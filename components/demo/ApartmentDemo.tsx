@@ -117,14 +117,12 @@ const permissionRows = ["ห้องพัก", "ผู้เช่า", "ส�
 const permissionColumns = ["เห็นเมนู", "ดู", "เพิ่ม", "แก้ไข", "ยกเลิก", "Export"];
 
 export function ApartmentDemo({
-  initialRole = "super_admin",
   showDemoControls = true,
 }: {
-  initialRole?: RoleKey;
   showDemoControls?: boolean;
 }) {
-  const [role, setRole] = useState<RoleKey>(initialRole);
-  const [subscription, setSubscription] = useState<SubscriptionState>(initialRole === "super_admin" ? "active" : "trialing");
+  const [role, setRole] = useState<RoleKey>("owner");
+  const [subscription, setSubscription] = useState<SubscriptionState>("trialing");
   const [lineEnabled, setLineEnabled] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -139,9 +137,10 @@ export function ApartmentDemo({
   const isLocked = role !== "super_admin" && subscription === "expired";
 
   function changeRole(nextRole: RoleKey) {
+    if (nextRole === "super_admin") return;
     setRole(nextRole);
     setActivePage("dashboard");
-    setSubscription(nextRole === "super_admin" ? "active" : "trialing");
+    setSubscription("trialing");
   }
 
   function navigate(page: PageKey) {
@@ -204,7 +203,7 @@ export function ApartmentDemo({
           <label className="global-search"><Search size={18} /><input placeholder="ค้นหากิจการ หอพัก ผู้เช่า หรือเอกสาร..." /></label>
           {showDemoControls ? <div className="demo-controls">
             <label><span>มุมมอง Demo</span><select value={role} onChange={(event) => changeRole(event.target.value as RoleKey)}>
-              <option value="super_admin">Super Admin</option><option value="owner">เจ้าของกิจการ</option><option value="accounting">ฝ่ายบัญชี</option><option value="staff">พนักงาน</option>
+              <option value="owner">เจ้าของกิจการ</option><option value="accounting">ฝ่ายบัญชี</option><option value="staff">พนักงาน</option>
             </select></label>
             {role !== "super_admin" ? <label><span>สถานะบริการ</span><select value={subscription} onChange={(event) => setSubscription(event.target.value as SubscriptionState)}>
               <option value="trialing">ทดลองใช้งาน</option><option value="active">ชำระแล้ว</option><option value="expired">หมดอายุ</option>
