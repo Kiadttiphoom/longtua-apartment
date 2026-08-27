@@ -42,9 +42,9 @@ export function LoginDemo() {
               <label className="check-label"><input type="checkbox" defaultChecked /> จดจำฉัน</label>
               <button className="text-button" type="button">ลืมรหัสผ่าน?</button>
             </div>
-            <Link className="button primary large" href="/dashboard">เข้าสู่ระบบ</Link>
+            <Link className="button primary large" href="/demo">เข้าสู่ระบบ</Link>
           </form>
-          <p className="register-link">ยังไม่มีบัญชี? <Link href="/register">สมัครใช้งานฟรี 30 วัน</Link></p>
+          <p className="register-link">ยังไม่มีบัญชี? <Link href="/demo/register">สมัครใช้งานฟรี 30 วัน</Link></p>
           <p className="login-footer">© 2026 Longtua Apartment</p>
         </div>
       </section>

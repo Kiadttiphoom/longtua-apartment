@@ -1,5 +1,5 @@
-import { LoginDemo } from "@/components/demo/LoginDemo";
+import { redirect } from "next/navigation";
 
 export default function LoginPage() {
-  return <LoginDemo />;
+  redirect("/demo/login");
 }

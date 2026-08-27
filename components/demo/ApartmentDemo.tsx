@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
+import { useMemo, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   Activity,
@@ -26,6 +26,7 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
+  Trash2,
   Users,
   WalletCards,
   X,
@@ -42,6 +43,10 @@ type PageKey =
 
 type NavItem = { code: PageKey; label: string; icon: ComponentType<LucideProps>; addon?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
+type Company = (typeof companies)[number];
+
+const DEMO_ITEM_LIMIT = 25;
+const DEMO_ADD_COOLDOWN_MS = 700;
 
 const navGroups: NavGroup[] = [
   { label: "ภาพรวม", items: [{ code: "dashboard", label: "แดชบอร์ด", icon: LayoutDashboard }] },
@@ -125,6 +130,7 @@ export function ApartmentDemo({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const companyCollection = useDemoCollection(companies, showToast);
 
   const currentRole = roleInfo[role];
   const visibleGroups = useMemo(() => navGroups
@@ -225,11 +231,17 @@ export function ApartmentDemo({
             onOpenPanel={() => setIsPanelOpen(true)}
             onNavigate={navigate}
             onToast={showToast}
+            companies={companyCollection.items}
+            onDeleteCompany={companyCollection.removeItem}
           />
         </main>
       </div>
 
-      {isPanelOpen ? <CompanyPanel onClose={() => setIsPanelOpen(false)} onSave={() => { setIsPanelOpen(false); showToast("เพิ่มกิจการตัวอย่างเรียบร้อยแล้ว"); }} /> : null}
+      {isPanelOpen ? <CompanyPanel onClose={() => setIsPanelOpen(false)} onSave={(company) => {
+        if (!companyCollection.addItem(company)) return;
+        setIsPanelOpen(false);
+        showToast("เพิ่มกิจการตัวอย่างเรียบร้อยแล้ว");
+      }} /> : null}
       {toast ? <div className="toast"><span><ShieldCheck size={18} /></span>{toast}</div> : null}
     </div>
   );
@@ -239,6 +251,7 @@ type PageContentProps = {
   activePage: PageKey; role: RoleKey; isLocked: boolean; lineEnabled: boolean;
   onLineChange: (value: boolean) => void; onOpenPanel: () => void;
   onNavigate: (page: PageKey) => void; onToast: (message: string) => void;
+  companies: Company[]; onDeleteCompany: (index: number) => void;
 };
 
 function PageContent(props: PageContentProps) {
@@ -252,7 +265,7 @@ function PageContent(props: PageContentProps) {
   if (props.activePage === "line") return <LinePage {...props} />;
   if (props.activePage === "rooms") return <RoomsPage {...props} />;
   if (props.activePage === "audit") return <AuditPage />;
-  return <GenericPage {...props} />;
+  return <GenericPage key={props.activePage} {...props} />;
 }
 
 function DashboardPage({ role, isLocked, onOpenPanel, onNavigate }: PageContentProps) {
@@ -329,38 +342,41 @@ function CustomerDashboard({ isLocked, onNavigate }: { isLocked: boolean; onNavi
   );
 }
 
-function CompaniesPage({ onOpenPanel }: PageContentProps) {
+function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany }: PageContentProps) {
   return (
     <>
       <PageHeader eyebrow="จัดการลูกค้า" title="กิจการ" description="จัดการลูกค้า เจ้าของกิจการ และสถานะการให้บริการ"><button className="button primary" onClick={onOpenPanel}><Plus size={17} /> เพิ่มกิจการ</button></PageHeader>
       <FilterBar placeholder="ค้นหาชื่อกิจการ เจ้าของ หรือเบอร์โทร" filters={[{ label: "ทุกสถานะ", options: ["Active", "Trial", "หมดอายุ"] }, { label: "ทุกแพ็กเกจ", options: ["Starter", "Business"] }]} />
-      <section className="panel table-panel"><div className="list-summary"><span>ทั้งหมด <strong>28 กิจการ</strong></span><span>Active 21 · Trial 5 · หมดอายุ 2</span></div><CompanyTable rows={companies} /></section>
+      <section className="panel table-panel"><div className="list-summary"><span>รายการใน Demo <strong>{companyItems.length} กิจการ</strong></span><span>ข้อมูลจะรีเซ็ตเมื่อรีเฟรชหน้า</span></div><CompanyTable rows={companyItems} onDelete={onDeleteCompany} /></section>
     </>
   );
 }
 
-function PropertiesPage({ role, isLocked }: PageContentProps) {
-  const rows = [
+function PropertiesPage({ role, isLocked, onToast }: PageContentProps) {
+  const initialRows = [
     ["สมชายแมนชั่น", "บริษัท สมชายอพาร์ทเมนท์", "40", "34", "หาดใหญ่, สงขลา", "เปิดใช้งาน"],
     ["บ้านสวน เรสซิเดนซ์", "บ้านสวนหอพัก", "64", "58", "เมือง, เชียงใหม่", "เปิดใช้งาน"],
     ["สุขใจเพลส", "สุขใจเรสซิเดนซ์", "28", "19", "บางนา, กรุงเทพฯ", "ทดลองใช้"],
     ["เดอะเนสท์ อาคาร A", "เดอะเนสท์ อพาร์ตเมนต์", "80", "76", "ศรีราชา, ชลบุรี", "เปิดใช้งาน"],
   ];
-  return <><PageHeader eyebrow="จัดการลูกค้า" title="หอพัก" description={role === "super_admin" ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ" : "หอพักภายในกิจการของคุณ"}><button disabled={isLocked} className="button primary"><Plus size={17} /> เพิ่มหอพัก</button></PageHeader><FilterBar placeholder="ค้นหาชื่อหอพัก รหัส หรือจังหวัด" filters={role === "super_admin" ? [{ label: "ทุกกิจการ", options: ["สมชายอพาร์ทเมนท์", "บ้านสวนหอพัก", "สุขใจเรสซิเดนซ์"] }, { label: "ทุกสถานะ", options: ["เปิดใช้งาน", "ทดลองใช้", "ระงับ"] }] : []} /><SimpleTable headers={["หอพัก", "กิจการ", "ห้องทั้งหมด", "มีผู้เช่า", "ที่ตั้ง", "สถานะ"]} rows={rows} /></>;
+  const collection = useDemoCollection(initialRows, onToast);
+  return <><PageHeader eyebrow="จัดการลูกค้า" title="หอพัก" description={role === "super_admin" ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ" : "หอพักภายในกิจการของคุณ"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`หอพัก Demo ${collection.items.length + 1}`, "กิจการตัวอย่าง", "20", "0", "กรุงเทพฯ", "ทดลองใช้"])}><Plus size={17} /> เพิ่มหอพัก</button></PageHeader><FilterBar placeholder="ค้นหาชื่อหอพัก รหัส หรือจังหวัด" filters={role === "super_admin" ? [{ label: "ทุกกิจการ", options: ["สมชายอพาร์ทเมนท์", "บ้านสวนหอพัก", "สุขใจเรสซิเดนซ์"] }, { label: "ทุกสถานะ", options: ["เปิดใช้งาน", "ทดลองใช้", "ระงับ"] }] : []} /><SimpleTable headers={["หอพัก", "กิจการ", "ห้องทั้งหมด", "มีผู้เช่า", "ที่ตั้ง", "สถานะ"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function UsersPage({ isLocked }: PageContentProps) {
-  const rows = [
+function UsersPage({ isLocked, onToast }: PageContentProps) {
+  const initialRows = [
     ["สมชาย ใจดี", "owner@somchai.com", "เจ้าของกิจการ", "ทุกหอ", "ใช้งานอยู่"],
     ["สุภาวดี พรชัย", "account@somchai.com", "ฝ่ายบัญชี", "2 หอพัก", "ใช้งานอยู่"],
     ["อนันต์ ดีพร้อม", "anan@somchai.com", "พนักงาน", "สมชายแมนชั่น", "ใช้งานอยู่"],
     ["จารุวรรณ แสงดี", "jaruwan@sukjai.com", "ผู้จัดการ", "สุขใจเพลส", "รอยืนยัน"],
   ];
-  return <><PageHeader eyebrow="การเข้าถึงระบบ" title="ผู้ใช้งาน" description="กำหนด Role และขอบเขตกิจการหรือหอพักที่เข้าถึงได้"><button disabled={isLocked} className="button primary"><Plus size={17} /> เชิญผู้ใช้งาน</button></PageHeader><FilterBar placeholder="ค้นหาชื่อ อีเมล หรือ Role" filters={[{ label: "ทุกกิจการ", options: ["สมชายอพาร์ทเมนท์", "สุขใจเรสซิเดนซ์"] }, { label: "ทุก Role", options: ["Owner", "Manager", "Accounting", "Staff"] }, { label: "ทุกสถานะ", options: ["ใช้งานอยู่", "รอยืนยัน", "ระงับ"] }]} /><SimpleTable headers={["ผู้ใช้งาน", "อีเมล", "Role", "ขอบเขตข้อมูล", "สถานะ"]} rows={rows} /></>;
+  const collection = useDemoCollection(initialRows, onToast);
+  return <><PageHeader eyebrow="การเข้าถึงระบบ" title="ผู้ใช้งาน" description="กำหนด Role และขอบเขตกิจการหรือหอพักที่เข้าถึงได้"><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`ผู้ใช้ Demo ${collection.items.length + 1}`, `demo${collection.items.length + 1}@example.com`, "พนักงาน", "สมชายแมนชั่น", "รอยืนยัน"])}><Plus size={17} /> เชิญผู้ใช้งาน</button></PageHeader><FilterBar placeholder="ค้นหาชื่อ อีเมล หรือ Role" filters={[{ label: "ทุกกิจการ", options: ["สมชายอพาร์ทเมนท์", "สุขใจเรสซิเดนซ์"] }, { label: "ทุก Role", options: ["Owner", "Manager", "Accounting", "Staff"] }, { label: "ทุกสถานะ", options: ["ใช้งานอยู่", "รอยืนยัน", "ระงับ"] }]} /><SimpleTable headers={["ผู้ใช้งาน", "อีเมล", "Role", "ขอบเขตข้อมูล", "สถานะ"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function RolesPage({ isLocked, onNavigate }: PageContentProps) {
-  return <><PageHeader eyebrow="สิทธิ์และการเข้าถึง" title="Role" description="กลุ่มสิทธิ์สำหรับกำหนดหน้าที่และขอบเขตการทำงาน"><button disabled={isLocked} className="button primary"><Plus size={17} /> เพิ่ม Role</button></PageHeader><section className="role-grid">{roles.map((item) => <article className="role-card" key={item.code}><div className="role-card-head"><span className="role-icon"><ShieldCheck size={20} /></span>{item.system ? <span className="badge neutral">Role ระบบ</span> : <button className="icon-button"><MoreHorizontal size={18} /></button>}</div><h3>{item.name}</h3><code>{item.code}</code><dl><div><dt>ขอบเขต</dt><dd>{item.scope}</dd></div><div><dt>ผู้ใช้งาน</dt><dd>{item.users} คน</dd></div><div><dt>สิทธิ์ที่เปิด</dt><dd>{item.permissions} รายการ</dd></div></dl><button onClick={() => onNavigate("permissions")} className="button secondary full">จัดการสิทธิ์</button></article>)}</section></>;
+function RolesPage({ isLocked, onNavigate, onToast }: PageContentProps) {
+  const collection = useDemoCollection(roles, onToast, 12);
+  return <><PageHeader eyebrow="สิทธิ์และการเข้าถึง" title="Role" description="กลุ่มสิทธิ์สำหรับกำหนดหน้าที่และขอบเขตการทำงาน"><button disabled={isLocked} className="button primary" onClick={() => collection.addItem({ name: `Role Demo ${collection.items.length + 1}`, code: `demo_role_${collection.items.length + 1}`, scope: "หอที่ได้รับมอบหมาย", users: 0, permissions: 0, system: false })}><Plus size={17} /> เพิ่ม Role</button></PageHeader><section className="role-grid">{collection.items.map((item, index) => <article className="role-card" key={`${item.code}-${index}`}><div className="role-card-head"><span className="role-icon"><ShieldCheck size={20} /></span>{item.system ? <span className="badge neutral">Role ระบบ</span> : <button className="icon-button delete-button" type="button" disabled={isLocked} aria-label={`ลบ ${item.name}`} title="ลบ Role" onClick={() => collection.removeItem(index)}><Trash2 size={17} /></button>}</div><h3>{item.name}</h3><code>{item.code}</code><dl><div><dt>ขอบเขต</dt><dd>{item.scope}</dd></div><div><dt>ผู้ใช้งาน</dt><dd>{item.users} คน</dd></div><div><dt>สิทธิ์ที่เปิด</dt><dd>{item.permissions} รายการ</dd></div></dl><button onClick={() => onNavigate("permissions")} className="button secondary full">จัดการสิทธิ์</button></article>)}</section></>;
 }
 
 function PermissionsPage({ isLocked, onToast }: PageContentProps) {
@@ -373,15 +389,16 @@ function SubscriptionsPage({ role, lineEnabled, onLineChange, onToast }: PageCon
   return <><PageHeader eyebrow="แพ็กเกจและบริการ" title={admin ? "Subscription" : "แพ็กเกจของคุณ"} description={admin ? "จัดการรอบบริการและบริการเสริมของทุกกิจการ" : "ตรวจสอบแพ็กเกจ รอบบิล และบริการเสริม"}>{!admin ? <button onClick={() => onToast("เปิดหน้าชำระเงินตัวอย่างแล้ว")} className="button primary">ต่ออายุบริการ</button> : null}</PageHeader>{admin ? <><section className="metric-grid compact"><Metric label="รายได้เดือนนี้" value="฿42,870" delta="+12.4%" icon={CircleDollarSign} tone="green" /><Metric label="Active" value="21" delta="75%" icon={ShieldCheck} tone="blue" /><Metric label="Trial" value="5" delta="4 ใกล้หมด" icon={Gauge} tone="orange" /><Metric label="MRR" value="฿38,640" delta="บริการรายเดือน" icon={WalletCards} tone="violet" /></section><SimpleTable headers={["กิจการ", "แพ็กเกจ", "ค่าบริการ", "รอบถัดไป", "บริการเสริม", "สถานะ"]} rows={companies.map((company, index) => [company.name, company.plan, index % 2 ? "฿990/เดือน" : "฿1,590/เดือน", company.date, index % 2 ? "–" : "LINE", company.status === "active" ? "Active" : company.status === "trial" ? "Trial" : "หมดอายุ"])} /></> : <PlanCards lineEnabled={lineEnabled} onLineChange={onLineChange} onToast={onToast} />}</>;
 }
 
-function LinePage({ role, lineEnabled, onLineChange, onToast }: PageContentProps) {
+function LinePage({ role, lineEnabled, onLineChange, onToast, isLocked }: PageContentProps) {
+  const collection = useDemoCollection([["แจ้งบิลเดือนสิงหาคม", "ผู้เช่า 48 คน", "26 ส.ค. 2569 09:00", "ส่งแล้ว 46"], ["เตือนครบกำหนดชำระ", "ผู้เช่า 12 คน", "28 ส.ค. 2569 08:00", "กำหนดเวลา"], ["ติดตามยอดค้าง 7 วัน", "ผู้เช่า 7 คน", "25 ส.ค. 2569 10:30", "ส่งแล้ว 7"]], onToast);
   if (!lineEnabled && role !== "super_admin") return <section className="addon-locked-page"><span className="addon-logo"><MessageCircle size={28} /></span><span className="badge purple">บริการเสริม</span><h1>LINE แจ้งเตือน</h1><p>ส่งใบแจ้งหนี้ แจ้งเตือนก่อนครบกำหนด และติดตามยอดค้างผ่าน LINE Official Account</p><div className="addon-benefits"><span><ShieldCheck size={18} />ส่งบิลเป็นรายห้อง</span><span><Bell size={18} />ตั้งเวลาแจ้งเตือนอัตโนมัติ</span><span><ReceiptText size={18} />ติดตามผลการส่งย้อนหลัง</span></div><div className="addon-price"><strong>฿299</strong><span>/ เดือน / กิจการ</span></div><button className="button primary large" onClick={() => { onLineChange(true); onToast("เปิด LINE Add-on สำหรับ Demo แล้ว"); }}>เปิดใช้งาน LINE</button><small>ยกเลิกได้ทุกเมื่อ ข้อมูลเดิมยังอยู่ครบ</small></section>;
-  const rows = [["แจ้งบิลเดือนสิงหาคม", "ผู้เช่า 48 คน", "26 ส.ค. 2569 09:00", "ส่งแล้ว 46"], ["เตือนครบกำหนดชำระ", "ผู้เช่า 12 คน", "28 ส.ค. 2569 08:00", "กำหนดเวลา"], ["ติดตามยอดค้าง 7 วัน", "ผู้เช่า 7 คน", "25 ส.ค. 2569 10:30", "ส่งแล้ว 7"]];
-  return <><PageHeader eyebrow="บริการเสริม" title="LINE แจ้งเตือน" description={role === "super_admin" ? "จัดการสถานะบริการ LINE ของกิจการต่าง ๆ" : "ส่งและติดตามข้อความถึงผู้เช่าผ่าน LINE"}><button className="button primary"><Plus size={17} /> สร้างข้อความ</button></PageHeader><div className="integration-banner"><span className="line-mark"><MessageCircle size={22} /></span><span><strong>LINE Official Account เชื่อมต่อแล้ว</strong><small>@somchaimansion · อัปเดตล่าสุด 2 นาทีที่แล้ว</small></span><span className="badge success">พร้อมใช้งาน</span></div><SimpleTable headers={["แคมเปญ", "ผู้รับ", "วันที่ส่ง", "ผลลัพธ์"]} rows={rows} /></>;
+  return <><PageHeader eyebrow="บริการเสริม" title="LINE แจ้งเตือน" description={role === "super_admin" ? "จัดการสถานะบริการ LINE ของกิจการต่าง ๆ" : "ส่งและติดตามข้อความถึงผู้เช่าผ่าน LINE"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`ข้อความ Demo ${collection.items.length + 1}`, "ผู้เช่า 1 คน", "วันนี้", "ฉบับร่าง"])}><Plus size={17} /> สร้างข้อความ</button></PageHeader><div className="integration-banner"><span className="line-mark"><MessageCircle size={22} /></span><span><strong>LINE Official Account เชื่อมต่อแล้ว</strong><small>@somchaimansion · อัปเดตล่าสุด 2 นาทีที่แล้ว</small></span><span className="badge success">พร้อมใช้งาน</span></div><SimpleTable headers={["แคมเปญ", "ผู้รับ", "วันที่ส่ง", "ผลลัพธ์"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function RoomsPage({ isLocked }: PageContentProps) {
-  const rooms = Array.from({ length: 16 }, (_, index) => ({ number: `${Math.floor(index / 8) + 1}${String(index % 8 + 1).padStart(2, "0")}`, status: index % 7 === 3 ? "maintenance" : index % 5 === 1 ? "vacant" : "occupied", tenant: index % 5 === 1 ? "พร้อมรับผู้เช่า" : index % 7 === 3 ? "กำลังซ่อม" : ["สมชาย ใจดี", "อารยา พรดี", "ธนกร แสงงาม"][index % 3] }));
-  return <><PageHeader eyebrow="จัดการหอพัก" title="ห้องพัก" description="สมชายแมนชั่น · แสดงห้องแยกตามชั้น"><button disabled={isLocked} className="button primary"><Plus size={17} /> เพิ่มห้อง</button></PageHeader><FilterBar placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า" /><section className="room-grid">{rooms.map((room) => <button className={`room-card ${room.status}`} key={room.number}><span><strong>{room.number}</strong><i /></span><small>{room.tenant}</small><em>{room.status === "occupied" ? "มีผู้เช่า" : room.status === "vacant" ? "ว่าง" : "ปิดซ่อม"}</em></button>)}</section></>;
+function RoomsPage({ isLocked, onToast }: PageContentProps) {
+  const initialRooms = Array.from({ length: 16 }, (_, index) => ({ number: `${Math.floor(index / 8) + 1}${String(index % 8 + 1).padStart(2, "0")}`, status: index % 7 === 3 ? "maintenance" : index % 5 === 1 ? "vacant" : "occupied", tenant: index % 5 === 1 ? "พร้อมรับผู้เช่า" : index % 7 === 3 ? "กำลังซ่อม" : ["สมชาย ใจดี", "อารยา พรดี", "ธนกร แสงงาม"][index % 3] }));
+  const collection = useDemoCollection(initialRooms, onToast);
+  return <><PageHeader eyebrow="จัดการหอพัก" title="ห้องพัก" description="สมชายแมนชั่น · แสดงห้องแยกตามชั้น"><button disabled={isLocked} className="button primary" onClick={() => collection.addItem({ number: `D${String(collection.items.length + 1).padStart(2, "0")}`, status: "vacant", tenant: "พร้อมรับผู้เช่า" })}><Plus size={17} /> เพิ่มห้อง</button></PageHeader><FilterBar placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า" /><section className="room-grid">{collection.items.map((room, index) => <article className={`room-card ${room.status}`} key={room.number}><span><strong>{room.number}</strong><i /></span><small>{room.tenant}</small><em>{room.status === "occupied" ? "มีผู้เช่า" : room.status === "vacant" ? "ว่าง" : "ปิดซ่อม"}</em><button className="room-delete" type="button" disabled={isLocked} aria-label={`ลบห้อง ${room.number}`} onClick={() => collection.removeItem(index)}><Trash2 size={14} /> ลบ</button></article>)}</section></>;
 }
 
 function AuditPage() {
@@ -389,13 +406,13 @@ function AuditPage() {
   return <><PageHeader eyebrow="ความปลอดภัย" title="Audit Log" description="ประวัติการเปลี่ยนแปลงข้อมูล สิทธิ์ และบริการสำคัญ" /><FilterBar placeholder="ค้นหาผู้กระทำหรือรายการ" /><SimpleTable headers={["การกระทำ", "ผู้ดำเนินการ", "รายละเอียด", "เวลา"]} rows={rows} /></>;
 }
 
-function GenericPage({ activePage, isLocked }: PageContentProps) {
+function GenericPage({ activePage, isLocked, onToast }: PageContentProps) {
   const labels: Record<string, [string, string]> = {
     tenants: ["ผู้เช่า", "จัดการข้อมูลผู้เช่าและประวัติการเข้าพัก"], contracts: ["สัญญาเช่า", "สัญญาปัจจุบันและสัญญาที่ใกล้หมด"], meters: ["มิเตอร์", "บันทึกมิเตอร์น้ำและไฟประจำรอบบิล"], invoices: ["ใบแจ้งหนี้", "สร้าง ตรวจสอบ และติดตามสถานะใบแจ้งหนี้"], payments: ["รับชำระ", "บันทึกการรับเงินและออกใบเสร็จ"], receivables: ["ยอดค้าง", "ติดตามยอดค้างชำระแยกตามช่วงเวลา"], reports: ["รายงาน", "สรุปข้อมูลการเงิน ผู้เช่า และอัตราเข้าพัก"], menus: ["จัดการเมนู", "กำหนดชื่อ ลำดับ และ Permission ที่ใช้แสดงเมนู"], settings: ["ตั้งค่าระบบ", "ข้อมูลกิจการ เอกสาร และค่าตั้งต้นของระบบ"],
   };
   const [title, description] = labels[activePage] ?? ["หน้าระบบ", "จัดการข้อมูลภายในระบบ"];
-  const rows = [["รายการตัวอย่าง 001", "สมชายแมนชั่น", "วันนี้", "พร้อมดำเนินการ"], ["รายการตัวอย่าง 002", "บ้านสวน เรสซิเดนซ์", "เมื่อวาน", "กำลังตรวจสอบ"], ["รายการตัวอย่าง 003", "สุขใจเพลส", "24 ส.ค. 2569", "เรียบร้อย"]];
-  return <><PageHeader eyebrow="ระบบหอพัก" title={title} description={description}><button disabled={isLocked} className="button primary"><Plus size={17} /> เพิ่มรายการ</button></PageHeader><FilterBar placeholder={`ค้นหา${title}`} /><SimpleTable headers={["รายการ", "หอพัก", "วันที่", "สถานะ"]} rows={rows} /></>;
+  const collection = useDemoCollection([["รายการตัวอย่าง 001", "สมชายแมนชั่น", "วันนี้", "พร้อมดำเนินการ"], ["รายการตัวอย่าง 002", "บ้านสวน เรสซิเดนซ์", "เมื่อวาน", "กำลังตรวจสอบ"], ["รายการตัวอย่าง 003", "สุขใจเพลส", "24 ส.ค. 2569", "เรียบร้อย"]], onToast);
+  return <><PageHeader eyebrow="ระบบหอพัก" title={title} description={description}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`${title} Demo ${String(collection.items.length + 1).padStart(3, "0")}`, "สมชายแมนชั่น", "วันนี้", "รายการใหม่"])}><Plus size={17} /> เพิ่มรายการ</button></PageHeader><FilterBar placeholder={`ค้นหา${title}`} /><SimpleTable headers={["รายการ", "หอพัก", "วันที่", "สถานะ"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
 function PageHeader({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children?: React.ReactNode }) {
@@ -418,12 +435,12 @@ function FilterBar({ placeholder, filters = [] }: { placeholder: string; filters
   return <div className="filter-bar"><label><Search size={17} /><input placeholder={placeholder} /></label>{filters.map((filter) => <select aria-label={filter.label} defaultValue="" key={filter.label}><option value="">{filter.label}</option>{filter.options.map((option) => <option key={option}>{option}</option>)}</select>)}<button className="button secondary"><SlidersHorizontal size={16} /> ตัวกรอง</button></div>;
 }
 
-function CompanyTable({ rows }: { rows: typeof companies }) {
-  return <div className="responsive-table"><table><thead><tr><th>กิจการ</th><th>แพ็กเกจ</th><th>หอพัก</th><th>ผู้ใช้งาน</th><th>รอบบริการ</th><th>สถานะ</th><th /></tr></thead><tbody>{rows.map((company) => <tr key={company.name}><td><span className="company-cell"><i>{company.name.charAt(0)}</i><span><strong>{company.name}</strong><small>{company.owner}</small></span></span></td><td>{company.plan}</td><td>{company.properties}</td><td>{company.users}</td><td>{company.date}</td><td><StatusBadge status={company.status} /></td><td><button className="icon-button"><MoreHorizontal size={18} /></button></td></tr>)}</tbody></table></div>;
+function CompanyTable({ rows, onDelete }: { rows: Company[]; onDelete?: (index: number) => void }) {
+  return <div className="responsive-table"><table><thead><tr><th>กิจการ</th><th>แพ็กเกจ</th><th>หอพัก</th><th>ผู้ใช้งาน</th><th>รอบบริการ</th><th>สถานะ</th><th /></tr></thead><tbody>{rows.map((company, index) => <tr key={`${company.name}-${index}`}><td><span className="company-cell"><i>{company.name.charAt(0)}</i><span><strong>{company.name}</strong><small>{company.owner}</small></span></span></td><td>{company.plan}</td><td>{company.properties}</td><td>{company.users}</td><td>{company.date}</td><td><StatusBadge status={company.status} /></td><td>{onDelete ? <button className="icon-button delete-button" type="button" aria-label={`ลบ ${company.name}`} title="ลบรายการ" onClick={() => onDelete(index)}><Trash2 size={17} /></button> : <button className="icon-button" type="button" aria-label={`ตัวเลือก ${company.name}`}><MoreHorizontal size={18} /></button>}</td></tr>)}</tbody></table></div>;
 }
 
-function SimpleTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
-  return <section className="panel table-panel"><div className="responsive-table"><table><thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}<th /></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row[0]}-${index}`}>{row.map((cell, cellIndex) => <td key={`${cell}-${cellIndex}`}>{cellIndex === 0 ? <strong>{cell}</strong> : cell}</td>)}<td><button className="icon-button"><MoreHorizontal size={18} /></button></td></tr>)}</tbody></table></div></section>;
+function SimpleTable({ headers, rows, onDelete, disableDelete = false }: { headers: string[]; rows: string[][]; onDelete?: (index: number) => void; disableDelete?: boolean }) {
+  return <section className="panel table-panel"><div className="responsive-table"><table><thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}<th /></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row[0]}-${index}`}>{row.map((cell, cellIndex) => <td key={`${cell}-${cellIndex}`}>{cellIndex === 0 ? <strong>{cell}</strong> : cell}</td>)}<td>{onDelete ? <button className="icon-button delete-button" type="button" disabled={disableDelete} aria-label={`ลบ ${row[0]}`} title="ลบรายการ" onClick={() => onDelete(index)}><Trash2 size={17} /></button> : <button className="icon-button" type="button" aria-label={`ตัวเลือก ${row[0]}`}><MoreHorizontal size={18} /></button>}</td></tr>)}</tbody></table></div></section>;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -435,6 +452,33 @@ function PlanCards({ lineEnabled, onLineChange, onToast }: { lineEnabled: boolea
   return <><section className="current-plan panel"><div><span className="badge success">แพ็กเกจปัจจุบัน</span><h2>Business</h2><p>รองรับ 3 หอพัก · 200 ห้อง · ผู้ใช้ไม่จำกัด</p></div><div><strong>฿1,590</strong><span>/ เดือน</span><small>รอบถัดไป 25 ก.ย. 2569</small></div><button onClick={() => onToast("เปิดหน้าต่ออายุบริการแล้ว")} className="button primary">ต่ออายุ</button></section><h2 className="section-title">บริการเสริม</h2><section className="addon-grid"><article><span className="addon-icon purple"><MessageCircle size={21} /></span><span><h3>LINE แจ้งเตือน</h3><p>ส่งบิลและแจ้งยอดค้างผ่าน LINE OA</p></span><strong>฿299 <small>/เดือน</small></strong><button className={`button ${lineEnabled ? "secondary" : "primary"}`} onClick={() => onLineChange(!lineEnabled)}>{lineEnabled ? "เปิดใช้งานแล้ว" : "เพิ่มบริการ"}</button></article><article><span className="addon-icon blue"><BookOpenCheck size={21} /></span><span><h3>รายงานขั้นสูง</h3><p>วิเคราะห์รายรับและแนวโน้มรายปี</p></span><strong>฿199 <small>/เดือน</small></strong><button className="button secondary">เพิ่มบริการ</button></article></section></>;
 }
 
-function CompanyPanel({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
-  return <div className="drawer-backdrop" onClick={onClose}><aside className="drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-head"><span><p className="eyebrow">จัดการลูกค้า</p><h2>เพิ่มกิจการใหม่</h2></span><button className="icon-button" onClick={onClose}><X size={20} /></button></div><form onSubmit={(event) => { event.preventDefault(); onSave(); }}><div className="form-section"><h3>ข้อมูลกิจการ</h3><label><span>ชื่อกิจการ *</span><input placeholder="เช่น บริษัท สมชายอพาร์ทเมนท์" required /></label><div className="field-row"><label><span>เบอร์โทร</span><input placeholder="08x-xxx-xxxx" /></label><label><span>เลขประจำตัวผู้เสียภาษี</span><input placeholder="13 หลัก" /></label></div></div><div className="form-section"><h3>เจ้าของกิจการ</h3><label><span>ชื่อ-นามสกุล *</span><input placeholder="ชื่อผู้ดูแลหลัก" required /></label><label><span>อีเมลสำหรับเข้าใช้งาน *</span><input type="email" placeholder="owner@example.com" required /></label></div><div className="form-section"><h3>แพ็กเกจเริ่มต้น</h3><label><span>แพ็กเกจ</span><select defaultValue="trial"><option value="trial">ทดลองฟรี 30 วัน</option><option value="starter">Starter</option><option value="business">Business</option></select></label></div><div className="drawer-actions"><button type="button" className="button secondary" onClick={onClose}>ยกเลิก</button><button type="submit" className="button primary">สร้างกิจการ</button></div></form></aside></div>;
+function CompanyPanel({ onClose, onSave }: { onClose: () => void; onSave: (company: Company) => void }) {
+  return <div className="drawer-backdrop" onClick={onClose}><aside className="drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-head"><span><p className="eyebrow">จัดการลูกค้า</p><h2>เพิ่มกิจการใหม่</h2></span><button className="icon-button" type="button" aria-label="ปิดหน้าต่าง" onClick={onClose}><X size={20} /></button></div><form onSubmit={(event) => { event.preventDefault(); const formData = new FormData(event.currentTarget); onSave({ name: String(formData.get("companyName")), owner: String(formData.get("ownerName")), plan: String(formData.get("plan")), properties: 1, users: 1, status: formData.get("plan") === "Trial" ? "trial" : "active", date: formData.get("plan") === "Trial" ? "อีก 30 วัน" : "รอบถัดไป 30 วัน" }); }}><div className="form-section"><h3>ข้อมูลกิจการ</h3><label><span>ชื่อกิจการ *</span><input name="companyName" maxLength={80} placeholder="เช่น บริษัท สมชายอพาร์ทเมนท์" required /></label><div className="field-row"><label><span>เบอร์โทร</span><input name="phone" maxLength={20} placeholder="08x-xxx-xxxx" /></label><label><span>เลขประจำตัวผู้เสียภาษี</span><input name="taxId" inputMode="numeric" maxLength={13} placeholder="13 หลัก" /></label></div></div><div className="form-section"><h3>เจ้าของกิจการ</h3><label><span>ชื่อ-นามสกุล *</span><input name="ownerName" maxLength={80} placeholder="ชื่อผู้ดูแลหลัก" required /></label><label><span>อีเมลสำหรับเข้าใช้งาน *</span><input name="email" type="email" maxLength={120} placeholder="owner@example.com" required /></label></div><div className="form-section"><h3>แพ็กเกจเริ่มต้น</h3><label><span>แพ็กเกจ</span><select name="plan" defaultValue="Trial"><option value="Trial">ทดลองฟรี 30 วัน</option><option value="Starter">Starter</option><option value="Business">Business</option></select></label></div><div className="drawer-actions"><button type="button" className="button secondary" onClick={onClose}>ยกเลิก</button><button type="submit" className="button primary">สร้างกิจการ</button></div></form></aside></div>;
+}
+
+function useDemoCollection<T>(initialItems: T[], onToast: (message: string) => void, limit = DEMO_ITEM_LIMIT) {
+  const [items, setItems] = useState(initialItems);
+  const lastAddAt = useRef(0);
+
+  function addItem(item: T) {
+    const now = Date.now();
+    if (now - lastAddAt.current < DEMO_ADD_COOLDOWN_MS) {
+      onToast("กรุณารอสักครู่ก่อนเพิ่มรายการถัดไป");
+      return false;
+    }
+    if (items.length >= limit) {
+      onToast(`Demo เพิ่มได้สูงสุด ${limit} รายการต่อหน้า`);
+      return false;
+    }
+    lastAddAt.current = now;
+    setItems((current) => [...current, item]);
+    return true;
+  }
+
+  function removeItem(index: number) {
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    onToast("ลบรายการออกจาก Demo แล้ว");
+  }
+
+  return { items, addItem, removeItem };
 }

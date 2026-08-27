@@ -1,5 +1,5 @@
-import { ApartmentDemo } from "@/components/demo/ApartmentDemo";
+import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  return <ApartmentDemo initialRole="owner" showDemoControls={false} />;
+  redirect("/demo");
 }

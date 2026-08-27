@@ -1,5 +1,5 @@
-import { ApartmentDemo } from "@/components/demo/ApartmentDemo";
+import { redirect } from "next/navigation";
 
 export default function DashboardDemoPage() {
-  return <ApartmentDemo />;
+  redirect("/demo");
 }
