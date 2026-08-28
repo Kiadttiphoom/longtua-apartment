@@ -103,6 +103,17 @@ type ContractRecord = {
   status: "active" | "expired" | "draft";
 };
 
+// ── Property (หอพัก) — ข้อมูลแยกต่อหอ ──
+type Property = {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  settings: AppSettings;
+  rooms: RoomRecord[];
+  contracts: ContractRecord[];
+};
+
 function thaiBahtText(num: number): string {
   if (!num || isNaN(num) || num <= 0) return "ศูนย์บาทถ้วน";
   const digits = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
@@ -132,100 +143,72 @@ function thaiBahtText(num: number): string {
   return text + "บาทถ้วน";
 }
 
-const INITIAL_CONTRACTS: ContractRecord[] = [
+const INITIAL_PROPERTIES: Property[] = [
   {
-    id: "สญ.-2568-001",
-    roomNumber: "101",
-    tenantName: "สมชาย ใจดี",
-    tenantIdCard: "1-9098-00123-45-1",
-    tenantPhone: "081-234-5678",
-    startDate: "1 ม.ค. 2568",
-    endDate: "31 ธ.ค. 2568",
-    rent: 4500,
-    deposit: 9000,
-    advanceRent: 4500,
-    customClauses: "ห้ามสูบบุหรี่ภายในห้องพักโดยเด็ดขาด",
-    status: "active",
+    id: "prop-001",
+    name: "สมชายแมนชั่น",
+    address: "123 ถ.กาญจนวนิช อ.หาดใหญ่ จ.สงขลา 90110",
+    phone: "074-200-001",
+    settings: {
+      electricRate: 3.50,
+      waterRate: 50,
+      billDay: 1,
+      dueDay: 5,
+      lateFee: 50,
+      promptpay: "0812345678",
+      accountName: "นายสมชาย ใจดี",
+      invoiceHeader: "ใบแจ้งหนี้ค่าเช่า สมชายแมนชั่น",
+      invoiceNote: "กรุณาชำระภายในกำหนด ขอบคุณครับ",
+      attachQR: true,
+    },
+    rooms: [
+      { number: "101", tenant: "สมชาย ใจดี",     rent: 4500, prevElec: 12430, newElec: null, contractStart: "1 ม.ค. 2568",  contractEnd: "31 ธ.ค. 2568" },
+      { number: "102", tenant: "อารยา พรดี",      rent: 4500, prevElec:  8210, newElec: null, contractStart: "15 ก.พ. 2568", contractEnd: "14 ก.พ. 2569" },
+      { number: "201", tenant: "ธนกร แสงงาม",    rent: 5000, prevElec:  5110, newElec: null, contractStart: "1 มี.ค. 2568", contractEnd: "28 ก.พ. 2569" },
+      { number: "301", tenant: "ปิยะ สุขสวัสดิ์", rent: 5500, prevElec:  3290, newElec: null, contractStart: "1 มิ.ย. 2568", contractEnd: "31 พ.ค. 2569" },
+      { number: "302", tenant: "กมลา ดีงาม",     rent: 5000, prevElec:  7840, newElec: null, contractStart: "10 ก.ค. 2568", contractEnd: "9 ก.ค. 2569"  },
+      { number: "401", tenant: "นันท์นภัส วารี",  rent: 6000, prevElec:  1050, newElec: null, contractStart: "1 ส.ค. 2568",  contractEnd: "31 ก.ค. 2569" },
+    ],
+    contracts: [
+      { id: "สญ.-2568-001", roomNumber: "101", tenantName: "สมชาย ใจดี",     tenantIdCard: "1-9098-00123-45-1", tenantPhone: "081-234-5678", startDate: "1 ม.ค. 2568",   endDate: "31 ธ.ค. 2568", rent: 4500, deposit: 9000,  advanceRent: 4500, customClauses: "ห้ามสูบบุหรี่ภายในห้องพักโดยเด็ดขาด", status: "active" },
+      { id: "สญ.-2568-002", roomNumber: "102", tenantName: "อารยา พรดี",      tenantIdCard: "3-8401-00244-12-9", tenantPhone: "089-876-5432", startDate: "15 ก.พ. 2568",  endDate: "14 ก.พ. 2569", rent: 4500, deposit: 9000,  advanceRent: 4500, customClauses: "อนุญาตจอดรถจักรยานยนต์ 1 คัน (ช่อง M-02)", status: "active" },
+      { id: "สญ.-2568-003", roomNumber: "201", tenantName: "ธนกร แสงงาม",    tenantIdCard: "1-1004-00892-31-0", tenantPhone: "082-345-6789", startDate: "1 มี.ค. 2568",  endDate: "28 ก.พ. 2569", rent: 5000, deposit: 10000, advanceRent: 5000, customClauses: "สิทธิ์จอดรถยนต์ช่อง A-04 พร้อมคีย์การ์ดเข้าออก 1 ใบ", status: "active" },
+      { id: "สญ.-2568-004", roomNumber: "301", tenantName: "ปิยะ สุขสวัสดิ์", tenantIdCard: "3-9002-00561-88-2", tenantPhone: "086-554-3321", startDate: "1 มิ.ย. 2568",  endDate: "31 พ.ค. 2569", rent: 5500, deposit: 11000, advanceRent: 5500, customClauses: "ห้องปรับอากาศ เครื่องทำน้ำอุ่น และเฟอร์นิเจอร์ครบชุด", status: "active" },
+      { id: "สญ.-2568-005", roomNumber: "302", tenantName: "กมลา ดีงาม",     tenantIdCard: "5-8001-00312-77-4", tenantPhone: "095-443-2211", startDate: "10 ก.ค. 2568", endDate: "9 ก.ค. 2569",  rent: 5000, deposit: 10000, advanceRent: 5000, customClauses: "ห้ามเลี้ยงสัตว์เลี้ยงทุกชนิดภายในห้องและอาคาร", status: "active" },
+      { id: "สญ.-2568-006", roomNumber: "401", tenantName: "นันท์นภัส วารี",  tenantIdCard: "1-7009-00432-11-8", tenantPhone: "084-332-1100", startDate: "1 ส.ค. 2568",  endDate: "31 ก.ค. 2569", rent: 6000, deposit: 12000, advanceRent: 6000, customClauses: "ห้องชั้นบนสุด รวมระเบียงวิวสวน", status: "active" },
+    ],
   },
   {
-    id: "สญ.-2568-002",
-    roomNumber: "102",
-    tenantName: "อารยา พรดี",
-    tenantIdCard: "3-8401-00244-12-9",
-    tenantPhone: "089-876-5432",
-    startDate: "15 ก.พ. 2568",
-    endDate: "14 ก.พ. 2569",
-    rent: 4500,
-    deposit: 9000,
-    advanceRent: 4500,
-    customClauses: "อนุญาตจอดรถจักรยานยนต์ 1 คัน (ช่อง M-02)",
-    status: "active",
+    id: "prop-002",
+    name: "สมชายเพลส 2",
+    address: "45 ถ.ราษฎร์ยินดี อ.เมือง จ.สงขลา 90000",
+    phone: "074-300-002",
+    settings: {
+      electricRate: 8.00,
+      waterRate: 100,
+      billDay: 1,
+      dueDay: 10,
+      lateFee: 100,
+      promptpay: "0898765432",
+      accountName: "นายสมชาย ใจดี",
+      invoiceHeader: "ใบแจ้งหนี้ค่าเช่า สมชายเพลส 2",
+      invoiceNote: "กรุณาโอนและแจ้งสลิปภายในกำหนด ขอบคุณครับ",
+      attachQR: true,
+    },
+    rooms: [
+      { number: "A01", tenant: "วรพจน์ บุญมี",   rent: 3500, prevElec: 4320, newElec: null, contractStart: "1 มี.ค. 2568", contractEnd: "28 ก.พ. 2569" },
+      { number: "A02", tenant: "พิมพ์ชนก วารี",  rent: 3500, prevElec: 6100, newElec: null, contractStart: "1 เม.ย. 2568", contractEnd: "31 มี.ค. 2569" },
+      { number: "A03", tenant: "ณัฐพล แก้วใส",   rent: 4000, prevElec: 2890, newElec: null, contractStart: "15 พ.ค. 2568", contractEnd: "14 พ.ค. 2569" },
+      { number: "B01", tenant: "(ว่าง)",          rent: 3500, prevElec: 9500, newElec: null, contractStart: "",             contractEnd: "" },
+      { number: "B02", tenant: "สุภาวดี พรชัย",  rent: 4000, prevElec: 3210, newElec: null, contractStart: "1 มิ.ย. 2568", contractEnd: "31 พ.ค. 2569" },
+    ],
+    contracts: [
+      { id: "สญ.-P2-001", roomNumber: "A01", tenantName: "วรพจน์ บุญมี",  tenantIdCard: "1-9001-00111-22-3", tenantPhone: "081-111-2233", startDate: "1 มี.ค. 2568",  endDate: "28 ก.พ. 2569", rent: 3500, deposit: 7000,  advanceRent: 3500, customClauses: "ห้ามสูบบุหรี่และห้ามนำของมึนเมาเข้าพัก", status: "active" },
+      { id: "สญ.-P2-002", roomNumber: "A02", tenantName: "พิมพ์ชนก วารี", tenantIdCard: "3-8500-00222-33-4", tenantPhone: "089-222-3344", startDate: "1 เม.ย. 2568", endDate: "31 มี.ค. 2569", rent: 3500, deposit: 7000,  advanceRent: 3500, customClauses: "อนุญาตจอดรถจักรยานยนต์ 1 คัน",         status: "active" },
+      { id: "สญ.-P2-003", roomNumber: "A03", tenantName: "ณัฐพล แก้วใส",  tenantIdCard: "1-7800-00333-44-5", tenantPhone: "082-333-4455", startDate: "15 พ.ค. 2568", endDate: "14 พ.ค. 2569", rent: 4000, deposit: 8000,  advanceRent: 4000, customClauses: "เฟอร์นิเจอร์ครบ ห้องใหม่",                status: "active" },
+      { id: "สญ.-P2-004", roomNumber: "B02", tenantName: "สุภาวดี พรชัย", tenantIdCard: "5-9200-00444-55-6", tenantPhone: "086-444-5566", startDate: "1 มิ.ย. 2568",  endDate: "31 พ.ค. 2569", rent: 4000, deposit: 8000,  advanceRent: 4000, customClauses: "ห้ามเลี้ยงสัตว์",                            status: "active" },
+    ],
   },
-  {
-    id: "สญ.-2568-003",
-    roomNumber: "201",
-    tenantName: "ธนกร แสงงาม",
-    tenantIdCard: "1-1004-00892-31-0",
-    tenantPhone: "082-345-6789",
-    startDate: "1 มี.ค. 2568",
-    endDate: "28 ก.พ. 2569",
-    rent: 5000,
-    deposit: 10000,
-    advanceRent: 5000,
-    customClauses: "สิทธิ์จอดรถยนต์ช่อง A-04 พร้อมคีย์การ์ดเข้าออก 1 ใบ",
-    status: "active",
-  },
-  {
-    id: "สญ.-2568-004",
-    roomNumber: "301",
-    tenantName: "ปิยะ สุขสวัสดิ์",
-    tenantIdCard: "3-9002-00561-88-2",
-    tenantPhone: "086-554-3321",
-    startDate: "1 มิ.ย. 2568",
-    endDate: "31 พ.ค. 2569",
-    rent: 5500,
-    deposit: 11000,
-    advanceRent: 5500,
-    customClauses: "ห้องปรับอากาศ เครื่องทำน้ำอุ่น และเฟอร์นิเจอร์ครบชุด",
-    status: "active",
-  },
-  {
-    id: "สญ.-2568-005",
-    roomNumber: "302",
-    tenantName: "กมลา ดีงาม",
-    tenantIdCard: "5-8001-00312-77-4",
-    tenantPhone: "095-443-2211",
-    startDate: "10 ก.ค. 2568",
-    endDate: "9 ก.ค. 2569",
-    rent: 5000,
-    deposit: 10000,
-    advanceRent: 5000,
-    customClauses: "ห้ามเลี้ยงสัตว์เลี้ยงทุกชนิดภายในห้องและอาคาร",
-    status: "active",
-  },
-  {
-    id: "สญ.-2568-006",
-    roomNumber: "401",
-    tenantName: "นันท์นภัส วารี",
-    tenantIdCard: "1-7009-00432-11-8",
-    tenantPhone: "084-332-1100",
-    startDate: "1 ส.ค. 2568",
-    endDate: "31 ก.ค. 2569",
-    rent: 6000,
-    deposit: 12000,
-    advanceRent: 6000,
-    customClauses: "ห้องชั้นบนสุด รวมระเบียงวิวสวน",
-    status: "active",
-  },
-];
-
-const INITIAL_ROOMS: RoomRecord[] = [
-  { number: "101", tenant: "สมชาย ใจดี",     rent: 4500, prevElec: 12430, newElec: null, contractStart: "1 ม.ค. 2568",  contractEnd: "31 ธ.ค. 2568" },
-  { number: "102", tenant: "อารยา พรดี",      rent: 4500, prevElec:  8210, newElec: null, contractStart: "15 ก.พ. 2568", contractEnd: "14 ก.พ. 2569" },
-  { number: "201", tenant: "ธนกร แสงงาม",    rent: 5000, prevElec:  5110, newElec: null, contractStart: "1 มี.ค. 2568", contractEnd: "28 ก.พ. 2569" },
-  { number: "301", tenant: "ปิยะ สุขสวัสดิ์", rent: 5500, prevElec:  3290, newElec: null, contractStart: "1 มิ.ย. 2568", contractEnd: "31 พ.ค. 2569" },
-  { number: "302", tenant: "กมลา ดีงาม",     rent: 5000, prevElec:  7840, newElec: null, contractStart: "10 ก.ค. 2568", contractEnd: "9 ก.ค. 2569"  },
-  { number: "401", tenant: "นันท์นภัส วารี",  rent: 6000, prevElec:  1050, newElec: null, contractStart: "1 ส.ค. 2568",  contractEnd: "31 ก.ค. 2569" },
 ];
 
 
@@ -307,13 +290,22 @@ export function ApartmentDemo({
   const [toast, setToast] = useState("");
   const companyCollection = useDemoCollection(companies, showToast);
 
-  // ── Shared state ──
-  const [appSettings, setAppSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [meterRooms, setMeterRooms] = useState<RoomRecord[]>(INITIAL_ROOMS);
-  const [contracts, setContracts] = useState<ContractRecord[]>(INITIAL_CONTRACTS);
+  // ── Multi-property state ──
+  const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
+  const [activePropertyId, setActivePropertyId] = useState<string>(INITIAL_PROPERTIES[0].id);
+  const [showPropertySwitcher, setShowPropertySwitcher] = useState(false);
+  const [showAddPropertyWizard, setShowAddPropertyWizard] = useState(false);
+
+  // ── Modal state ──
   const [viewingContract, setViewingContract] = useState<ContractRecord | null>(null);
   const [editingContract, setEditingContract] = useState<ContractRecord | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<RoomRecord | null>(null);
+
+  // ── Derived: active property data ──
+  const activeProperty = properties.find(p => p.id === activePropertyId) ?? properties[0];
+  const appSettings = activeProperty.settings;
+  const meterRooms = activeProperty.rooms;
+  const contracts = activeProperty.contracts;
 
   const currentRole = roleInfo[role];
   const visibleGroups = useMemo(() => navGroups
@@ -338,30 +330,47 @@ export function ApartmentDemo({
     window.setTimeout(() => setToast(""), 2400);
   }
 
+  // ── Property-scoped helpers ──
+  function updateActiveProperty(updater: (p: Property) => Property) {
+    setProperties(prev => prev.map(p => p.id === activePropertyId ? updater(p) : p));
+  }
+
   function updateMeter(roomNumber: string, newElec: number | null) {
-    setMeterRooms(prev => prev.map(r => r.number === roomNumber ? { ...r, newElec } : r));
+    updateActiveProperty(p => ({
+      ...p,
+      rooms: p.rooms.map(r => r.number === roomNumber ? { ...r, newElec } : r),
+    }));
   }
 
   function saveContract(updated: ContractRecord) {
-    setContracts(prev => {
-      const idx = prev.findIndex(c => c.id === updated.id);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = updated;
-        return next;
-      }
-      return [updated, ...prev];
+    updateActiveProperty(p => {
+      const idx = p.contracts.findIndex(c => c.id === updated.id);
+      const nextContracts = idx >= 0
+        ? p.contracts.map((c, i) => i === idx ? updated : c)
+        : [updated, ...p.contracts];
+      const nextRooms = p.rooms.map(r => r.number === updated.roomNumber
+        ? { ...r, tenant: updated.tenantName, rent: updated.rent, contractStart: updated.startDate, contractEnd: updated.endDate }
+        : r);
+      return { ...p, contracts: nextContracts, rooms: nextRooms };
     });
-    // Sync room tenant & rent if exists
-    setMeterRooms(prev => prev.map(r => r.number === updated.roomNumber ? { ...r, tenant: updated.tenantName, rent: updated.rent, contractStart: updated.startDate, contractEnd: updated.endDate } : r));
-    if (viewingContract && viewingContract.id === updated.id) {
-      setViewingContract(updated);
-    }
+    if (viewingContract && viewingContract.id === updated.id) setViewingContract(updated);
   }
 
   function deleteContract(id: string) {
-    setContracts(prev => prev.filter(c => c.id !== id));
+    updateActiveProperty(p => ({ ...p, contracts: p.contracts.filter(c => c.id !== id) }));
     showToast("ลบสัญญาเช่าเรียบร้อยแล้ว");
+  }
+
+  function updateSettings(s: AppSettings) {
+    updateActiveProperty(p => ({ ...p, settings: s }));
+  }
+
+  function addProperty(prop: Property) {
+    setProperties(prev => [...prev, prop]);
+    setActivePropertyId(prop.id);
+    setShowAddPropertyWizard(false);
+    navigate("dashboard");
+    showToast(`เพิ่มหอพัก "${prop.name}" เรียบร้อยแล้ว`);
   }
 
   return (
@@ -374,11 +383,55 @@ export function ApartmentDemo({
           <button className="icon-button sidebar-close" aria-label="ปิดเมนู" onClick={() => setIsMobileOpen(false)}><X size={20} /></button>
         </div>
 
-        {role !== "super_admin" ? <button className="context-selector" type="button">
-          <span className="context-icon"><Building2 size={18} /></span>
-          <span><small>กิจการ / หอพักปัจจุบัน</small><strong>สมชายแมนชั่น</strong></span>
-          <ChevronDown size={16} />
-        </button> : null}
+        {role !== "super_admin" ? (
+          <div className="property-switcher-wrap">
+            <button
+              className="context-selector"
+              type="button"
+              onClick={() => setShowPropertySwitcher(v => !v)}
+            >
+              <span className="context-icon"><Building2 size={18} /></span>
+              <span>
+                <small>กิจการ / หอพักปัจจุบัน</small>
+                <strong>{activeProperty.name}</strong>
+              </span>
+              <ChevronDown size={16} style={{ transform: showPropertySwitcher ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+            </button>
+            {showPropertySwitcher && (
+              <div className="property-dropdown">
+                {properties.map(p => (
+                  <button
+                    key={p.id}
+                    className={`property-option${p.id === activePropertyId ? " active" : ""}`}
+                    onClick={() => {
+                      setActivePropertyId(p.id);
+                      setShowPropertySwitcher(false);
+                      navigate("dashboard");
+                    }}
+                  >
+                    <Building2 size={15} />
+                    <span>
+                      <strong>{p.name}</strong>
+                      <small>{p.rooms.length} ห้อง · {p.rooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length} มีผู้เช่า</small>
+                    </span>
+                    {p.id === activePropertyId && <ShieldCheck size={14} style={{ color: "var(--primary)", marginLeft: "auto" }} />}
+                  </button>
+                ))}
+                <div className="property-dropdown-sep" />
+                <button
+                  className="property-option add-property"
+                  onClick={() => {
+                    setShowPropertySwitcher(false);
+                    setShowAddPropertyWizard(true);
+                  }}
+                >
+                  <Plus size={15} />
+                  <span><strong>เพิ่มหอพักใหม่</strong></span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <nav className="sidebar-nav" aria-label="เมนูหลัก">
           {visibleGroups.map((group) => (
@@ -407,6 +460,7 @@ export function ApartmentDemo({
       </aside>
 
       {isMobileOpen ? <button className="sidebar-backdrop" aria-label="ปิดเมนู" onClick={() => setIsMobileOpen(false)} /> : null}
+      {showPropertySwitcher ? <button className="sidebar-backdrop" style={{ zIndex: 19 }} aria-label="ปิด" onClick={() => setShowPropertySwitcher(false)} /> : null}
 
       <div className="app-main">
         <header className="topbar">
@@ -444,7 +498,7 @@ export function ApartmentDemo({
             companies={companyCollection.items}
             onDeleteCompany={companyCollection.removeItem}
             appSettings={appSettings}
-            onSettingsChange={setAppSettings}
+            onSettingsChange={updateSettings}
             meterRooms={meterRooms}
             onMeterChange={updateMeter}
             contracts={contracts}
@@ -452,6 +506,10 @@ export function ApartmentDemo({
             onEditContract={setEditingContract}
             onDeleteContract={deleteContract}
             onViewInvoice={setViewingInvoice}
+            activeProperty={activeProperty}
+            properties={properties}
+            onSwitchProperty={(id) => { setActivePropertyId(id); navigate("dashboard"); }}
+            onAddProperty={() => setShowAddPropertyWizard(true)}
           />
         </main>
       </div>
@@ -496,10 +554,19 @@ export function ApartmentDemo({
 
       {viewingInvoice ? <InvoiceModal room={viewingInvoice} settings={appSettings} onClose={() => setViewingInvoice(null)} /> : null}
 
+      {showAddPropertyWizard ? (
+        <AddPropertyWizard
+          existingSettings={appSettings}
+          onClose={() => setShowAddPropertyWizard(false)}
+          onSave={addProperty}
+        />
+      ) : null}
+
       {toast ? <div className="toast"><span><ShieldCheck size={18} /></span>{toast}</div> : null}
     </div>
   );
 }
+
 
 
 
@@ -516,6 +583,10 @@ type PageContentProps = {
   onEditContract: (contract: ContractRecord | null) => void;
   onDeleteContract: (id: string) => void;
   onViewInvoice: (room: RoomRecord) => void;
+  activeProperty: Property;
+  properties: Property[];
+  onSwitchProperty: (id: string) => void;
+  onAddProperty: () => void;
 };
 
 
@@ -545,14 +616,14 @@ function PageContent(props: PageContentProps) {
 
 
 
-function DashboardPage({ role, isLocked, onOpenPanel, onNavigate }: PageContentProps) {
+function DashboardPage({ role, isLocked, onOpenPanel, onNavigate, activeProperty, meterRooms, contracts }: PageContentProps) {
   const admin = role === "super_admin";
   return (
     <>
-      <PageHeader eyebrow={admin ? "ภาพรวมแพลตฟอร์ม" : "สมชายแมนชั่น"} title={admin ? "แดชบอร์ด" : "สวัสดีครับ คุณสมชาย"} description={admin ? "ติดตามลูกค้า การใช้งาน และสถานะบริการทั้งหมด" : "ภาพรวมสิ่งที่ต้องจัดการในวันนี้"}>
+      <PageHeader eyebrow={admin ? "ภาพรวมแพลตฟอร์ม" : activeProperty.name} title={admin ? "แดชบอร์ด" : `สวัสดีครับ คุณสมชาย`} description={admin ? "ติดตามลูกค้า การใช้งาน และสถานะบริการทั้งหมด" : "ภาพรวมสิ่งที่ต้องจัดการในวันนี้"}>
         {admin ? <button className="button primary" onClick={onOpenPanel}><Plus size={17} /> เพิ่มกิจการ</button> : <button className="button primary" disabled={isLocked} onClick={() => onNavigate("payments")}><Plus size={17} /> รับชำระ</button>}
       </PageHeader>
-      {admin ? <AdminDashboard onNavigate={onNavigate} /> : <CustomerDashboard isLocked={isLocked} onNavigate={onNavigate} />}
+      {admin ? <AdminDashboard onNavigate={onNavigate} /> : <CustomerDashboard isLocked={isLocked} onNavigate={onNavigate} activeProperty={activeProperty} meterRooms={meterRooms} contracts={contracts} />}
     </>
   );
 }
@@ -593,31 +664,55 @@ function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => void })
   );
 }
 
-function CustomerDashboard({ isLocked, onNavigate }: { isLocked: boolean; onNavigate: (page: PageKey) => void }) {
+function CustomerDashboard({
+  isLocked, onNavigate, activeProperty, meterRooms, contracts,
+}: {
+  isLocked: boolean;
+  onNavigate: (page: PageKey) => void;
+  activeProperty: Property;
+  meterRooms: RoomRecord[];
+  contracts: ContractRecord[];
+}) {
+  const totalRooms = meterRooms.length;
+  const occupied = meterRooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length;
+  const occupancy = totalRooms > 0 ? ((occupied / totalRooms) * 100).toFixed(1) : "0.0";
+  const monthlyRent = contracts.filter(c => c.status === "active").reduce((s, c) => s + c.rent, 0);
+  const needMeter = meterRooms.filter(r => r.newElec === null).length;
+  const soonExpiry = contracts.filter(c => c.status === "active").length;
+
   return (
     <>
       <section className="metric-grid">
-        <Metric label="ห้องทั้งหมด" value="60" delta="3 อาคาร" icon={KeyRound} tone="blue" />
-        <Metric label="มีผู้เช่า" value="52" delta="Occupancy 86.7%" icon={Users} tone="green" />
-        <Metric label="ยอดรับเดือนนี้" value="฿185,400" delta="จาก ฿210,540" icon={WalletCards} tone="violet" />
-        <Metric label="ยอดค้างชำระ" value="฿25,140" delta="7 ห้อง" icon={ReceiptText} tone="orange" />
+        <Metric label="ห้องทั้งหมด" value={String(totalRooms)} delta={`${activeProperty.name}`} icon={KeyRound} tone="blue" />
+        <Metric label="มีผู้เช่า" value={String(occupied)} delta={`Occupancy ${occupancy}%`} icon={Users} tone="green" />
+        <Metric label="ยอดค่าเช่า/เดือน" value={`฿${monthlyRent.toLocaleString()}`} delta={`${contracts.filter(c => c.status === "active").length} ห้อง`} icon={WalletCards} tone="violet" />
+        <Metric label="ยอดค้างชำระ" value="฿25,140" delta="3 ห้อง" icon={ReceiptText} tone="orange" />
       </section>
       <section className="dashboard-grid">
         <div className="panel task-panel">
           <PanelHeading title="งานที่ต้องทำ" description="กดเพื่อไปจัดการรายการต่อได้ทันที" />
-          {[["ต้องอ่านมิเตอร์", "8 ห้อง", "meters"], ["ยังไม่ออกบิล", "3 ห้อง", "invoices"], ["ครบกำหนดวันนี้", "5 บิล", "receivables"], ["สัญญาใกล้หมด", "4 ฉบับ", "contracts"]].map(([label, count, page]) => (
+          {[
+            [`ต้องอ่านมิเตอร์`, `${needMeter} ห้อง`, "meters"],
+            ["ยังไม่ออกบิล", "3 ห้อง", "invoices"],
+            ["ครบกำหนดวันนี้", "5 บิล", "receivables"],
+            [`สัญญา Active`, `${soonExpiry} ฉบับ`, "contracts"],
+          ].map(([label, count, page]) => (
             <button disabled={isLocked} key={label} onClick={() => onNavigate(page as PageKey)}><span>{label}</span><strong>{count}</strong><ChevronRight size={17} /></button>
           ))}
         </div>
         <div className="panel occupancy-panel">
-          <PanelHeading title="สถานะห้อง" description="สมชายแมนชั่น · ทุกอาคาร" />
-          <div className="occupancy-number"><strong>86.7%</strong><span>อัตราเข้าพัก</span></div>
-          <div className="room-summary"><span><i className="green" />มีผู้เช่า <strong>52</strong></span><span><i className="gray" />ว่าง <strong>6</strong></span><span><i className="red" />ปิดซ่อม <strong>2</strong></span></div>
+          <PanelHeading title="สถานะห้อง" description={`${activeProperty.name} · ทุกอาคาร`} />
+          <div className="occupancy-number"><strong>{occupancy}%</strong><span>อัตราเข้าพัก</span></div>
+          <div className="room-summary">
+            <span><i className="green" />มีผู้เช่า <strong>{occupied}</strong></span>
+            <span><i className="gray" />ว่าง <strong>{totalRooms - occupied}</strong></span>
+          </div>
         </div>
       </section>
     </>
   );
 }
+
 
 function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany }: PageContentProps) {
   return (
@@ -629,16 +724,89 @@ function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany }
   );
 }
 
-function PropertiesPage({ role, isLocked, onToast }: PageContentProps) {
-  const initialRows = [
-    ["สมชายแมนชั่น", "บริษัท สมชายอพาร์ทเมนท์", "40", "34", "หาดใหญ่, สงขลา", "เปิดใช้งาน"],
-    ["บ้านสวน เรสซิเดนซ์", "บ้านสวนหอพัก", "64", "58", "เมือง, เชียงใหม่", "เปิดใช้งาน"],
-    ["สุขใจเพลส", "สุขใจเรสซิเดนซ์", "28", "19", "บางนา, กรุงเทพฯ", "ทดลองใช้"],
-    ["เดอะเนสท์ อาคาร A", "เดอะเนสท์ อพาร์ตเมนต์", "80", "76", "ศรีราชา, ชลบุรี", "เปิดใช้งาน"],
-  ];
-  const collection = useDemoCollection(initialRows, onToast);
-  return <><PageHeader eyebrow="จัดการลูกค้า" title="หอพัก" description={role === "super_admin" ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ" : "หอพักภายในกิจการของคุณ"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`หอพัก Demo ${collection.items.length + 1}`, "กิจการตัวอย่าง", "20", "0", "กรุงเทพฯ", "ทดลองใช้"])}><Plus size={17} /> เพิ่มหอพัก</button></PageHeader><FilterBar placeholder="ค้นหาชื่อหอพัก รหัส หรือจังหวัด" filters={role === "super_admin" ? [{ label: "ทุกกิจการ", options: ["สมชายอพาร์ทเมนท์", "บ้านสวนหอพัก", "สุขใจเรสซิเดนซ์"] }, { label: "ทุกสถานะ", options: ["เปิดใช้งาน", "ทดลองใช้", "ระงับ"] }] : []} /><SimpleTable headers={["หอพัก", "กิจการ", "ห้องทั้งหมด", "มีผู้เช่า", "ที่ตั้ง", "สถานะ"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
+function PropertiesPage({ role, isLocked, properties, activeProperty, onSwitchProperty, onAddProperty, onToast }: PageContentProps) {
+  return (
+    <>
+      <PageHeader eyebrow="จัดการลูกค้า" title="หอพัก" description={role === "super_admin" ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ" : "หอพักภายในกิจการของคุณ · คลิกเพื่อสลับหอพักที่กำลังจัดการ"}>
+        <button disabled={isLocked} className="button primary" onClick={onAddProperty}>
+          <Plus size={17} /> เพิ่มหอพักใหม่
+        </button>
+      </PageHeader>
+      <div className="meter-summary-bar">
+        <span><strong>หอพักทั้งหมด</strong>{properties.length} แห่ง</span>
+        <span><strong>หอพักที่เลือกอยู่</strong>{activeProperty.name}</span>
+        <span><strong>ห้องพักรวม</strong>{properties.reduce((s, p) => s + p.rooms.length, 0)} ห้อง</span>
+        <span><strong>ผู้เช่ารวม</strong>{properties.reduce((s, p) => s + p.contracts.filter(c => c.status === "active").length, 0)} คน</span>
+      </div>
+      <section className="panel table-panel">
+        <div className="responsive-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อหอพัก</th>
+                <th>ที่อยู่</th>
+                <th>เบอร์ติดต่อ</th>
+                <th>จำนวนห้อง</th>
+                <th>ผู้เช่า</th>
+                <th>อัตราค่าไฟ / ค่าน้ำ</th>
+                <th>สถานะ</th>
+                <th style={{ textAlign: "right" }}>การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {properties.map(p => {
+                const isActive = p.id === activeProperty.id;
+                const occupiedCount = p.rooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length;
+                return (
+                  <tr key={p.id} style={isActive ? { background: "#f0f7ff" } : {}}>
+                    <td>
+                      <span className="company-cell">
+                        <i style={{ background: isActive ? "var(--primary)" : "#e2e8f0", color: isActive ? "white" : "var(--ink)" }}>🏢</i>
+                        <span>
+                          <strong>{p.name}</strong>
+                          {isActive && <small style={{ color: "var(--primary)", fontWeight: 600 }}>กำลังใช้งานอยู่</small>}
+                        </span>
+                      </span>
+                    </td>
+                    <td><small>{p.address || "—"}</small></td>
+                    <td>{p.phone || "—"}</td>
+                    <td><strong>{p.rooms.length}</strong> ห้อง</td>
+                    <td><strong>{occupiedCount}</strong> / {p.rooms.length}</td>
+                    <td><small>ไฟ ฿{p.settings.electricRate}/หน่วย · น้ำ ฿{p.settings.waterRate}/ด.</small></td>
+                    <td>
+                      {isActive ? (
+                        <span className="badge success"><i />กำลังใช้งาน</span>
+                      ) : (
+                        <span className="badge neutral"><i />พร้อมใช้งาน</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      {!isActive ? (
+                        <button
+                          className="button secondary"
+                          style={{ fontSize: 12, minHeight: 32, padding: "0 12px" }}
+                          onClick={() => {
+                            onSwitchProperty(p.id);
+                            onToast(`สลับไปยัง "${p.name}" แล้ว`);
+                          }}
+                        >
+                          สลับไปหอนี้
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--primary)", fontWeight: 600, paddingRight: 8 }}>✓ หอปัจจุบัน</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  );
 }
+
 
 function UsersPage({ isLocked, onToast }: PageContentProps) {
   const initialRows = [
@@ -672,11 +840,52 @@ function LinePage({ role, lineEnabled, onLineChange, onToast, isLocked }: PageCo
   return <><PageHeader eyebrow="บริการเสริม" title="LINE แจ้งเตือน" description={role === "super_admin" ? "จัดการสถานะบริการ LINE ของกิจการต่าง ๆ" : "ส่งและติดตามข้อความถึงผู้เช่าผ่าน LINE"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`ข้อความ Demo ${collection.items.length + 1}`, "ผู้เช่า 1 คน", "วันนี้", "ฉบับร่าง"])}><Plus size={17} /> สร้างข้อความ</button></PageHeader><div className="integration-banner"><span className="line-mark"><MessageCircle size={22} /></span><span><strong>LINE Official Account เชื่อมต่อแล้ว</strong><small>@somchaimansion · อัปเดตล่าสุด 2 นาทีที่แล้ว</small></span><span className="badge success">พร้อมใช้งาน</span></div><SimpleTable headers={["แคมเปญ", "ผู้รับ", "วันที่ส่ง", "ผลลัพธ์"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function RoomsPage({ isLocked, onToast }: PageContentProps) {
-  const initialRooms = Array.from({ length: 16 }, (_, index) => ({ number: `${Math.floor(index / 8) + 1}${String(index % 8 + 1).padStart(2, "0")}`, status: index % 7 === 3 ? "maintenance" : index % 5 === 1 ? "vacant" : "occupied", tenant: index % 5 === 1 ? "พร้อมรับผู้เช่า" : index % 7 === 3 ? "กำลังซ่อม" : ["สมชาย ใจดี", "อารยา พรดี", "ธนกร แสงงาม"][index % 3] }));
-  const collection = useDemoCollection(initialRooms, onToast);
-  return <><PageHeader eyebrow="จัดการหอพัก" title="ห้องพัก" description="สมชายแมนชั่น · แสดงห้องแยกตามชั้น"><button disabled={isLocked} className="button primary" onClick={() => collection.addItem({ number: `D${String(collection.items.length + 1).padStart(2, "0")}`, status: "vacant", tenant: "พร้อมรับผู้เช่า" })}><Plus size={17} /> เพิ่มห้อง</button></PageHeader><FilterBar placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า" /><section className="room-grid">{collection.items.map((room, index) => <article className={`room-card ${room.status}`} key={room.number}><span><strong>{room.number}</strong><i /></span><small>{room.tenant}</small><em>{room.status === "occupied" ? "มีผู้เช่า" : room.status === "vacant" ? "ว่าง" : "ปิดซ่อม"}</em><button className="room-delete" type="button" disabled={isLocked} aria-label={`ลบห้อง ${room.number}`} onClick={() => collection.removeItem(index)}><Trash2 size={14} /> ลบ</button></article>)}</section></>;
+function RoomsPage({ isLocked, onToast, meterRooms, activeProperty }: PageContentProps) {
+  return (
+    <>
+      <PageHeader
+        eyebrow="จัดการหอพัก"
+        title="ห้องพัก"
+        description={`${activeProperty.name} · แสดงสถานะห้องพักทั้งหมด (${meterRooms.length} ห้อง)`}
+      >
+        <button
+          disabled={isLocked}
+          className="button primary"
+          onClick={() => onToast("เปิดฟอร์มเพิ่มห้องพักใหม่")}
+        >
+          <Plus size={17} /> เพิ่มห้อง
+        </button>
+      </PageHeader>
+      <div className="meter-summary-bar">
+        <span><strong>หอพัก</strong>{activeProperty.name}</span>
+        <span><strong>ห้องทั้งหมด</strong>{meterRooms.length} ห้อง</span>
+        <span><strong>มีผู้เช่า</strong>{meterRooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length} ห้อง</span>
+        <span><strong>ว่าง</strong>{meterRooms.filter(r => !r.tenant || r.tenant === "(ว่าง)").length} ห้อง</span>
+      </div>
+      <FilterBar placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า" />
+      <section className="room-grid">
+        {meterRooms.map((room) => {
+          const isVacant = !room.tenant || room.tenant === "(ว่าง)";
+          const status = isVacant ? "vacant" : "occupied";
+          return (
+            <article className={`room-card ${status}`} key={room.number}>
+              <span>
+                <strong>{room.number}</strong>
+                <i />
+              </span>
+              <small>{room.tenant || "พร้อมรับผู้เช่า"}</small>
+              <em>{isVacant ? "ว่าง" : `฿${room.rent.toLocaleString()}/ด.`}</em>
+              <span style={{ fontSize: 11, color: "var(--muted)", marginTop: 6, display: "block" }}>
+                {isVacant ? "ไม่มีสัญญา" : `สัญญาถึง ${room.contractEnd || "—"}`}
+              </span>
+            </article>
+          );
+        })}
+      </section>
+    </>
+  );
 }
+
 
 function AuditPage() {
   const rows = [["แก้ไข Permission", "พงศกร · Super Admin", "Role ฝ่ายบัญชี", "วันนี้ 15:10"], ["เปิด LINE Add-on", "พงศกร · Super Admin", "บริษัท สมชายอพาร์ทเมนท์", "วันนี้ 14:42"], ["เพิ่มผู้ใช้งาน", "สมชาย ใจดี", "account@somchai.com", "วันนี้ 11:18"], ["ต่อ Trial", "พงศกร · Super Admin", "สุขใจเรสซิเดนซ์ +7 วัน", "เมื่อวาน 16:05"]];
@@ -1892,4 +2101,128 @@ function useDemoCollection<T>(initialItems: T[], onToast: (message: string) => v
   }
 
   return { items, addItem, removeItem };
+}
+
+// ──────────────────────────────────────────────────────
+// AddPropertyWizard — เพิ่มหอพักใหม่ (2 ขั้นตอน)
+// ──────────────────────────────────────────────────────
+function AddPropertyWizard({
+  existingSettings,
+  onClose,
+  onSave,
+}: {
+  existingSettings: AppSettings;
+  onClose: () => void;
+  onSave: (prop: Property) => void;
+}) {
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [copySettings, setCopySettings] = useState(true);
+  const [electricRate, setElectricRate] = useState(existingSettings.electricRate);
+  const [waterRate, setWaterRate] = useState(existingSettings.waterRate);
+  const [promptpay, setPromptpay] = useState(existingSettings.promptpay);
+  const [accountName, setAccountName] = useState(existingSettings.accountName);
+
+  function handleSave() {
+    if (!name.trim()) return;
+    const settings: AppSettings = copySettings
+      ? { ...existingSettings, invoiceHeader: `ใบแจ้งหนี้ค่าเช่า ${name}` }
+      : { ...existingSettings, electricRate, waterRate, promptpay, accountName, invoiceHeader: `ใบแจ้งหนี้ค่าเช่า ${name}` };
+    onSave({
+      id: `prop-${Date.now()}`,
+      name: name.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+      settings,
+      rooms: [],
+      contracts: [],
+    });
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-toolbar">
+          <button className="icon-button" onClick={onClose}><X size={20} /></button>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>🏢 เพิ่มหอพักใหม่</span>
+          <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>ขั้นที่ {step}/2</span>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, padding: "12px 20px 0", alignItems: "center" }}>
+          <div style={{ flex: 1, height: 4, borderRadius: 4, background: "var(--primary)" }} />
+          <div style={{ flex: 1, height: 4, borderRadius: 4, background: step >= 2 ? "var(--primary)" : "var(--line)" }} />
+        </div>
+
+        {step === 1 && (
+          <div style={{ padding: "20px 24px 24px" }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>ข้อมูลหอพัก</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>กรอกชื่อและที่อยู่ของหอพักที่ต้องการเพิ่ม</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <label className="settings-field">
+                <span>ชื่อหอพัก *</span>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="เช่น สมชายเพลส 2" autoFocus />
+              </label>
+              <label className="settings-field">
+                <span>ที่อยู่หอพัก</span>
+                <input value={address} onChange={e => setAddress(e.target.value)} placeholder="เลขที่ ถนน ตำบล อำเภอ จังหวัด" />
+              </label>
+              <label className="settings-field">
+                <span>เบอร์ติดต่อ</span>
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="074-xxx-xxx" />
+              </label>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24, gap: 10 }}>
+              <button className="button secondary" onClick={onClose}>ยกเลิก</button>
+              <button className="button primary" disabled={!name.trim()} onClick={() => setStep(2)}>ถัดไป →</button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div style={{ padding: "20px 24px 24px" }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>ตั้งค่าการเงิน</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>กำหนดอัตราค่าสาธารณูปโภคสำหรับ <strong>{name}</strong></p>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", background: copySettings ? "#f0f7ff" : "#f8f9fa", borderRadius: 10, border: `1.5px solid ${copySettings ? "var(--primary)" : "var(--line)"}`, cursor: "pointer", marginBottom: 18, fontSize: 13 }}>
+              <input type="checkbox" checked={copySettings} onChange={e => setCopySettings(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--primary)", marginTop: 2 }} />
+              <span>
+                <strong>คัดลอกการตั้งค่าจากหอพักปัจจุบัน</strong><br />
+                <span style={{ color: "var(--muted)" }}>ค่าไฟ ค่าน้ำ PromptPay จะถูก copy มาให้ แก้ทีหลังได้ในตั้งค่าระบบ</span>
+              </span>
+            </label>
+
+            {!copySettings && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <label className="settings-field">
+                    <span>ค่าไฟ (฿/หน่วย)</span>
+                    <input type="number" step="0.01" min="0" value={electricRate} onChange={e => setElectricRate(parseFloat(e.target.value) || 0)} />
+                  </label>
+                  <label className="settings-field">
+                    <span>ค่าน้ำ (฿/เดือน)</span>
+                    <input type="number" min="0" value={waterRate} onChange={e => setWaterRate(parseFloat(e.target.value) || 0)} />
+                  </label>
+                </div>
+                <label className="settings-field">
+                  <span>เลขพร้อมเพย์</span>
+                  <input value={promptpay} onChange={e => setPromptpay(e.target.value)} placeholder="0812345678" />
+                </label>
+                <label className="settings-field">
+                  <span>ชื่อบัญชีรับเงิน</span>
+                  <input value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="ชื่อ-นามสกุล" />
+                </label>
+              </div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24, gap: 10 }}>
+              <button className="button secondary" onClick={() => setStep(1)}>← ย้อนกลับ</button>
+              <button className="button primary" onClick={handleSave}><Building2 size={16} /> สร้างหอพัก</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
