@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { isRegistrationEnabled, isSystemAdmin } from "@/lib/auth/system-admin";
 import {
   normalizePhone,
   normalizeUsername,
@@ -67,6 +68,13 @@ function logAuthFailure(requestId: string, stage: string, error: unknown) {
   })}`);
 }
 
+function isInvalidCredentialsError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const details = error as { code?: unknown; message?: unknown; status?: unknown };
+  return details.code === "invalid_credentials"
+    || details.status === 400 && typeof details.message === "string" && /invalid login credentials/i.test(details.message);
+}
+
 export async function loginAction(
   _previousState: AuthActionState,
   formData: FormData,
@@ -83,21 +91,36 @@ export async function loginAction(
     });
   }
 
+  let authUserId: string | undefined;
   try {
     getSupabasePublicConfig();
     const admin = createAdminClient();
     const { data: alias, error: aliasError } = await admin
       .from("auth_login_aliases")
-      .select("internal_email")
+      .select("internal_email, auth_user_id")
       .eq("username", username)
       .maybeSingle();
 
     if (aliasError) {
       logAuthFailure(requestId, "login.username_lookup", aliasError);
-      return errorState(requestId, "auth_unavailable", "ระบบเข้าสู่ระบบไม่พร้อมใช้งานชั่วคราว", { retryable: true });
+      return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
     }
     if (!alias) {
       return errorState(requestId, "invalid_credentials", "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+    }
+    authUserId = alias.auth_user_id;
+
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("status")
+      .eq("id", authUserId)
+      .maybeSingle();
+    if (profileError) {
+      logAuthFailure(requestId, "login.profile_status", profileError);
+      return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
+    }
+    if (!profile || profile.status !== "active") {
+      return errorState(requestId, "account_suspended", "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
     }
 
     const supabase = await createClient();
@@ -107,15 +130,15 @@ export async function loginAction(
     });
 
     if (error) {
-      logAuthFailure(requestId, "login.password_signin", error);
+      if (!isInvalidCredentialsError(error)) logAuthFailure(requestId, "login.password_signin", error);
       return errorState(requestId, "invalid_credentials", "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
   } catch (error) {
     logAuthFailure(requestId, "login.unexpected", error);
-    return errorState(requestId, "auth_unavailable", "ระบบเข้าสู่ระบบไม่พร้อมใช้งานชั่วคราว", { retryable: true });
+    return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
   }
 
-  redirect("/dashboard");
+  redirect(authUserId && await isSystemAdmin(authUserId) ? "/admin" : "/dashboard");
 }
 
 export async function registerAction(
@@ -150,6 +173,13 @@ export async function registerAction(
 
   try {
     getSupabasePublicConfig();
+    const registration = await isRegistrationEnabled();
+    if (!registration.configured) {
+      return errorState(requestId, "registration_unavailable", "ระบบสมัครสมาชิกยังตั้งค่าไม่ครบ", { retryable: true, values });
+    }
+    if (!registration.enabled) {
+      return errorState(requestId, "registration_closed", "ขณะนี้ระบบปิดรับสมัครสมาชิกใหม่", { values });
+    }
     const admin = createAdminClient();
     const { data: existing, error: existingError } = await admin
       .from("auth_login_aliases")

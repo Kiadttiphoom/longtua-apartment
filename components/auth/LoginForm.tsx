@@ -43,7 +43,7 @@ export function LoginForm() {
               {fields.password ? <small className="field-error">{fields.password}</small> : null}
             </label>
             {state.error && state.error.code !== "validation_failed" ? (
-              <p className="form-error" role="alert">{state.error.message}<small>รหัสอ้างอิง {state.error.requestId}</small></p>
+              <p className="form-error" role="alert">{state.error.message}</p>
             ) : null}
             <SubmitButton>เข้าสู่ระบบ</SubmitButton>
           </form>

@@ -3,6 +3,9 @@ import { ApartmentDashboard } from "@/components/dashboard/ApartmentDashboard";
 import { logoutAction } from "@/app/auth/actions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { isSystemAdmin } from "@/lib/auth/system-admin";
+import { serverError } from "@/lib/server-log";
+import { getOrganizationAccess } from "@/lib/auth/organization-access";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -13,13 +16,14 @@ function roleLabel(role: string) {
   return roles[role] ?? role;
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ organization?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ organization?: string; page?: string }> }) {
   if (!isSupabaseConfigured()) redirect("/login");
 
   const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.getClaims();
   const userId = authData?.claims?.sub;
   if (authError || !userId) redirect("/login");
+  if (await isSystemAdmin(userId)) redirect("/admin");
 
   const [{ data: profile }, { data: memberships, error: membershipsError }] = await Promise.all([
     supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
@@ -27,7 +31,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ]);
   if (!profile || membershipsError || !memberships?.length) redirect("/login");
 
-  const requestedOrganizationId = (await searchParams).organization;
+  const requested = await searchParams;
+  const requestedOrganizationId = requested.organization;
   const selectedMembership = requestedOrganizationId && UUID_PATTERN.test(requestedOrganizationId)
     ? memberships.find((membership) => membership.organization_id === requestedOrganizationId)
     : memberships[0];
@@ -40,6 +45,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const organization = organizations.find((item) => item.id === selectedMembership.organization_id);
   if (!organization) redirect("/login");
   const organizationId = organization.id;
+
+  const organizationAccess = await getOrganizationAccess(userId, organizationId);
+  if (!organizationAccess) redirect("/login");
+  const menuItems = organizationAccess.granularReady
+    ? organizationAccess.menus.map((item) => ({ key: item.code.replace(/^customer_/, ""), label: item.label }))
+    : undefined;
 
   const [subscriptionResult, propertiesResult, settingsResult, roomsResult, tenantsResult, leasesResult,
     metersResult, meterReadingsResult, invoicesResult, paymentsResult] = await Promise.all([
@@ -59,10 +70,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const coreErrors = [propertiesResult.error, settingsResult.error, roomsResult.error, tenantsResult.error,
     leasesResult.error, metersResult.error, meterReadingsResult.error, invoicesResult.error, paymentsResult.error].filter(Boolean);
 
-  if (coreErrors.length) console.error(`[dashboard] ${JSON.stringify({
+  if (coreErrors.length) serverError("dashboard", {
     stage: "dashboard.load_core", organizationId,
     errors: coreErrors.map((error) => ({ code: error?.code, message: error?.message })),
-  })}`);
+  });
 
   return <ApartmentDashboard
     organization={organization}
@@ -79,6 +90,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     meterReadings={meterReadingsResult.data ?? []}
     invoices={invoicesResult.data ?? []}
     payments={paymentsResult.data ?? []}
+    initialPage={requested.page}
+    menuItems={menuItems}
+    permissionKeys={organizationAccess.granularReady ? Array.from(organizationAccess.permissions) : undefined}
     schemaError={coreErrors.length ? "ยังไม่ได้ติดตั้ง migration apartment_core กรุณารัน Supabase migration ก่อนใช้งาน" : undefined}
     logoutAction={logoutAction}
   />;

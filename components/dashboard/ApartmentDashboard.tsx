@@ -46,11 +46,14 @@ type Props = {
   meterReadings: MeterReading[];
   invoices: Invoice[];
   payments: Payment[];
+  initialPage?: string;
+  menuItems?: Array<{ key: string; label: string }>;
+  permissionKeys?: string[];
   schemaError?: string;
   logoutAction: () => Promise<void>;
 };
 
-const nav: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
+const defaultNav: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
   { key: "overview", label: "แดชบอร์ด", icon: LayoutDashboard },
   { key: "properties", label: "หอพัก", icon: Building2 },
   { key: "rooms", label: "ห้องพัก", icon: KeyRound },
@@ -64,6 +67,8 @@ const nav: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
   { key: "settings", label: "ตั้งค่าหอพัก", icon: Settings },
   { key: "subscription", label: "แพ็กเกจและบริการ", icon: CircleDollarSign },
 ];
+const navByKey = new Map(defaultNav.map((item) => [item.key, item]));
+function isPageKey(value: string | undefined): value is PageKey { return Boolean(value && navByKey.has(value as PageKey)); }
 
 const pageMeta: Record<PageKey, { title: string; description: string; modal?: ModalKey; button?: string }> = {
   overview: { title: "ภาพรวมกิจการ", description: "ข้อมูลจริงล่าสุดของกิจการและทุกหอพัก" },
@@ -107,7 +112,15 @@ function Empty({ title, detail, action }: { title: string; detail: string; actio
 
 export function ApartmentDashboard(props: Props) {
   const router = useRouter();
-  const [page, setPage] = useState<PageKey>("overview");
+  const configuredNav = props.menuItems?.flatMap((item) => {
+    if (!isPageKey(item.key)) return [];
+    const fallback = navByKey.get(item.key)!;
+    return [{ ...fallback, label: item.label }];
+  });
+  const nav = props.menuItems === undefined ? defaultNav : (configuredNav ?? []);
+  const permissions = useMemo(() => new Set(props.permissionKeys ?? []), [props.permissionKeys]);
+  const initialPage = isPageKey(props.initialPage) && nav.some((item) => item.key === props.initialPage) ? props.initialPage : (nav[0]?.key ?? "overview");
+  const [page, setPage] = useState<PageKey>(initialPage);
   const [modal, setModal] = useState<ModalKey>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState(props.properties[0]?.id ?? "");
@@ -126,6 +139,7 @@ export function ApartmentDashboard(props: Props) {
   const meta = pageMeta[page];
 
   function navigate(next: PageKey) {
+    if (!nav.some((item) => item.key === next)) return;
     setPage(next);
     setMobileOpen(false);
     setNotice(null);
@@ -142,6 +156,11 @@ export function ApartmentDashboard(props: Props) {
       }
     });
   }
+
+  if (!nav.length) return <div className="real-app-shell">
+    <aside className="real-sidebar"><div className="real-sidebar-brand"><BrandLogo /></div><form action={props.logoutAction}><button className="real-logout" type="submit"><LogOut size={18} />ออกจากระบบ</button></form></aside>
+    <div className="real-main"><main className="real-content"><div className="real-alert error"><strong>บัญชีนี้ยังไม่มีสิทธิ์ใช้งาน</strong><span>กรุณาติดต่อผู้ดูแลกิจการเพื่อกำหนด Role หรือสิทธิ์รายผู้ใช้</span></div></main></div>
+  </div>;
 
   return <div className="real-app-shell">
     <aside className={`real-sidebar ${mobileOpen ? "open" : ""}`}>
@@ -166,7 +185,7 @@ export function ApartmentDashboard(props: Props) {
       <main className="real-content">
         {props.schemaError ? <div className="real-alert error"><strong>ฐานข้อมูลระบบจริงยังไม่พร้อม</strong><span>{props.schemaError}</span></div> : null}
         {notice ? <div className={`real-alert ${notice.ok ? "success" : "error"}`}><span>{notice.message}{notice.requestId ? ` · รหัสอ้างอิง ${notice.requestId}` : ""}</span><button onClick={() => setNotice(null)} aria-label="ปิด"><X size={16} /></button></div> : null}
-        <div className="real-page-header"><div><small>LONGTUA APARTMENT</small><h1>{meta.title}</h1><p>{meta.description}</p></div>{meta.modal && meta.button ? <button className="real-primary" onClick={() => setModal(meta.modal ?? null)}><Plus size={17} />{meta.button}</button> : null}</div>
+        <div className="real-page-header"><div><small>LONGTUA APARTMENT</small><h1>{meta.title}</h1><p>{meta.description}</p></div>{meta.modal && meta.button && (!props.permissionKeys || permissions.has(`customer_${page}:${page === "settings" ? "update" : "create"}`)) ? <button className="real-primary" onClick={() => setModal(meta.modal ?? null)}><Plus size={17} />{meta.button}</button> : null}</div>
         {page === "overview" ? <Overview properties={props.properties} rooms={props.rooms} activeLeases={activeLeases} outstanding={outstanding} revenue={revenue} occupancy={occupancy} invoices={props.invoices} onNavigate={navigate} /> : null}
         {page === "properties" ? <PropertiesTable items={props.properties} /> : null}
         {page === "rooms" ? <RoomsTable items={props.rooms} propertyMap={propertyMap} tenantMap={tenantMap} leases={activeLeases} /> : null}

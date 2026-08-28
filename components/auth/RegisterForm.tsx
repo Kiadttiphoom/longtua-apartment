@@ -10,7 +10,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const initialAuthActionState: AuthActionState = { status: "idle" };
 
-export function RegisterForm() {
+export function RegisterForm({ registrationEnabled = true }: { registrationEnabled?: boolean }) {
   const [state, action] = useActionState(registerAction, initialAuthActionState);
   const [organizationName, setOrganizationName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -34,6 +34,13 @@ export function RegisterForm() {
             <h1>สร้างบัญชีของคุณ</h1>
             <p>สร้างบัญชีธุรกิจหนึ่งครั้ง แล้วเพิ่มหอพักได้หลายแห่งภายหลัง</p>
           </div>
+          {!registrationEnabled ? (
+            <div className="registration-closed" role="status">
+              <h2>ปิดรับสมัครสมาชิกชั่วคราว</h2>
+              <p>ผู้ดูแลระบบปิดการสร้างบัญชีใหม่อยู่ บัญชีเดิมยังเข้าสู่ระบบได้ตามปกติ</p>
+            </div>
+          ) : null}
+          {registrationEnabled ? (
           <form action={action} className="register-form" noValidate>
             <label><span>ชื่อธุรกิจหรือชื่อผู้ประกอบการ *</span><input aria-describedby="business-name-hint" aria-invalid={Boolean(fields.organizationName)} name="organizationName" onChange={(event) => setOrganizationName(event.target.value)} placeholder="เช่น บริษัท สมชายบริหารทรัพย์ หรือ คุณสมชาย" value={organizationName} /><small className="field-hint" id="business-name-hint">ไม่ใช่ชื่อหอพัก — ใช้เป็นชื่อบัญชีหลักสำหรับรวมทุกหอ</small>{fields.organizationName ? <small className="field-error">{fields.organizationName}</small> : null}</label>
             <label><span>ชื่อของคุณ (แสดงในระบบ) *</span><input aria-invalid={Boolean(fields.displayName)} autoComplete="name" name="displayName" onChange={(event) => setDisplayName(event.target.value)} placeholder="เช่น สมชาย ใจดี" value={displayName} />{fields.displayName ? <small className="field-error">{fields.displayName}</small> : null}</label>
@@ -50,6 +57,7 @@ export function RegisterForm() {
             ) : null}
             <SubmitButton>สมัครและเริ่มทดลองใช้งาน</SubmitButton>
           </form>
+          ) : null}
           <p className="register-link">มีบัญชีแล้ว? <Link href="/login">เข้าสู่ระบบ</Link></p>
           <p className="login-footer">© 2026 Longtua Apartment</p>
         </div>

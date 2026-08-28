@@ -40,3 +40,8 @@ test("productionDashboard_loadsOnlyRowsForSelectedOrganization", () => {
     assert.match(dashboardPage, queryPattern);
   }
 });
+
+test("productionDashboard_schemaFailure_logsOnlyOnServer", () => {
+  assert.match(dashboardPage, /serverError\("dashboard"/);
+  assert.doesNotMatch(dashboardPage, /console\.error/);
+});

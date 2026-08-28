@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { hasOrganizationPermission, type MenuActionCode } from "@/lib/auth/organization-access";
 
 export type DashboardActionResult = { ok: boolean; message: string; requestId?: string };
 
@@ -38,7 +39,7 @@ type ActionContext =
   | { ok: false; error: DashboardActionResult }
   | { ok: true; supabase: Awaited<ReturnType<typeof createClient>>; organizationId: string; userId: string };
 
-async function actionContext(formData: FormData): Promise<ActionContext> {
+async function actionContext(formData: FormData, menuCode: string, actionCode: MenuActionCode): Promise<ActionContext> {
   const organizationId = text(formData, "organizationId");
   if (!UUID_PATTERN.test(organizationId)) return { ok: false, error: fail("ไม่พบกิจการที่ต้องการทำรายการ") };
 
@@ -63,7 +64,10 @@ async function actionContext(formData: FormData): Promise<ActionContext> {
   ]);
 
   if (!membership || !subscription) return { ok: false, error: fail("คุณไม่มีสิทธิ์เข้าถึงกิจการนี้") };
-  if (!["owner", "manager", "accounting"].includes(membership.role_code)) {
+
+  const allowed = await hasOrganizationPermission(userId, organizationId, menuCode, actionCode);
+  if (allowed === false) return { ok: false, error: fail("Role ของคุณไม่มี Permission สำหรับรายการนี้") };
+  if (allowed === null && !["owner", "manager", "accounting"].includes(membership.role_code)) {
     return { ok: false, error: fail("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล") };
   }
 
@@ -83,7 +87,7 @@ function success(message: string): DashboardActionResult {
 
 export async function createPropertyAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_properties", "create");
   if (!context.ok) return context.error;
 
   const name = text(formData, "name");
@@ -104,7 +108,7 @@ export async function createPropertyAction(formData: FormData): Promise<Dashboar
 
 export async function createRoomAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_rooms", "create");
   if (!context.ok) return context.error;
 
   const propertyId = text(formData, "propertyId");
@@ -148,7 +152,7 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
 
 export async function createTenantAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_tenants", "create");
   if (!context.ok) return context.error;
 
   const fullName = text(formData, "fullName");
@@ -175,7 +179,7 @@ export async function createTenantAction(formData: FormData): Promise<DashboardA
 
 export async function createLeaseAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_leases", "create");
   if (!context.ok) return context.error;
 
   const propertyId = text(formData, "propertyId");
@@ -215,7 +219,7 @@ export async function createLeaseAction(formData: FormData): Promise<DashboardAc
 
 export async function createInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_invoices", "create");
   if (!context.ok) return context.error;
 
   const propertyId = text(formData, "propertyId");
@@ -266,7 +270,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
 
 export async function saveMeterReadingAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_meters", "create");
   if (!context.ok) return context.error;
 
   const propertyId = text(formData, "propertyId");
@@ -322,7 +326,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
 
 export async function recordPaymentAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_payments", "create");
   if (!context.ok) return context.error;
 
   const invoiceId = text(formData, "invoiceId");
@@ -374,7 +378,7 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
 
 export async function updatePropertySettingsAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData);
+  const context = await actionContext(formData, "customer_settings", "update");
   if (!context.ok) return context.error;
   const propertyId = text(formData, "propertyId");
   if (!UUID_PATTERN.test(propertyId)) return fail("กรุณาเลือกหอพัก");

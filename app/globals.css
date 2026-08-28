@@ -553,3 +553,134 @@ td strong { color: var(--ink); font-weight: 650; }
   .real-stat-grid, .real-report-grid, .real-form-grid { grid-template-columns: 1fr; }
   .real-org-switch select { min-width: 160px; max-width: 190px; }
 }
+
+/* ── Longtua platform administration (never rendered in demo routes) ── */
+.admin-shell { min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0,1fr); background: #f4f6fa; color: var(--ink); }
+.admin-sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background: #050f24; color: white; }
+.admin-brand { min-height: 82px; padding: 19px 23px; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; }
+.admin-brand .brand-logo { max-width: 168px; }
+.admin-identity { margin: 17px 13px 8px; padding: 13px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(77,138,255,.25); border-radius: 9px; background: rgba(42,101,226,.14); }
+.admin-identity > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: #2664dc; }
+.admin-identity > div { min-width: 0; display: flex; flex-direction: column; }
+.admin-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.admin-identity small { color: #9eacc3; font-size: 9px; }
+.admin-sidebar nav { min-height: 0; padding: 10px 13px; display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; }
+.admin-sidebar nav a, .admin-sidebar form button { min-height: 42px; padding: 0 12px; border: 0; border-radius: 8px; display: flex; align-items: center; gap: 10px; background: transparent; color: #b4bfd1; text-decoration: none; font: 500 13px/1 inherit; cursor: pointer; }
+.admin-sidebar nav a:hover { background: rgba(255,255,255,.08); color: white; }
+.admin-sidebar nav a.active { background: rgba(42,101,226,.28); color: white; box-shadow: inset 3px 0 #4b89ff; }
+.admin-sidebar form { margin-top: auto; padding: 13px; border-top: 1px solid rgba(255,255,255,.1); }
+.admin-sidebar form button { width: 100%; }
+.admin-content { width: 100%; max-width: 1450px; margin: 0 auto; padding: 31px; }
+.admin-content > header { margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+.admin-content > header small, .admin-card small { color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.admin-content > header h1 { margin: 4px 0 2px; font-size: 26px; }
+.admin-content > header p { margin: 0; color: var(--muted); font-size: 12px; }
+.admin-role-badge { padding: 7px 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; background: #eaf1ff; color: #2058c5; font-size: 10px; font-weight: 700; }
+.admin-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; margin-bottom: 16px; }
+.admin-stats article { padding: 18px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.admin-stats article > span { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 9px; background: #eef4ff; color: var(--primary); }
+.admin-stats article > div { display: flex; flex-direction: column; }
+.admin-stats small { color: var(--muted); font-size: 10px; }
+.admin-stats strong { font-size: 22px; }
+.admin-card { margin-bottom: 16px; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.admin-card h2 { margin: 3px 0 5px; font-size: 18px; }
+.admin-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.admin-card code { padding: 2px 5px; border-radius: 4px; background: #f0f2f6; color: #34425b; }
+.registration-control { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.registration-control > div:first-child { max-width: 650px; }
+.registration-state { display: flex; align-items: center; gap: 13px; }
+.registration-state > span { padding: 6px 9px; border-radius: 99px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.registration-state > span.on { background: #e8f8ee; color: #14733e; }
+.registration-state > span.off { background: #fff0f0; color: #b82a2a; }
+.registration-state button { min-height: 40px; padding: 0 15px; border: 0; border-radius: 8px; color: white; font: 600 12px/1 inherit; cursor: pointer; }
+.registration-state button.primary { background: var(--primary); }
+.registration-state button.danger { background: #c93737; }
+.admin-card-head { margin-bottom: 13px; display: flex; align-items: center; justify-content: space-between; }
+.admin-card-head a { color: var(--primary); font-size: 11px; font-weight: 600; text-decoration: none; }
+.admin-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.admin-table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.admin-table-wrap th { padding: 10px 12px; background: #f8f9fc; color: var(--muted); font-size: 10px; text-align: left; }
+.admin-table-wrap td { padding: 12px; border-top: 1px solid var(--line); }
+.admin-table-wrap td { vertical-align: middle; }
+.admin-cell-note { margin-top: 3px; display: block; color: var(--muted) !important; font-size: 9px !important; font-weight: 500 !important; letter-spacing: 0 !important; }
+.admin-inline-form { min-width: max-content; display: flex; align-items: center; gap: 6px; }
+.admin-form-wide { min-width: 720px; }
+.admin-create-form { display: grid; grid-template-columns: repeat(4,minmax(130px,1fr)); gap: 9px; }
+.admin-create-form .wide { grid-column: span 2; }
+.admin-inline-form input, .admin-inline-form select, .admin-create-form input, .admin-create-form select {
+  min-height: 35px; padding: 7px 9px; border: 1px solid #cfd6e2; border-radius: 6px; background: white; color: var(--ink); font: 500 11px/1.2 inherit;
+}
+.admin-inline-form input:focus, .admin-inline-form select:focus, .admin-create-form input:focus, .admin-create-form select:focus { border-color: var(--primary); outline: 2px solid rgba(42,101,226,.12); }
+.admin-inline-form input[type="password"] { width: 220px; }
+.admin-inline-form .admin-number { width: 72px; }
+.admin-inline-form button, .admin-create-form button, .admin-permission-toggle button { min-height: 35px; padding: 0 11px; border: 0; border-radius: 6px; background: var(--primary); color: white; font: 700 10px/1 inherit; cursor: pointer; white-space: nowrap; }
+.admin-inline-form button:hover, .admin-create-form button:hover { filter: brightness(.92); }
+.admin-inline-form button.danger { background: #c93737; }
+.admin-permission-toggle { display: flex; justify-content: center; }
+.admin-permission-toggle button { min-width: 72px; }
+.admin-permission-toggle button.enabled { background: #18864a; }
+.admin-permission-toggle button.disabled { background: #e7ebf1; color: #6d7788; }
+.admin-card details { min-width: 150px; }
+.admin-card summary { color: var(--primary); cursor: pointer; font-size: 10px; font-weight: 700; }
+.admin-card pre { max-width: 480px; max-height: 260px; overflow: auto; padding: 10px; border-radius: 7px; background: #101827; color: #dce5f5; font-size: 10px; white-space: pre-wrap; }
+.admin-addon-card { display: flex; align-items: center; gap: 15px; }
+.admin-addon-card > span:first-child { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; background: #e9f8ef; color: #178447; }
+.admin-addon-card > div { flex: 1; }
+.admin-status { padding: 4px 7px; border-radius: 99px; background: #eef2f7; font-size: 9px; font-weight: 700; }
+.admin-status.active { background: #e8f8ee; color: #14733e; }
+.admin-notice { margin-bottom: 15px; padding: 11px 13px; border-radius: 8px; font-size: 12px; }
+.admin-notice.success { background: #e8f8ee; color: #14733e; }
+.admin-notice.error { background: #fff0f0; color: #b82a2a; }
+.admin-permissions-card { padding: 0; overflow: hidden; }
+.admin-permissions-card > .admin-card-head { padding: 21px 21px 0; }
+.admin-permission-tabs { display: flex; gap: 4px; padding: 0 21px; border-bottom: 1px solid var(--line); }
+.admin-permission-tabs a { padding: 10px 13px; border-bottom: 2px solid transparent; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
+.admin-permission-tabs a.active { border-color: var(--primary); color: var(--primary); }
+.admin-permission-manager { padding: 17px 21px 21px; }
+.admin-permission-toolbar { margin-bottom: 14px; display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+.admin-permission-toolbar label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.admin-permission-toolbar select, .admin-permission-table select { min-height: 36px; padding: 7px 30px 7px 9px; border: 1px solid #cfd6e2; border-radius: 7px; background: white; color: var(--ink); font: 500 11px/1.2 inherit; }
+.admin-permission-toolbar p { margin: 0 0 7px; }
+.admin-role-assignment { display: flex; align-items: end; gap: 7px; }
+.admin-role-assignment button { min-height: 36px; padding: 0 11px; border: 0; border-radius: 7px; background: var(--primary); color: white; font: 700 10px/1 inherit; cursor: pointer; }
+.admin-permission-table { min-width: 900px; }
+.admin-permission-table thead th { position: sticky; top: 0; z-index: 2; text-align: center; white-space: nowrap; }
+.admin-permission-table thead th:first-child { left: 0; z-index: 3; min-width: 210px; text-align: left; }
+.admin-permission-table thead button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.admin-permission-table tbody th { position: sticky; left: 0; z-index: 1; border-top: 1px solid var(--line); background: white; }
+.admin-permission-table tbody th label, .admin-permission-table tbody th > span { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 11px; }
+.admin-permission-table tbody th span { flex-direction: column; align-items: flex-start; gap: 2px; }
+.admin-permission-table tbody th small { color: var(--muted); font-size: 8px; font-weight: 500; letter-spacing: 0; }
+.admin-permission-table td { min-width: 82px; text-align: center; }
+.admin-permission-table input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer; }
+.admin-permission-table input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .65; }
+.admin-permission-table.override td { min-width: 122px; }
+.admin-permission-table.override select { width: 112px; min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+.admin-sticky-save { position: sticky; bottom: 12px; z-index: 5; margin-top: 14px; padding: 10px 12px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; border: 1px solid #cdd8ec; border-radius: 9px; background: rgba(248,250,255,.96); box-shadow: 0 8px 25px rgba(19,43,83,.1); }
+.admin-sticky-save span { margin-right: auto; color: var(--muted); font-size: 10px; }
+.admin-sticky-save button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 7px; background: var(--primary); color: white; font: 700 10px/1 inherit; cursor: pointer; }
+.admin-sticky-save button.secondary { background: #e8edf6; color: #3f4e67; }
+.admin-empty { padding: 30px 0; text-align: center; }
+.registration-closed { padding: 22px; border: 1px solid #f0c7c7; border-radius: 10px; background: #fff7f7; text-align: center; }
+.registration-closed h2 { margin: 0 0 5px; font-size: 17px; }
+.registration-closed p { margin: 0; color: var(--muted); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .admin-shell { grid-template-columns: 1fr; }
+  .admin-sidebar { position: relative; height: auto; }
+  .admin-sidebar nav { flex-direction: row; }
+  .admin-sidebar form { margin-top: 0; }
+  .admin-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .admin-create-form { grid-template-columns: repeat(2,minmax(130px,1fr)); }
+}
+@media (max-width: 600px) {
+  .admin-content { padding: 20px 12px; }
+  .admin-content > header, .registration-control, .registration-state { align-items: flex-start; flex-direction: column; }
+  .admin-stats { grid-template-columns: 1fr; }
+  .registration-state, .registration-state form, .registration-state button { width: 100%; }
+  .admin-create-form { grid-template-columns: 1fr; }
+  .admin-create-form .wide { grid-column: auto; }
+  .admin-permission-toolbar label, .admin-permission-toolbar select { width: 100%; }
+  .admin-sticky-save { align-items: stretch; flex-direction: column; }
+  .admin-sticky-save span { margin-right: 0; }
+}
