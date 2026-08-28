@@ -1,10 +1,11 @@
 "use client";
 // apartment demo – updated
 
-import { useMemo, useRef, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { calculateInvoice, filterRows, toCsv } from "@/components/demo/demo-domain.mjs";
 import {
-  Activity,
+  Download,
   Hotel,
   Bell,
   BookOpenCheck,
@@ -18,11 +19,13 @@ import {
   KeyRound,
   LayoutDashboard,
   LockKeyhole,
+  LogOut,
   Menu,
   MessageCircle,
   MoreHorizontal,
   Plus,
   ReceiptText,
+  RotateCcw,
   Search,
   Settings,
   ShieldCheck,
@@ -48,6 +51,7 @@ type Company = (typeof companies)[number];
 
 const DEMO_ITEM_LIMIT = 25;
 const DEMO_ADD_COOLDOWN_MS = 700;
+const DEMO_STORAGE_KEY = "longtua-apartment-demo-v1";
 
 // ── Shared settings type ──
 type AppSettings = {
@@ -61,19 +65,6 @@ type AppSettings = {
   invoiceHeader: string;
   invoiceNote: string;
   attachQR: boolean;
-};
-
-const DEFAULT_SETTINGS: AppSettings = {
-  electricRate: 3.50,
-  waterRate: 50,
-  billDay: 1,
-  dueDay: 5,
-  lateFee: 50,
-  promptpay: "0812345678",
-  accountName: "นายสมชาย ใจดี",
-  invoiceHeader: "ใบแจ้งหนี้ค่าเช่า สมชายแมนชั่น",
-  invoiceNote: "กรุณาชำระภายในกำหนด ขอบคุณครับ",
-  attachQR: true,
 };
 
 // ── Shared room record (meter source of truth) ──
@@ -141,6 +132,16 @@ function thaiBahtText(num: number): string {
     }
   }
   return text + "บาทถ้วน";
+}
+
+function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  const blob = new Blob(["\uFEFF", toCsv(headers, rows)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 const INITIAL_PROPERTIES: Property[] = [
@@ -278,16 +279,32 @@ const permissionColumns = ["เห็นเมนู", "ดู", "เพิ่�
 
 export function ApartmentDemo({
   showDemoControls = true,
+  currentUserName,
+  currentUserRoleLabel,
+  currentOrganizationName,
+  initialSubscription = "trialing",
+  trialDaysRemaining,
+  trialEndsAtText,
+  logoutAction,
 }: {
   showDemoControls?: boolean;
+  currentUserName?: string;
+  currentUserRoleLabel?: string;
+  currentOrganizationName?: string;
+  initialSubscription?: SubscriptionState;
+  trialDaysRemaining?: number;
+  trialEndsAtText?: string;
+  logoutAction?: () => Promise<void>;
 }) {
   const [role, setRole] = useState<RoleKey>("owner");
-  const [subscription, setSubscription] = useState<SubscriptionState>("trialing");
+  const [subscription, setSubscription] = useState<SubscriptionState>(initialSubscription);
   const [lineEnabled, setLineEnabled] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [hasRestoredDemo, setHasRestoredDemo] = useState(!showDemoControls);
   const companyCollection = useDemoCollection(companies, showToast);
 
   // ── Multi-property state ──
@@ -301,6 +318,45 @@ export function ApartmentDemo({
   const [editingContract, setEditingContract] = useState<ContractRecord | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<RoomRecord | null>(null);
 
+  useEffect(() => {
+    if (!showDemoControls) return;
+    const restoreTimer = window.setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem(DEMO_STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as {
+            properties?: Property[];
+            activePropertyId?: string;
+            role?: Exclude<RoleKey, "super_admin">;
+            subscription?: SubscriptionState;
+            lineEnabled?: boolean;
+          };
+          if (saved.properties?.length) setProperties(saved.properties);
+          if (saved.activePropertyId) setActivePropertyId(saved.activePropertyId);
+          if (saved.role) setRole(saved.role);
+          if (saved.subscription) setSubscription(saved.subscription);
+          if (typeof saved.lineEnabled === "boolean") setLineEnabled(saved.lineEnabled);
+        }
+      } catch {
+        window.localStorage.removeItem(DEMO_STORAGE_KEY);
+      } finally {
+        setHasRestoredDemo(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(restoreTimer);
+  }, [showDemoControls]);
+
+  useEffect(() => {
+    if (!hasRestoredDemo || !showDemoControls) return;
+    window.localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify({
+      properties,
+      activePropertyId,
+      role,
+      subscription,
+      lineEnabled,
+    }));
+  }, [activePropertyId, hasRestoredDemo, lineEnabled, properties, role, showDemoControls, subscription]);
+
   // ── Derived: active property data ──
   const activeProperty = properties.find(p => p.id === activePropertyId) ?? properties[0];
   const appSettings = activeProperty.settings;
@@ -308,6 +364,12 @@ export function ApartmentDemo({
   const contracts = activeProperty.contracts;
 
   const currentRole = roleInfo[role];
+  const displayUserName = currentUserName ?? currentRole.name;
+  const displayUserRole = currentUserRoleLabel ?? currentRole.label;
+  const displayUserContext = currentOrganizationName
+    ? `${displayUserRole} · ${currentOrganizationName}`
+    : displayUserRole;
+  const displayInitials = displayUserName.trim().slice(0, 1) || currentRole.initials;
   const visibleGroups = useMemo(() => navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => currentRole.allowed.includes(item.code)) }))
     .filter((group) => group.items.length > 0), [currentRole]);
@@ -371,6 +433,46 @@ export function ApartmentDemo({
     setShowAddPropertyWizard(false);
     navigate("dashboard");
     showToast(`เพิ่มหอพัก "${prop.name}" เรียบร้อยแล้ว`);
+  }
+
+  function addRoom(room: RoomRecord) {
+    updateActiveProperty((property) => ({ ...property, rooms: [...property.rooms, room] }));
+    showToast(`เพิ่มห้อง ${room.number} เรียบร้อยแล้ว`);
+  }
+
+  function resetDemo() {
+    window.localStorage.removeItem(DEMO_STORAGE_KEY);
+    setRole("owner");
+    setSubscription("trialing");
+    setLineEnabled(false);
+    setActivePage("dashboard");
+    setProperties(INITIAL_PROPERTIES);
+    setActivePropertyId(INITIAL_PROPERTIES[0].id);
+    setGlobalSearch("");
+    showToast("รีเซ็ตข้อมูล Demo กลับค่าเริ่มต้นแล้ว");
+  }
+
+  function submitGlobalSearch() {
+    const term = globalSearch.trim().toLocaleLowerCase("th");
+    if (!term) return;
+    const target = visibleGroups.flatMap((group) => group.items)
+      .find((item) => item.label.toLocaleLowerCase("th").includes(term) || item.code.includes(term));
+    if (target) {
+      navigate(target.code);
+      showToast(`เปิดหน้า ${target.label} จากการค้นหาแล้ว`);
+      return;
+    }
+    if (properties.some((property) => property.name.toLocaleLowerCase("th").includes(term))) {
+      navigate("properties");
+      showToast("พบหอพักที่ค้นหาในหน้าหอพัก");
+      return;
+    }
+    if (properties.some((property) => property.rooms.some((room) => `${room.number} ${room.tenant}`.toLocaleLowerCase("th").includes(term)))) {
+      navigate("rooms");
+      showToast("พบห้องหรือผู้เช่าที่ค้นหาในหน้าห้องพัก");
+      return;
+    }
+    showToast("ไม่พบข้อมูลที่ตรงกับคำค้นหา");
   }
 
   return (
@@ -453,9 +555,13 @@ export function ApartmentDemo({
         </nav>
 
         <div className="sidebar-user">
-          <span className="avatar">{currentRole.initials}</span>
-          <span><strong>{currentRole.name}</strong><small>{currentRole.label}</small></span>
-          <MoreHorizontal size={18} />
+          <span className="avatar">{displayInitials}</span>
+          <span><strong>{displayUserName}</strong><small title={displayUserContext}>{displayUserContext}</small></span>
+          {logoutAction ? (
+            <form action={logoutAction}>
+              <button className="sidebar-logout" aria-label="ออกจากระบบ" title="ออกจากระบบ" type="submit"><LogOut size={17} /></button>
+            </form>
+          ) : <MoreHorizontal size={18} />}
         </div>
       </aside>
 
@@ -465,7 +571,7 @@ export function ApartmentDemo({
       <div className="app-main">
         <header className="topbar">
           <button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={() => setIsMobileOpen(true)}><Menu size={21} /></button>
-          <label className="global-search"><Search size={18} /><input placeholder="ค้นหากิจการ หอพัก ผู้เช่า หรือเอกสาร..." /></label>
+          <label className="global-search"><Search size={18} /><input aria-label="ค้นหาทั่วทั้งเดโม" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitGlobalSearch(); }} placeholder="ค้นหาเมนู หอพัก ห้อง หรือผู้เช่า แล้วกด Enter" /></label>
           {showDemoControls ? <div className="demo-controls">
             <label><span>มุมมอง Demo</span><select value={role} onChange={(event) => changeRole(event.target.value as RoleKey)}>
               <option value="owner">เจ้าของกิจการ</option><option value="accounting">ฝ่ายบัญชี</option><option value="staff">พนักงาน</option>
@@ -473,14 +579,15 @@ export function ApartmentDemo({
             {role !== "super_admin" ? <label><span>สถานะบริการ</span><select value={subscription} onChange={(event) => setSubscription(event.target.value as SubscriptionState)}>
               <option value="trialing">ทดลองใช้งาน</option><option value="active">ชำระแล้ว</option><option value="expired">หมดอายุ</option>
             </select></label> : null}
+            <button className="icon-button reset-demo" type="button" title="รีเซ็ตข้อมูล Demo" aria-label="รีเซ็ตข้อมูล Demo" onClick={resetDemo}><RotateCcw size={17} /></button>
           </div> : null}
           <button className="icon-button notification" aria-label="การแจ้งเตือน"><Bell size={19} /><i /></button>
-          <span className="top-avatar">{currentRole.initials}</span>
+          <span className="top-avatar">{displayInitials}</span>
         </header>
 
         <main className="content">
           {role !== "super_admin" && subscription === "trialing" ? (
-            <div className="trial-banner"><span><Zap size={18} /><strong>ทดลองใช้ฟรีเหลือ 12 วัน</strong><small>ใช้งานได้ถึง 7 กันยายน 2569</small></span><button onClick={() => navigate("subscriptions")}>ดูแพ็กเกจ <ChevronRight size={16} /></button></div>
+            <div className="trial-banner"><span><Zap size={18} /><strong>{trialDaysRemaining === undefined ? "ช่วงทดลองใช้ฟรี 30 วัน" : `ทดลองใช้ฟรีเหลือ ${trialDaysRemaining} วัน`}</strong><small>{trialEndsAtText ? `ใช้งานได้ถึง ${trialEndsAtText}` : "ใช้งานได้ถึง 7 กันยายน 2569"}</small></span><button onClick={() => navigate("subscriptions")}>ดูแพ็กเกจ <ChevronRight size={16} /></button></div>
           ) : null}
           {isLocked ? (
             <div className="expired-banner"><span><LockKeyhole size={19} /><strong>ระยะเวลาการใช้งานสิ้นสุดแล้ว</strong><small>ข้อมูลยังอยู่ครบ แต่ไม่สามารถเพิ่มหรือแก้ไขรายการได้</small></span><button onClick={() => navigate("subscriptions")}>ต่ออายุบริการ</button></div>
@@ -510,6 +617,7 @@ export function ApartmentDemo({
             properties={properties}
             onSwitchProperty={(id) => { setActivePropertyId(id); navigate("dashboard"); }}
             onAddProperty={() => setShowAddPropertyWizard(true)}
+            onAddRoom={addRoom}
           />
         </main>
       </div>
@@ -523,7 +631,6 @@ export function ApartmentDemo({
       {editingContract !== null ? (
         <ContractFormModal
           contract={editingContract}
-          settings={appSettings}
           onClose={() => setEditingContract(null)}
           onSave={(saved) => {
             saveContract(saved);
@@ -587,6 +694,7 @@ type PageContentProps = {
   properties: Property[];
   onSwitchProperty: (id: string) => void;
   onAddProperty: () => void;
+  onAddRoom: (room: RoomRecord) => void;
 };
 
 
@@ -719,7 +827,7 @@ function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany }
     <>
       <PageHeader eyebrow="จัดการลูกค้า" title="กิจการ" description="จัดการลูกค้า เจ้าของกิจการ และสถานะการให้บริการ"><button className="button primary" onClick={onOpenPanel}><Plus size={17} /> เพิ่มกิจการ</button></PageHeader>
       <FilterBar placeholder="ค้นหาชื่อกิจการ เจ้าของ หรือเบอร์โทร" filters={[{ label: "ทุกสถานะ", options: ["Active", "Trial", "หมดอายุ"] }, { label: "ทุกแพ็กเกจ", options: ["Starter", "Business"] }]} />
-      <section className="panel table-panel"><div className="list-summary"><span>รายการใน Demo <strong>{companyItems.length} กิจการ</strong></span><span>ข้อมูลจะรีเซ็ตเมื่อรีเฟรชหน้า</span></div><CompanyTable rows={companyItems} onDelete={onDeleteCompany} /></section>
+      <section className="panel table-panel"><div className="list-summary"><span>รายการใน Demo <strong>{companyItems.length} กิจการ</strong></span><span>ข้อมูลหลักจะถูกเก็บไว้ในเบราว์เซอร์จนกดรีเซ็ต Demo</span></div><CompanyTable rows={companyItems} onDelete={onDeleteCompany} /></section>
     </>
   );
 }
@@ -840,7 +948,13 @@ function LinePage({ role, lineEnabled, onLineChange, onToast, isLocked }: PageCo
   return <><PageHeader eyebrow="บริการเสริม" title="LINE แจ้งเตือน" description={role === "super_admin" ? "จัดการสถานะบริการ LINE ของกิจการต่าง ๆ" : "ส่งและติดตามข้อความถึงผู้เช่าผ่าน LINE"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`ข้อความ Demo ${collection.items.length + 1}`, "ผู้เช่า 1 คน", "วันนี้", "ฉบับร่าง"])}><Plus size={17} /> สร้างข้อความ</button></PageHeader><div className="integration-banner"><span className="line-mark"><MessageCircle size={22} /></span><span><strong>LINE Official Account เชื่อมต่อแล้ว</strong><small>@somchaimansion · อัปเดตล่าสุด 2 นาทีที่แล้ว</small></span><span className="badge success">พร้อมใช้งาน</span></div><SimpleTable headers={["แคมเปญ", "ผู้รับ", "วันที่ส่ง", "ผลลัพธ์"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function RoomsPage({ isLocked, onToast, meterRooms, activeProperty }: PageContentProps) {
+function RoomsPage({ isLocked, onToast, meterRooms, activeProperty, onAddRoom }: PageContentProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [occupancy, setOccupancy] = useState("");
+  const [showAddRoom, setShowAddRoom] = useState(false);
+  const roomRows = meterRooms.map((room) => [room.number, room.tenant, room.tenant === "(ว่าง)" ? "ว่าง" : "มีผู้เช่า"]);
+  const visibleRoomNumbers = new Set((filterRows(roomRows, searchTerm, [{ column: 2, value: occupancy }]) as string[][]).map((row) => row[0]));
+  const visibleRooms = meterRooms.filter((room) => visibleRoomNumbers.has(room.number));
   return (
     <>
       <PageHeader
@@ -851,7 +965,7 @@ function RoomsPage({ isLocked, onToast, meterRooms, activeProperty }: PageConten
         <button
           disabled={isLocked}
           className="button primary"
-          onClick={() => onToast("เปิดฟอร์มเพิ่มห้องพักใหม่")}
+          onClick={() => setShowAddRoom(true)}
         >
           <Plus size={17} /> เพิ่มห้อง
         </button>
@@ -862,9 +976,14 @@ function RoomsPage({ isLocked, onToast, meterRooms, activeProperty }: PageConten
         <span><strong>มีผู้เช่า</strong>{meterRooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length} ห้อง</span>
         <span><strong>ว่าง</strong>{meterRooms.filter(r => !r.tenant || r.tenant === "(ว่าง)").length} ห้อง</span>
       </div>
-      <FilterBar placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า" />
+      <FilterBar
+        placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า"
+        value={searchTerm}
+        onSearchChange={setSearchTerm}
+        filters={[{ label: "ทุกสถานะ", options: ["มีผู้เช่า", "ว่าง"], value: occupancy, onChange: setOccupancy }]}
+      />
       <section className="room-grid">
-        {meterRooms.map((room) => {
+        {visibleRooms.map((room) => {
           const isVacant = !room.tenant || room.tenant === "(ว่าง)";
           const status = isVacant ? "vacant" : "occupied";
           return (
@@ -882,6 +1001,8 @@ function RoomsPage({ isLocked, onToast, meterRooms, activeProperty }: PageConten
           );
         })}
       </section>
+      {visibleRooms.length === 0 ? <EmptyState message="ไม่พบห้องพักที่ตรงกับการค้นหา" /> : null}
+      {showAddRoom ? <AddRoomModal existingRooms={meterRooms} onClose={() => setShowAddRoom(false)} onSave={(room) => { onAddRoom(room); setShowAddRoom(false); }} onToast={onToast} /> : null}
     </>
   );
 }
@@ -907,6 +1028,9 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
     ["นันท์นภัส วารี", "401", "1 ส.ค. 2568", "31 ก.ค. 2569", "฿6,000", "อยู่ระหว่างเช่า"],
   ];
   const collection = useDemoCollection(initialRows, onToast);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [status, setStatus] = useState("");
+  const visibleRows = filterRows(collection.items, searchTerm, [{ column: 5, value: status }]) as string[][];
   return (
     <>
       <PageHeader eyebrow="จัดการหอพัก" title="ผู้เช่า" description="รายชื่อผู้เช่าทั้งหมดพร้อมข้อมูลสัญญาและสถานะ">
@@ -914,11 +1038,11 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
           <Plus size={17} /> เพิ่มผู้เช่า
         </button>
       </PageHeader>
-      <FilterBar placeholder="ค้นหาชื่อผู้เช่า หรือเลขห้อง" filters={[{ label: "ทุกสถานะ", options: ["อยู่ระหว่างเช่า", "สัญญาหมด", "รอทำสัญญา"] }]} />
+      <FilterBar placeholder="ค้นหาชื่อผู้เช่า หรือเลขห้อง" value={searchTerm} onSearchChange={setSearchTerm} filters={[{ label: "ทุกสถานะ", options: ["อยู่ระหว่างเช่า", "สัญญาหมด", "รอทำสัญญา"], value: status, onChange: setStatus }]} />
       <SimpleTable
         headers={["ผู้เช่า", "ห้อง", "วันเข้าพัก", "วันหมดสัญญา", "ค่าเช่า/เดือน", "สถานะ"]}
-        rows={collection.items}
-        onDelete={collection.removeItem}
+        rows={visibleRows}
+        onDelete={(index) => collection.removeItem(collection.items.indexOf(visibleRows[index]))}
         disableDelete={isLocked}
       />
     </>
@@ -928,7 +1052,7 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
 // ───────────────────────────────────────────────
 // สัญญาเช่า
 // ───────────────────────────────────────────────
-function ContractsPage({ isLocked, onToast, contracts, onViewContract, onEditContract, onDeleteContract }: PageContentProps) {
+function ContractsPage({ isLocked, contracts, onViewContract, onEditContract, onDeleteContract }: PageContentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -1097,9 +1221,10 @@ function ContractsPage({ isLocked, onToast, contracts, onViewContract, onEditCon
 // มิเตอร์ — จดได้จริง คำนวณอัตโนมัติ
 // ───────────────────────────────────────────────
 function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, appSettings }: PageContentProps) {
-  const doneCount = meterRooms.filter(r => r.newElec !== null).length;
-  const allDone = doneCount === meterRooms.length;
-  const totalElec = meterRooms.reduce((s, r) => {
+  const billableRooms = meterRooms.filter((room) => room.tenant && room.tenant !== "(ว่าง)");
+  const doneCount = billableRooms.filter(r => r.newElec !== null && r.newElec >= r.prevElec).length;
+  const allDone = doneCount === billableRooms.length;
+  const totalElec = billableRooms.reduce((s, r) => {
     if (r.newElec === null) return s;
     const u = r.newElec - r.prevElec;
     return s + (u >= 0 ? u * appSettings.electricRate : 0);
@@ -1108,11 +1233,14 @@ function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, 
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="บันทึกมิเตอร์" description={`รอบบิล สิงหาคม 2569 · กรอกเลขมิเตอร์ใหม่แล้วระบบคำนวณให้อัตโนมัติ`}>
-        <button className="button secondary" disabled={isLocked} onClick={() => onToast("Export ข้อมูลมิเตอร์แล้ว")}>Export</button>
+        <button className="button secondary" disabled={isLocked} onClick={() => {
+          downloadCsv("meter-august-2569.csv", ["ห้อง", "ผู้เช่า", "มิเตอร์เก่า", "มิเตอร์ใหม่"], meterRooms.map((room) => [room.number, room.tenant, room.prevElec, room.newElec ?? ""]));
+          onToast("ดาวน์โหลดข้อมูลมิเตอร์แล้ว");
+        }}><Download size={16} /> Export</button>
         <button
           className="button primary"
           disabled={isLocked || !allDone}
-          title={!allDone ? `กรอกมิเตอร์ให้ครบทุกห้องก่อน (เหลือ ${meterRooms.length - doneCount} ห้อง)` : ""}
+          title={!allDone ? `กรอกมิเตอร์ให้ครบทุกห้องที่มีผู้เช่าก่อน (เหลือ ${billableRooms.length - doneCount} ห้อง)` : ""}
           onClick={() => { onNavigate("invoices"); onToast("สร้างใบแจ้งหนี้ทุกห้องแล้ว"); }}
         >
           <FileText size={17} /> สร้างบิลทุกห้อง
@@ -1120,9 +1248,9 @@ function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, 
       </PageHeader>
       <div className="meter-summary-bar">
         <span><strong>รอบบิล</strong>สิงหาคม 2569</span>
-        <span><strong>บันทึกแล้ว</strong>{doneCount}/{meterRooms.length} ห้อง</span>
+        <span><strong>บันทึกแล้ว</strong>{doneCount}/{billableRooms.length} ห้องที่มีผู้เช่า</span>
         <span><strong>ค่าไฟรวม</strong>฿{totalElec.toFixed(2)}</span>
-        <span><strong>ค่าน้ำรวม</strong>฿{(meterRooms.length * appSettings.waterRate).toFixed(2)}</span>
+        <span><strong>ค่าน้ำรวม</strong>฿{(billableRooms.length * appSettings.waterRate).toFixed(2)}</span>
       </div>
       <section className="panel table-panel">
         <div className="responsive-table">
@@ -1140,7 +1268,7 @@ function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, 
               </tr>
             </thead>
             <tbody>
-              {meterRooms.map(room => {
+              {billableRooms.map(room => {
                 const units = room.newElec !== null ? room.newElec - room.prevElec : null;
                 const valid = units === null || units >= 0;
                 const elecCost = (valid && units !== null) ? units * appSettings.electricRate : null;
@@ -1194,19 +1322,23 @@ function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, 
 // ───────────────────────────────────────────────
 // ใบแจ้งหนี้ — สร้างจากข้อมูลมิเตอร์จริง
 // ───────────────────────────────────────────────
-function InvoicesPage({ isLocked, onToast, onNavigate, meterRooms, appSettings, onViewInvoice }: PageContentProps) {
-  const done = meterRooms.filter(r => r.newElec !== null);
-  const pending = meterRooms.filter(r => r.newElec === null);
-  const totalBilled = done.reduce((s, r) => {
-    const u = r.newElec! - r.prevElec;
-    return s + r.rent + u * appSettings.electricRate + appSettings.waterRate;
-  }, 0);
+function InvoicesPage({ isLocked, onToast, onNavigate, onLineChange, meterRooms, appSettings, onViewInvoice }: PageContentProps) {
+  const billableRooms = meterRooms.filter((room) => room.tenant && room.tenant !== "(ว่าง)");
+  const done = billableRooms.filter((room) => calculateInvoice(room, appSettings) !== null);
+  const pending = billableRooms.filter((room) => calculateInvoice(room, appSettings) === null);
+  const totalBilled = done.reduce((sum, room) => sum + calculateInvoice(room, appSettings)!.total, 0);
 
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="ใบแจ้งหนี้" description="ออกบิล ดูรายละเอียด และส่งให้ผู้เช่า · รอบสิงหาคม 2569">
-        <button disabled={isLocked} className="button secondary" onClick={() => onToast("Export ใบแจ้งหนี้ทั้งหมด PDF แล้ว")}>Export PDF</button>
-        <button disabled={isLocked} className="button primary" onClick={() => onToast("ส่งบิลผ่าน LINE ทุกห้องแล้ว")}>
+        <button disabled={isLocked || done.length === 0} className="button secondary" onClick={() => {
+          downloadCsv("invoices-august-2569.csv", ["ห้อง", "ผู้เช่า", "ค่าเช่า", "ค่าไฟ", "ค่าน้ำ", "รวม"], done.map((room) => {
+            const invoice = calculateInvoice(room, appSettings)!;
+            return [room.number, room.tenant, room.rent, invoice.electricCost, invoice.waterCost, invoice.total];
+          }));
+          onToast("ดาวน์โหลดรายการใบแจ้งหนี้แล้ว");
+        }}><Download size={16} /> Export</button>
+        <button disabled={isLocked || done.length === 0} className="button primary" onClick={() => { onLineChange(true); onNavigate("line"); onToast("สร้างแคมเปญส่งบิลผ่าน LINE แล้ว"); }}>
           <MessageCircle size={17} /> ส่งผ่าน LINE
         </button>
       </PageHeader>
@@ -1227,7 +1359,7 @@ function InvoicesPage({ isLocked, onToast, onNavigate, meterRooms, appSettings, 
 
       <section className="panel table-panel">
         <div className="panel-heading">
-          <span><h2>รายการบิล</h2><p>กด "ดูบิล" เพื่อดูใบแจ้งหนี้แบบ PDF และพิมพ์</p></span>
+          <span><h2>รายการบิล</h2><p>กด &quot;ดูบิล&quot; เพื่อดูใบแจ้งหนี้แบบ PDF และพิมพ์</p></span>
         </div>
         <div className="responsive-table">
           <table>
@@ -1238,11 +1370,11 @@ function InvoicesPage({ isLocked, onToast, onNavigate, meterRooms, appSettings, 
               </tr>
             </thead>
             <tbody>
-              {meterRooms.map((room, idx) => {
-                const hasMeter = room.newElec !== null;
-                const units = hasMeter ? room.newElec! - room.prevElec : null;
-                const elecCost = units !== null ? units * appSettings.electricRate : null;
-                const total = hasMeter ? room.rent + elecCost! + appSettings.waterRate : null;
+              {billableRooms.map((room, idx) => {
+                const invoice = calculateInvoice(room, appSettings);
+                const hasMeter = invoice !== null;
+                const elecCost = invoice?.electricCost ?? null;
+                const total = invoice?.total ?? null;
                 return (
                   <tr key={room.number}>
                     <td><strong>{hasMeter ? `INV-2569-09${String(idx + 1).padStart(2, "0")}` : "—"}</strong></td>
@@ -1296,13 +1428,20 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
     ["10 ก.ค. 2569", "301 · ปิยะ สุขสวัสดิ์", "INV-2569-0604", "฿5,500", "โอนเงิน", "RCP-004"],
   ];
   const collection = useDemoCollection(initialRows, onToast);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [paymentChannel, setPaymentChannel] = useState("");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const visibleRows = filterRows(collection.items, searchTerm, [{ column: 4, value: paymentChannel }]) as string[][];
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="รับชำระ" description="บันทึกการรับเงินและออกใบเสร็จให้ผู้เช่า">
-        <button disabled={isLocked} className="button secondary" onClick={() => onToast("Export รายการรับชำระแล้ว")}>
-          Export
+        <button disabled={isLocked} className="button secondary" onClick={() => {
+          downloadCsv("payments-august-2569.csv", ["วันที่รับ", "ห้อง / ผู้เช่า", "เลขที่บิล", "ยอด", "ช่องทาง", "เลขที่ใบเสร็จ"], collection.items);
+          onToast("ดาวน์โหลดรายการรับชำระแล้ว");
+        }}>
+          <Download size={16} /> Export
         </button>
-        <button disabled={isLocked} className="button primary" onClick={() => collection.addItem(["วันนี้", `ห้องใหม่ · ผู้เช่าใหม่`, `INV-2569-XXXX`, "฿0", "โอนเงิน", `RCP-${String(collection.items.length + 100)}`])}>
+        <button disabled={isLocked} className="button primary" onClick={() => setShowPaymentForm(true)}>
           <Plus size={17} /> บันทึกรับชำระ
         </button>
       </PageHeader>
@@ -1311,13 +1450,18 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
         <span><strong>เดือนก่อน</strong> ฿185,400</span>
         <span><strong>รายการทั้งหมด</strong> {collection.items.length} รายการ</span>
       </div>
-      <FilterBar placeholder="ค้นหาห้อง ชื่อผู้เช่า หรือเลขที่บิล" filters={[{ label: "ช่องทางทั้งหมด", options: ["เงินสด", "โอนเงิน", "พร้อมเพย์"] }, { label: "เดือนทั้งหมด", options: ["สิงหาคม 2569", "กรกฎาคม 2569"] }]} />
+      <FilterBar placeholder="ค้นหาห้อง ชื่อผู้เช่า หรือเลขที่บิล" value={searchTerm} onSearchChange={setSearchTerm} filters={[{ label: "ช่องทางทั้งหมด", options: ["เงินสด", "โอนเงิน", "พร้อมเพย์"], value: paymentChannel, onChange: setPaymentChannel }]} />
       <SimpleTable
         headers={["วันที่รับ", "ห้อง / ผู้เช่า", "เลขที่บิล", "ยอด", "ช่องทาง", "เลขที่ใบเสร็จ"]}
-        rows={collection.items}
-        onDelete={collection.removeItem}
+        rows={visibleRows}
+        onDelete={(index) => collection.removeItem(collection.items.indexOf(visibleRows[index]))}
         disableDelete={isLocked}
       />
+      {showPaymentForm ? <PaymentModal receiptNumber={`RCP-${String(collection.items.length + 100).padStart(3, "0")}`} onClose={() => setShowPaymentForm(false)} onSave={(row) => {
+        if (!collection.addItem(row)) return;
+        setShowPaymentForm(false);
+        onToast("บันทึกรับชำระและออกเลขที่ใบเสร็จแล้ว");
+      }} /> : null}
     </>
   );
 }
@@ -1326,15 +1470,19 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
 // ยอดค้าง
 // ───────────────────────────────────────────────
 function ReceivablesPage({ isLocked, onToast }: PageContentProps) {
-  const rows = [
+  const initialRows = [
     ["101 · สมชาย ใจดี", "INV-2569-0801", "฿4,788", "22 วัน", "เตือนแล้ว 1 ครั้ง"],
     ["102 · อารยา พรดี", "INV-2569-0802", "฿4,763.50", "22 วัน", "ยังไม่เตือน"],
     ["302 · กมลา ดีงาม", "INV-2569-0602", "฿5,000", "57 วัน", "เตือนแล้ว 3 ครั้ง"],
   ];
+  const [rows, setRows] = useState(initialRows);
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="ยอดค้างชำระ" description="ติดตามและเร่งรัดยอดค้างแยกตามอายุหนี้">
-        <button disabled={isLocked} className="button primary" onClick={() => onToast("ส่งการแจ้งเตือนยอดค้างแล้ว")}>
+        <button disabled={isLocked} className="button primary" onClick={() => {
+          setRows((current) => current.map((row) => [...row.slice(0, 4), row[4].startsWith("เตือนแล้ว") ? row[4] : "เตือนแล้ว 1 ครั้ง"]));
+          onToast("อัปเดตสถานะการแจ้งเตือนยอดค้างแล้ว");
+        }}>
           <Bell size={17} /> แจ้งเตือนทั้งหมด
         </button>
       </PageHeader>
@@ -1377,10 +1525,13 @@ function ReportsPage({ onToast }: PageContentProps) {
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="รายงาน" description="สรุปรายรับ อัตราเข้าพัก และยอดค้างรายเดือน">
-        <button className="button secondary" onClick={() => onToast("Export รายงานเป็น Excel แล้ว")}>
-          Export Excel
+        <button className="button secondary" onClick={() => {
+          downloadCsv("monthly-report-2569.csv", ["เดือน", "รายรับ", "ห้องที่ชำระ", "ยอดค้าง", "Occupancy"], monthlyRows);
+          onToast("ดาวน์โหลดรายงาน CSV สำหรับเปิดใน Excel แล้ว");
+        }}>
+          <Download size={16} /> Export Excel
         </button>
-        <button className="button primary" onClick={() => onToast("Export รายงานเป็น PDF แล้ว")}>
+        <button className="button primary" onClick={() => { window.print(); onToast("เปิดหน้าต่างพิมพ์สำหรับบันทึก PDF แล้ว"); }}>
           Export PDF
         </button>
       </PageHeader>
@@ -1655,13 +1806,11 @@ function InvoiceModal({ room, settings, onClose }: { room: RoomRecord; settings:
 // ──────────────────────────────────────────────────────
 function ContractFormModal({
   contract,
-  settings,
   onClose,
   onSave,
   onSaveAndView,
 }: {
   contract: ContractRecord;
-  settings: AppSettings;
   onClose: () => void;
   onSave: (contract: ContractRecord) => void;
   onSaveAndView: (contract: ContractRecord) => void;
@@ -1899,13 +2048,13 @@ function ContractModal({
             <p>
               สัญญาเช่าฉบับนี้ทำขึ้นระหว่าง <strong>บริษัท สมชายอพาร์ทเมนท์ จำกัด</strong> โดย <strong>นายสมชาย ใจดี</strong> (ผู้ให้เช่า) 
               ตั้งอยู่เลขที่ 123 ถนนกาญจนวนิช ตำบลหาดใหญ่ อำเภอหาดใหญ่ จังหวัดสงขลา 90110 โทรศัพท์ 074-200-001 
-              ซึ่งต่อไปในสัญญานี้จะเรียกว่า <strong>"ผู้ให้เช่า"</strong> ฝ่ายหนึ่ง
+              ซึ่งต่อไปในสัญญานี้จะเรียกว่า <strong>&quot;ผู้ให้เช่า&quot;</strong> ฝ่ายหนึ่ง
             </p>
             <p style={{ marginTop: 8 }}>
               กับ <strong>{contract.tenantName || "...................................................."}</strong> (ผู้เช่า) 
               {contract.tenantIdCard ? ` เลขประจำตัวประชาชน ${contract.tenantIdCard}` : ""} 
               {contract.tenantPhone ? ` โทรศัพท์ ${contract.tenantPhone}` : ""} 
-              ซึ่งต่อไปในสัญญานี้จะเรียกว่า <strong>"ผู้เช่า"</strong> อีกฝ่ายหนึ่ง
+              ซึ่งต่อไปในสัญญานี้จะเรียกว่า <strong>&quot;ผู้เช่า&quot;</strong> อีกฝ่ายหนึ่ง
             </p>
             <p style={{ marginTop: 8 }}>
               คู่สัญญาทั้งสองฝ่ายตกลงยินยอมทำสัญญาเช่าห้องพักอาศัย โดยมีข้อความและเงื่อนไขถูกต้องตรงกันดังต่อไปนี้:
@@ -2051,8 +2200,24 @@ function StatusBar({ label, value, total, color }: { label: string; value: numbe
   return <div className="status-bar"><span><strong>{label}</strong><small>{value} กิจการ</small></span><div><i className={color} style={{ width: `${(value / total) * 100}%` }} /></div></div>;
 }
 
-function FilterBar({ placeholder, filters = [] }: { placeholder: string; filters?: Array<{ label: string; options: string[] }> }) {
-  return <div className="filter-bar"><label><Search size={17} /><input placeholder={placeholder} /></label>{filters.map((filter) => <select aria-label={filter.label} defaultValue="" key={filter.label}><option value="">{filter.label}</option>{filter.options.map((option) => <option key={option}>{option}</option>)}</select>)}<button className="button secondary"><SlidersHorizontal size={16} /> ตัวกรอง</button></div>;
+function FilterBar({
+  placeholder,
+  filters = [],
+  value,
+  onSearchChange,
+}: {
+  placeholder: string;
+  filters?: Array<{ label: string; options: string[]; value?: string; onChange?: (value: string) => void }>;
+  value?: string;
+  onSearchChange?: (value: string) => void;
+}) {
+  const controlled = onSearchChange !== undefined;
+  const hasFilter = Boolean(value) || filters.some((filter) => Boolean(filter.value));
+  return <div className="filter-bar"><label><Search size={17} /><input placeholder={placeholder} value={controlled ? value ?? "" : undefined} onChange={controlled ? (event) => onSearchChange(event.target.value) : undefined} /></label>{filters.map((filter) => <select aria-label={filter.label} value={filter.onChange ? filter.value ?? "" : undefined} defaultValue={filter.onChange ? undefined : ""} onChange={filter.onChange ? (event) => filter.onChange?.(event.target.value) : undefined} key={filter.label}><option value="">{filter.label}</option>{filter.options.map((option) => <option key={option}>{option}</option>)}</select>)}<button className="button secondary" type="button" disabled={!controlled || !hasFilter} onClick={() => { onSearchChange?.(""); filters.forEach((filter) => filter.onChange?.("")); }}><SlidersHorizontal size={16} /> ล้างตัวกรอง</button></div>;
+}
+
+function EmptyState({ message }: { message: string }) {
+  return <div className="empty-state"><Search size={22} /><span>{message}</span></div>;
 }
 
 function CompanyTable({ rows, onDelete }: { rows: Company[]; onDelete?: (index: number) => void }) {
@@ -2074,6 +2239,38 @@ function PlanCards({ lineEnabled, onLineChange, onToast }: { lineEnabled: boolea
 
 function CompanyPanel({ onClose, onSave }: { onClose: () => void; onSave: (company: Company) => void }) {
   return <div className="drawer-backdrop" onClick={onClose}><aside className="drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-head"><span><p className="eyebrow">จัดการลูกค้า</p><h2>เพิ่มกิจการใหม่</h2></span><button className="icon-button" type="button" aria-label="ปิดหน้าต่าง" onClick={onClose}><X size={20} /></button></div><form onSubmit={(event) => { event.preventDefault(); const formData = new FormData(event.currentTarget); onSave({ name: String(formData.get("companyName")), owner: String(formData.get("ownerName")), plan: String(formData.get("plan")), properties: 1, users: 1, status: formData.get("plan") === "Trial" ? "trial" : "active", date: formData.get("plan") === "Trial" ? "อีก 30 วัน" : "รอบถัดไป 30 วัน" }); }}><div className="form-section"><h3>ข้อมูลกิจการ</h3><label><span>ชื่อกิจการ *</span><input name="companyName" maxLength={80} placeholder="เช่น บริษัท สมชายอพาร์ทเมนท์" required /></label><div className="field-row"><label><span>เบอร์โทร</span><input name="phone" maxLength={20} placeholder="08x-xxx-xxxx" /></label><label><span>เลขประจำตัวผู้เสียภาษี</span><input name="taxId" inputMode="numeric" maxLength={13} placeholder="13 หลัก" /></label></div></div><div className="form-section"><h3>เจ้าของกิจการ</h3><label><span>ชื่อ-นามสกุล *</span><input name="ownerName" maxLength={80} placeholder="ชื่อผู้ดูแลหลัก" required /></label><label><span>อีเมลสำหรับเข้าใช้งาน *</span><input name="email" type="email" maxLength={120} placeholder="owner@example.com" required /></label></div><div className="form-section"><h3>แพ็กเกจเริ่มต้น</h3><label><span>แพ็กเกจ</span><select name="plan" defaultValue="Trial"><option value="Trial">ทดลองฟรี 30 วัน</option><option value="Starter">Starter</option><option value="Business">Business</option></select></label></div><div className="drawer-actions"><button type="button" className="button secondary" onClick={onClose}>ยกเลิก</button><button type="submit" className="button primary">สร้างกิจการ</button></div></form></aside></div>;
+}
+
+function AddRoomModal({
+  existingRooms,
+  onClose,
+  onSave,
+  onToast,
+}: {
+  existingRooms: RoomRecord[];
+  onClose: () => void;
+  onSave: (room: RoomRecord) => void;
+  onToast: (message: string) => void;
+}) {
+  return <div className="modal-backdrop" onClick={onClose}><div className="modal-box compact-form-modal" onClick={(event) => event.stopPropagation()}><div className="modal-toolbar"><button className="icon-button" type="button" onClick={onClose}><X size={20} /></button><strong>เพิ่มห้องพัก</strong></div><form onSubmit={(event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const number = String(data.get("number")).trim();
+    if (existingRooms.some((room) => room.number.toLocaleLowerCase("th") === number.toLocaleLowerCase("th"))) {
+      onToast(`มีห้อง ${number} อยู่แล้ว`);
+      return;
+    }
+    onSave({ number, tenant: "(ว่าง)", rent: Number(data.get("rent")), prevElec: Number(data.get("prevElec")), newElec: null, contractStart: "", contractEnd: "" });
+  }}><div className="form-section"><label><span>เลขห้อง *</span><input name="number" required maxLength={12} placeholder="เช่น 402 หรือ C01" autoFocus /></label><label><span>ค่าเช่าต่อเดือน *</span><input name="rent" type="number" required min="0" step="100" defaultValue="4500" /></label><label><span>เลขมิเตอร์ไฟตั้งต้น *</span><input name="prevElec" type="number" required min="0" defaultValue="0" /></label></div><div className="modal-form-actions"><button className="button secondary" type="button" onClick={onClose}>ยกเลิก</button><button className="button primary" type="submit"><Plus size={16} /> เพิ่มห้อง</button></div></form></div></div>;
+}
+
+function PaymentModal({ receiptNumber, onClose, onSave }: { receiptNumber: string; onClose: () => void; onSave: (row: string[]) => void }) {
+  return <div className="modal-backdrop" onClick={onClose}><div className="modal-box compact-form-modal" onClick={(event) => event.stopPropagation()}><div className="modal-toolbar"><button className="icon-button" type="button" onClick={onClose}><X size={20} /></button><strong>บันทึกรับชำระ · {receiptNumber}</strong></div><form onSubmit={(event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const amount = Number(data.get("amount"));
+    onSave(["วันนี้", `${String(data.get("room"))} · ${String(data.get("tenant"))}`, String(data.get("invoice")), `฿${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`, String(data.get("channel")), receiptNumber]);
+  }}><div className="form-section"><div className="field-row"><label><span>ห้อง *</span><input name="room" required placeholder="เช่น 101" autoFocus /></label><label><span>ชื่อผู้เช่า *</span><input name="tenant" required placeholder="ชื่อ-นามสกุล" /></label></div><label><span>เลขที่ใบแจ้งหนี้ *</span><input name="invoice" required defaultValue="INV-2569-09" /></label><label><span>ยอดรับชำระ *</span><input name="amount" type="number" required min="0.01" step="0.01" defaultValue="4500" /></label><label><span>ช่องทาง</span><select name="channel" defaultValue="โอนเงิน"><option>โอนเงิน</option><option>พร้อมเพย์</option><option>เงินสด</option></select></label></div><div className="modal-form-actions"><button className="button secondary" type="button" onClick={onClose}>ยกเลิก</button><button className="button primary" type="submit"><WalletCards size={16} /> บันทึกและออกใบเสร็จ</button></div></form></div></div>;
 }
 
 function useDemoCollection<T>(initialItems: T[], onToast: (message: string) => void, limit = DEMO_ITEM_LIMIT) {

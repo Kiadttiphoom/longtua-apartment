@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Longtua Apartment
 
-## Getting Started
+ระบบจริงและ Demo แยก route, component และ data source ออกจากกันชัดเจน
 
-First, run the development server:
+- Demo: `/demo/login`, `/demo/register`, `/demo`
+- ระบบจริง: `/login`, `/register`, `/dashboard`
+
+## เริ่มใช้งาน
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด `http://localhost:3000/demo` หรือเริ่มจากหน้าเข้าสู่ระบบที่ `http://localhost:3000/demo/login`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+บัญชีตัวอย่างถูกกรอกไว้ให้แล้ว รหัสผ่านคือ `longtua-demo` ข้อมูลหอพัก มิเตอร์ สัญญา และการตั้งค่าหลักจะถูกเก็บใน `localStorage` ของเบราว์เซอร์ กดปุ่มรีเซ็ตด้านขวาของตัวเลือกสถานะบริการเพื่อกลับสู่ข้อมูลเริ่มต้น
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Flow สำหรับพรีเซนต์
 
-## Learn More
+1. สลับหอพักจากแถบด้านซ้าย
+2. เปิดหน้ามิเตอร์และกรอกเลขมิเตอร์ใหม่ให้ครบทุกห้องที่มีผู้เช่า
+3. กดสร้างบิลทุกห้อง แล้วเปิดดูใบแจ้งหนี้และสั่งพิมพ์/PDF
+4. เปิดหน้ารับชำระและบันทึกรายการเพื่อออกเลขที่ใบเสร็จ
+5. ทดลองสลับบทบาทและสถานะบริการเพื่อดูสิทธิ์และโหมดหมดอายุ
 
-To learn more about Next.js, take a look at the following resources:
+## ตรวจสอบก่อนส่งเดโม
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm test
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Super Admin มีโค้ดรองรับภายใน แต่ตั้งใจไม่แสดงเป็นตัวเลือกในเดโมสาธารณะ
 
-## Deploy on Vercel
+## Auth และทดลองใช้ฟรีจริง
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+หน้า `/login`, `/register` และ `/dashboard` ใช้ Supabase Auth แบบ cookie session โดยผู้ใช้กรอกเฉพาะ `username + password` ระบบ map username ไป synthetic email ฝั่ง server จึงไม่เปิดเผย service role key หรืออีเมลภายในให้ browser
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. คัดลอกค่าจาก `.env.example` ไป `.env.local` และตั้ง `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` กับ `AUTH_INTERNAL_EMAIL_DOMAIN`
+2. Apply migration ตามลำดับไปยัง Supabase project:
+   - `supabase/migrations/20260828070647_auth_foundation.sql`
+   - `supabase/migrations/20260828083714_apartment_core.sql`
+3. สมัครที่ `/register`; ระบบจะสร้าง profile, organization, owner membership และ trial 30 วันใน transaction เดียว
+
+หน้า `/dashboard` ไม่ใช้ข้อมูลตัวอย่างและไม่ใช้ `localStorage` ข้อมูลหอพัก ห้อง ผู้เช่า สัญญา มิเตอร์ ใบแจ้งหนี้ และการรับชำระทั้งหมดอ่าน/เขียน Supabase โดยมี RLS จำกัดตาม `organization_id`
+
+หากยังไม่ได้ตั้ง Supabase key หน้า demo ที่ `/demo` ยังใช้งานได้ตามปกติ แต่การสมัคร/ล็อกอินจริงจะแสดงว่า configuration ยังไม่ครบ
