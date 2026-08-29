@@ -36,7 +36,7 @@ Super Admin มีโค้ดรองรับภายใน แต่ตั�
 
 ## Auth และทดลองใช้ฟรีจริง
 
-หน้า `/login`, `/register` และ `/dashboard` ใช้ Supabase Auth แบบ cookie session โดยผู้ใช้กรอกเฉพาะ `username + password` ระบบ map username ไป synthetic email ฝั่ง server จึงไม่เปิดเผย service role key หรืออีเมลภายในให้ browser
+หน้า `/login`, `/register` และหน้าพอร์ทัล เช่น `/dashboard`, `/dormitories`, `/guestrooms` ใช้ Supabase Auth แบบ cookie session โดยผู้ใช้กรอกเฉพาะ `username + password` ระบบ map username ไป synthetic email ฝั่ง server จึงไม่เปิดเผย service role key หรืออีเมลภายในให้ browser
 
 1. คัดลอกค่าจาก `.env.example` ไป `.env.local` และตั้ง `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` กับ `AUTH_INTERNAL_EMAIL_DOMAIN`
 2. Apply migration ตามลำดับไปยัง Supabase project:
@@ -46,9 +46,10 @@ Super Admin มีโค้ดรองรับภายใน แต่ตั�
    - `supabase/migrations/20260828091931_admin_management_catalog.sql`
    - `supabase/migrations/20260828100500_expand_super_admin_operations.sql`
    - `supabase/migrations/20260828101032_granular_menu_permissions.sql`
+   - `supabase/migrations/20260829023526_create_rooms_with_meters.sql`
 3. สมัครที่ `/register`; ระบบจะสร้าง profile, organization, owner membership และ trial 30 วันใน transaction เดียว
 
-หน้า `/dashboard` ไม่ใช้ข้อมูลตัวอย่างและไม่ใช้ `localStorage` ข้อมูลหอพัก ห้อง ผู้เช่า สัญญา มิเตอร์ ใบแจ้งหนี้ และการรับชำระทั้งหมดอ่าน/เขียน Supabase โดยมี RLS จำกัดตาม `organization_id`
+หน้าระบบจริงอยู่ใน route group `app/(portal)` และแยก route ตาม feature โดยไม่ใช้ข้อมูลตัวอย่างหรือ `localStorage` ข้อมูลทั้งหมดอ่าน/เขียน Supabase โดยมี RLS จำกัดตาม `organization_id`
 
 ## สร้าง Super Admin คนแรก
 

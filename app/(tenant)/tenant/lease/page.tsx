@@ -1,0 +1,9 @@
+import { CalendarRange, FileClock, UsersRound } from "lucide-react";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { money, thaiDate } from "@/lib/format";
+import { loadTenantPortalData } from "@/lib/tenant/data";
+
+export default async function TenantLeasePage() {
+  const data = await loadTenantPortalData();
+  return <><header className="tenant-page-heading"><div><span>เอกสารของฉัน</span><h1>สัญญาเช่า</h1><p>ข้อมูลทุกเวอร์ชันถูกเก็บไว้และเรียกดูย้อนหลังได้</p></div><span className="tenant-home-icon"><CalendarRange size={22} /></span></header>{data.leases.map((lease) => { const room = data.rooms.find((item) => item.id === lease.room_id); const property = data.properties.find((item) => item.id === lease.property_id); const versions = data.versions.filter((item) => item.lease_id === lease.id); return <article className="tenant-lease-card" key={lease.id}><header><div><small>เลขที่สัญญา</small><h2>{lease.lease_number}</h2><p>{property?.name} · ห้อง {room?.room_number ?? "—"}</p></div><StatusBadge status={lease.status} /></header><div className="tenant-contract-amount"><small>ค่าเช่าตามสัญญา</small><strong>{money(Number(lease.rent_amount))}<span>/เดือน</span></strong></div><dl><div><dt><CalendarRange size={14} /> ระยะเวลา</dt><dd>{thaiDate(lease.start_date)} – {thaiDate(lease.end_date)}</dd></div><div><dt><UsersRound size={14} /> จำนวนผู้พัก</dt><dd>{lease.occupant_count} คน</dd></div><div><dt>เงินประกัน</dt><dd>{money(Number(lease.deposit_amount))}</dd></div><div><dt>ค่าเช่าล่วงหน้า</dt><dd>{money(Number(lease.advance_amount))}</dd></div></dl>{lease.terms ? <section><strong>เงื่อนไขเพิ่มเติม</strong><p>{lease.terms}</p></section> : null}<footer><FileClock size={16} /><span>มีประวัติ {versions.length.toLocaleString("th-TH")} เวอร์ชัน</span>{versions[0] ? <time>ล่าสุด {thaiDate(versions[0].created_at)}</time> : null}</footer></article>; })}</>;
+}

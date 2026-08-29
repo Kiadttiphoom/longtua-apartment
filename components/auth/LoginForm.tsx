@@ -10,7 +10,7 @@ import { loginAction, type AuthActionState } from "@/app/auth/actions";
 
 const initialAuthActionState: AuthActionState = { status: "idle" };
 
-export function LoginForm() {
+export function LoginForm({ supportUrl = "https://longtua.com/contact" }: { supportUrl?: string }) {
   const [state, action] = useActionState(loginAction, initialAuthActionState);
   const [showPassword, setShowPassword] = useState(false);
   const fields = state.error?.fields ?? {};
@@ -47,7 +47,7 @@ export function LoginForm() {
             ) : null}
             <SubmitButton>เข้าสู่ระบบ</SubmitButton>
           </form>
-          <p className="register-link">ยังไม่มีบัญชี? <Link href="/register">สมัครใช้ฟรี 30 วัน</Link></p>
+          <p className="register-link">ต้องการความช่วยเหลือ? <Link href={supportUrl}>ติดต่อผู้ดูแลระบบ</Link></p>
           <p className="login-footer">© 2026 Longtua Apartment</p>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 function source(relativePath) {
@@ -10,9 +10,12 @@ function source(relativePath) {
 const migration = source("../supabase/migrations/20260828090230_super_admin_and_registration_control.sql");
 const managementMigration = source("../supabase/migrations/20260828091931_admin_management_catalog.sql");
 const granularMigration = source("../supabase/migrations/20260828101032_granular_menu_permissions.sql");
-const authActions = source("../app/auth/actions.ts");
-const adminActions = source("../app/admin/actions.ts");
-const adminPage = source("../app/admin/page.tsx");
+const trialRequestApi = source("../app/api/public/trial-requests/route.ts");
+const adminActions = source("../app/(admin)/admin/actions.ts");
+const adminPage = source("../components/admin/AdminSectionPage.tsx");
+const adminShell = source("../components/admin/AdminPlatformShell.tsx");
+const adminViewContent = source("../components/admin/AdminViewContent.tsx");
+const adminManagementViews = source("../components/admin/views/AdminManagementViews.tsx");
 const demo = source("../components/demo/ApartmentDemo.tsx");
 
 test("superAdmin_isPlatformScopedAndServerOnly", () => {
@@ -23,18 +26,26 @@ test("superAdmin_isPlatformScopedAndServerOnly", () => {
 });
 
 test("registrationControl_isCheckedOnServerAndNotOnlyHiddenInUi", () => {
-  assert.match(authActions, /await isRegistrationEnabled\(\)/);
-  assert.match(authActions, /registration_closed/);
+  assert.match(trialRequestApi, /await isRegistrationEnabled\(\)/);
+  assert.match(trialRequestApi, /registration_closed/);
   assert.match(adminActions, /await isSystemAdmin\(userId\)/);
   assert.match(adminActions, /registration_enabled/);
 });
 
 test("adminConsole_hasRegistrationMenuAndDemoDoesNotExposeIt", () => {
   for (const menu of ["กิจการ", "หอพัก", "ผู้ใช้งาน", "ห้องพัก", "ผู้เช่า", "สัญญาเช่า", "มิเตอร์", "ใบแจ้งหนี้", "รับชำระ", "ยอดค้าง", "รายงาน", "LINE แจ้งเตือน", "แพ็กเกจและบริการ", "Role", "Permission", "เมนูระบบ", "Audit Log", "ตั้งค่าระบบ"]) {
-    assert.match(adminPage, new RegExp(menu));
+    assert.match(adminShell, new RegExp(menu));
   }
-  assert.match(adminPage, /setRegistrationEnabledAction/);
+  assert.match(adminManagementViews, /setRegistrationEnabledAction/);
   assert.doesNotMatch(demo, /ปิดการลงทะเบียน|ศูนย์ควบคุมระบบ/);
+});
+
+test("adminRoutes_useExplicitFeatureFoldersInsteadOfDynamicSection", () => {
+  const sections = ["organizations", "properties", "users", "rooms", "tenants", "leases", "meters", "invoices", "payments", "receivables", "reports", "line", "subscriptions", "roles", "permissions", "menus", "audit", "settings"];
+  assert.equal(existsSync(fileURLToPath(new URL("../app/(admin)/admin/[section]", import.meta.url))), false);
+  for (const section of sections) {
+    assert.equal(existsSync(fileURLToPath(new URL(`../app/(admin)/admin/${section}/page.tsx`, import.meta.url))), true, `missing /admin/${section}`);
+  }
 });
 
 test("superAdminOperations_loadRealCrossOrganizationData", () => {
@@ -64,8 +75,8 @@ test("adminMutations_reauthorizeAndWritePlatformAuditLog", () => {
 });
 
 test("menuActionPermissions_controlMenusServerMutationsAndRls", () => {
-  const dashboardPage = source("../app/dashboard/page.tsx");
-  const dashboardActions = source("../app/dashboard/actions.ts");
+  const portalContext = source("../lib/portal/context.ts");
+  const dashboardActions = source("../app/(portal)/resource-actions.ts");
   const accessResolver = source("../lib/auth/organization-access.ts");
   for (const table of ["platform_permission_actions", "platform_menu_actions", "platform_role_menu_actions", "platform_user_menu_actions"]) {
     assert.match(granularMigration, new RegExp(`create table public\\.${table}`));
@@ -75,11 +86,11 @@ test("menuActionPermissions_controlMenusServerMutationsAndRls", () => {
   assert.match(granularMigration, /enable row level security/);
   assert.match(accessResolver, /userValues/);
   assert.match(accessResolver, /overrideValue \?\? roleValue \?\? false/);
-  assert.match(dashboardPage, /getOrganizationAccess/);
-  assert.match(dashboardPage, /menuItems=\{menuItems\}/);
-  assert.match(dashboardPage, /permissionKeys=/);
+  assert.match(portalContext, /getOrganizationAccess/);
+  assert.match(portalContext, /permissions: Array\.from\(access\.permissions\)/);
+  assert.match(portalContext, /access\.menus\.flatMap/);
   assert.match(dashboardActions, /actionContext\(formData, "customer_properties", "create"\)/);
   assert.match(dashboardActions, /actionContext\(formData, "customer_payments", "create"\)/);
-  assert.match(adminPage, /RolePermissionMatrix/);
-  assert.match(adminPage, /UserPermissionMatrix/);
+  assert.match(adminViewContent + adminManagementViews, /RolePermissionMatrix/);
+  assert.match(adminViewContent + adminManagementViews, /UserPermissionMatrix/);
 });

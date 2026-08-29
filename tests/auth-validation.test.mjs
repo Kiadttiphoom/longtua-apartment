@@ -6,11 +6,12 @@ import {
   normalizePhone,
   normalizeUsername,
   validateLoginInput,
-  validateRegistrationInput,
+  validateTrialRequestInput,
 } from "../lib/auth/validation.mjs";
 
 const authActionsSource = readFileSync(fileURLToPath(new URL("../app/auth/actions.ts", import.meta.url)), "utf8");
 const loginFormSource = readFileSync(fileURLToPath(new URL("../components/auth/LoginForm.tsx", import.meta.url)), "utf8");
+const trialRequestRouteSource = readFileSync(fileURLToPath(new URL("../app/api/public/trial-requests/route.ts", import.meta.url)), "utf8");
 
 test("normalizeUsername_mixedCaseAndWhitespace_returnsCanonicalLoginKey", () => {
   assert.equal(normalizeUsername("  Somchai.Owner  "), "somchai.owner");
@@ -27,12 +28,14 @@ test("validateLoginInput_invalidUsernameAndShortPassword_returnsFieldErrors", ()
   });
 });
 
-test("validateRegistrationInput_weakPasswordAndMissingConsent_blocksSignup", () => {
-  assert.deepEqual(validateRegistrationInput({
+test("validateTrialRequestInput_weakPasswordAndMissingConsent_blocksRequest", () => {
+  assert.deepEqual(validateTrialRequestInput({
     username: "owner_01",
-    displayName: "สมชาย ใจดี",
-    organizationName: "สมชายอพาร์ทเมนท์",
+    operatorName: "สมชาย ใจดี",
+    propertyName: "หอพักสมชาย",
+    contactEmail: "owner@example.com",
     phone: "081-234-5678",
+    requestedRoomCount: 30,
     password: "abcdefgh",
     confirmPassword: "abcdefgh",
     accepted: false,
@@ -42,16 +45,25 @@ test("validateRegistrationInput_weakPasswordAndMissingConsent_blocksSignup", () 
   });
 });
 
-test("validateRegistrationInput_completeOwnerProfile_allowsThirtyDayTrialSignup", () => {
-  assert.deepEqual(validateRegistrationInput({
+test("validateTrialRequestInput_completeApplication_allowsPendingRequest", () => {
+  assert.deepEqual(validateTrialRequestInput({
     username: "owner_01",
-    displayName: "สมชาย ใจดี",
-    organizationName: "สมชายอพาร์ทเมนท์",
+    operatorName: "สมชาย ใจดี",
+    propertyName: "หอพักสมชาย",
+    contactEmail: "owner@example.com",
     phone: "081-234-5678",
+    requestedRoomCount: 30,
     password: "Longtua123",
     confirmPassword: "Longtua123",
     accepted: true,
   }), {});
+});
+
+test("trialRequestEndpoint_keepsOperatorAndPropertyNamesDistinct", () => {
+  assert.match(trialRequestRouteSource, /operatorName\?: unknown/);
+  assert.match(trialRequestRouteSource, /propertyName\?: unknown/);
+  assert.match(trialRequestRouteSource, /new_operator_name: operatorName/);
+  assert.match(trialRequestRouteSource, /new_property_name: propertyName/);
 });
 
 test("normalizePhone_formattedThaiNumber_returnsDigitsOnly", () => {
@@ -63,6 +75,8 @@ test("loginErrors_doNotExposeReferenceIdAndInvalidCredentialsAreNotLoggedAsServe
   assert.doesNotMatch(loginFormSource, /รหัสอ้างอิง|error\.requestId/);
   assert.match(authActionsSource, /if \(!isInvalidCredentialsError\(error\)\) logAuthFailure/);
   assert.match(authActionsSource, /ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง/);
-  const loginSection = authActionsSource.slice(authActionsSource.indexOf("export async function loginAction"), authActionsSource.indexOf("export async function registerAction"));
+  const loginStart = authActionsSource.indexOf("export async function loginAction");
+  const logoutStart = authActionsSource.indexOf("export async function logoutAction", loginStart);
+  const loginSection = authActionsSource.slice(loginStart, logoutStart === -1 ? undefined : logoutStart);
   assert.doesNotMatch(loginSection, /ระบบเข้าสู่ระบบไม่พร้อมใช้งานชั่วคราว/);
 });
