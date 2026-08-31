@@ -10,6 +10,7 @@ import {
   Bell,
   BookOpenCheck,
   Building2,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
@@ -51,7 +52,7 @@ type Company = (typeof companies)[number];
 
 const DEMO_ITEM_LIMIT = 25;
 const DEMO_ADD_COOLDOWN_MS = 700;
-const DEMO_STORAGE_KEY = "longtua-apartment-demo-v1";
+const DEMO_STORAGE_KEY = "longtua-apartment-owner-demo-v2";
 
 // ── Shared settings type ──
 type AppSettings = {
@@ -215,10 +216,10 @@ const INITIAL_PROPERTIES: Property[] = [
 
 const navGroups: NavGroup[] = [
   { label: "ภาพรวม", items: [{ code: "dashboard", label: "แดชบอร์ด", icon: LayoutDashboard }] },
-  { label: "จัดการลูกค้า", items: [
+  { label: "กิจการของฉัน", items: [
     { code: "companies", label: "กิจการ", icon: Building2 },
-    { code: "properties", label: "หอพัก", icon: Hotel },
-    { code: "users", label: "ผู้ใช้งาน", icon: Users },
+    { code: "properties", label: "หอพักของฉัน", icon: Hotel },
+    { code: "users", label: "ทีมงาน", icon: Users },
   ] },
   { label: "จัดการหอพัก", items: [
     { code: "rooms", label: "ห้องพัก", icon: KeyRound },
@@ -282,7 +283,7 @@ export function ApartmentDemo({
   currentUserName,
   currentUserRoleLabel,
   currentOrganizationName,
-  initialSubscription = "trialing",
+  initialSubscription = "active",
   trialDaysRemaining,
   trialEndsAtText,
   logoutAction,
@@ -296,7 +297,7 @@ export function ApartmentDemo({
   trialEndsAtText?: string;
   logoutAction?: () => Promise<void>;
 }) {
-  const [role, setRole] = useState<RoleKey>("owner");
+  const role: RoleKey = "owner";
   const [subscription, setSubscription] = useState<SubscriptionState>(initialSubscription);
   const [lineEnabled, setLineEnabled] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
@@ -327,13 +328,11 @@ export function ApartmentDemo({
           const saved = JSON.parse(raw) as {
             properties?: Property[];
             activePropertyId?: string;
-            role?: Exclude<RoleKey, "super_admin">;
             subscription?: SubscriptionState;
             lineEnabled?: boolean;
           };
           if (saved.properties?.length) setProperties(saved.properties);
           if (saved.activePropertyId) setActivePropertyId(saved.activePropertyId);
-          if (saved.role) setRole(saved.role);
           if (saved.subscription) setSubscription(saved.subscription);
           if (typeof saved.lineEnabled === "boolean") setLineEnabled(saved.lineEnabled);
         }
@@ -351,11 +350,10 @@ export function ApartmentDemo({
     window.localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify({
       properties,
       activePropertyId,
-      role,
       subscription,
       lineEnabled,
     }));
-  }, [activePropertyId, hasRestoredDemo, lineEnabled, properties, role, showDemoControls, subscription]);
+  }, [activePropertyId, hasRestoredDemo, lineEnabled, properties, showDemoControls, subscription]);
 
   // ── Derived: active property data ──
   const activeProperty = properties.find(p => p.id === activePropertyId) ?? properties[0];
@@ -373,14 +371,7 @@ export function ApartmentDemo({
   const visibleGroups = useMemo(() => navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => currentRole.allowed.includes(item.code)) }))
     .filter((group) => group.items.length > 0), [currentRole]);
-  const isLocked = role !== "super_admin" && subscription === "expired";
-
-  function changeRole(nextRole: RoleKey) {
-    if (nextRole === "super_admin") return;
-    setRole(nextRole);
-    setActivePage("dashboard");
-    setSubscription("trialing");
-  }
+  const isLocked = subscription === "expired";
 
   function navigate(page: PageKey) {
     setActivePage(page);
@@ -442,8 +433,7 @@ export function ApartmentDemo({
 
   function resetDemo() {
     window.localStorage.removeItem(DEMO_STORAGE_KEY);
-    setRole("owner");
-    setSubscription("trialing");
+    setSubscription(initialSubscription);
     setLineEnabled(false);
     setActivePage("dashboard");
     setProperties(INITIAL_PROPERTIES);
@@ -485,8 +475,7 @@ export function ApartmentDemo({
           <button className="icon-button sidebar-close" aria-label="ปิดเมนู" onClick={() => setIsMobileOpen(false)}><X size={20} /></button>
         </div>
 
-        {role !== "super_admin" ? (
-          <div className="property-switcher-wrap">
+        <div className="property-switcher-wrap">
             <button
               className="context-selector"
               type="button"
@@ -494,7 +483,7 @@ export function ApartmentDemo({
             >
               <span className="context-icon"><Building2 size={18} /></span>
               <span>
-                <small>กิจการ / หอพักปัจจุบัน</small>
+                <small>หอพักที่กำลังจัดการ</small>
                 <strong>{activeProperty.name}</strong>
               </span>
               <ChevronDown size={16} style={{ transform: showPropertySwitcher ? "rotate(180deg)" : "none", transition: "0.2s" }} />
@@ -533,7 +522,6 @@ export function ApartmentDemo({
               </div>
             )}
           </div>
-        ) : null}
 
         <nav className="sidebar-nav" aria-label="เมนูหลัก">
           {visibleGroups.map((group) => (
@@ -571,14 +559,9 @@ export function ApartmentDemo({
       <div className="app-main">
         <header className="topbar">
           <button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={() => setIsMobileOpen(true)}><Menu size={21} /></button>
-          <label className="global-search"><Search size={18} /><input aria-label="ค้นหาทั่วทั้งเดโม" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitGlobalSearch(); }} placeholder="ค้นหาเมนู หอพัก ห้อง หรือผู้เช่า แล้วกด Enter" /></label>
+          <label className="global-search"><Search size={18} /><input aria-label="ค้นหาทั่วระบบ" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitGlobalSearch(); }} placeholder="ค้นหาห้อง ผู้เช่า หรือเมนู แล้วกด Enter" /></label>
           {showDemoControls ? <div className="demo-controls">
-            <label><span>มุมมอง Demo</span><select value={role} onChange={(event) => changeRole(event.target.value as RoleKey)}>
-              <option value="owner">เจ้าของกิจการ</option><option value="accounting">ฝ่ายบัญชี</option><option value="staff">พนักงาน</option>
-            </select></label>
-            {role !== "super_admin" ? <label><span>สถานะบริการ</span><select value={subscription} onChange={(event) => setSubscription(event.target.value as SubscriptionState)}>
-              <option value="trialing">ทดลองใช้งาน</option><option value="active">ชำระแล้ว</option><option value="expired">หมดอายุ</option>
-            </select></label> : null}
+            <span className="demo-owner-badge"><ShieldCheck size={15} /> บัญชีเจ้าของ · ข้อมูลตัวอย่าง</span>
             <button className="icon-button reset-demo" type="button" title="รีเซ็ตข้อมูล Demo" aria-label="รีเซ็ตข้อมูล Demo" onClick={resetDemo}><RotateCcw size={17} /></button>
           </div> : null}
           <button className="icon-button notification" aria-label="การแจ้งเตือน"><Bell size={19} /><i /></button>
@@ -586,7 +569,7 @@ export function ApartmentDemo({
         </header>
 
         <main className="content">
-          {role !== "super_admin" && subscription === "trialing" ? (
+          {subscription === "trialing" ? (
             <div className="trial-banner"><span><Zap size={18} /><strong>{trialDaysRemaining === undefined ? "ช่วงทดลองใช้ฟรี 30 วัน" : `ทดลองใช้ฟรีเหลือ ${trialDaysRemaining} วัน`}</strong><small>{trialEndsAtText ? `ใช้งานได้ถึง ${trialEndsAtText}` : "ใช้งานได้ถึง 7 กันยายน 2569"}</small></span><button onClick={() => navigate("subscriptions")}>ดูแพ็กเกจ <ChevronRight size={16} /></button></div>
           ) : null}
           {isLocked ? (
@@ -614,6 +597,7 @@ export function ApartmentDemo({
             onDeleteContract={deleteContract}
             onViewInvoice={setViewingInvoice}
             activeProperty={activeProperty}
+            ownerName={displayUserName}
             properties={properties}
             onSwitchProperty={(id) => { setActivePropertyId(id); navigate("dashboard"); }}
             onAddProperty={() => setShowAddPropertyWizard(true)}
@@ -691,6 +675,7 @@ type PageContentProps = {
   onDeleteContract: (id: string) => void;
   onViewInvoice: (room: RoomRecord) => void;
   activeProperty: Property;
+  ownerName: string;
   properties: Property[];
   onSwitchProperty: (id: string) => void;
   onAddProperty: () => void;
@@ -724,12 +709,12 @@ function PageContent(props: PageContentProps) {
 
 
 
-function DashboardPage({ role, isLocked, onOpenPanel, onNavigate, activeProperty, meterRooms, contracts }: PageContentProps) {
+function DashboardPage({ role, ownerName, isLocked, onOpenPanel, onNavigate, activeProperty, meterRooms, contracts }: PageContentProps) {
   const admin = role === "super_admin";
   return (
     <>
-      <PageHeader eyebrow={admin ? "ภาพรวมแพลตฟอร์ม" : activeProperty.name} title={admin ? "แดชบอร์ด" : `สวัสดีครับ คุณสมชาย`} description={admin ? "ติดตามลูกค้า การใช้งาน และสถานะบริการทั้งหมด" : "ภาพรวมสิ่งที่ต้องจัดการในวันนี้"}>
-        {admin ? <button className="button primary" onClick={onOpenPanel}><Plus size={17} /> เพิ่มกิจการ</button> : <button className="button primary" disabled={isLocked} onClick={() => onNavigate("payments")}><Plus size={17} /> รับชำระ</button>}
+      <PageHeader eyebrow={admin ? "ภาพรวมแพลตฟอร์ม" : `ภาพรวมเจ้าของ · ${activeProperty.name}`} title={admin ? "แดชบอร์ด" : `สวัสดีครับ คุณ${ownerName}`} description={admin ? "ติดตามลูกค้า การใช้งาน และสถานะบริการทั้งหมด" : "ตัวเลขสำคัญและงานที่ต้องจัดการของหอพักวันนี้"}>
+        {admin ? <button className="button primary" onClick={onOpenPanel}><Plus size={17} /> เพิ่มกิจการ</button> : <><button className="button secondary" disabled={isLocked} onClick={() => onNavigate("meters")}><Gauge size={17} /> จดมิเตอร์</button><button className="button primary" disabled={isLocked} onClick={() => onNavigate("payments")}><Plus size={17} /> รับชำระ</button></>}
       </PageHeader>
       {admin ? <AdminDashboard onNavigate={onNavigate} /> : <CustomerDashboard isLocked={isLocked} onNavigate={onNavigate} activeProperty={activeProperty} meterRooms={meterRooms} contracts={contracts} />}
     </>
@@ -787,14 +772,23 @@ function CustomerDashboard({
   const monthlyRent = contracts.filter(c => c.status === "active").reduce((s, c) => s + c.rent, 0);
   const needMeter = meterRooms.filter(r => r.newElec === null).length;
   const soonExpiry = contracts.filter(c => c.status === "active").length;
+  const collected = Math.round(monthlyRent * 0.78);
+  const outstanding = Math.max(monthlyRent - collected, 0);
+  const collectionRate = monthlyRent > 0 ? Math.round((collected / monthlyRent) * 100) : 0;
 
   return (
     <>
-      <section className="metric-grid">
-        <Metric label="ห้องทั้งหมด" value={String(totalRooms)} delta={`${activeProperty.name}`} icon={KeyRound} tone="blue" />
-        <Metric label="มีผู้เช่า" value={String(occupied)} delta={`Occupancy ${occupancy}%`} icon={Users} tone="green" />
-        <Metric label="ยอดค่าเช่า/เดือน" value={`฿${monthlyRent.toLocaleString()}`} delta={`${contracts.filter(c => c.status === "active").length} ห้อง`} icon={WalletCards} tone="violet" />
-        <Metric label="ยอดค้างชำระ" value="฿25,140" delta="3 ห้อง" icon={ReceiptText} tone="orange" />
+      <section className="owner-quick-actions" aria-label="งานด่วน">
+        <button disabled={isLocked} onClick={() => onNavigate("meters")}><span className="quick-action-icon blue"><Gauge size={19} /></span><span><strong>จดมิเตอร์</strong><small>{needMeter} ห้องยังไม่บันทึก</small></span><ChevronRight size={17} /></button>
+        <button disabled={isLocked} onClick={() => onNavigate("invoices")}><span className="quick-action-icon violet"><FileText size={19} /></span><span><strong>ออกบิลประจำเดือน</strong><small>พร้อมตรวจสอบก่อนส่ง</small></span><ChevronRight size={17} /></button>
+        <button disabled={isLocked} onClick={() => onNavigate("payments")}><span className="quick-action-icon green"><WalletCards size={19} /></span><span><strong>บันทึกรับชำระ</strong><small>ออกใบเสร็จได้ทันที</small></span><ChevronRight size={17} /></button>
+        <button disabled={isLocked} onClick={() => onNavigate("contracts")}><span className="quick-action-icon orange"><Users size={19} /></span><span><strong>เพิ่มผู้เช่า</strong><small>ทำสัญญาและเข้าพัก</small></span><ChevronRight size={17} /></button>
+      </section>
+      <section className="metric-grid owner-metrics">
+        <Metric label="รายรับเดือนนี้" value={`฿${collected.toLocaleString()}`} delta={`${collectionRate}% ของค่าเช่าที่เรียกเก็บ`} icon={CircleDollarSign} tone="green" />
+        <Metric label="ค้างชำระ" value={`฿${outstanding.toLocaleString()}`} delta="ติดตาม 3 ห้อง" icon={ReceiptText} tone="orange" />
+        <Metric label="ห้องว่าง" value={String(totalRooms - occupied)} delta={`จากทั้งหมด ${totalRooms} ห้อง`} icon={KeyRound} tone="blue" />
+        <Metric label="อัตราเข้าพัก" value={`${occupancy}%`} delta={`${occupied} ห้องมีผู้เช่า`} icon={Building2} tone="violet" />
       </section>
       <section className="dashboard-grid">
         <div className="panel task-panel">
@@ -808,14 +802,16 @@ function CustomerDashboard({
             <button disabled={isLocked} key={label} onClick={() => onNavigate(page as PageKey)}><span>{label}</span><strong>{count}</strong><ChevronRight size={17} /></button>
           ))}
         </div>
-        <div className="panel occupancy-panel">
-          <PanelHeading title="สถานะห้อง" description={`${activeProperty.name} · ทุกอาคาร`} />
-          <div className="occupancy-number"><strong>{occupancy}%</strong><span>อัตราเข้าพัก</span></div>
-          <div className="room-summary">
-            <span><i className="green" />มีผู้เช่า <strong>{occupied}</strong></span>
-            <span><i className="gray" />ว่าง <strong>{totalRooms - occupied}</strong></span>
+        <div className="panel owner-finance-panel">
+          <PanelHeading title="สรุปรายรับเดือนนี้" description="เทียบกับยอดที่ควรเรียกเก็บ" action="ดูรายงาน" onAction={() => onNavigate("reports")} />
+          <div className="owner-finance-summary">
+            <span><small>รับแล้ว</small><strong>฿{collected.toLocaleString()}</strong></span>
+            <span><small>เป้าหมาย</small><strong>฿{monthlyRent.toLocaleString()}</strong></span>
           </div>
-        </div>
+          <div className="collection-progress" aria-label={`เก็บค่าเช่าแล้ว ${collectionRate} เปอร์เซ็นต์`}><i style={{ width: `${collectionRate}%` }} /></div>
+          <div className="owner-finance-note"><CalendarDays size={17} /><span><strong>รอบบิลเดือนสิงหาคม</strong><small>ครบกำหนดชำระวันที่ {activeProperty.settings.dueDay}</small></span></div>
+          <button className="owner-outstanding-link" onClick={() => onNavigate("receivables")}><span>ยอดที่ต้องติดตาม</span><strong>฿{outstanding.toLocaleString()}</strong><ChevronRight size={17} /></button>
+          </div>
       </section>
     </>
   );
