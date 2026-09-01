@@ -11,20 +11,35 @@ import {
   BookOpenCheck,
   Building2,
   CalendarDays,
+  CalendarCheck,
+  CalendarClock,
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
+  CreditCard,
+  Banknote,
+  DoorOpen,
+  Droplets,
+  Eye,
+  FilePlus,
   FileText,
   Gauge,
   KeyRound,
   LayoutDashboard,
+  LayoutGrid,
+  ListFilter,
   LockKeyhole,
   LogOut,
+  Mail,
+  MapPin,
   Menu,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
+  Phone,
   Plus,
+  Printer,
   ReceiptText,
   RotateCcw,
   Search,
@@ -32,6 +47,8 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Trash2,
+  UserRound,
+  UserRoundCheck,
   Users,
   WalletCards,
   X,
@@ -828,88 +845,245 @@ function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany }
   );
 }
 
-function PropertiesPage({ role, isLocked, properties, activeProperty, onSwitchProperty, onAddProperty, onToast }: PageContentProps) {
+function PropertiesPage({ role, isLocked, properties, activeProperty, onSwitchProperty, onAddProperty, onToast, onNavigate }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProperties = properties.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.phone.includes(searchTerm)
+  );
+
   return (
     <>
-      <PageHeader eyebrow="จัดการลูกค้า" title="หอพัก" description={role === "super_admin" ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ" : "หอพักภายในกิจการของคุณ · คลิกเพื่อสลับหอพักที่กำลังจัดการ"}>
+      <PageHeader
+        eyebrow="จัดการลูกค้า"
+        title="หอพัก"
+        description={
+          role === "super_admin"
+            ? "หอพักทั้งหมดในระบบและกิจการที่เป็นเจ้าของ"
+            : "หอพักภายในกิจการของคุณ · คลิกเพื่อสลับหอพักที่กำลังจัดการ"
+        }
+      >
         <button disabled={isLocked} className="button primary" onClick={onAddProperty}>
           <Plus size={17} /> เพิ่มหอพักใหม่
         </button>
       </PageHeader>
+
       <div className="meter-summary-bar">
         <span><strong>หอพักทั้งหมด</strong>{properties.length} แห่ง</span>
         <span><strong>หอพักที่เลือกอยู่</strong>{activeProperty.name}</span>
         <span><strong>ห้องพักรวม</strong>{properties.reduce((s, p) => s + p.rooms.length, 0)} ห้อง</span>
         <span><strong>ผู้เช่ารวม</strong>{properties.reduce((s, p) => s + p.contracts.filter(c => c.status === "active").length, 0)} คน</span>
       </div>
-      <section className="panel table-panel">
-        <div className="responsive-table">
-          <table>
-            <thead>
-              <tr>
-                <th>ชื่อหอพัก</th>
-                <th>ที่อยู่</th>
-                <th>เบอร์ติดต่อ</th>
-                <th>จำนวนห้อง</th>
-                <th>ผู้เช่า</th>
-                <th>อัตราค่าไฟ / ค่าน้ำ</th>
-                <th>สถานะ</th>
-                <th style={{ textAlign: "right" }}>การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {properties.map(p => {
-                const isActive = p.id === activeProperty.id;
-                const occupiedCount = p.rooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length;
-                return (
-                  <tr key={p.id} style={isActive ? { background: "#f0f7ff" } : {}}>
-                    <td>
-                      <span className="company-cell">
-                        <i style={{ background: isActive ? "var(--primary)" : "#e2e8f0", color: isActive ? "white" : "var(--ink)" }}>🏢</i>
-                        <span>
-                          <strong>{p.name}</strong>
-                          {isActive && <small style={{ color: "var(--primary)", fontWeight: 600 }}>กำลังใช้งานอยู่</small>}
-                        </span>
-                      </span>
-                    </td>
-                    <td><small>{p.address || "—"}</small></td>
-                    <td>{p.phone || "—"}</td>
-                    <td><strong>{p.rooms.length}</strong> ห้อง</td>
-                    <td><strong>{occupiedCount}</strong> / {p.rooms.length}</td>
-                    <td><small>ไฟ ฿{p.settings.electricRate}/หน่วย · น้ำ ฿{p.settings.waterRate}/ด.</small></td>
-                    <td>
-                      {isActive ? (
-                        <span className="badge success"><i />กำลังใช้งาน</span>
-                      ) : (
-                        <span className="badge neutral"><i />พร้อมใช้งาน</span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {!isActive ? (
-                        <button
-                          className="button secondary"
-                          style={{ fontSize: 12, minHeight: 32, padding: "0 12px" }}
-                          onClick={() => {
-                            onSwitchProperty(p.id);
-                            onToast(`สลับไปยัง "${p.name}" แล้ว`);
-                          }}
-                        >
-                          สลับไปหอนี้
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 12, color: "var(--primary)", fontWeight: 600, paddingRight: 8 }}>✓ หอปัจจุบัน</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาชื่อหอ ที่อยู่ หรือเบอร์โทร..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
         </div>
-      </section>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อหอพัก</th>
+                  <th>ที่อยู่</th>
+                  <th>เบอร์ติดต่อ</th>
+                  <th>จำนวนห้อง</th>
+                  <th>ผู้เช่า</th>
+                  <th>อัตราค่าไฟ / ค่าน้ำ</th>
+                  <th>สถานะ</th>
+                  <th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProperties.map((p) => {
+                  const isActive = p.id === activeProperty.id;
+                  const occupiedCount = p.rooms.filter((r) => r.tenant && r.tenant !== "(ว่าง)").length;
+                  return (
+                    <tr key={p.id} style={isActive ? { background: "#f0f7ff" } : {}}>
+                      <td>
+                        <span className="company-cell">
+                          <i style={{ background: isActive ? "var(--primary)" : "#e2e8f0", color: isActive ? "white" : "var(--ink)" }}>🏢</i>
+                          <span>
+                            <strong>{p.name}</strong>
+                            {isActive && <small style={{ color: "var(--primary)", fontWeight: 600 }}>กำลังใช้งานอยู่</small>}
+                          </span>
+                        </span>
+                      </td>
+                      <td><small>{p.address || "—"}</small></td>
+                      <td>{p.phone || "—"}</td>
+                      <td><strong>{p.rooms.length}</strong> ห้อง</td>
+                      <td><strong>{occupiedCount}</strong> / {p.rooms.length}</td>
+                      <td><small>ไฟ ฿{p.settings.electricRate}/หน่วย · น้ำ ฿{p.settings.waterRate}/ด.</small></td>
+                      <td>
+                        {isActive ? (
+                          <span className="badge success"><i />กำลังใช้งาน</span>
+                        ) : (
+                          <span className="badge neutral"><i />พร้อมใช้งาน</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        {!isActive ? (
+                          <button
+                            className="button secondary"
+                            style={{ fontSize: 12, minHeight: 32, padding: "0 12px" }}
+                            onClick={() => {
+                              onSwitchProperty(p.id);
+                              onToast(`สลับไปยัง "${p.name}" แล้ว`);
+                            }}
+                          >
+                            สลับไปหอนี้
+                          </button>
+                        ) : (
+                          <button
+                            className="button secondary"
+                            style={{ fontSize: 12, minHeight: 32, padding: "0 12px" }}
+                            onClick={() => onNavigate("rooms")}
+                          >
+                            ดูห้องพัก
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <div className="portal-dormitory-grid">
+          {filteredProperties.map((p) => {
+            const isActive = p.id === activeProperty.id;
+            const occupiedCount = p.rooms.filter((r) => r.tenant && r.tenant !== "(ว่าง)").length;
+            const vacantCount = p.rooms.length - occupiedCount;
+
+            return (
+              <article className="portal-dormitory-card" key={p.id}>
+                <header>
+                  <span>
+                    <Building2 aria-hidden="true" size={20} />
+                  </span>
+                  <div>
+                    <h2>{p.name}</h2>
+                    {isActive ? (
+                      <span className="badge success" style={{ alignSelf: "flex-start", marginTop: 4 }}>
+                        <i /> กำลังใช้งาน
+                      </span>
+                    ) : (
+                      <span className="badge neutral" style={{ alignSelf: "flex-start", marginTop: 4 }}>
+                        <i /> พร้อมใช้งาน
+                      </span>
+                    )}
+                  </div>
+                </header>
+
+                <div className="portal-dormitory-contact">
+                  <p>
+                    <MapPin aria-hidden="true" size={15} />
+                    <span>{p.address || "123 ถ.กาญจนวนิช อ.หาดใหญ่ จ.สงขลา"}</span>
+                  </p>
+                  <p>
+                    <Phone aria-hidden="true" size={15} />
+                    <span>{p.phone || "074-200-001"}</span>
+                  </p>
+                </div>
+
+                <dl>
+                  <div>
+                    <dt>ห้องทั้งหมด</dt>
+                    <dd>{p.rooms.length}</dd>
+                  </div>
+                  <div>
+                    <dt>ห้องว่าง</dt>
+                    <dd style={{ color: "#1d4ed8" }}>{vacantCount}</dd>
+                  </div>
+                  <div>
+                    <dt>มีผู้เช่า</dt>
+                    <dd style={{ color: "#0d9488" }}>{occupiedCount}</dd>
+                  </div>
+                </dl>
+
+                <footer className="portal-dormitory-card-footer">
+                  <div className="portal-lease-card-actions-grid">
+                    <button
+                      className="portal-lease-card-btn view"
+                      onClick={() => {
+                        if (!isActive) onSwitchProperty(p.id);
+                        onNavigate("rooms");
+                      }}
+                      title="ดูห้องพัก"
+                      type="button"
+                    >
+                      <DoorOpen size={15} />
+                      <span>จัดการห้องพัก ({p.rooms.length})</span>
+                    </button>
+                    {!isActive ? (
+                      <button
+                        className="portal-lease-card-btn edit"
+                        onClick={() => {
+                          onSwitchProperty(p.id);
+                          onToast(`สลับไปยัง "${p.name}" แล้ว`);
+                        }}
+                        title="สลับไปหอนี้"
+                        type="button"
+                      >
+                        <ShieldCheck size={15} />
+                        <span>สลับไปหอนี้</span>
+                      </button>
+                    ) : (
+                      <button
+                        className="portal-lease-card-btn edit"
+                        onClick={() => onNavigate("settings")}
+                        title="ตั้งค่าหอนี้"
+                        type="button"
+                      >
+                        <Settings size={15} />
+                        <span>ตั้งค่าหอนี้</span>
+                      </button>
+                    )}
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
+
 
 
 function UsersPage({ isLocked, onToast }: PageContentProps) {
@@ -944,13 +1118,22 @@ function LinePage({ role, lineEnabled, onLineChange, onToast, isLocked }: PageCo
   return <><PageHeader eyebrow="บริการเสริม" title="LINE แจ้งเตือน" description={role === "super_admin" ? "จัดการสถานะบริการ LINE ของกิจการต่าง ๆ" : "ส่งและติดตามข้อความถึงผู้เช่าผ่าน LINE"}><button disabled={isLocked} className="button primary" onClick={() => collection.addItem([`ข้อความ Demo ${collection.items.length + 1}`, "ผู้เช่า 1 คน", "วันนี้", "ฉบับร่าง"])}><Plus size={17} /> สร้างข้อความ</button></PageHeader><div className="integration-banner"><span className="line-mark"><MessageCircle size={22} /></span><span><strong>LINE Official Account เชื่อมต่อแล้ว</strong><small>@somchaimansion · อัปเดตล่าสุด 2 นาทีที่แล้ว</small></span><span className="badge success">พร้อมใช้งาน</span></div><SimpleTable headers={["แคมเปญ", "ผู้รับ", "วันที่ส่ง", "ผลลัพธ์"]} rows={collection.items} onDelete={collection.removeItem} disableDelete={isLocked} /></>;
 }
 
-function RoomsPage({ isLocked, onToast, meterRooms, activeProperty, onAddRoom }: PageContentProps) {
+function RoomsPage({ isLocked, onToast, onNavigate, meterRooms, activeProperty, onAddRoom }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [occupancy, setOccupancy] = useState("");
   const [showAddRoom, setShowAddRoom] = useState(false);
-  const roomRows = meterRooms.map((room) => [room.number, room.tenant, room.tenant === "(ว่าง)" ? "ว่าง" : "มีผู้เช่า"]);
-  const visibleRoomNumbers = new Set((filterRows(roomRows, searchTerm, [{ column: 2, value: occupancy }]) as string[][]).map((row) => row[0]));
+
+  const roomRows = meterRooms.map((room) => [
+    room.number,
+    room.tenant,
+    room.tenant === "(ว่าง)" ? "ว่าง" : "มีผู้เช่า",
+  ]);
+  const visibleRoomNumbers = new Set(
+    (filterRows(roomRows, searchTerm, [{ column: 2, value: occupancy }]) as string[][]).map((row) => row[0])
+  );
   const visibleRooms = meterRooms.filter((room) => visibleRoomNumbers.has(room.number));
+
   return (
     <>
       <PageHeader
@@ -966,37 +1149,200 @@ function RoomsPage({ isLocked, onToast, meterRooms, activeProperty, onAddRoom }:
           <Plus size={17} /> เพิ่มห้อง
         </button>
       </PageHeader>
+
       <div className="meter-summary-bar">
         <span><strong>หอพัก</strong>{activeProperty.name}</span>
         <span><strong>ห้องทั้งหมด</strong>{meterRooms.length} ห้อง</span>
         <span><strong>มีผู้เช่า</strong>{meterRooms.filter(r => r.tenant && r.tenant !== "(ว่าง)").length} ห้อง</span>
         <span><strong>ว่าง</strong>{meterRooms.filter(r => !r.tenant || r.tenant === "(ว่าง)").length} ห้อง</span>
       </div>
-      <FilterBar
-        placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า"
-        value={searchTerm}
-        onSearchChange={setSearchTerm}
-        filters={[{ label: "ทุกสถานะ", options: ["มีผู้เช่า", "ว่าง"], value: occupancy, onChange: setOccupancy }]}
-      />
-      <section className="room-grid">
-        {visibleRooms.map((room) => {
-          const isVacant = !room.tenant || room.tenant === "(ว่าง)";
-          const status = isVacant ? "vacant" : "occupied";
-          return (
-            <article className={`room-card ${status}`} key={room.number}>
-              <span>
-                <strong>{room.number}</strong>
-                <i />
-              </span>
-              <small>{room.tenant || "พร้อมรับผู้เช่า"}</small>
-              <em>{isVacant ? "ว่าง" : `฿${room.rent.toLocaleString()}/ด.`}</em>
-              <span style={{ fontSize: 11, color: "var(--muted)", marginTop: 6, display: "block" }}>
-                {isVacant ? "ไม่มีสัญญา" : `สัญญาถึง ${room.contractEnd || "—"}`}
-              </span>
-            </article>
-          );
-        })}
-      </section>
+
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <select value={occupancy} onChange={(e) => setOccupancy(e.target.value)}>
+          <option value="">ทุกสถานะ</option>
+          <option value="มีผู้เช่า">มีผู้เช่า</option>
+          <option value="ว่าง">ห้องว่าง</option>
+        </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ห้องพัก</th>
+                  <th>ผู้เช่าปัจจุบัน</th>
+                  <th>ค่าเช่าต่อเดือน</th>
+                  <th>ระยะเวลาสัญญา</th>
+                  <th>สถานะ</th>
+                  <th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleRooms.map((room) => {
+                  const isVacant = !room.tenant || room.tenant === "(ว่าง)";
+                  return (
+                    <tr key={room.number}>
+                      <td>
+                        <span className="portal-lease-room-pill" style={{ margin: 0 }}>
+                          {room.number}
+                        </span>
+                      </td>
+                      <td>
+                        <strong>{isVacant ? "— (ว่าง)" : room.tenant}</strong>
+                      </td>
+                      <td>฿{room.rent.toLocaleString()}/ด.</td>
+                      <td>
+                        <small>{isVacant ? "ไม่มีสัญญา" : `สัญญาถึง ${room.contractEnd || "—"}`}</small>
+                      </td>
+                      <td>
+                        {isVacant ? (
+                          <span className="badge info"><i />ห้องว่าง</span>
+                        ) : (
+                          <span className="badge success"><i />มีผู้เช่า</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        <div className="portal-table-actions-cell">
+                          <button
+                            className="portal-table-action-btn view"
+                            onClick={() => onNavigate("contracts")}
+                            title={isVacant ? "ทำสัญญาใหม่" : "ดูสัญญาเช่า"}
+                            type="button"
+                          >
+                            <FileText size={13} />
+                            <span>{isVacant ? "ทำสัญญา" : "ดูสัญญา"}</span>
+                          </button>
+                          <button
+                            className="portal-table-action-btn edit"
+                            onClick={() => onNavigate("meters")}
+                            title="บันทึกมิเตอร์"
+                            type="button"
+                          >
+                            <Zap size={13} />
+                            <span>มิเตอร์</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <div className="portal-room-grid">
+          {visibleRooms.map((room) => {
+            const isVacant = !room.tenant || room.tenant === "(ว่าง)";
+            const status = isVacant ? "vacant" : "occupied";
+            return (
+              <article className="portal-room-card" data-status={status} key={room.number}>
+                <header>
+                  <div>
+                    <span>ห้อง</span>
+                    <strong>{room.number}</strong>
+                  </div>
+                  {isVacant ? (
+                    <span className="badge info"><i />ห้องว่าง</span>
+                  ) : (
+                    <span className="badge success"><i />มีผู้เช่า</span>
+                  )}
+                </header>
+
+                <dl>
+                  <div>
+                    <dt>ชั้น</dt>
+                    <dd>{room.number.length >= 3 ? `ชั้น ${room.number[0]}` : "ชั้น 1"}</dd>
+                  </div>
+                  <div>
+                    <dt>ค่าเช่าต่อเดือน</dt>
+                    <dd>฿{room.rent.toLocaleString()}</dd>
+                  </div>
+                </dl>
+
+                <div className="portal-room-tenant-strip">
+                  {!isVacant ? (
+                    <div>
+                      <UserRound size={14} />
+                      <span>
+                        <strong>{room.tenant}</strong>
+                        <small> · สัญญาถึง {room.contractEnd || "—"}</small>
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="vacant-note">ห้องว่าง พร้อมทำสัญญาเช่า</span>
+                  )}
+                </div>
+
+                <footer className="portal-room-card-footer">
+                  <div className="portal-lease-card-actions-grid">
+                    {isVacant ? (
+                      <button
+                        className="portal-lease-card-btn view"
+                        onClick={() => onNavigate("contracts")}
+                        title="ทำสัญญาเช่า"
+                        type="button"
+                      >
+                        <FilePlus size={14} />
+                        <span>ทำสัญญา</span>
+                      </button>
+                    ) : (
+                      <button
+                        className="portal-lease-card-btn view"
+                        onClick={() => onNavigate("contracts")}
+                        title="ดูสัญญาเช่า"
+                        type="button"
+                      >
+                        <FileText size={14} />
+                        <span>ดูสัญญา</span>
+                      </button>
+                    )}
+                    <button
+                      className="portal-lease-card-btn edit"
+                      onClick={() => onNavigate("meters")}
+                      title="บันทึกมิเตอร์"
+                      type="button"
+                    >
+                      <Zap size={14} />
+                      <span>มิเตอร์</span>
+                    </button>
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </div>
+      )}
       {visibleRooms.length === 0 ? <EmptyState message="ไม่พบห้องพักที่ตรงกับการค้นหา" /> : null}
       {showAddRoom ? <AddRoomModal existingRooms={meterRooms} onClose={() => setShowAddRoom(false)} onSave={(room) => { onAddRoom(room); setShowAddRoom(false); }} onToast={onToast} /> : null}
     </>
@@ -1013,7 +1359,8 @@ function AuditPage() {
 // ───────────────────────────────────────────────
 // ผู้เช่า
 // ───────────────────────────────────────────────
-function TenantsPage({ isLocked, onToast }: PageContentProps) {
+function TenantsPage({ isLocked, onToast, onNavigate }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const initialRows = [
     ["สมชาย ใจดี", "101", "1 ม.ค. 2568", "31 ธ.ค. 2568", "฿4,500", "อยู่ระหว่างเช่า"],
     ["อารยา พรดี", "102", "15 ก.พ. 2568", "14 ก.พ. 2569", "฿4,500", "อยู่ระหว่างเช่า"],
@@ -1027,6 +1374,7 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState("");
   const visibleRows = filterRows(collection.items, searchTerm, [{ column: 5, value: status }]) as string[][];
+
   return (
     <>
       <PageHeader eyebrow="จัดการหอพัก" title="ผู้เช่า" description="รายชื่อผู้เช่าทั้งหมดพร้อมข้อมูลสัญญาและสถานะ">
@@ -1034,13 +1382,199 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
           <Plus size={17} /> เพิ่มผู้เช่า
         </button>
       </PageHeader>
-      <FilterBar placeholder="ค้นหาชื่อผู้เช่า หรือเลขห้อง" value={searchTerm} onSearchChange={setSearchTerm} filters={[{ label: "ทุกสถานะ", options: ["อยู่ระหว่างเช่า", "สัญญาหมด", "รอทำสัญญา"], value: status, onChange: setStatus }]} />
-      <SimpleTable
-        headers={["ผู้เช่า", "ห้อง", "วันเข้าพัก", "วันหมดสัญญา", "ค่าเช่า/เดือน", "สถานะ"]}
-        rows={visibleRows}
-        onDelete={(index) => collection.removeItem(collection.items.indexOf(visibleRows[index]))}
-        disableDelete={isLocked}
-      />
+
+      <div className="meter-summary-bar">
+        <span><strong>ผู้เช่าทั้งหมด</strong>{collection.items.length} คน</span>
+        <span><strong>อยู่ระหว่างเช่า</strong>{collection.items.filter(r => r[5] === "อยู่ระหว่างเช่า").length} คน</span>
+        <span><strong>สัญญาหมด</strong>{collection.items.filter(r => r[5] === "สัญญาหมด").length} คน</span>
+      </div>
+
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาชื่อผู้เช่า หรือเลขห้อง..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">ทุกสถานะ</option>
+          <option value="อยู่ระหว่างเช่า">อยู่ระหว่างเช่า</option>
+          <option value="สัญญาหมด">สัญญาหมด</option>
+          <option value="รอทำสัญญา">รอทำสัญญา</option>
+        </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ผู้เช่า</th>
+                  <th>ห้อง</th>
+                  <th>วันเข้าพัก</th>
+                  <th>วันหมดสัญญา</th>
+                  <th>ค่าเช่า/เดือน</th>
+                  <th>สถานะ</th>
+                  <th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleRows.map((item, idx) => (
+                  <tr key={`${item[0]}-${idx}`}>
+                    <td>
+                      <span className="company-cell">
+                        <i>{item[0].charAt(0)}</i>
+                        <span>
+                          <strong>{item[0]}</strong>
+                          <small>081-{String(1000000 + idx * 111111).slice(-7)}</small>
+                        </span>
+                      </span>
+                    </td>
+                    <td>
+                      <span className="portal-lease-room-pill" style={{ margin: 0 }}>
+                        {item[1]}
+                      </span>
+                    </td>
+                    <td>{item[2]}</td>
+                    <td>{item[3]}</td>
+                    <td><strong>{item[4]}</strong></td>
+                    <td>
+                      {item[5] === "อยู่ระหว่างเช่า" ? (
+                        <span className="badge success"><i />{item[5]}</span>
+                      ) : (
+                        <span className="badge neutral"><i />{item[5]}</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div className="portal-table-actions-cell">
+                        <button
+                          className="portal-table-action-btn account"
+                          onClick={() => onToast(`เปิดหน้าจัดการบัญชีสำหรับคุณ "${item[0]}" แล้ว`)}
+                          title="จัดการบัญชีผู้เช่า"
+                          type="button"
+                        >
+                          <UserRoundCheck size={13} />
+                          <span>บัญชี</span>
+                        </button>
+                        <button
+                          className="portal-table-action-btn view"
+                          onClick={() => onNavigate("contracts")}
+                          title="ดูสัญญาเช่า"
+                          type="button"
+                        >
+                          <FileText size={13} />
+                          <span>ดูสัญญา</span>
+                        </button>
+                        <button
+                          className="portal-table-action-btn delete"
+                          disabled={isLocked}
+                          onClick={() => collection.removeItem(collection.items.indexOf(item))}
+                          title="ลบข้อมูลผู้เช่า"
+                          type="button"
+                        >
+                          <Trash2 size={13} />
+                          <span>ลบ</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {visibleRows.map((item, idx) => {
+            const isRenting = item[5] === "อยู่ระหว่างเช่า";
+            return (
+              <article className="portal-record-card" key={`${item[0]}-${idx}`}>
+                <header>
+                  <span className="portal-record-icon">
+                    <UserRound aria-hidden="true" size={20} />
+                  </span>
+                  <div>
+                    <h2>{item[0]}</h2>
+                    <small>ห้อง {item[1]} · บัตรประชาชน •••• {String(1000 + idx).slice(-4)}</small>
+                  </div>
+                  {isRenting ? (
+                    <span className="badge success"><i />{item[5]}</span>
+                  ) : (
+                    <span className="badge neutral"><i />{item[5]}</span>
+                  )}
+                </header>
+
+                <div className="portal-record-details">
+                  <p>
+                    <Phone aria-hidden="true" size={15} />
+                    <span>081-{String(1000000 + idx * 111111).slice(-7)}</span>
+                  </p>
+                  <p>
+                    <CalendarDays aria-hidden="true" size={15} />
+                    <span>สัญญา: {item[2]} ถึง {item[3]}</span>
+                  </p>
+                  <p>
+                    <WalletCards aria-hidden="true" size={15} />
+                    <span>ค่าเช่า <strong>{item[4]}</strong> / เดือน</span>
+                  </p>
+                </div>
+
+                <footer className="portal-lease-card-footer">
+                  <div className="portal-lease-card-meta-row">
+                    <span>
+                      <UserRoundCheck size={13} style={{ display: "inline", marginRight: 4 }} />
+                      บัญชี Tenant Portal: พร้อมใช้งาน
+                    </span>
+                  </div>
+                  <div className="portal-lease-card-actions-grid">
+                    <button
+                      className="portal-lease-card-btn account"
+                      onClick={() => onToast(`เปิดหน้าจัดการบัญชีสำหรับคุณ "${item[0]}" แล้ว`)}
+                      title="จัดการบัญชีผู้เช่า"
+                      type="button"
+                    >
+                      <UserRoundCheck size={15} />
+                      <span>จัดการบัญชี</span>
+                    </button>
+                    <button
+                      className="portal-lease-card-btn view"
+                      onClick={() => onNavigate("contracts")}
+                      title="ดูสัญญาเช่า"
+                      type="button"
+                    >
+                      <FileText size={15} />
+                      <span>ดูสัญญา</span>
+                    </button>
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </section>
+      )}
     </>
   );
 }
@@ -1049,6 +1583,7 @@ function TenantsPage({ isLocked, onToast }: PageContentProps) {
 // สัญญาเช่า
 // ───────────────────────────────────────────────
 function ContractsPage({ isLocked, contracts, onViewContract, onEditContract, onDeleteContract }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -1114,110 +1649,250 @@ function ContractsPage({ isLocked, contracts, onViewContract, onEditContract, on
           <option value="draft">ร่างสัญญา</option>
           <option value="expired">หมดอายุ</option>
         </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
+        </div>
       </div>
 
-      <section className="panel table-panel">
-        <div className="responsive-table">
-          <table>
-            <thead>
-              <tr>
-                <th>เลขที่สัญญา</th>
-                <th>ห้อง / ผู้เช่า</th>
-                <th>ระยะเวลาสัญญา</th>
-                <th>ค่าเช่า / ประกัน</th>
-                <th>ข้อตกลงพิเศษ</th>
-                <th>สถานะ</th>
-                <th style={{ textAlign: "right", paddingRight: 16 }}>การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContracts.length === 0 ? (
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "32px 0", color: "var(--muted)" }}>
-                    ไม่พบรายการสัญญาที่ตรงกับการค้นหา
-                  </td>
+                  <th>เลขที่สัญญา</th>
+                  <th>ห้อง / ผู้เช่า</th>
+                  <th>ระยะเวลาสัญญา</th>
+                  <th>ค่าเช่า / ประกัน</th>
+                  <th>ข้อตกลงพิเศษ</th>
+                  <th>สถานะ</th>
+                  <th style={{ textAlign: "right", paddingRight: 16 }}>การจัดการ</th>
                 </tr>
-              ) : (
-                filteredContracts.map((contract) => (
-                  <tr key={contract.id}>
-                    <td><strong>{contract.id}</strong></td>
-                    <td>
-                      <span className="company-cell">
-                        <i>{contract.roomNumber}</i>
-                        <span>
-                          <strong>{contract.tenantName || "—"}</strong>
-                          <small>โทร. {contract.tenantPhone || "—"}</small>
-                        </span>
-                      </span>
-                    </td>
-                    <td>
-                      <div>
-                        <strong>{contract.startDate}</strong>
-                        <small style={{ display: "block", color: "var(--muted)" }}>ถึง {contract.endDate}</small>
-                      </div>
-                    </td>
-                    <td>
-                      <div>
-                        <strong>฿{contract.rent.toLocaleString()}</strong>/ด.
-                        <small style={{ display: "block", color: "var(--muted)" }}>ประกัน ฿{contract.deposit.toLocaleString()}</small>
-                      </div>
-                    </td>
-                    <td style={{ maxWidth: 200, fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {contract.customClauses || "—"}
-                    </td>
-                    <td>
-                      {contract.status === "active" ? (
-                        <span className="badge success"><i />มีผลอยู่</span>
-                      ) : contract.status === "draft" ? (
-                        <span className="badge info"><i />ร่าง</span>
-                      ) : (
-                        <span className="badge neutral"><i />หมดอายุ</span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button
-                        className="button secondary"
-                        style={{ fontSize: 12, minHeight: 32, padding: "0 10px", marginRight: 6 }}
-                        onClick={() => onViewContract(contract)}
-                        title="ดูสัญญาทางการ (PDF / พิมพ์)"
-                      >
-                        📄 ดูสัญญา
-                      </button>
-                      <button
-                        className="button secondary"
-                        disabled={isLocked}
-                        style={{ fontSize: 12, minHeight: 32, padding: "0 10px", marginRight: 6 }}
-                        onClick={() => onEditContract(contract)}
-                        title="แก้ไขข้อมูลสัญญา"
-                      >
-                        ✏️ แก้ไข
-                      </button>
-                      <button
-                        className="icon-button delete-button"
-                        disabled={isLocked}
-                        style={{ verticalAlign: "middle" }}
-                        onClick={() => onDeleteContract(contract.id)}
-                        title="ลบสัญญา"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+              </thead>
+              <tbody>
+                {filteredContracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center", padding: "32px 0", color: "var(--muted)" }}>
+                      ไม่พบรายการสัญญาที่ตรงกับการค้นหา
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                ) : (
+                  filteredContracts.map((contract) => (
+                    <tr key={contract.id}>
+                      <td><strong>{contract.id}</strong></td>
+                      <td>
+                        <span className="company-cell">
+                          <i>{contract.roomNumber}</i>
+                          <span>
+                            <strong>{contract.tenantName || "—"}</strong>
+                            <small>โทร. {contract.tenantPhone || "—"}</small>
+                          </span>
+                        </span>
+                      </td>
+                      <td>
+                        <div>
+                          <strong>{contract.startDate}</strong>
+                          <small style={{ display: "block", color: "var(--muted)" }}>ถึง {contract.endDate}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <strong>฿{contract.rent.toLocaleString()}</strong>/ด.
+                          <small style={{ display: "block", color: "var(--muted)" }}>ประกัน ฿{contract.deposit.toLocaleString()}</small>
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: 200, fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {contract.customClauses || "—"}
+                      </td>
+                      <td>
+                        {contract.status === "active" ? (
+                          <span className="badge success"><i />มีผลอยู่</span>
+                        ) : contract.status === "draft" ? (
+                          <span className="badge info"><i />ร่าง</span>
+                        ) : (
+                          <span className="badge neutral"><i />หมดอายุ</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        <div className="portal-table-actions-cell">
+                          <button
+                            className="portal-table-action-btn view"
+                            onClick={() => onViewContract(contract)}
+                            title="ดูสัญญาทางการ"
+                            type="button"
+                          >
+                            <FileText size={13} />
+                            <span>ดูสัญญา</span>
+                          </button>
+                          <button
+                            className="portal-table-action-btn print"
+                            onClick={() => {
+                              onViewContract(contract);
+                              setTimeout(() => window.print(), 150);
+                            }}
+                            title="พิมพ์สัญญา A4"
+                            type="button"
+                          >
+                            <Printer size={13} />
+                            <span>พิมพ์ A4</span>
+                          </button>
+                          <button
+                            className="portal-table-action-btn edit"
+                            disabled={isLocked}
+                            onClick={() => onEditContract(contract)}
+                            title="แก้ไขข้อมูลสัญญา"
+                            type="button"
+                          >
+                            <Pencil size={13} />
+                            <span>แก้ไข</span>
+                          </button>
+                          <button
+                            className="portal-table-action-btn delete"
+                            disabled={isLocked}
+                            onClick={() => onDeleteContract(contract.id)}
+                            title="ลบสัญญา"
+                            type="button"
+                          >
+                            <Trash2 size={13} />
+                            <span>ลบ</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {filteredContracts.map((contract) => (
+            <article className="portal-lease-card" key={contract.id}>
+              <header className="portal-lease-card-header">
+                <div>
+                  <span className="portal-lease-room-pill">{contract.roomNumber}</span>
+                  <div className="portal-lease-card-title">
+                    <strong>{contract.id}</strong>
+                    <small>ห้อง {contract.roomNumber}</small>
+                  </div>
+                </div>
+                {contract.status === "active" ? (
+                  <span className="badge success"><i />มีผลอยู่</span>
+                ) : contract.status === "draft" ? (
+                  <span className="badge info"><i />ร่าง</span>
+                ) : (
+                  <span className="badge neutral"><i />หมดอายุ</span>
+                )}
+              </header>
+
+              <div className="portal-lease-card-tenant">
+                <div className="portal-lease-card-tenant-info">
+                  <strong>{contract.tenantName || "—"}</strong>
+                  <small>โทร. {contract.tenantPhone || "—"}</small>
+                </div>
+              </div>
+
+              <dl className="portal-lease-card-metrics">
+                <div>
+                  <dt>ค่าเช่าต่อเดือน</dt>
+                  <dd>฿{contract.rent.toLocaleString()}</dd>
+                </div>
+                <div>
+                  <dt>เงินประกัน</dt>
+                  <dd>฿{contract.deposit.toLocaleString()}</dd>
+                </div>
+                <div style={{ gridColumn: "span 2" }}>
+                  <dt>ระยะเวลาสัญญา</dt>
+                  <dd>{contract.startDate} ถึง {contract.endDate}</dd>
+                </div>
+              </dl>
+
+              <footer className="portal-lease-card-footer">
+                <div className="portal-lease-card-meta-row">
+                  <span>ข้อตกลง: {contract.customClauses || "ตามระเบียบอาคาร"}</span>
+                </div>
+                <div className="portal-lease-card-actions-grid">
+                  <button
+                    className="portal-lease-card-btn view"
+                    onClick={() => onViewContract(contract)}
+                    title="ดูสัญญาเช่า"
+                    type="button"
+                  >
+                    <FileText size={15} />
+                    <span>ดูสัญญา</span>
+                  </button>
+                  <button
+                    className="portal-lease-card-btn print"
+                    onClick={() => {
+                      onViewContract(contract);
+                      setTimeout(() => window.print(), 150);
+                    }}
+                    title="พิมพ์สัญญา A4"
+                    type="button"
+                  >
+                    <Printer size={15} />
+                    <span>พิมพ์ A4</span>
+                  </button>
+                  <button
+                    className="portal-lease-card-btn edit"
+                    disabled={isLocked}
+                    onClick={() => onEditContract(contract)}
+                    title="แก้ไขสัญญา"
+                    type="button"
+                  >
+                    <Pencil size={15} />
+                    <span>แก้ไข</span>
+                  </button>
+                  <button
+                    className="portal-lease-card-btn delete"
+                    disabled={isLocked}
+                    onClick={() => onDeleteContract(contract.id)}
+                    title="ลบสัญญา"
+                    type="button"
+                  >
+                    <Trash2 size={15} />
+                    <span>ลบ</span>
+                  </button>
+                </div>
+              </footer>
+            </article>
+          ))}
+        </section>
+      )}
     </>
   );
 }
-
-// ───────────────────────────────────────────────
-// มิเตอร์ — จดได้จริง คำนวณอัตโนมัติ
-// ───────────────────────────────────────────────
 function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, appSettings }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterState, setFilterState] = useState("all");
+
   const billableRooms = meterRooms.filter((room) => room.tenant && room.tenant !== "(ว่าง)");
+  const filteredRooms = billableRooms.filter((r) => {
+    const matchesSearch = r.number.includes(searchTerm) || r.tenant.toLowerCase().includes(searchTerm.toLowerCase());
+    const isDone = r.newElec !== null && r.newElec >= r.prevElec;
+    const matchesFilter = filterState === "all" || (filterState === "done" ? isDone : !isDone);
+    return matchesSearch && matchesFilter;
+  });
+
   const doneCount = billableRooms.filter(r => r.newElec !== null && r.newElec >= r.prevElec).length;
   const allDone = doneCount === billableRooms.length;
   const totalElec = billableRooms.reduce((s, r) => {
@@ -1248,81 +1923,217 @@ function MetersPage({ isLocked, onToast, onNavigate, meterRooms, onMeterChange, 
         <span><strong>ค่าไฟรวม</strong>฿{totalElec.toFixed(2)}</span>
         <span><strong>ค่าน้ำรวม</strong>฿{(billableRooms.length * appSettings.waterRate).toFixed(2)}</span>
       </div>
-      <section className="panel table-panel">
-        <div className="responsive-table">
-          <table>
-            <thead>
-              <tr>
-                <th>ห้อง / ผู้เช่า</th>
-                <th>มิเตอร์เก่า</th>
-                <th>มิเตอร์ใหม่</th>
-                <th>หน่วยใช้</th>
-                <th>ค่าไฟ ({appSettings.electricRate} ฿/หน่วย)</th>
-                <th>ค่าน้ำ</th>
-                <th>รวมสาธารณูปโภค</th>
-                <th>สถานะ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {billableRooms.map(room => {
-                const units = room.newElec !== null ? room.newElec - room.prevElec : null;
-                const valid = units === null || units >= 0;
-                const elecCost = (valid && units !== null) ? units * appSettings.electricRate : null;
-                const total = elecCost !== null ? elecCost + appSettings.waterRate : null;
-                return (
-                  <tr key={room.number} style={room.newElec !== null && valid ? { background: "#f6fef9" } : {}}>
-                    <td>
-                      <span className="company-cell">
-                        <i>{room.number}</i>
-                        <span><strong>{room.tenant}</strong><small>ค่าเช่า ฿{room.rent.toLocaleString()}/เดือน</small></span>
-                      </span>
-                    </td>
-                    <td>{room.prevElec.toLocaleString()}</td>
-                    <td>
-                      <input
-                        className={`meter-input${!valid ? " meter-input-error" : room.newElec !== null ? " meter-input-done" : ""}`}
-                        type="number"
-                        min={room.prevElec}
-                        placeholder="กรอกเลข"
-                        value={room.newElec ?? ""}
-                        disabled={isLocked}
-                        onChange={e => onMeterChange(room.number, e.target.value === "" ? null : Number(e.target.value))}
-                      />
-                    </td>
-                    <td>
-                      {units !== null
-                        ? (valid ? <strong>{units} หน่วย</strong> : <span style={{ color: "var(--red)", fontWeight: 600 }}>❌ ติดลบ</span>)
-                        : <span style={{ color: "var(--subtle)" }}>—</span>}
-                    </td>
-                    <td>{elecCost !== null ? <strong>฿{elecCost.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
-                    <td>฿{appSettings.waterRate.toFixed(2)}</td>
-                    <td>{total !== null ? <strong style={{ color: "var(--primary)" }}>฿{total.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
-                    <td>
-                      {room.newElec !== null && valid
-                        ? <span className="badge success"><i />บันทึกแล้ว</span>
-                        : <span className="badge neutral"><i />รอบันทึก</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาห้องหรือชื่อผู้เช่า..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <select value={filterState} onChange={(e) => setFilterState(e.target.value)}>
+          <option value="all">ทุกสถานะการจด</option>
+          <option value="done">บันทึกแล้ว</option>
+          <option value="pending">รอบันทึก</option>
+        </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
         </div>
-      </section>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ห้อง / ผู้เช่า</th>
+                  <th>มิเตอร์เก่า</th>
+                  <th>มิเตอร์ใหม่</th>
+                  <th>หน่วยใช้</th>
+                  <th>ค่าไฟ ({appSettings.electricRate} ฿/หน่วย)</th>
+                  <th>ค่าน้ำ</th>
+                  <th>รวมสาธารณูปโภค</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRooms.map(room => {
+                  const units = room.newElec !== null ? room.newElec - room.prevElec : null;
+                  const valid = units === null || units >= 0;
+                  const elecCost = (valid && units !== null) ? units * appSettings.electricRate : null;
+                  const total = elecCost !== null ? elecCost + appSettings.waterRate : null;
+                  return (
+                    <tr key={room.number} style={room.newElec !== null && valid ? { background: "#f6fef9" } : {}}>
+                      <td>
+                        <span className="company-cell">
+                          <i>{room.number}</i>
+                          <span><strong>{room.tenant}</strong><small>ค่าเช่า ฿{room.rent.toLocaleString()}/เดือน</small></span>
+                        </span>
+                      </td>
+                      <td>{room.prevElec.toLocaleString()}</td>
+                      <td>
+                        <input
+                          className={`meter-input${!valid ? " meter-input-error" : room.newElec !== null ? " meter-input-done" : ""}`}
+                          type="number"
+                          min={room.prevElec}
+                          placeholder="กรอกเลข"
+                          value={room.newElec ?? ""}
+                          disabled={isLocked}
+                          onChange={e => onMeterChange(room.number, e.target.value === "" ? null : Number(e.target.value))}
+                        />
+                      </td>
+                      <td>
+                        {units !== null
+                          ? (valid ? <strong>{units} หน่วย</strong> : <span style={{ color: "var(--red)", fontWeight: 600 }}>❌ ติดลบ</span>)
+                          : <span style={{ color: "var(--subtle)" }}>—</span>}
+                      </td>
+                      <td>{elecCost !== null ? <strong>฿{elecCost.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
+                      <td>฿{appSettings.waterRate.toFixed(2)}</td>
+                      <td>{total !== null ? <strong style={{ color: "var(--primary)" }}>฿{total.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
+                      <td>
+                        {room.newElec !== null && valid
+                          ? <span className="badge success"><i />บันทึกแล้ว</span>
+                          : <span className="badge neutral"><i />รอบันทึก</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {filteredRooms.map((room) => {
+            const units = room.newElec !== null ? room.newElec - room.prevElec : null;
+            const valid = units === null || units >= 0;
+            const elecCost = (valid && units !== null) ? units * appSettings.electricRate : null;
+            const total = elecCost !== null ? elecCost + appSettings.waterRate : null;
+
+            return (
+              <article className="portal-record-card meter-card" key={room.number}>
+                <header>
+                  <span className="portal-record-icon electric">
+                    <Zap aria-hidden="true" size={20} />
+                  </span>
+                  <div>
+                    <h2>ห้อง {room.number}</h2>
+                    <small>ผู้เช่า: {room.tenant}</small>
+                  </div>
+                  {room.newElec !== null && valid ? (
+                    <span className="badge success"><i />บันทึกแล้ว</span>
+                  ) : (
+                    <span className="badge neutral"><i />รอบันทึก</span>
+                  )}
+                </header>
+
+                <div className="portal-meter-reading">
+                  <div>
+                    <small>ครั้งก่อน</small>
+                    <strong>{room.prevElec.toLocaleString()}</strong>
+                  </div>
+                  <span>
+                    <Gauge aria-hidden="true" size={17} />
+                    {units !== null && valid ? `${units} หน่วย` : "รอจด"}
+                  </span>
+                  <div>
+                    <small>ครั้งนี้</small>
+                    <input
+                      style={{
+                        width: 90,
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                        border: "1px solid #cbd5e1",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        textAlign: "center",
+                      }}
+                      type="number"
+                      min={room.prevElec}
+                      placeholder="กรอกเลข"
+                      value={room.newElec ?? ""}
+                      disabled={isLocked}
+                      onChange={(e) => onMeterChange(room.number, e.target.value === "" ? null : Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                <footer className="portal-lease-card-footer">
+                  <div className="portal-lease-card-meta-row">
+                    <span>
+                      ค่าไฟ: <strong>{elecCost !== null ? `฿${elecCost.toFixed(2)}` : "—"}</strong> · ค่าน้ำ: <strong>฿{appSettings.waterRate.toFixed(2)}</strong>
+                    </span>
+                  </div>
+                  <div className="portal-lease-card-actions-grid">
+                    <button
+                      className="portal-lease-card-btn view"
+                      onClick={() => onNavigate("invoices")}
+                      title="ดูใบแจ้งหนี้"
+                      type="button"
+                    >
+                      <FileText size={15} />
+                      <span>ดูบิลห้องนี้</span>
+                    </button>
+                    <button
+                      className="portal-lease-card-btn edit"
+                      onClick={() => onToast(`บันทึกมิเตอร์ห้อง ${room.number} เรียบร้อยแล้ว`)}
+                      title="ยืนยันค่ามิเตอร์"
+                      type="button"
+                    >
+                      <ShieldCheck size={15} />
+                      <span>ยืนยันตัวเลข</span>
+                    </button>
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </section>
+      )}
     </>
   );
 }
-
-
 
 // ───────────────────────────────────────────────
 // ใบแจ้งหนี้ — สร้างจากข้อมูลมิเตอร์จริง
 // ───────────────────────────────────────────────
 function InvoicesPage({ isLocked, onToast, onNavigate, onLineChange, meterRooms, appSettings, onViewInvoice }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const billableRooms = meterRooms.filter((room) => room.tenant && room.tenant !== "(ว่าง)");
   const done = billableRooms.filter((room) => calculateInvoice(room, appSettings) !== null);
   const pending = billableRooms.filter((room) => calculateInvoice(room, appSettings) === null);
   const totalBilled = done.reduce((sum, room) => sum + calculateInvoice(room, appSettings)!.total, 0);
+
+  const filteredRooms = billableRooms.filter((r) => {
+    const matchesSearch = r.number.includes(searchTerm) || r.tenant.toLowerCase().includes(searchTerm.toLowerCase());
+    const invoice = calculateInvoice(r, appSettings);
+    const hasMeter = invoice !== null;
+    const matchesStatus = statusFilter === "all" || (statusFilter === "ready" ? hasMeter : !hasMeter);
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
@@ -1353,70 +2164,205 @@ function InvoicesPage({ isLocked, onToast, onNavigate, onLineChange, meterRooms,
         <span><strong>ยอดรวม</strong>฿{totalBilled.toFixed(2)}</span>
       </div>
 
-      <section className="panel table-panel">
-        <div className="panel-heading">
-          <span><h2>รายการบิล</h2><p>กด &quot;ดูบิล&quot; เพื่อดูใบแจ้งหนี้แบบ PDF และพิมพ์</p></span>
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="all">ทุกสถานะบิล</option>
+          <option value="ready">พร้อมออกบิล</option>
+          <option value="pending">รอมิเตอร์</option>
+        </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
         </div>
-        <div className="responsive-table">
-          <table>
-            <thead>
-              <tr>
-                <th>เลขที่บิล</th><th>ห้อง / ผู้เช่า</th><th>ค่าเช่า</th><th>ค่าไฟ</th><th>ค่าน้ำ</th>
-                <th>รวม</th><th>กำหนดชำระ</th><th>สถานะ</th><th />
-              </tr>
-            </thead>
-            <tbody>
-              {billableRooms.map((room, idx) => {
-                const invoice = calculateInvoice(room, appSettings);
-                const hasMeter = invoice !== null;
-                const elecCost = invoice?.electricCost ?? null;
-                const total = invoice?.total ?? null;
-                return (
-                  <tr key={room.number}>
-                    <td><strong>{hasMeter ? `INV-2569-09${String(idx + 1).padStart(2, "0")}` : "—"}</strong></td>
-                    <td>
-                      <span className="company-cell">
-                        <i>{room.number}</i>
-                        <span><strong>{room.tenant}</strong></span>
-                      </span>
-                    </td>
-                    <td>฿{room.rent.toLocaleString()}</td>
-                    <td>{elecCost !== null ? `฿${elecCost.toFixed(2)}` : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
-                    <td>฿{appSettings.waterRate.toFixed(2)}</td>
-                    <td>{total !== null ? <strong>฿{total.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
-                    <td>{hasMeter ? "5 ก.ย. 2569" : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
-                    <td>
-                      {hasMeter
-                        ? <span className="badge info"><i />รอชำระ</span>
-                        : <span className="badge neutral"><i />รอมิเตอร์</span>}
-                    </td>
-                    <td>
-                      <button
-                        className="button secondary"
-                        style={{ fontSize: 12, minHeight: 32, padding: "0 12px" }}
-                        disabled={!hasMeter}
-                        onClick={() => hasMeter && onViewInvoice(room)}
-                      >
-                        ดูบิล
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่บิล</th><th>ห้อง / ผู้เช่า</th><th>ค่าเช่า</th><th>ค่าไฟ</th><th>ค่าน้ำ</th>
+                  <th>รวม</th><th>กำหนดชำระ</th><th>สถานะ</th><th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRooms.map((room, idx) => {
+                  const invoice = calculateInvoice(room, appSettings);
+                  const hasMeter = invoice !== null;
+                  const elecCost = invoice?.electricCost ?? null;
+                  const total = invoice?.total ?? null;
+                  return (
+                    <tr key={room.number}>
+                      <td><strong>{hasMeter ? `INV-2569-09${String(idx + 1).padStart(2, "0")}` : "—"}</strong></td>
+                      <td>
+                        <span className="company-cell">
+                          <i>{room.number}</i>
+                          <span><strong>{room.tenant}</strong></span>
+                        </span>
+                      </td>
+                      <td>฿{room.rent.toLocaleString()}</td>
+                      <td>{elecCost !== null ? `฿${elecCost.toFixed(2)}` : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
+                      <td>฿{appSettings.waterRate.toFixed(2)}</td>
+                      <td>{total !== null ? <strong>฿{total.toFixed(2)}</strong> : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
+                      <td>{hasMeter ? "5 ก.ย. 2569" : <span style={{ color: "var(--subtle)" }}>—</span>}</td>
+                      <td>
+                        {hasMeter
+                          ? <span className="badge info"><i />รอชำระ</span>
+                          : <span className="badge neutral"><i />รอมิเตอร์</span>}
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        <div className="portal-table-actions-cell">
+                          <button
+                            className="portal-table-action-btn view"
+                            disabled={!hasMeter}
+                            onClick={() => hasMeter && onViewInvoice(room)}
+                            title="ดูใบแจ้งหนี้"
+                            type="button"
+                          >
+                            <FileText size={13} />
+                            <span>ดูบิล</span>
+                          </button>
+                          <button
+                            className="portal-table-action-btn print"
+                            disabled={!hasMeter}
+                            onClick={() => {
+                              if (hasMeter) {
+                                onViewInvoice(room);
+                                setTimeout(() => window.print(), 150);
+                              }
+                            }}
+                            title="พิมพ์บิล A4"
+                            type="button"
+                          >
+                            <Printer size={13} />
+                            <span>พิมพ์ A4</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {filteredRooms.map((room, idx) => {
+            const invoice = calculateInvoice(room, appSettings);
+            const hasMeter = invoice !== null;
+            const elecCost = invoice?.electricCost ?? 0;
+            const total = invoice?.total ?? room.rent;
+            const invNumber = `INV-2569-09${String(idx + 1).padStart(2, "0")}`;
+
+            return (
+              <article className="portal-record-card invoice-card" key={room.number}>
+                <header>
+                  <span className="portal-record-icon">
+                    <ReceiptText aria-hidden="true" size={20} />
+                  </span>
+                  <div>
+                    <h2>{hasMeter ? invNumber : `ห้อง ${room.number}`}</h2>
+                    <small>ห้อง {room.number} · ผู้เช่า: {room.tenant}</small>
+                  </div>
+                  {hasMeter ? (
+                    <span className="badge info"><i />รอชำระ</span>
+                  ) : (
+                    <span className="badge neutral"><i />รอมิเตอร์</span>
+                  )}
+                </header>
+
+                <div className="portal-invoice-balance">
+                  <div>
+                    <small>ยอดรวม</small>
+                    <strong>฿{total.toFixed(2)}</strong>
+                  </div>
+                  <div className="outstanding">
+                    <small>คงเหลือ</small>
+                    <strong>฿{total.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                <div className="portal-room-tenant-strip" style={{ marginTop: 8 }}>
+                  <span style={{ fontSize: "12px", color: "#334155" }}>
+                    ค่าเช่า ฿{room.rent.toLocaleString()} · ไฟ ฿{elecCost.toFixed(2)} · น้ำ ฿{appSettings.waterRate.toFixed(2)}
+                  </span>
+                </div>
+
+                <footer className="portal-lease-card-footer">
+                  <div className="portal-lease-card-meta-row">
+                    <span>
+                      <CalendarClock size={13} style={{ display: "inline", marginRight: 4 }} />
+                      ครบกำหนด: 5 ก.ย. 2569
+                    </span>
+                  </div>
+                  <div className="portal-lease-card-actions-grid">
+                    <button
+                      className="portal-lease-card-btn view"
+                      disabled={!hasMeter}
+                      onClick={() => hasMeter && onViewInvoice(room)}
+                      title="ดูใบแจ้งหนี้"
+                      type="button"
+                    >
+                      <FileText size={15} />
+                      <span>ดูใบแจ้งหนี้</span>
+                    </button>
+                    <button
+                      className="portal-lease-card-btn print"
+                      disabled={!hasMeter}
+                      onClick={() => {
+                        if (hasMeter) {
+                          onViewInvoice(room);
+                          setTimeout(() => window.print(), 150);
+                        }
+                      }}
+                      title="พิมพ์บิล A4"
+                      type="button"
+                    >
+                      <Printer size={15} />
+                      <span>พิมพ์บิล A4</span>
+                    </button>
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </section>
+      )}
     </>
   );
 }
-
-
 
 // ───────────────────────────────────────────────
 // รับชำระ
 // ───────────────────────────────────────────────
 function PaymentsPage({ isLocked, onToast }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const initialRows = [
     ["27 ส.ค. 2569", "201 · ธนกร แสงงาม", "INV-2569-0803", "฿5,315.50", "โอนเงิน", "RCP-001"],
     ["26 ส.ค. 2569", "101 · สมชาย ใจดี", "INV-2569-0707", "฿4,788", "เงินสด", "RCP-002"],
@@ -1428,6 +2374,7 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
   const [paymentChannel, setPaymentChannel] = useState("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const visibleRows = filterRows(collection.items, searchTerm, [{ column: 4, value: paymentChannel }]) as string[][];
+
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="รับชำระ" description="บันทึกการรับเงินและออกใบเสร็จให้ผู้เช่า">
@@ -1441,18 +2388,182 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
           <Plus size={17} /> บันทึกรับชำระ
         </button>
       </PageHeader>
+
       <div className="meter-summary-bar">
         <span><strong>เดือนนี้</strong> ยอดรับ ฿10,079</span>
         <span><strong>เดือนก่อน</strong> ฿185,400</span>
         <span><strong>รายการทั้งหมด</strong> {collection.items.length} รายการ</span>
       </div>
-      <FilterBar placeholder="ค้นหาห้อง ชื่อผู้เช่า หรือเลขที่บิล" value={searchTerm} onSearchChange={setSearchTerm} filters={[{ label: "ช่องทางทั้งหมด", options: ["เงินสด", "โอนเงิน", "พร้อมเพย์"], value: paymentChannel, onChange: setPaymentChannel }]} />
-      <SimpleTable
-        headers={["วันที่รับ", "ห้อง / ผู้เช่า", "เลขที่บิล", "ยอด", "ช่องทาง", "เลขที่ใบเสร็จ"]}
-        rows={visibleRows}
-        onDelete={(index) => collection.removeItem(collection.items.indexOf(visibleRows[index]))}
-        disableDelete={isLocked}
-      />
+
+      <div className="filter-bar">
+        <label>
+          <Search size={17} />
+          <input
+            placeholder="ค้นหาห้อง ชื่อผู้เช่า หรือเลขที่บิล..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <select value={paymentChannel} onChange={(e) => setPaymentChannel(e.target.value)}>
+          <option value="">ช่องทางทั้งหมด</option>
+          <option value="เงินสด">เงินสด</option>
+          <option value="โอนเงิน">โอนเงิน</option>
+          <option value="พร้อมเพย์">พร้อมเพย์</option>
+        </select>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>วันที่รับ</th>
+                  <th>ห้อง / ผู้เช่า</th>
+                  <th>เลขที่บิล</th>
+                  <th>ยอด</th>
+                  <th>ช่องทาง</th>
+                  <th>เลขที่ใบเสร็จ</th>
+                  <th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleRows.map((item) => (
+                  <tr key={item[5]}>
+                    <td><strong>{item[0]}</strong></td>
+                    <td>{item[1]}</td>
+                    <td>{item[2]}</td>
+                    <td><strong style={{ color: "#16a34a" }}>{item[3]}</strong></td>
+                    <td><span className="badge success"><i />{item[4]}</span></td>
+                    <td><code>{item[5]}</code></td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div className="portal-table-actions-cell">
+                        <button
+                          className="portal-table-action-btn view"
+                          onClick={() => onToast(`แสดงใบเสร็จรับเงิน ${item[5]}`)}
+                          title="ดูใบเสร็จ"
+                          type="button"
+                        >
+                          <FileText size={13} />
+                          <span>ดูใบเสร็จ</span>
+                        </button>
+                        <button
+                          className="portal-table-action-btn print"
+                          onClick={() => {
+                            onToast(`สั่งพิมพ์ใบเสร็จ ${item[5]}`);
+                            setTimeout(() => window.print(), 150);
+                          }}
+                          title="พิมพ์ใบเสร็จ A4"
+                          type="button"
+                        >
+                          <Printer size={13} />
+                          <span>พิมพ์ A4</span>
+                        </button>
+                        <button
+                          className="portal-table-action-btn delete"
+                          disabled={isLocked}
+                          onClick={() => collection.removeItem(collection.items.indexOf(item))}
+                          title="ลบรายการรับชำระ"
+                          type="button"
+                        >
+                          <Trash2 size={13} />
+                          <span>ลบ</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {visibleRows.map((item, idx) => (
+            <article className="portal-record-card" key={`${item[5]}-${idx}`}>
+              <header>
+                <span className="portal-record-icon success">
+                  <Banknote aria-hidden="true" size={20} />
+                </span>
+                <div>
+                  <h2>{item[5]}</h2>
+                  <small>{item[1]}</small>
+                </div>
+                <span className="badge success"><i />ชำระแล้ว</span>
+              </header>
+
+              <div className="portal-payment-amount">
+                <small>ยอดรับชำระ</small>
+                <strong>{item[3]}</strong>
+              </div>
+
+              <dl className="portal-record-metrics">
+                <div>
+                  <dt>ช่องทาง</dt>
+                  <dd><CreditCard size={14} /> {item[4]}</dd>
+                </div>
+                <div>
+                  <dt>เลขที่บิล</dt>
+                  <dd>{item[2]}</dd>
+                </div>
+              </dl>
+
+              <footer className="portal-lease-card-footer">
+                <div className="portal-lease-card-meta-row">
+                  <span>
+                    <CalendarCheck size={14} style={{ display: "inline", marginRight: 4 }} />
+                    รับชำระเมื่อ {item[0]}
+                  </span>
+                </div>
+                <div className="portal-lease-card-actions-grid">
+                  <button
+                    className="portal-lease-card-btn view"
+                    onClick={() => onToast(`แสดงใบเสร็จรับเงิน ${item[5]}`)}
+                    title="ดูใบเสร็จ"
+                    type="button"
+                  >
+                    <FileText size={15} />
+                    <span>ดูใบเสร็จ</span>
+                  </button>
+                  <button
+                    className="portal-lease-card-btn print"
+                    onClick={() => {
+                      onToast(`พิมพ์ใบเสร็จรับเงิน ${item[5]}`);
+                      window.print();
+                    }}
+                    title="พิมพ์ใบเสร็จ A4"
+                    type="button"
+                  >
+                    <Printer size={15} />
+                    <span>พิมพ์ใบเสร็จ</span>
+                  </button>
+                </div>
+              </footer>
+            </article>
+          ))}
+        </section>
+      )}
+
       {showPaymentForm ? <PaymentModal receiptNumber={`RCP-${String(collection.items.length + 100).padStart(3, "0")}`} onClose={() => setShowPaymentForm(false)} onSave={(row) => {
         if (!collection.addItem(row)) return;
         setShowPaymentForm(false);
@@ -1466,12 +2577,14 @@ function PaymentsPage({ isLocked, onToast }: PageContentProps) {
 // ยอดค้าง
 // ───────────────────────────────────────────────
 function ReceivablesPage({ isLocked, onToast }: PageContentProps) {
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const initialRows = [
     ["101 · สมชาย ใจดี", "INV-2569-0801", "฿4,788", "22 วัน", "เตือนแล้ว 1 ครั้ง"],
     ["102 · อารยา พรดี", "INV-2569-0802", "฿4,763.50", "22 วัน", "ยังไม่เตือน"],
     ["302 · กมลา ดีงาม", "INV-2569-0602", "฿5,000", "57 วัน", "เตือนแล้ว 3 ครั้ง"],
   ];
   const [rows, setRows] = useState(initialRows);
+
   return (
     <>
       <PageHeader eyebrow="การเงิน" title="ยอดค้างชำระ" description="ติดตามและเร่งรัดยอดค้างแยกตามอายุหนี้">
@@ -1482,6 +2595,7 @@ function ReceivablesPage({ isLocked, onToast }: PageContentProps) {
           <Bell size={17} /> แจ้งเตือนทั้งหมด
         </button>
       </PageHeader>
+
       <section className="receivable-summary">
         <div className="receivable-card orange">
           <strong>฿9,551.50</strong>
@@ -1499,10 +2613,146 @@ function ReceivablesPage({ isLocked, onToast }: PageContentProps) {
           <small>฿5,000</small>
         </div>
       </section>
-      <SimpleTable
-        headers={["ห้อง / ผู้เช่า", "เลขที่บิล", "ยอดค้าง", "ค้างมา", "การติดตาม"]}
-        rows={rows}
-      />
+
+      <div className="filter-bar">
+        <div style={{ flex: 1 }}>
+          <small style={{ color: "#64748b", fontWeight: 600 }}>พบ 3 รายการยอดค้างชำระ</small>
+        </div>
+        <div className="portal-view-toggle">
+          <button
+            aria-label="มุมมองตาราง"
+            className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            type="button"
+          >
+            <ListFilter size={15} />
+            <span>ตาราง</span>
+          </button>
+          <button
+            aria-label="มุมมองการ์ด"
+            className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            <LayoutGrid size={15} />
+            <span>การ์ด</span>
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "table" ? (
+        <section className="panel table-panel">
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ห้อง / ผู้เช่า</th>
+                  <th>เลขที่บิล</th>
+                  <th>ยอดค้าง</th>
+                  <th>ค้างมา</th>
+                  <th>การติดตาม</th>
+                  <th style={{ textAlign: "right" }}>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row[1]}>
+                    <td><strong>{row[0]}</strong></td>
+                    <td><code>{row[1]}</code></td>
+                    <td><strong style={{ color: "#e11d48" }}>{row[2]}</strong></td>
+                    <td><span className="badge danger"><i />{row[3]}</span></td>
+                    <td>{row[4]}</td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div className="portal-table-actions-cell">
+                        <button
+                          className="portal-table-action-btn account"
+                          onClick={() => onToast(`ส่งข้อความแจ้งเตือนไปยัง ${row[0]} แล้ว`)}
+                          title="แจ้งเตือนผู้เช่า"
+                          type="button"
+                        >
+                          <MessageCircle size={13} />
+                          <span>แจ้งเตือน</span>
+                        </button>
+                        <button
+                          className="portal-table-action-btn view"
+                          onClick={() => onToast(`เปิดหน้าบันทึกรับชำระสำหรับบิล ${row[1]}`)}
+                          title="รับชำระยอดนี้"
+                          type="button"
+                        >
+                          <CreditCard size={13} />
+                          <span>รับชำระ</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-collection-grid">
+          {rows.map((row, idx) => (
+            <article className="portal-record-card" key={row[1]}>
+              <header>
+                <span className="portal-record-icon" style={{ background: "#fee2e2", color: "#e11d48" }}>
+                  <ReceiptText aria-hidden="true" size={20} />
+                </span>
+                <div>
+                  <h2>{row[1]}</h2>
+                  <small>{row[0]}</small>
+                </div>
+                <span className="badge danger"><i />เกินกำหนด</span>
+              </header>
+
+              <div className="portal-invoice-balance">
+                <div>
+                  <small>ยอดเรียกเก็บ</small>
+                  <strong>{row[2]}</strong>
+                </div>
+                <div className="outstanding">
+                  <small>ยอดค้างชำระ</small>
+                  <strong>{row[2]}</strong>
+                </div>
+              </div>
+
+              <dl className="portal-record-metrics" style={{ marginTop: 10 }}>
+                <div>
+                  <dt>ค้างชำระมาแล้ว</dt>
+                  <dd style={{ color: "#e11d48", fontWeight: 700 }}>{row[3]}</dd>
+                </div>
+                <div>
+                  <dt>สถานะการติดตาม</dt>
+                  <dd>{row[4]}</dd>
+                </div>
+              </dl>
+
+              <footer className="portal-lease-card-footer">
+                <div className="portal-lease-card-actions-grid">
+                  <button
+                    className="portal-lease-card-btn view"
+                    onClick={() => onToast(`ส่งข้อความทวงถามสำหรับ ${row[0]}`)}
+                    title="ส่งข้อความทวงถาม"
+                    type="button"
+                  >
+                    <MessageCircle size={15} />
+                    <span>แจ้งเตือนผู้เช่า</span>
+                  </button>
+                  <button
+                    className="portal-lease-card-btn edit"
+                    onClick={() => onToast(`เปิดฟอร์มรับชำระเงินสำหรับ ${row[0]}`)}
+                    title="รับชำระเงิน"
+                    type="button"
+                  >
+                    <WalletCards size={15} />
+                    <span>รับชำระยอดนี้</span>
+                  </button>
+                </div>
+              </footer>
+            </article>
+          ))}
+        </section>
+      )}
     </>
   );
 }
@@ -1722,75 +2972,97 @@ function InvoiceModal({ room, settings, onClose }: { room: RoomRecord; settings:
   const elecCost = units * settings.electricRate;
   const total = room.rent + elecCost + settings.waterRate;
   const invNo = `INV-2569-09${room.number.replace(/\D/g, "")}`;
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-box invoice-modal" onClick={e => e.stopPropagation()}>
+      <div className="modal-box invoice-modal" style={{ maxWidth: 840 }} onClick={e => e.stopPropagation()}>
         <div className="modal-toolbar">
           <button className="icon-button" onClick={onClose}><X size={20} /></button>
-          <span style={{ fontWeight: 600, fontSize: 14 }}>ใบแจ้งหนี้ · ห้อง {room.number}</span>
-          <button className="button primary" style={{ marginLeft: "auto" }} onClick={() => window.print()}>🖨️ พิมพ์บิล</button>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>ใบแจ้งหนี้ · ห้อง {room.number} ({invNo})</span>
+          <button className="button primary" style={{ marginLeft: "auto" }} onClick={() => window.print()}>🖨️ พิมพ์บิล A4</button>
         </div>
-        <div className="invoice-paper" id="print-area">
-          <div className="invoice-header-row">
-            <div>
-              <div className="invoice-co-name">สมชายแมนชั่น</div>
-              <div className="invoice-co-sub">123 ถ.กาญจนวนิช อ.หาดใหญ่ จ.สงขลา 90110</div>
-              <div className="invoice-co-sub">โทร. 074-200-001</div>
+
+        <div className="contract-paper" id="print-area">
+          <div className="contract-official-header">
+            <div className="contract-official-emblem">🏢</div>
+            <h1 className="contract-official-title">สมชายแมนชั่น</h1>
+            <p className="contract-official-sub">ใบแจ้งหนี้ / ใบเรียกเก็บเงินประจำเดือน (INVOICE)</p>
+          </div>
+
+          <div className="contract-meta-bar">
+            <div><strong>เลขที่เอกสาร:</strong> {invNo}</div>
+            <div><strong>วันที่ออกบิล:</strong> 27 ส.ค. 2569</div>
+            <div><strong>กำหนดชำระ:</strong> 5 ก.ย. 2569</div>
+            <div><strong>ห้องพัก:</strong> {room.number}</div>
+          </div>
+
+          <div style={{ margin: "14px 0 10px", padding: "8px 12px", background: "#f8fafc", borderRadius: 6, fontSize: "10pt" }}>
+            <strong>ผู้เช่าพักอาศัย:</strong> {room.tenant || "ผู้เช่าห้องพัก"} · <strong>รอบบิล:</strong> 1–31 สิงหาคม 2569
+          </div>
+
+          <div style={{ margin: "14px 0", border: "1px solid #cbd5e1", borderRadius: 8, overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10pt" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #cbd5e1" }}>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>ลำดับ</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>รายการค่าใช้จ่าย</th>
+                  <th style={{ padding: "8px 12px", textAlign: "right" }}>จำนวนเงิน (บาท)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <td style={{ padding: "8px 12px" }}>1</td>
+                  <td style={{ padding: "8px 12px" }}><strong>ค่าเช่าห้องพักประจำเดือน</strong> (ห้อง {room.number})</td>
+                  <td style={{ padding: "8px 12px", textAlign: "right" }}>{room.rent.toLocaleString()}.00</td>
+                </tr>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <td style={{ padding: "8px 12px" }}>2</td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <strong>ค่ากระแสไฟฟ้า</strong> ({room.prevElec.toLocaleString()} → {room.newElec!.toLocaleString()} = {units} หน่วย × {settings.electricRate} บ./หน่วย)
+                  </td>
+                  <td style={{ padding: "8px 12px", textAlign: "right" }}>{elecCost.toFixed(2)}</td>
+                </tr>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <td style={{ padding: "8px 12px" }}>3</td>
+                  <td style={{ padding: "8px 12px" }}><strong>ค่าน้ำประปา</strong> (อัตราเหมาจ่าย)</td>
+                  <td style={{ padding: "8px 12px", textAlign: "right" }}>{settings.waterRate.toFixed(2)}</td>
+                </tr>
+                <tr style={{ background: "#f8fafc", fontWeight: "bold" }}>
+                  <td colSpan={2} style={{ padding: "10px 12px", textAlign: "right" }}>
+                    ยอดรวมสุทธิที่ต้องชำระ (TOTAL AMOUNT):
+                  </td>
+                  <td style={{ padding: "10px 12px", textAlign: "right", fontSize: "12pt", color: "#0f172a" }}>
+                    ฿{total.toFixed(2)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ margin: "10px 0", padding: "8px 12px", background: "#f1f5f9", borderRadius: 6, fontSize: "10pt" }}>
+            <strong>จำนวนเงินตัวอักษร:</strong> {thaiBahtText(total)}
+          </div>
+
+          <div style={{ margin: "14px 0", padding: "10px 12px", border: "1px dashed #94a3b8", borderRadius: 8, fontSize: "9.5pt" }}>
+            <strong style={{ display: "block", marginBottom: 3, color: "#1e293b" }}>ช่องทางการชำระเงิน:</strong>
+            <p style={{ margin: "2px 0" }}>พร้อมเพย์: <strong>{settings.promptpay || "081-999-8888"}</strong> ({settings.accountName || "สมชายแมนชั่น"})</p>
+            <small style={{ color: "#64748b" }}>* กรุณาชำระเงินภายในวันที่ <strong>5 ก.ย. 2569</strong></small>
+          </div>
+
+          <div className="contract-signatures-grid" style={{ marginTop: 20 }}>
+            <div className="contract-sig-item">
+              <p>ลงชื่อ ............................................................ ผู้แจ้งยอด</p>
+              <div className="sig-line" />
+              <p>(สมชายแมนชั่น)</p>
+              <p>เจ้าหน้าที่ / ผู้จัดการอาคาร</p>
             </div>
-            <div className="invoice-title-block">
-              <div className="invoice-title-th">ใบแจ้งหนี้</div>
-              <div className="invoice-title-en">Invoice</div>
+            <div className="contract-sig-item">
+              <p>ลงชื่อ ............................................................ ผู้รับใบแจ้งหนี้</p>
+              <div className="sig-line" />
+              <p>( {room.tenant || "ผู้เช่าห้องพัก"} )</p>
+              <p>ผู้เช่าห้องพักหมายเลข {room.number}</p>
             </div>
           </div>
-          <div className="invoice-meta-row">
-            <div><span>เลขที่</span><strong>{invNo}</strong></div>
-            <div><span>วันที่ออก</span><strong>27 ส.ค. 2569</strong></div>
-            <div><span>กำหนดชำระ</span><strong style={{ color: "var(--red)" }}>5 ก.ย. 2569</strong></div>
-          </div>
-          <div className="invoice-tenant-row">
-            <p><strong>ผู้เช่า:</strong> {room.tenant}</p>
-            <p><strong>ห้อง:</strong> {room.number} · สมชายแมนชั่น</p>
-            <p><strong>รอบบิล:</strong> 1–31 สิงหาคม 2569</p>
-          </div>
-          <table className="invoice-items-table">
-            <thead>
-              <tr><th>รายการ</th><th>รายละเอียด</th><th className="text-right">จำนวนเงิน</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>ค่าเช่าห้องพัก</td>
-                <td>ห้อง {room.number} · สิงหาคม 2569</td>
-                <td className="text-right">฿{room.rent.toLocaleString()}.00</td>
-              </tr>
-              <tr>
-                <td>ค่าไฟฟ้า</td>
-                <td>{room.prevElec.toLocaleString()} → {room.newElec!.toLocaleString()} = {units} หน่วย × ฿{settings.electricRate}/หน่วย</td>
-                <td className="text-right">฿{elecCost.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td>ค่าน้ำประปา</td>
-                <td>เหมาจ่าย / เดือน</td>
-                <td className="text-right">฿{settings.waterRate.toFixed(2)}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr className="invoice-total-row">
-                <td colSpan={2}><strong>รวมทั้งสิ้น</strong></td>
-                <td className="text-right invoice-total-amount"><strong>฿{total.toFixed(2)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-          {settings.attachQR && (
-            <div className="invoice-payment-row">
-              <div className="qr-placeholder">QR<br /><small>พร้อมเพย์</small></div>
-              <div>
-                <p><strong>พร้อมเพย์:</strong> {settings.promptpay}</p>
-                <p><strong>ชื่อบัญชี:</strong> {settings.accountName}</p>
-                <p style={{ color: "var(--muted)", fontSize: 12 }}>กรุณาส่งสลิปมาที่ LINE หลังโอน</p>
-              </div>
-            </div>
-          )}
-          <p className="invoice-note-text">{settings.invoiceNote}</p>
         </div>
       </div>
     </div>

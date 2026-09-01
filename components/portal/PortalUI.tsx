@@ -17,7 +17,25 @@ export function PageHeader({ title, description, actionLabel, onAction }: { titl
   return <header className="portal-page-header"><div><h1>{title}</h1><p>{description}</p></div>{actionLabel && onAction ? <button className="portal-primary" onClick={onAction} type="button"><Plus size={18} />{actionLabel}</button> : null}</header>;
 }
 
-export function Modal({ title, description, children, onClose, pending = false }: { title: string; description?: string; children: React.ReactNode; onClose: () => void; pending?: boolean }) {
+export function Modal({
+  title,
+  description,
+  children,
+  onClose,
+  pending = false,
+  maxWidth,
+  className,
+  headerActions,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  pending?: boolean;
+  maxWidth?: number | string;
+  className?: string;
+  headerActions?: React.ReactNode;
+}) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
   const pendingRef = useRef(pending);
@@ -70,8 +88,28 @@ export function Modal({ title, description, children, onClose, pending = false }
   if (typeof document === "undefined") return null;
   return createPortal(
     <div className="portal-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose(); }}>
-      <section aria-describedby={description ? "portal-modal-description" : undefined} aria-modal="true" aria-labelledby="portal-modal-title" className="portal-modal" ref={dialogRef} role="dialog" tabIndex={-1}>
-        <header><div><h2 id="portal-modal-title">{title}</h2>{description ? <p id="portal-modal-description">{description}</p> : null}</div><button aria-label="ปิด" disabled={pending} onClick={onClose}><X size={20} /></button></header>
+      <section
+        aria-describedby={description ? "portal-modal-description" : undefined}
+        aria-modal="true"
+        aria-labelledby="portal-modal-title"
+        className={`portal-modal ${className ?? ""}`}
+        ref={dialogRef}
+        role="dialog"
+        style={maxWidth ? { width: `min(${typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth}, 95vw)` } : undefined}
+        tabIndex={-1}
+      >
+        <header>
+          <div>
+            <h2 id="portal-modal-title">{title}</h2>
+            {description ? <p id="portal-modal-description">{description}</p> : null}
+          </div>
+          <div className="portal-modal-header-actions">
+            {headerActions}
+            <button aria-label="ปิด" className="portal-modal-close-btn" disabled={pending} onClick={onClose} type="button">
+              <X size={20} />
+            </button>
+          </div>
+        </header>
         {children}
       </section>
     </div>,
