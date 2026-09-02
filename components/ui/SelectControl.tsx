@@ -130,22 +130,112 @@ export function SelectControl({
   };
 
   const panel = open && typeof document !== "undefined" ? createPortal(
-    <div className="ui-select-popover" ref={panelRef} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}>
-      {hasSearch ? <label className="ui-select-search"><Search size={16} /><input aria-label={`ค้นหา${ariaLabel ?? "รายการ"}`} ref={searchRef} value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }} onKeyDown={(event) => {
-        if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); moveActive(event.key === "ArrowDown" ? 1 : -1); }
-        if (event.key === "Enter" && filtered[activeIndex]) { event.preventDefault(); choose(filtered[activeIndex].value); }
-        if (event.key === "Escape") { event.preventDefault(); closePanel(); buttonRef.current?.focus(); }
-      }} placeholder="ค้นหา..." /></label> : null}
-      <div aria-label={ariaLabel} className="ui-select-options" id={listboxId} role="listbox">
-        {filtered.length ? filtered.map((option, index) => <button aria-selected={option.value === selectedValue} className={option.value === selectedValue ? "selected" : ""} data-active={index === activeIndex} id={`${listboxId}-${index}`} key={option.value} onClick={() => choose(option.value)} onMouseEnter={() => setActiveIndex(index)} role="option" tabIndex={-1} type="button"><span><strong>{option.label}</strong>{option.description ? <small>{option.description}</small> : null}</span>{option.value === selectedValue ? <Check size={17} /> : null}</button>) : <div className="ui-select-empty">ไม่พบรายการที่ค้นหา</div>}
+    <div
+      className="fixed z-[100] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden"
+      ref={panelRef}
+      style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
+    >
+      {hasSearch ? (
+        <label className="p-2.5 border-b border-slate-100 flex items-center gap-2 text-slate-400 bg-slate-50/50">
+          <Search size={15} />
+          <input
+            aria-label={`ค้นหา${ariaLabel ?? "รายการ"}`}
+            className="w-full bg-transparent border-0 outline-none text-slate-800 text-xs placeholder:text-slate-400"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActiveIndex(0);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                moveActive(event.key === "ArrowDown" ? 1 : -1);
+              }
+              if (event.key === "Enter" && filtered[activeIndex]) {
+                event.preventDefault();
+                choose(filtered[activeIndex].value);
+              }
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closePanel();
+                buttonRef.current?.focus();
+              }
+            }}
+            placeholder="ค้นหา..."
+            ref={searchRef}
+            value={query}
+          />
+        </label>
+      ) : null}
+      <div aria-label={ariaLabel} className="flex-1 overflow-y-auto p-1.5 space-y-0.5" id={listboxId} role="listbox">
+        {filtered.length ? (
+          filtered.map((option, index) => {
+            const isSelected = option.value === selectedValue;
+            const isActive = index === activeIndex;
+            return (
+              <button
+                aria-selected={isSelected}
+                className={`w-full px-3 py-2 flex items-center justify-between rounded-xl text-left text-[13px] transition-colors cursor-pointer ${
+                  isSelected
+                    ? "bg-blue-50 text-blue-700 font-semibold"
+                    : isActive
+                    ? "bg-slate-100 text-slate-900 font-medium"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+                data-active={isActive}
+                id={`${listboxId}-${index}`}
+                key={option.value}
+                onClick={() => choose(option.value)}
+                onMouseEnter={() => setActiveIndex(index)}
+                role="option"
+                tabIndex={-1}
+                type="button"
+              >
+                <span className="flex flex-col">
+                  <strong>{option.label}</strong>
+                  {option.description ? <small className="text-[11px] text-slate-400 font-normal">{option.description}</small> : null}
+                </span>
+                {isSelected ? <Check className="text-blue-600" size={16} /> : null}
+              </button>
+            );
+          })
+        ) : (
+          <div className="p-4 text-center text-xs text-slate-400">ไม่พบรายการที่ค้นหา</div>
+        )}
       </div>
     </div>,
     document.body,
   ) : null;
 
-  return <>
-    {name ? <input name={name} readOnly ref={hiddenInputRef} type="hidden" value={selectedValue} /> : null}
-    <button aria-activedescendant={open && filtered[activeIndex] ? `${listboxId}-${activeIndex}` : undefined} aria-controls={listboxId} aria-expanded={open} aria-haspopup="listbox" aria-invalid={invalid} aria-label={ariaLabel} className={`ui-select-trigger ${open ? "open" : ""}`} disabled={disabled} onClick={() => open ? closePanel() : openPanel()} onKeyDown={handleKeyDown} ref={buttonRef} role="combobox" type="button"><span className={selected ? "" : "placeholder"}>{selected?.label ?? placeholder}</span><ChevronDown size={17} /></button>
-    {panel}
-  </>;
+  return (
+    <>
+      {name ? <input name={name} readOnly ref={hiddenInputRef} type="hidden" value={selectedValue} /> : null}
+      <button
+        aria-activedescendant={open && filtered[activeIndex] ? `${listboxId}-${activeIndex}` : undefined}
+        aria-controls={listboxId}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-invalid={invalid}
+        aria-label={ariaLabel}
+        className={`w-full h-10 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-[13px] font-medium outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
+          invalid
+            ? "border-rose-300 bg-rose-50/40 text-rose-900"
+            : open
+            ? "border-blue-500 bg-white ring-2 ring-blue-100 text-slate-900"
+            : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
+        }`}
+        disabled={disabled}
+        onClick={() => (open ? closePanel() : openPanel())}
+        onKeyDown={handleKeyDown}
+        ref={buttonRef}
+        role="combobox"
+        type="button"
+      >
+        <span className={selected ? "text-slate-800 truncate" : "text-slate-400 truncate"}>
+          {selected?.label ?? placeholder}
+        </span>
+        <ChevronDown className={`text-slate-400 shrink-0 transition-transform ${open ? "rotate-180 text-blue-600" : ""}`} size={16} />
+      </button>
+      {panel}
+    </>
+  );
 }

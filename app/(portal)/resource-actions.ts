@@ -670,6 +670,18 @@ export async function updateRoomAction(formData: FormData): Promise<DashboardAct
   if (floor.length > 40) return fail("ชั้นต้องไม่เกิน 40 ตัวอักษร");
   if (!Number.isFinite(baseRent) || baseRent < 0) return fail("ค่าเช่าต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป");
   if (!["vacant", "occupied", "maintenance", "inactive"].includes(status)) return fail("สถานะห้องไม่ถูกต้อง");
+  if (status === "vacant") {
+    const { data: activeLease } = await context.supabase
+      .from("leases")
+      .select("lease_number")
+      .eq("room_id", roomId)
+      .eq("organization_id", context.organizationId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (activeLease) {
+      return fail(`ไม่สามารถเปลี่ยนสถานะเป็นห้องว่างได้ เนื่องจากมีสัญญาเช่าที่ยังมีผลอยู่ (${activeLease.lease_number}) กรุณาสิ้นสุดหรือยกเลิกสัญญาเช่าก่อน`);
+    }
+  }
   const { data, error } = await context.supabase.from("rooms").update({
     property_id: propertyId, room_number: roomNumber, floor: floor || null, base_rent: baseRent, status,
   }).eq("id", roomId).eq("organization_id", context.organizationId).select("id").maybeSingle();
@@ -739,6 +751,34 @@ export async function updateTenantAction(formData: FormData): Promise<DashboardA
   return success("แก้ไขข้อมูลผู้เช่าเรียบร้อยแล้ว");
 }
 
+export async function deleteTenantAction(formData: FormData): Promise<DashboardActionResult> {
+  const requestId = crypto.randomUUID();
+  const context = await actionContext(formData, "customer_tenants", "delete");
+  if (!context.ok) return context.error;
+  const tenantId = text(formData, "tenantId");
+  if (!UUID_PATTERN.test(tenantId)) return fail("ไม่พบผู้เช่าที่ต้องการลบ");
+
+  // Check if tenant has tenant_accounts
+  const admin = createAdminClient();
+  if (admin) {
+    const { data: acc } = await admin.from("tenant_accounts").select("auth_user_id").eq("tenant_id", tenantId).maybeSingle();
+    if (acc?.auth_user_id) {
+      await admin.auth.admin.deleteUser(acc.auth_user_id);
+    }
+  }
+
+  const { data, error } = await context.supabase.from("tenants").delete()
+    .eq("id", tenantId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  if (error) {
+    logFailure(requestId, "tenant.delete", error);
+    if (error.code === "23503") return fail("ลบผู้เช่าไม่ได้ เนื่องจากมีสัญญาเช่า ใบแจ้งหนี้ หรือประวัติการชำระเงินผูกอยู่ กรุณาเปลี่ยนสถานะเป็น 'ผู้เช่าเดิม' หรือ 'ระงับ' แทน");
+    return { ...fail("ลบผู้เช่าไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
+  }
+  if (!data) return fail("ไม่พบผู้เช่า หรือคุณไม่มีสิทธิ์ลบผู้เช่านี้");
+  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "tenant.deleted", entity_type: "tenant", entity_id: tenantId });
+  return success("ลบข้อมูลผู้เช่าเรียบร้อยแล้ว");
+}
+
 export async function updateLeaseAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_leases", "update");
@@ -757,10 +797,27 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
     lease_number: leaseNumber, start_date: startDate, end_date: endDate || null, rent_amount: rentAmount,
     deposit_amount: depositAmount, advance_amount: advanceAmount, terms: text(formData, "terms") || null, status,
     occupant_count: occupantCount,
-  }).eq("id", leaseId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  }).eq("id", leaseId).eq("organization_id", context.organizationId).select("id, room_id").maybeSingle();
   if (error || !data) {
     logFailure(requestId, "lease.update", error);
     return { ...fail("แก้ไขสัญญาไม่สำเร็จ เลขที่สัญญาอาจซ้ำ"), requestId };
+  }
+  if (data.room_id) {
+    if (status === "active") {
+      await context.supabase.from("rooms").update({ status: "occupied" }).eq("id", data.room_id).eq("organization_id", context.organizationId);
+    } else if (["ended", "cancelled"].includes(status)) {
+      const { data: otherActive } = await context.supabase
+        .from("leases")
+        .select("id")
+        .eq("room_id", data.room_id)
+        .eq("organization_id", context.organizationId)
+        .eq("status", "active")
+        .neq("id", leaseId)
+        .maybeSingle();
+      if (!otherActive) {
+        await context.supabase.from("rooms").update({ status: "vacant" }).eq("id", data.room_id).eq("organization_id", context.organizationId);
+      }
+    }
   }
   return success("แก้ไขสัญญาเช่าเรียบร้อยแล้ว");
 }
@@ -781,3 +838,164 @@ export async function updateInvoiceAction(formData: FormData): Promise<Dashboard
   }
   return success("แก้ไขใบแจ้งหนี้เรียบร้อยแล้ว");
 }
+
+export async function createOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+  const requestId = crypto.randomUUID();
+  const context = await actionContext(formData, "customer_users", "create");
+  if (!context.ok) return context.error;
+
+  const fullName = text(formData, "fullName");
+  const usernameOrEmail = text(formData, "username").trim();
+  const password = text(formData, "password");
+  const roleCode = text(formData, "roleCode");
+
+  if (fullName.length < 2 || fullName.length > 160) return fail("กรุณากรอกชื่อ-นามสกุล 2-160 ตัวอักษร");
+  if (!usernameOrEmail) return fail("กรุณากรอกชื่อผู้ใช้หรืออีเมล");
+  if (password.length < 6) return fail("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+  if (!["manager", "accounting", "staff"].includes(roleCode)) return fail("ระดับสิทธิ์ไม่ถูกต้อง");
+
+  const admin = createAdminClient();
+  const normalizedUser = usernameOrEmail.toLowerCase();
+  const isEmail = normalizedUser.includes("@");
+
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("id, username")
+    .or(`username.eq.${normalizedUser}`)
+    .maybeSingle();
+
+  let authUserId: string;
+
+  if (existingProfile) {
+    authUserId = existingProfile.id;
+    const { data: existingMember } = await admin
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", authUserId)
+      .maybeSingle();
+
+    if (existingMember) return fail("ผู้ใช้งานนี้เป็นสมาชิกในกิจการนี้อยู่แล้ว");
+  } else {
+    const domain = process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase() || "longtua.internal";
+    const emailToUse = isEmail ? normalizedUser : `${crypto.randomUUID()}@${domain}`;
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email: emailToUse,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        username: normalizedUser,
+        display_name: fullName,
+      },
+    });
+
+    if (createError || !created.user) {
+      logFailure(requestId, "user.create", createError);
+      return fail(createError?.message || "ไม่สามารถสร้างบัญชีผู้ใช้งานได้");
+    }
+
+    authUserId = created.user.id;
+
+    await admin.from("profiles").upsert({
+      id: authUserId,
+      username: normalizedUser,
+      display_name: fullName,
+      status: "active",
+    });
+
+    if (!isEmail) {
+      await admin.from("auth_login_aliases").upsert({
+        username: normalizedUser,
+        auth_user_id: authUserId,
+        internal_email: emailToUse,
+      });
+    }
+  }
+
+  const { error: memberError } = await admin.from("organization_members").insert({
+    organization_id: context.organizationId,
+    user_id: authUserId,
+    role_code: roleCode,
+    status: "active",
+  });
+
+  if (memberError) {
+    logFailure(requestId, "organization_members.insert", memberError);
+    return fail("เพิ่มผู้ใช้เข้าสู่กิจการไม่สำเร็จ");
+  }
+
+  revalidatePath("/users");
+  return success(`เพิ่มผู้ใช้งาน "${fullName}" เรียบร้อยแล้ว`);
+}
+
+export async function updateOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+  const requestId = crypto.randomUUID();
+  const context = await actionContext(formData, "customer_users", "update");
+  if (!context.ok) return context.error;
+
+  const memberId = text(formData, "memberId");
+  const roleCode = text(formData, "roleCode");
+  const newPassword = text(formData, "newPassword");
+
+  if (!UUID_PATTERN.test(memberId)) return fail("ไม่พบผู้ใช้งานที่ต้องการแก้ไข");
+  if (!["manager", "accounting", "staff"].includes(roleCode)) return fail("ระดับสิทธิ์ไม่ถูกต้อง");
+
+  const admin = createAdminClient();
+  const { data: member } = await admin
+    .from("organization_members")
+    .select("user_id, role_code")
+    .eq("user_id", memberId)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
+
+  if (!member) return fail("ไม่พบผู้ใช้งานในกิจการนี้");
+  if (member.role_code === "owner") return fail("ไม่สามารถเปลี่ยนระดับสิทธิ์ของเจ้าของกิจการได้");
+
+  await admin
+    .from("organization_members")
+    .update({ role_code: roleCode })
+    .eq("user_id", memberId)
+    .eq("organization_id", context.organizationId);
+
+  if (newPassword && newPassword.length >= 6) {
+    await admin.auth.admin.updateUserById(member.user_id, { password: newPassword });
+  }
+
+  revalidatePath("/users");
+  return success("อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว");
+}
+
+export async function deleteOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+  const requestId = crypto.randomUUID();
+  const context = await actionContext(formData, "customer_users", "delete");
+  if (!context.ok) return context.error;
+
+  const memberId = text(formData, "memberId");
+  if (!UUID_PATTERN.test(memberId)) return fail("ไม่พบผู้ใช้งานที่ต้องการลบ");
+
+  const admin = createAdminClient();
+  const { data: member } = await admin
+    .from("organization_members")
+    .select("user_id, role_code")
+    .eq("user_id", memberId)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
+
+  if (!member) return fail("ไม่พบผู้ใช้งานในกิจการนี้");
+  if (member.role_code === "owner") return fail("ไม่สามารถลบเจ้าของกิจการได้");
+
+  const { error } = await admin
+    .from("organization_members")
+    .delete()
+    .eq("user_id", memberId)
+    .eq("organization_id", context.organizationId);
+
+  if (error) {
+    logFailure(requestId, "organization_members.delete", error);
+    return fail("ลบผู้ใช้งานไม่สำเร็จ");
+  }
+
+  revalidatePath("/users");
+  return success("ลบผู้ใช้งานออกจากกิจการเรียบร้อยแล้ว");
+}
+

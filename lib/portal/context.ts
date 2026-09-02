@@ -13,6 +13,7 @@ export const ACTIVE_ORGANIZATION_COOKIE = "longtua_active_organization";
 const menuPaths: Record<string, string> = {
   customer_overview: "/dashboard",
   customer_properties: "/dormitories",
+  customer_users: "/users",
   customer_rooms: "/guestrooms",
   customer_tenants: "/tenants",
   customer_leases: "/leases",
@@ -26,12 +27,13 @@ const menuPaths: Record<string, string> = {
 };
 
 const fallbackMenus = [
-  ["customer_overview", "ภาพรวม"], ["customer_properties", "หอพัก"],
-  ["customer_rooms", "ห้องพัก"], ["customer_tenants", "ผู้เช่า"],
-  ["customer_leases", "สัญญาเช่า"], ["customer_meters", "มิเตอร์"],
-  ["customer_invoices", "ใบแจ้งหนี้"], ["customer_payments", "รับชำระ"],
-  ["customer_receivables", "ยอดค้าง"], ["customer_reports", "รายงาน"],
-  ["customer_settings", "ตั้งค่าหอพัก"], ["customer_subscription", "แพ็กเกจและบริการ"],
+  ["customer_overview", "แดชบอร์ด"], ["customer_properties", "หอพัก"],
+  ["customer_users", "ผู้ใช้งาน"], ["customer_rooms", "ห้องพัก"],
+  ["customer_tenants", "ผู้เช่า"], ["customer_leases", "สัญญาเช่า"],
+  ["customer_meters", "มิเตอร์"], ["customer_invoices", "ใบแจ้งหนี้"],
+  ["customer_payments", "รับชำระ"], ["customer_receivables", "ยอดค้าง"],
+  ["customer_reports", "รายงาน"], ["customer_settings", "ตั้งค่าหอพัก"],
+  ["customer_subscription", "แพ็กเกจและบริการ"],
 ] as const;
 
 function roleLabel(role: string) {

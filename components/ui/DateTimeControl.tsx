@@ -127,26 +127,212 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
   const today = new Date();
   const selectedDate = dateValue(viewYear, viewMonth, day);
 
-  const clock = <div className="ui-clock-picker">
-    <div><span>ชั่วโมง</span><div>{Array.from({ length: 24 }, (_, index) => <button aria-pressed={hour === index} className={hour === index ? "selected" : ""} key={index} onClick={() => setHour(index)} type="button">{pad(index)}</button>)}</div></div>
-    <div><span>นาที</span><div>{Array.from(new Set([...Array.from({ length: 12 }, (_, index) => index * 5), minute])).sort((a, b) => a - b).map((item) => <button aria-pressed={minute === item} className={minute === item ? "selected" : ""} key={item} onClick={() => setMinute(item)} type="button">{pad(item)}</button>)}</div></div>
-  </div>;
+  const clock = (
+    <div className="flex gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 my-2">
+      <div className="flex-1">
+        <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5 text-center">ชั่วโมง</span>
+        <div className="grid grid-cols-6 gap-1 max-h-28 overflow-y-auto p-1">
+          {Array.from({ length: 24 }, (_, index) => (
+            <button
+              aria-pressed={hour === index}
+              className={`h-7 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                hour === index ? "bg-blue-600 text-white font-bold" : "hover:bg-slate-200 text-slate-700"
+              }`}
+              key={index}
+              onClick={() => setHour(index)}
+              type="button"
+            >
+              {pad(index)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1">
+        <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5 text-center">นาที</span>
+        <div className="grid grid-cols-4 gap-1 max-h-28 overflow-y-auto p-1">
+          {Array.from(new Set([...Array.from({ length: 12 }, (_, index) => index * 5), minute]))
+            .sort((a, b) => a - b)
+            .map((item) => (
+              <button
+                aria-pressed={minute === item}
+                className={`h-7 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  minute === item ? "bg-blue-600 text-white font-bold" : "hover:bg-slate-200 text-slate-700"
+                }`}
+                key={item}
+                onClick={() => setMinute(item)}
+                type="button"
+              >
+                {pad(item)}
+              </button>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
 
   const panel = open && typeof document !== "undefined" ? createPortal(
-    <div className="ui-datetime-popover" id={panelId} ref={panelRef} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}>
-      {mode !== "time" ? <>
-        <header><button aria-label={mode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"} onClick={() => mode === "month" ? setViewYear((current) => current - 1) : viewMonth === 0 ? (setViewYear((current) => current - 1), setViewMonth(11)) : setViewMonth((current) => current - 1)} type="button"><ChevronLeft size={18} /></button><strong>{mode === "month" ? String(viewYear + 543) : new Intl.DateTimeFormat("th-TH", { month: "long", year: "numeric" }).format(new Date(viewYear, viewMonth, 1))}</strong><button aria-label={mode === "month" ? "ปีถัดไป" : "เดือนถัดไป"} onClick={() => mode === "month" ? setViewYear((current) => current + 1) : viewMonth === 11 ? (setViewYear((current) => current + 1), setViewMonth(0)) : setViewMonth((current) => current + 1)} type="button"><ChevronRight size={18} /></button></header>
-        {mode === "month" ? <div className="ui-month-grid">{monthNames.map((monthName, index) => <button className={value === `${viewYear}-${pad(index + 1)}` ? "selected" : ""} key={monthName} onClick={() => commit(`${viewYear}-${pad(index + 1)}`)} type="button">{monthName}</button>)}</div> : <><div className="ui-calendar-weekdays">{weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}</div><div className="ui-calendar-grid">{calendarDays.map((date) => { const candidate = dateValue(date.getFullYear(), date.getMonth(), date.getDate()); const isToday = candidate === dateValue(today.getFullYear(), today.getMonth(), today.getDate()); return <button aria-label={new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(date)} className={`${date.getMonth() !== viewMonth ? "outside" : ""} ${candidate === selectedDate ? "selected" : ""} ${isToday ? "today" : ""}`} disabled={isDisabledDate(candidate)} key={candidate} onClick={() => selectDay(date)} type="button">{date.getDate()}</button>; })}</div></>}
-      </> : null}
+    <div
+      className="fixed z-[100] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 overflow-hidden"
+      id={panelId}
+      ref={panelRef}
+      style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
+    >
+      {mode !== "time" ? (
+        <>
+          <header className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <button
+              aria-label={mode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"}
+              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+              onClick={() =>
+                mode === "month"
+                  ? setViewYear((current) => current - 1)
+                  : viewMonth === 0
+                  ? (setViewYear((current) => current - 1), setViewMonth(11))
+                  : setViewMonth((current) => current - 1)
+              }
+              type="button"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <strong className="text-sm font-bold text-slate-800">
+              {mode === "month"
+                ? String(viewYear + 543)
+                : new Intl.DateTimeFormat("th-TH", { month: "long", year: "numeric" }).format(new Date(viewYear, viewMonth, 1))}
+            </strong>
+            <button
+              aria-label={mode === "month" ? "ปีถัดไป" : "เดือนถัดไป"}
+              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+              onClick={() =>
+                mode === "month"
+                  ? setViewYear((current) => current + 1)
+                  : viewMonth === 11
+                  ? (setViewYear((current) => current + 1), setViewMonth(0))
+                  : setViewMonth((current) => current + 1)
+              }
+              type="button"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </header>
+          {mode === "month" ? (
+            <div className="grid grid-cols-3 gap-2 py-3">
+              {monthNames.map((monthName, index) => (
+                <button
+                  className={`py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                    value === `${viewYear}-${pad(index + 1)}`
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                  key={monthName}
+                  onClick={() => commit(`${viewYear}-${pad(index + 1)}`)}
+                  type="button"
+                >
+                  {monthName}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="py-3">
+              <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-1.5">
+                {weekdays.map((weekday) => (
+                  <span key={weekday}>{weekday}</span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {calendarDays.map((date) => {
+                  const candidate = dateValue(date.getFullYear(), date.getMonth(), date.getDate());
+                  const isToday = candidate === dateValue(today.getFullYear(), today.getMonth(), today.getDate());
+                  const isSelected = candidate === selectedDate;
+                  const isOutside = date.getMonth() !== viewMonth;
+                  return (
+                    <button
+                      aria-label={new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(date)}
+                      className={`h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+                        isSelected
+                          ? "bg-blue-600 text-white font-bold shadow-xs"
+                          : isToday
+                          ? "border border-blue-400 text-blue-600 font-semibold"
+                          : isOutside
+                          ? "text-slate-300 hover:bg-slate-50"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                      disabled={isDisabledDate(candidate)}
+                      key={candidate}
+                      onClick={() => selectDay(date)}
+                      type="button"
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      ) : null}
       {mode === "time" || mode === "datetime-local" ? clock : null}
-      {mode !== "month" ? <footer><button className="ui-picker-clear" disabled={!value} onClick={() => commit("")} type="button"><X size={14} />ล้างค่า</button>{mode === "date" ? <button onClick={() => commit(dateValue(today.getFullYear(), today.getMonth(), today.getDate()))} type="button">วันนี้</button> : <button className="confirm" onClick={() => commit(mode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)} type="button">ยืนยันเวลา</button>}</footer> : null}
+      {mode !== "month" ? (
+        <footer className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
+          <button
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-30 cursor-pointer"
+            disabled={!value}
+            onClick={() => commit("")}
+            type="button"
+          >
+            <X size={14} />
+            <span>ล้างค่า</span>
+          </button>
+          {mode === "date" ? (
+            <button
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
+              onClick={() => commit(dateValue(today.getFullYear(), today.getMonth(), today.getDate()))}
+              type="button"
+            >
+              วันนี้
+            </button>
+          ) : (
+            <button
+              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white shadow-xs cursor-pointer"
+              onClick={() => commit(mode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)}
+              type="button"
+            >
+              ยืนยันเวลา
+            </button>
+          )}
+        </footer>
+      ) : null}
     </div>,
     document.body,
   ) : null;
 
-  return <div className="ui-date-control">
-    <input name={name} readOnly type="hidden" value={value} />
-    <button aria-controls={panelId} aria-expanded={open} aria-haspopup="dialog" aria-invalid={invalid} aria-label={ariaLabel} className={`ui-date-trigger ${open ? "open" : ""}`} disabled={disabled} onClick={() => open ? setOpen(false) : openPanel()} ref={triggerRef} role="combobox" type="button"><span className={value ? "" : "placeholder"}>{displayValue(value, mode) || placeholder || (mode === "month" ? "เลือกเดือน" : mode === "time" ? "เลือกเวลา" : "เลือกวันที่")}</span>{mode === "time" ? <Clock3 size={17} /> : <CalendarDays size={17} />}</button>
-    {panel}
-  </div>;
+  return (
+    <div className="relative">
+      <input name={name} readOnly type="hidden" value={value} />
+      <button
+        aria-controls={panelId}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-invalid={invalid}
+        aria-label={ariaLabel}
+        className={`w-full h-10 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-[13px] font-medium outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
+          invalid
+            ? "border-rose-300 bg-rose-50/40 text-rose-900"
+            : open
+            ? "border-blue-500 bg-white ring-2 ring-blue-100 text-slate-900"
+            : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
+        }`}
+        disabled={disabled}
+        onClick={() => (open ? setOpen(false) : openPanel())}
+        ref={triggerRef}
+        role="combobox"
+        type="button"
+      >
+        <span className={value ? "text-slate-800 truncate" : "text-slate-400 truncate"}>
+          {displayValue(value, mode) || placeholder || (mode === "month" ? "เลือกเดือน" : mode === "time" ? "เลือกเวลา" : "เลือกวันที่")}
+        </span>
+        {mode === "time" ? <Clock3 className="text-slate-400 shrink-0" size={16} /> : <CalendarDays className="text-slate-400 shrink-0" size={16} />}
+      </button>
+      {panel}
+    </div>
+  );
 }

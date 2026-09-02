@@ -20,14 +20,28 @@ type CollectionToolbarProps = {
 
 export function CollectionToolbar({ title, description, query, onQueryChange, placeholder, filter, actions }: CollectionToolbarProps) {
   return (
-    <section className={`portal-room-toolbar portal-collection-toolbar${filter ? "" : " no-filter"}${actions ? " with-actions" : ""}`}>
-      <div><strong>{title}</strong><span>{description}</span></div>
-      <label className="portal-room-search">
+    <section className="mb-6 p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+      <div className="flex flex-col min-w-[180px] mr-auto">
+        <strong className="text-slate-800 text-[15px] font-bold">{title}</strong>
+        <span className="text-slate-500 text-xs mt-0.5">{description}</span>
+      </div>
+      <label className="flex items-center gap-2.5 px-3.5 h-[42px] min-w-[220px] max-w-sm flex-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-3 focus-within:ring-blue-100 transition-all">
         <Search aria-hidden="true" size={16} />
-        <input aria-label={placeholder} onChange={(event) => onQueryChange(event.target.value)} placeholder={placeholder} type="search" value={query} />
+        <input
+          aria-label={placeholder}
+          className="w-full bg-transparent border-0 outline-none text-slate-800 text-[13px] placeholder:text-slate-400"
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder={placeholder}
+          type="search"
+          value={query}
+        />
       </label>
-      {filter ? <SelectControl ariaLabel={filter.label} onValueChange={filter.onChange} options={filter.options} value={filter.value} /> : null}
-      {actions ? <div className="portal-toolbar-actions">{actions}</div> : null}
+      {filter ? (
+        <div className="min-w-[160px]">
+          <SelectControl ariaLabel={filter.label} onValueChange={filter.onChange} options={filter.options} value={filter.value} />
+        </div>
+      ) : null}
+      {actions ? <div className="flex items-center gap-2.5 ml-auto lg:ml-0">{actions}</div> : null}
     </section>
   );
 }

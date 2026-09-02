@@ -1,19 +1,36 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Banknote, CalendarCheck, Clock3, CreditCard, ExternalLink, FileText, LayoutGrid, ListFilter, Printer, Receipt } from "lucide-react";
+import {
+  Banknote,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  ExternalLink,
+  Eye,
+  FileText,
+  Hash,
+  LayoutGrid,
+  List,
+  Printer,
+  Receipt,
+  ShieldCheck,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 import { recordPaymentAction, reviewPaymentSubmissionAction } from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
   EmptyState,
-  Field,
   Modal,
   PageHeader,
   PortalForm,
-  SelectField,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { SelectControl } from "@/components/ui/SelectControl";
 import { money, thaiBahtText, thaiDate } from "@/lib/format";
 import type { Invoice, Payment, Property, Tenant } from "@/components/portal/types";
 import { validatePayment } from "@/lib/portal/validation.mjs";
@@ -26,7 +43,7 @@ type PaymentSubmission = {
   paid_at: string;
   method: string;
   reference: string | null;
-  slip_path: string;
+  slip_path: string | null;
   note: string | null;
   status: string;
   created_at: string;
@@ -37,20 +54,23 @@ export function PaymentsPage({
   organizationId,
   payments,
   invoices,
-  properties,
   tenants,
-  submissions,
+  properties,
+  submissions = [],
   canCreate,
 }: {
   organizationId: string;
   payments: Payment[];
   invoices: Invoice[];
-  properties: Property[];
   tenants: Tenant[];
-  submissions: PaymentSubmission[];
+  properties: Property[];
+  submissions?: PaymentSubmission[];
   canCreate: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [propertyFilter, setPropertyFilter] = useState("all");
+  const [formInvoiceId, setFormInvoiceId] = useState("");
+  const [formMethod, setFormMethod] = useState("transfer");
   const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [query, setQuery] = useState("");
@@ -60,131 +80,252 @@ export function PaymentsPage({
   const tenantMap = useMemo(() => new Map(tenants.map((item) => [item.id, item.full_name])), [tenants]);
   const invoiceMap = useMemo(() => new Map(invoices.map((item) => [item.id, item.invoice_number])), [invoices]);
   const openInvoices = invoices.filter((item) => Number(item.balance_due) > 0 && item.status !== "void");
+  const selectedOpenInvoice = openInvoices.find((item) => item.id === formInvoiceId);
   const month = new Date().toISOString().slice(0, 7).replace("-", "");
 
-  const filtered = useMemo(() => {
-    const keyword = query.trim().toLocaleLowerCase("th");
-    return payments.filter(
-      (item) =>
-        (method === "all" || item.method === method) &&
-        (!keyword ||
-          [item.receipt_number, propertyMap.get(item.property_id), item.reference].some((value) =>
-            value?.toLocaleLowerCase("th").includes(keyword)
-          ))
-    );
-  }, [method, payments, propertyMap, query]);
+  const totalVerifiedAmount = useMemo(
+    () =>
+      payments
+        .filter((item) => item.status === "confirmed")
+        .reduce((sum, item) => sum + Number(item.amount), 0),
+    [payments]
+  );
+  const totalTransactionsCount = payments.length;
+  const pendingSubmissionsCount = submissions.length;
+  const openInvoicesCount = openInvoices.length;
 
-  const viewingPropName = viewingPayment ? propertyMap.get(viewingPayment.property_id) || "ลองตัว อพาร์ตเมนต์" : "ลองตัว อพาร์ตเมนต์";
+  const filtered = useMemo(() => {
+    const keyword = query.trim().toLocaleLowerCase("th-TH");
+    return payments.filter((item) => {
+      const matchesProperty = propertyFilter === "all" || item.property_id === propertyFilter;
+      const matchesMethod = method === "all" || item.method === method;
+      const matchesSearch =
+        !keyword ||
+        [item.receipt_number, propertyMap.get(item.property_id), item.reference].some((value) =>
+          value?.toLocaleLowerCase("th-TH").includes(keyword)
+        );
+
+      return matchesProperty && matchesMethod && matchesSearch;
+    });
+  }, [method, payments, propertyFilter, propertyMap, query]);
+
+  const viewingPropName = viewingPayment ? propertyMap.get(viewingPayment.property_id) || "หอพัก" : "หอพัก";
 
   const methodLabel = (m: string) => {
     switch (m) {
       case "cash": return "เงินสด";
       case "transfer": return "โอนธนาคาร";
-      case "promptpay": return "พร้อมเพย์ (PromptPay)";
+      case "promptpay": return "พร้อมเพย์";
       case "card": return "บัตรเครดิต/เดบิต";
       default: return m;
     }
   };
 
   return (
-    <>
+    <div className="portal-refined-page space-y-8">
       <PageHeader
-        actionLabel={canCreate ? "รับชำระเงิน" : undefined}
-        description="บันทึกยอดรับเงินจริงและตัดยอดคงเหลือของใบแจ้งหนี้"
-        onAction={() => setOpen(true)}
-        title="รับชำระ"
+        actionLabel={canCreate ? "บันทึกรับชำระ" : undefined}
+        description="บันทึกยอดรับเงินจริงและตัดยอดคงเหลือของใบแจ้งหนี้อัตโนมัติ"
+        onAction={() => {
+          setFormInvoiceId(openInvoices[0]?.id ?? "");
+          setOpen(true);
+        }}
+        title="รับชำระเงิน"
       />
 
-      <section className="portal-summary-strip">
-        <div>
-          <strong>
-            {money(
-              payments
-                .filter((item) => item.status === "confirmed")
-                .reduce((sum, item) => sum + Number(item.amount), 0)
-            )}
-          </strong>
-          <span>รับชำระยืนยันแล้ว</span>
+      <section aria-label="ภาพรวมการรับชำระ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+              <ShieldCheck size={20} strokeWidth={2.2} />
+            </span>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">รับชำระยืนยันแล้ว</span>
+              <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
+                {money(totalVerifiedAmount)}
+              </strong>
+            </div>
+          </div>
         </div>
-        <div>
-          <strong>{payments.length.toLocaleString("th-TH")}</strong>
-          <span>รายการทั้งหมด</span>
+
+        <button
+          aria-pressed={method === "all"}
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
+            method === "all"
+              ? "bg-white border-blue-500 shadow-md ring-2 ring-blue-500/20"
+              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+          }`}
+          onClick={() => setMethod("all")}
+          type="button"
+        >
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+              <Receipt size={20} strokeWidth={2.2} />
+            </span>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">รายการทั้งหมด</span>
+              <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
+                {totalTransactionsCount.toLocaleString("th-TH")} รายการ
+              </strong>
+            </div>
+          </div>
+        </button>
+
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+              <Clock3 size={20} strokeWidth={2.2} />
+            </span>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">สลิปรอตรวจสอบ</span>
+              <strong className="text-2xl font-black text-amber-800 tracking-tight tabular-nums mt-0.5 block">
+                {pendingSubmissionsCount.toLocaleString("th-TH")} รายการ
+              </strong>
+            </div>
+          </div>
         </div>
-        <div>
-          <strong>{openInvoices.length.toLocaleString("th-TH")}</strong>
-          <span>ใบแจ้งหนี้รอชำระ</span>
+
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+              <CreditCard size={20} strokeWidth={2.2} />
+            </span>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">ใบแจ้งหนี้รอชำระ</span>
+              <strong className="text-2xl font-black text-rose-800 tracking-tight tabular-nums mt-0.5 block">
+                {openInvoicesCount.toLocaleString("th-TH")} ฉบับ
+              </strong>
+            </div>
+          </div>
         </div>
       </section>
 
-      {submissions.length ? (
-        <section className="portal-payment-review">
-          <header>
-            <div>
-              <h2>หลักฐานรอตรวจสอบ (สลิปโอนเงิน)</h2>
-              <p>ตรวจยอดและชื่อบัญชีก่อนกดยืนยัน ระบบจะตัดยอดใบแจ้งหนี้ทันที</p>
+      {properties.length > 1 ? (
+        <section aria-label="เลือกหอพัก" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+              <Building2 aria-hidden="true" className="text-blue-600" size={16} strokeWidth={2.2} />
+              <span>เลือกหอพักเพื่อกรองรายการรับชำระ</span>
             </div>
-            <span>{submissions.length.toLocaleString("th-TH")} รายการ</span>
+            <small className="text-xs font-semibold text-slate-500">
+              {properties.length.toLocaleString("th-TH")} หอพัก · {payments.length.toLocaleString("th-TH")} รายการ
+            </small>
           </header>
-          <div>
+          <div aria-label="รายชื่อหอพัก" className="flex gap-2.5 overflow-x-auto p-3" role="group">
+            <button
+              aria-pressed={propertyFilter === "all"}
+              className={`min-w-[168px] rounded-xl border px-4 py-3 text-left text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
+                propertyFilter === "all"
+                  ? "border-blue-500 bg-blue-50/70 text-blue-950 shadow-xs ring-2 ring-blue-500/15"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+              onClick={() => setPropertyFilter("all")}
+              type="button"
+            >
+              <span className="flex items-center gap-2">
+                <Building2 aria-hidden="true" size={15} />
+                ทุกหอพัก
+              </span>
+              <span className="mt-1 block text-[11px] font-medium text-slate-500">{payments.length.toLocaleString("th-TH")} รายการในระบบ</span>
+            </button>
+            {properties.map((prop) => {
+              const propPaymentCount = payments.filter((p) => p.property_id === prop.id).length;
+              const isSelected = propertyFilter === prop.id;
+              return (
+                <button
+                  aria-pressed={isSelected}
+                  className={`min-w-[190px] rounded-xl border px-4 py-3 text-left text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50/70 text-blue-950 shadow-xs ring-2 ring-blue-500/15"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                  key={prop.id}
+                  onClick={() => setPropertyFilter(prop.id)}
+                  type="button"
+                >
+                  <span className="block truncate">{prop.name}</span>
+                  <span className="mt-1 block text-[11px] font-medium text-slate-500">{propPaymentCount.toLocaleString("th-TH")} รายการรับชำระ</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {submissions.length ? (
+        <section className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-sm space-y-4">
+          <header className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                <Clock3 size={16} strokeWidth={2.2} />
+              </span>
+              <div>
+                <h2 className="text-sm font-bold text-amber-950">หลักฐานรอตรวจสอบ (สลิปโอนเงิน)</h2>
+                <p className="text-xs text-amber-800/80">ตรวจยอดและชื่อบัญชีก่อนกดยืนยัน ระบบจะตัดยอดใบแจ้งหนี้ทันที</p>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-xl bg-amber-200/80 text-amber-900 text-xs font-bold shrink-0">
+              {submissions.length.toLocaleString("th-TH")} รายการ
+            </span>
+          </header>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {submissions.map((item) => (
-              <article key={item.id}>
-                <div className="portal-review-main">
-                  <span>
-                    <Clock3 size={19} />
-                  </span>
-                  <div>
-                    <strong>{tenantMap.get(item.tenant_id) ?? "ผู้เช่า"}</strong>
-                    <small>
+              <article className="p-4 rounded-xl bg-white border border-amber-200 shadow-xs flex flex-col gap-3" key={item.id}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="text-xs font-bold text-slate-800 block truncate">{tenantMap.get(item.tenant_id) ?? "ผู้เช่า"}</strong>
+                    <small className="text-[11px] text-slate-400 block truncate">
                       {invoiceMap.get(item.invoice_id) ?? "ใบแจ้งหนี้"} · โอนเมื่อ {thaiDate(item.paid_at)}
                     </small>
                   </div>
-                  <b>{money(Number(item.amount))}</b>
+                  <strong className="text-sm font-bold text-emerald-600 shrink-0">{money(Number(item.amount))}</strong>
                 </div>
-                <dl>
+                <div className="grid grid-cols-2 gap-2 text-xs p-2.5 rounded-lg bg-slate-50 text-slate-600">
                   <div>
-                    <dt>ช่องทาง</dt>
-                    <dd>{methodLabel(item.method)}</dd>
+                    <span className="text-[10px] text-slate-400 block">ช่องทาง</span>
+                    <span className="font-medium text-slate-800">{methodLabel(item.method)}</span>
                   </div>
                   <div>
-                    <dt>อ้างอิง</dt>
-                    <dd>{item.reference || "—"}</dd>
+                    <span className="text-[10px] text-slate-400 block">อ้างอิง</span>
+                    <span className="font-medium text-slate-800 truncate block">{item.reference || "—"}</span>
                   </div>
-                </dl>
-                {item.note ? <p>{item.note}</p> : null}
-                <footer>
-                  {item.slipUrl ? (
-                    <a href={item.slipUrl} rel="noreferrer" target="_blank">
-                      <ExternalLink size={15} /> เปิดหลักฐานสลิป
-                    </a>
-                  ) : (
-                    <span>ไม่สามารถเปิดไฟล์ได้</span>
-                  )}
-                  <form
-                    action={async (formData) => {
-                      await reviewPaymentSubmissionAction(formData);
-                    }}
+                </div>
+                {item.slipUrl ? (
+                  <a
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                    href={item.slipUrl}
+                    rel="noreferrer"
+                    target="_blank"
                   >
-                    <input name="organizationId" type="hidden" value={organizationId} />
+                    <ExternalLink size={13} /> ดูภาพสลิปโอนเงิน
+                  </a>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                  <form action={async (formData: FormData) => { await reviewPaymentSubmissionAction(formData); }}>
                     <input name="submissionId" type="hidden" value={item.id} />
-                    <input name="decision" type="hidden" value="reject" />
-                    <input aria-label="เหตุผลที่ส่งกลับ" name="rejectionReason" placeholder="เหตุผลที่ส่งกลับ" required />
-                    <button className="portal-secondary" type="submit">
-                      ส่งกลับ
+                    <input name="decision" type="hidden" value="approved" />
+                    <button
+                      className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all"
+                      type="submit"
+                    >
+                      <CheckCircle2 size={14} /> อนุมัติ
                     </button>
                   </form>
-                  <form
-                    action={async (formData) => {
-                      await reviewPaymentSubmissionAction(formData);
-                    }}
-                  >
-                    <input name="organizationId" type="hidden" value={organizationId} />
+                  <form action={async (formData: FormData) => { await reviewPaymentSubmissionAction(formData); }}>
                     <input name="submissionId" type="hidden" value={item.id} />
-                    <input name="decision" type="hidden" value="approve" />
-                    <button className="portal-primary" type="submit">
-                      ยืนยันยอด
+                    <input name="decision" type="hidden" value="rejected" />
+                    <button
+                      className="w-full h-8.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all"
+                      type="submit"
+                    >
+                      <XCircle size={14} /> ไม่อนุมัติ
                     </button>
                   </form>
-                </footer>
+                </div>
               </article>
             ))}
           </div>
@@ -193,361 +334,457 @@ export function PaymentsPage({
 
       <CollectionToolbar
         actions={
-          <div className="portal-view-toggle">
+          <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
             <button
               aria-label="มุมมองตาราง"
-              className={`portal-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                viewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
               onClick={() => setViewMode("table")}
               type="button"
             >
-              <ListFilter size={15} />
+              <List size={14} />
               <span>ตาราง</span>
             </button>
             <button
               aria-label="มุมมองการ์ด"
-              className={`portal-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                viewMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
               onClick={() => setViewMode("grid")}
               type="button"
             >
-              <LayoutGrid size={15} />
+              <LayoutGrid size={14} />
               <span>การ์ด</span>
             </button>
           </div>
         }
-        description={`พบ ${filtered.length.toLocaleString("th-TH")} รายการ`}
+        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${payments.length.toLocaleString("th-TH")} รายการ`}
         filter={{
-          label: "กรองช่องทางชำระ",
+          label: "กรองช่องทาง",
           value: method,
           onChange: setMethod,
           options: [
-            { value: "all", label: "ทุกช่องทาง" },
+            { value: "all", label: "ทุกช่องทางชำระ" },
+            { value: "transfer", label: "โอนผ่านธนาคาร" },
+            { value: "promptpay", label: "พร้อมเพย์ (PromptPay)" },
             { value: "cash", label: "เงินสด" },
-            { value: "transfer", label: "โอนธนาคาร" },
-            { value: "promptpay", label: "PromptPay" },
-            { value: "card", label: "บัตร" },
-            { value: "other", label: "อื่น ๆ" },
+            { value: "card", label: "บัตรเครดิต/เดบิต" },
           ],
         }}
         onQueryChange={setQuery}
-        placeholder="ค้นหาเลขที่ใบเสร็จ หอพัก หรือเลขอ้างอิง"
+        placeholder="ค้นหาเลขที่ใบเสร็จ, หอพัก หรือเลขอ้างอิง..."
         query={query}
-        title="ประวัติรับชำระ"
+        title="ประวัติการรับชำระเงิน"
       />
 
       {filtered.length ? (
         viewMode === "table" ? (
-          <div className="portal-table-wrap">
+          <div className="w-full">
             <DataTable
               headers={[
-                "เลขที่ใบเสร็จ",
-                "หอพัก / อาคาร",
-                "ยอดรับชำระ",
-                "ช่องทาง",
+                "เลขที่ใบเสร็จ / หอพัก",
+                "วันที่ชำระ",
+                "จำนวนเงิน",
+                "ช่องทางชำระ",
                 "เลขอ้างอิง",
-                "วันที่รับเงิน",
                 "สถานะ",
                 "การจัดการ",
               ]}
-              rows={filtered.map((item) => [
-                <div className="portal-lease-room-cell" key="rec">
-                  <span className="portal-dormitory-icon-pill" style={{ background: "#ecfdf5", color: "#059669" }}>
-                    <Receipt size={16} />
-                  </span>
-                  <div>
-                    <strong>{item.receipt_number}</strong>
-                  </div>
-                </div>,
-                <span key="prop">{propertyMap.get(item.property_id) ?? "—"}</span>,
-                <strong key="amount" style={{ color: "#0d9488" }}>
-                  {money(Number(item.amount))}
-                </strong>,
-                <span key="method">{methodLabel(item.method)}</span>,
-                <span key="ref" style={{ color: "#64748b", fontSize: "12px" }}>
-                  {item.reference || "—"}
-                </span>,
-                <span key="date">{thaiDate(item.paid_at)}</span>,
-                <StatusBadge key="status" status={item.status} />,
-                <div className="portal-table-actions" key="actions">
-                  <button
-                    className="portal-table-action-btn view"
-                    onClick={() => setViewingPayment(item)}
-                    title="ดูใบเสร็จรับเงิน"
-                    type="button"
-                  >
-                    <FileText size={14} />
-                    <span>ดูใบเสร็จ</span>
-                  </button>
-                  <button
-                    className="portal-table-action-btn print"
-                    onClick={() => {
-                      setViewingPayment(item);
-                      setTimeout(() => window.print(), 150);
-                    }}
-                    title="พิมพ์ใบเสร็จ A4"
-                    type="button"
-                  >
-                    <Printer size={14} />
-                  </button>
-                </div>,
-              ])}
-            />
-          </div>
-        ) : (
-          <section className="portal-collection-grid">
-            {filtered.map((item) => (
-              <article className="portal-record-card payment-card" key={item.id}>
-                <header>
-                  <span className="portal-record-icon success">
-                    <Banknote aria-hidden="true" size={20} />
-                  </span>
-                  <div>
-                    <h2>{item.receipt_number}</h2>
-                    <small>{propertyMap.get(item.property_id) ?? "ไม่พบหอพัก"}</small>
-                  </div>
-                  <StatusBadge status={item.status} />
-                </header>
-
-                <div className="portal-payment-amount">
-                  <small>ยอดรับชำระ</small>
-                  <strong>{money(Number(item.amount))}</strong>
-                </div>
-
-                <dl className="portal-record-metrics">
-                  <div>
-                    <dt>ช่องทาง</dt>
-                    <dd>
-                      <CreditCard aria-hidden="true" size={14} /> {methodLabel(item.method)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>เลขอ้างอิง</dt>
-                    <dd>{item.reference || "—"}</dd>
-                  </div>
-                </dl>
-
-                <footer className="portal-lease-card-footer">
-                  <div className="portal-lease-card-meta-row">
-                    <span>
-                      <CalendarCheck aria-hidden="true" size={14} style={{ display: "inline", marginRight: 4 }} />
-                      รับชำระเมื่อ {thaiDate(item.paid_at)}
+              rows={filtered.map((item) => {
+                const propName = propertyMap.get(item.property_id);
+                return [
+                  <div className="flex items-center gap-2.5" key="rec">
+                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 shadow-2xs">
+                      <Receipt size={15} strokeWidth={2.2} />
                     </span>
-                  </div>
-                  <div className="portal-lease-card-actions-grid">
+                    <div className="flex flex-col text-xs min-w-0">
+                      <strong className="text-slate-900 font-mono font-bold block">{item.receipt_number}</strong>
+                      <small className="text-slate-400">{propName ?? "หอพัก"}</small>
+                    </div>
+                  </div>,
+                  <span className="text-xs font-semibold text-slate-700" key="date">
+                    {thaiDate(item.paid_at)}
+                  </span>,
+                  <strong className="text-xs font-mono font-bold text-emerald-600" key="amount">
+                    {money(Number(item.amount))}
+                  </strong>,
+                  <span className="text-xs text-slate-600 font-medium" key="method">
+                    {methodLabel(item.method)}
+                  </span>,
+                  <span className="text-xs font-mono text-slate-500 truncate max-w-xs block" key="ref">
+                    {item.reference || "—"}
+                  </span>,
+                  <StatusBadge key="status" status={item.status} />,
+                  <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
                     <button
-                      className="portal-lease-card-btn view"
+                      className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
                       onClick={() => setViewingPayment(item)}
                       title="ดูใบเสร็จรับเงิน"
                       type="button"
                     >
-                      <FileText size={15} />
+                      <Eye size={14} strokeWidth={2.2} />
                       <span>ดูใบเสร็จ</span>
                     </button>
                     <button
-                      className="portal-lease-card-btn print"
+                      className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0"
                       onClick={() => {
                         setViewingPayment(item);
                         setTimeout(() => window.print(), 150);
                       }}
-                      title="พิมพ์ใบเสร็จ A4"
+                      title="พิมพ์ใบเสร็จรับเงิน A4"
                       type="button"
                     >
-                      <Printer size={15} />
-                      <span>พิมพ์ใบเสร็จ</span>
+                      <Printer size={14} strokeWidth={2.2} />
                     </button>
+                  </div>,
+                ];
+              })}
+            />
+          </div>
+        ) : (
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((item) => {
+              const propName = propertyMap.get(item.property_id);
+              return (
+                <article
+                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                  key={item.id}
+                >
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+                  <div>
+                    <header className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white font-black text-sm shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <Receipt size={20} strokeWidth={2.2} />
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-emerald-600 transition-colors">
+                            {item.receipt_number}
+                          </h2>
+                          <span className="text-xs text-slate-400 block truncate mt-0.5">
+                            {propName ?? "หอพัก"} · {thaiDate(item.paid_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </header>
+                    <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
+                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดชำระจริง</dt>
+                        <dd className="text-base font-mono font-black text-emerald-600 mt-1">{money(Number(item.amount))}</dd>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">ช่องทาง: {methodLabel(item.method)}</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">เลขอ้างอิง</dt>
+                        <dd className="text-xs font-mono font-bold text-slate-800 mt-1 truncate">{item.reference || "—"}</dd>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">ยืนยันแล้ว</span>
+                      </div>
+                    </dl>
                   </div>
-                </footer>
-              </article>
-            ))}
+                  <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
+                    <button
+                      className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
+                      onClick={() => setViewingPayment(item)}
+                      title="ดูใบเสร็จรับเงิน"
+                      type="button"
+                    >
+                      <Eye size={15} strokeWidth={2.2} />
+                      <span>ดูใบเสร็จ</span>
+                    </button>
+                    <button
+                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
+                      onClick={() => {
+                        setViewingPayment(item);
+                        setTimeout(() => window.print(), 150);
+                      }}
+                      title="พิมพ์ใบเสร็จ"
+                      type="button"
+                    >
+                      <Printer size={15} strokeWidth={2.2} />
+                      <span>พิมพ์</span>
+                    </button>
+                  </footer>
+                </article>
+              );
+            })}
           </section>
         )
       ) : (
         <EmptyState
-          description={
-            payments.length
-              ? "ลองเปลี่ยนคำค้นหาหรือช่องทางชำระ"
-              : "เมื่อรับชำระจากใบแจ้งหนี้ รายการจะปรากฏที่นี่"
-          }
-          title={payments.length ? "ไม่พบรายการรับชำระ" : "ยังไม่มีรายการรับชำระ"}
+          description="บันทึกการรับชำระเงินเมื่อผู้เช่าโอนหรือชำระเงินสดเรียบร้อยแล้ว"
+          title="ยังไม่มีรายการรับชำระเงิน"
         />
       )}
 
-      {/* Official Printable Receipt Modal */}
       {viewingPayment ? (
         <Modal
-          className="contract-modal"
+          className="contract-modal portal-refined-modal"
           headerActions={
-            <div className="portal-modal-header-actions">
-              <button
-                className="portal-primary"
-                onClick={() => window.print()}
-                type="button"
-              >
-                <Printer size={14} />
-                <span>พิมพ์ / บันทึก PDF</span>
-              </button>
-            </div>
+            <button
+              className="h-8.5 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs print:hidden"
+              onClick={() => window.print()}
+              type="button"
+            >
+              <Printer size={14} strokeWidth={2.2} />
+              <span>พิมพ์ใบเสร็จ A4</span>
+            </button>
           }
-          maxWidth={840}
+          maxWidth={800}
           onClose={() => setViewingPayment(null)}
-          title={`ใบเสร็จรับเงิน (${viewingPayment.receipt_number})`}
+          title={`ใบเสร็จรับเงิน ${viewingPayment.receipt_number}`}
         >
-          <div className="contract-paper" id="print-area">
-            <div className="contract-official-header">
-              <div className="contract-official-emblem">🏢</div>
-              <h1 className="contract-official-title">{viewingPropName}</h1>
-              <p className="contract-official-sub">ใบเสร็จรับเงิน / ใบรับฝากชำระ (RECEIPT)</p>
-            </div>
-
-            <div className="contract-meta-bar">
+          <div className="p-6 sm:p-10 overflow-y-auto text-slate-800 text-xs sm:text-[13px] leading-relaxed space-y-5 font-sans" id="print-area">
+            <div className="flex items-start justify-between border-b border-slate-200 pb-5">
               <div>
-                <strong>เลขที่ใบเสร็จ:</strong> {viewingPayment.receipt_number}
+                <h1 className="text-xl font-black text-slate-900">{viewingPropName}</h1>
+                <p className="text-xs text-slate-500 mt-1">ใบเสร็จรับเงินค่าเช่าและบริการ</p>
               </div>
-              <div>
-                <strong>วันที่รับเงิน:</strong> {thaiDate(viewingPayment.paid_at)}
-              </div>
-              <div>
-                <strong>ช่องทางชำระ:</strong> {methodLabel(viewingPayment.method)}
-              </div>
-              <div>
-                <strong>เลขอ้างอิง:</strong> {viewingPayment.reference || "—"}
+              <div className="text-right">
+                <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-800 font-extrabold text-sm rounded-lg border border-emerald-100">
+                  ใบเสร็จรับเงิน / RECEIPT
+                </span>
+                <p className="text-xs font-mono font-bold text-slate-900 mt-2">เลขที่: {viewingPayment.receipt_number}</p>
+                <p className="text-[11px] text-slate-400">วันที่รับเงิน: {thaiDate(viewingPayment.paid_at)}</p>
               </div>
             </div>
-
-            {/* Receipt Table */}
-            <div style={{ margin: "16px 0", border: "1px solid #cbd5e1", borderRadius: 8, overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10pt" }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #cbd5e1" }}>
-                    <th style={{ padding: "8px 12px", textAlign: "left" }}>ลำดับ</th>
-                    <th style={{ padding: "8px 12px", textAlign: "left" }}>รายการรับชำระ</th>
-                    <th style={{ padding: "8px 12px", textAlign: "right" }}>จำนวนเงินที่ชำระ (บาท)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "8px 12px" }}>1</td>
-                    <td style={{ padding: "8px 12px" }}>
-                      <strong>ชำระเงินค่าห้องพักและสาธารณูปโภค</strong> ({viewingPropName})
-                    </td>
-                    <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                      {money(Number(viewingPayment.amount))}
-                    </td>
-                  </tr>
-                  <tr style={{ background: "#f8fafc", fontWeight: "bold" }}>
-                    <td colSpan={2} style={{ padding: "10px 12px", textAlign: "right" }}>
-                      ยอดเงินที่รับชำระสุทธิ (PAID TOTAL):
-                    </td>
-                    <td style={{ padding: "10px 12px", textAlign: "right", fontSize: "12pt", color: "#059669" }}>
-                      {money(Number(viewingPayment.amount))}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ margin: "10px 0", padding: "8px 12px", background: "#f1f5f9", borderRadius: 6, fontSize: "10pt" }}>
-              <strong>จำนวนเงินตัวอักษร:</strong> {thaiBahtText(Number(viewingPayment.amount))}
-            </div>
-
-            <p style={{ fontSize: "9.5pt", color: "#64748b", margin: "14px 0 0" }}>
-              * ใบเสร็จรับเงินนี้ออกโดยระบบอัตโนมัติของ {viewingPropName} และมีผลสมบูรณ์เมื่อตัดยอดสำเร็จ
-            </p>
-
-            {/* Signatures */}
-            <div className="contract-signatures-grid" style={{ marginTop: 24 }}>
-              <div className="contract-sig-item">
-                <p>ลงชื่อ ............................................................ ผู้รับเงิน</p>
-                <div className="sig-line" />
-                <p>({viewingPropName})</p>
-                <p>ผู้มีอำนาจลงนาม / ฝ่ายการเงิน</p>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+              <div className="flex justify-between">
+                <span>ช่องทางการชำระเงิน:</span>
+                <strong className="text-slate-900 font-bold">{methodLabel(viewingPayment.method)}</strong>
               </div>
-              <div className="contract-sig-item">
-                <p>ลงชื่อ ............................................................ ผู้ชำระเงิน</p>
-                <div className="sig-line" />
-                <p>(............................................................)</p>
-                <p>ผู้ชำระเงิน</p>
+              <div className="flex justify-between">
+                <span>เลขอ้างอิง / สลิปโอน:</span>
+                <strong className="text-slate-900 font-mono font-bold">{viewingPayment.reference || "—"}</strong>
+              </div>
+            </div>
+            <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
+              <div className="bg-slate-100 p-3 font-bold text-slate-800 flex justify-between border-b border-slate-200">
+                <span>รายการรับชำระ</span>
+                <span>จำนวนเงิน (บาท)</span>
+              </div>
+              <div className="p-3 space-y-2">
+                <div className="flex justify-between py-1">
+                  <span>ชำระยอดตามใบแจ้งหนี้</span>
+                  <strong className="font-mono text-slate-900">{money(Number(viewingPayment.amount))}</strong>
+                </div>
+              </div>
+              <div className="bg-slate-50 p-3.5 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
+                <span>รวมทั้งสิ้น ({thaiBahtText(Number(viewingPayment.amount))})</span>
+                <span className="text-emerald-600 font-mono font-black text-base">{money(Number(viewingPayment.amount))}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+              <div className="space-y-8">
+                <div className="border-b border-slate-300 w-48 mx-auto" />
+                <p>ลงชื่อ ........................................................... ผู้รับเงิน</p>
+              </div>
+              <div className="space-y-8">
+                <div className="border-b border-slate-300 w-48 mx-auto" />
+                <p>ลงชื่อ ........................................................... ผู้ชำระเงิน</p>
               </div>
             </div>
           </div>
         </Modal>
       ) : null}
 
-      {/* Record Payment Modal */}
       {open ? (
         <Modal
-          description="เลือกใบแจ้งหนี้และระบุยอดที่รับจริง ระบบรองรับการชำระบางส่วน"
+          className="portal-refined-modal"
+          description="เลือกใบแจ้งหนี้ที่ต้องการตัดยอด และระบุจำนวนเงินที่ได้รับจริง"
+          maxWidth={600}
           onClose={() => setOpen(false)}
-          title="รับชำระเงิน"
+          title="บันทึกการรับชำระเงิน"
         >
           <PortalForm
             action={recordPaymentAction}
+            onCancel={() => setOpen(false)}
             onSuccess={() => setOpen(false)}
             organizationId={organizationId}
-            submitLabel="ยืนยันรับชำระ"
+            submitLabel="บันทึกรับเงินและตัดหนี้"
+            submitDisabled={!openInvoices.length}
+            submitDisabledReason={!openInvoices.length ? "ยังไม่มีใบแจ้งหนี้ที่มียอดค้างชำระ" : undefined}
             validate={validatePayment}
           >
             {(errors, clear) => (
-              <>
-                <SelectField
-                  clear={clear}
-                  error={errors.invoiceId}
-                  label="ใบแจ้งหนี้"
-                  name="invoiceId"
-                  onChange={(value, form) => {
-                    const invoice = openInvoices.find((item) => item.id === value);
-                    if (invoice && form) {
-                      (form.elements.namedItem("amount") as HTMLInputElement).value = String(
-                        invoice.balance_due
-                      );
-                    }
-                  }}
-                  options={openInvoices.map((item) => ({
-                    value: item.id,
-                    label: `${item.invoice_number} · คงเหลือ ${money(Number(item.balance_due))}`,
-                  }))}
-                  required
-                />
-                <div className="portal-form-grid">
-                  <Field
-                    clear={clear}
-                    defaultValue={`REC-${month}-${String(payments.length + 1).padStart(4, "0")}`}
-                    error={errors.receiptNumber}
-                    label="เลขที่ใบเสร็จ"
-                    name="receiptNumber"
-                    required
-                  />
-                  <Field
-                    clear={clear}
-                    error={errors.amount}
-                    label="ยอดรับชำระ"
-                    min="0.01"
-                    name="amount"
-                    required
-                    step="0.01"
-                    type="number"
-                  />
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                    <Sparkles size={13} strokeWidth={2.2} />
+                  </span>
+                  <div className="leading-relaxed">
+                    <strong className="font-bold block text-blue-950">บันทึกรับชำระเงินและออกใบเสร็จ</strong>
+                    <span className="text-[11px] text-blue-800/80">
+                      ระบบจะตัดยอดคงค้างในใบแจ้งหนี้ให้อัตโนมัติทันทีที่บันทึกสำเร็จ
+                    </span>
+                  </div>
                 </div>
-                <SelectField
-                  clear={clear}
-                  defaultValue="transfer"
-                  error={errors.method}
-                  label="ช่องทาง"
-                  name="method"
-                  options={[
-                    { value: "cash", label: "เงินสด" },
-                    { value: "transfer", label: "โอนธนาคาร" },
-                    { value: "promptpay", label: "PromptPay" },
-                    { value: "card", label: "บัตร" },
-                    { value: "other", label: "อื่น ๆ" },
-                  ]}
-                  required
-                />
-                <Field clear={clear} error={errors.reference} label="เลขอ้างอิง" name="reference" />
-              </>
+                <input name="invoiceId" type="hidden" value={formInvoiceId} />
+                <input name="method" type="hidden" value={formMethod} />
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <FileText size={14} className="text-slate-500" />
+                      <span>เลือกใบแจ้งหนี้ที่ค้างชำระ <span className="text-rose-500">*</span></span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-normal">เฉพาะบิลที่ค้าง</span>
+                  </label>
+                  <SelectControl
+                    ariaLabel="ใบแจ้งหนี้"
+                    onValueChange={(val) => {
+                      setFormInvoiceId(val);
+                      clear("invoiceId");
+                    }}
+                    options={openInvoices.map((item) => ({
+                      value: item.id,
+                      label: `${item.invoice_number} — ยอดค้าง ${money(Number(item.balance_due))}`,
+                    }))}
+                    placeholder="เลือกใบแจ้งหนี้"
+                    value={formInvoiceId}
+                  />
+                  {errors.invoiceId ? (
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.invoiceId}</p>
+                  ) : null}
+                  {selectedOpenInvoice ? (
+                    <div aria-live="polite" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3">
+                      <div>
+                        <span className="block text-[11px] font-medium text-emerald-700">ยอดคงเหลือของบิลที่เลือก</span>
+                        <strong className="mt-0.5 block font-mono text-sm font-black text-emerald-900">
+                          {money(Number(selectedOpenInvoice.balance_due))}
+                        </strong>
+                      </div>
+                      <span className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-800 shadow-xs">
+                        {propertyMap.get(selectedOpenInvoice.property_id) ?? "หอพัก"}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={14} className="text-slate-500" />
+                        <span>วันที่รับเงินจริง <span className="text-rose-500">*</span></span>
+                      </span>
+                    </label>
+                    <input
+                      aria-invalid={Boolean(errors.paidAt)}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                      defaultValue={new Date().toISOString().slice(0, 10)}
+                      name="paidAt"
+                      onChange={() => clear("paidAt")}
+                      type="date"
+                    />
+                    {errors.paidAt ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.paidAt}</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Banknote size={14} className="text-slate-500" />
+                        <span>จำนวนเงินที่รับจริง (บาท) <span className="text-rose-500">*</span></span>
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <Banknote size={16} strokeWidth={2.2} />
+                      </span>
+                      <input
+                        aria-invalid={Boolean(errors.amount)}
+                        className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
+                        min={0.01}
+                        name="amount"
+                        onChange={() => clear("amount")}
+                        placeholder="เช่น 3500.00"
+                        step="0.01"
+                        type="number"
+                      />
+                    </div>
+                    {errors.amount ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.amount}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <CreditCard size={14} className="text-slate-500" />
+                        <span>ช่องทางการชำระ <span className="text-rose-500">*</span></span>
+                      </span>
+                    </label>
+                    <SelectControl
+                      ariaLabel="วิธีชำระเงิน"
+                      onValueChange={(val) => {
+                        setFormMethod(val);
+                        clear("method");
+                      }}
+                      options={[
+                        { value: "transfer", label: "โอนผ่านธนาคาร" },
+                        { value: "promptpay", label: "พร้อมเพย์" },
+                        { value: "cash", label: "เงินสด" },
+                        { value: "card", label: "บัตรเครดิต/เดบิต" },
+                      ]}
+                      value={formMethod}
+                    />
+                    {errors.method ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.method}</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Hash size={14} className="text-slate-500" />
+                        <span>เลขอ้างอิง / สลิปโอน</span>
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <Hash size={16} strokeWidth={2.2} />
+                      </span>
+                      <input
+                        aria-invalid={Boolean(errors.reference)}
+                        className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                        name="reference"
+                        onChange={() => clear("reference")}
+                        placeholder="เช่น 202603019842"
+                      />
+                    </div>
+                    {errors.reference ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.reference}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Receipt size={14} className="text-slate-500" />
+                      <span>เลขที่ใบเสร็จรับเงิน <span className="text-rose-500">*</span></span>
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                      <Receipt size={16} strokeWidth={2.2} />
+                    </span>
+                    <input
+                      aria-invalid={Boolean(errors.receiptNumber)}
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                      defaultValue={`REC-${month}-${String(payments.length + 1).padStart(3, "0")}`}
+                      name="receiptNumber"
+                      onChange={() => clear("receiptNumber")}
+                      placeholder="ระบุเลขที่ใบเสร็จ"
+                    />
+                  </div>
+                  {errors.receiptNumber ? (
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.receiptNumber}</p>
+                  ) : null}
+                </div>
+              </div>
             )}
           </PortalForm>
         </Modal>
       ) : null}
-    </>
+    </div>
   );
 }

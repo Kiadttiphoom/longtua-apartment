@@ -24,39 +24,137 @@ type ShellProps = {
 };
 
 const icons: Record<string, typeof Home> = {
-  customer_overview: LayoutDashboard, customer_properties: Building2, customer_rooms: KeyRound,
-  customer_tenants: Users, customer_leases: CalendarRange, customer_meters: Gauge,
-  customer_invoices: FileText, customer_payments: WalletCards, customer_receivables: ReceiptText,
-  customer_reports: CircleDollarSign, customer_settings: Settings, customer_subscription: CircleDollarSign,
+  customer_overview: LayoutDashboard, customer_properties: Building2, customer_users: Users,
+  customer_rooms: KeyRound, customer_tenants: Users, customer_leases: CalendarRange,
+  customer_meters: Gauge, customer_invoices: FileText, customer_payments: WalletCards,
+  customer_receivables: ReceiptText, customer_reports: CircleDollarSign,
+  customer_settings: Settings, customer_subscription: CircleDollarSign,
 };
+
+const menuCategoryOrder = [
+  { label: "ภาพรวม", codes: ["customer_overview", "customer_properties", "customer_users"] },
+  { label: "จัดการหอพัก", codes: ["customer_rooms", "customer_tenants", "customer_leases"] },
+  { label: "การเงิน", codes: ["customer_meters", "customer_invoices", "customer_payments", "customer_receivables", "customer_reports"] },
+  { label: "บริการเสริม", codes: ["customer_line"] },
+  { label: "ระบบ", codes: ["customer_subscription", "customer_settings"] },
+];
 
 export function PortalShell({ children, context }: ShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  return <div className="portal-shell">
-    <aside className={`portal-sidebar ${mobileOpen ? "open" : ""}`}>
-      <div className="portal-brand"><BrandLogo className="portal-brand-logo" variant="inverse" /></div>
-      <button className="portal-sidebar-close" onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู"><X size={20} /></button>
-      <div className="portal-nav-label">จัดการกิจการ</div>
-      <nav>{context.menus.map((item) => {
-        const Icon = icons[item.code] ?? Home;
-        const active = pathname === item.href;
-        return <AppNavLink active={active} className={active ? "active" : ""} href={item.href} key={item.code} onClick={() => setMobileOpen(false)}><Icon size={18} /><span>{item.label}</span></AppNavLink>;
-      })}</nav>
-      <form action={logoutAction} className="portal-logout-form"><button className="portal-logout" type="submit"><LogOut size={18} />ออกจากระบบ</button></form>
-    </aside>
-    {mobileOpen ? <button aria-label="ปิดเมนู" className="portal-sidebar-scrim" onClick={() => setMobileOpen(false)} /> : null}
-    <div className="portal-main">
-      <header className="portal-topbar">
-        <button className="portal-menu-button" onClick={() => setMobileOpen(true)} aria-label="เปิดเมนู"><Menu size={21} /></button>
-        {context.organizations.length > 1 ? <form action={switchOrganizationAction} className="portal-org-switch">
-          <input name="returnPath" type="hidden" value={pathname} />
-          <SelectControl ariaLabel="เลือกกิจการ" name="organizationId" onValueChange={(_, form) => form?.requestSubmit()} options={context.organizations.map((item) => ({ value: item.id, label: item.name }))} value={context.organization.id} />
-        </form> : null}
-        <div className="portal-user"><span>{context.userName.trim().slice(0, 1)}<i aria-hidden="true" /></span><div><strong>{context.userName}</strong><small>{context.roleLabel}</small></div></div>
-      </header>
-      <main className="portal-content">{children}</main>
+  // Group context.menus by category
+  const knownCodes = new Set(menuCategoryOrder.flatMap((g) => g.codes));
+  const groupedMenus = menuCategoryOrder
+    .map((group) => ({
+      label: group.label,
+      items: group.codes
+        .map((code) => context.menus.find((m) => m.code === code))
+        .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const leftoverMenus = context.menus.filter((m) => !knownCodes.has(m.code));
+  if (leftoverMenus.length > 0) {
+    groupedMenus.push({ label: "อื่นๆ", items: leftoverMenus });
+  }
+
+  return (
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)] bg-[#f5f7fb] text-[#15233b]">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[272px] h-screen flex flex-col bg-gradient-to-b from-[#0b1d39] via-[#091830] to-[#071428] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="h-[96px] min-h-[96px] p-4 flex items-center justify-center border-b border-white/10 bg-[#06152d]">
+          <BrandLogo className="w-full max-h-[70px] object-contain" variant="inverse" />
+        </div>
+        <button
+          className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg bg-white/5"
+          onClick={() => setMobileOpen(false)}
+          aria-label="ปิดเมนู"
+          type="button"
+        >
+          <X size={20} />
+        </button>
+        <nav aria-label="เมนูหลัก" className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+          {groupedMenus.map((group) => (
+            <section className="space-y-1" key={group.label}>
+              <p className="px-3 py-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const Icon = icons[item.code] ?? Home;
+                const active = pathname === item.href;
+                return (
+                  <AppNavLink
+                    active={active}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all ${
+                      active
+                        ? "bg-[#2457e6] text-white shadow-md shadow-blue-700/40 font-semibold"
+                        : "text-slate-300 hover:text-white hover:bg-white/10"
+                    }`}
+                    href={item.href}
+                    key={item.code}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon size={18} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                  </AppNavLink>
+                );
+              })}
+            </section>
+          ))}
+        </nav>
+        <form action={logoutAction} className="mt-auto p-3 border-t border-white/10">
+          <button
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-slate-300 text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
+            type="submit"
+          >
+            <LogOut size={18} />
+            <span>ออกจากระบบ</span>
+          </button>
+        </form>
+      </aside>
+      {mobileOpen ? (
+        <button
+          aria-label="ปิดเมนู"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        />
+      ) : null}
+      <div className="min-w-0 flex flex-col">
+        <header className="sticky top-0 z-30 min-h-[70px] px-6 lg:px-8 flex items-center gap-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+          <button
+            className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
+            onClick={() => setMobileOpen(true)}
+            aria-label="เปิดเมนู"
+            type="button"
+          >
+            <Menu size={20} />
+          </button>
+          {context.organizations.length > 1 ? (
+            <form action={switchOrganizationAction} className="flex items-center gap-2">
+              <input name="returnPath" type="hidden" value={pathname} />
+              <SelectControl
+                ariaLabel="เลือกกิจการ"
+                name="organizationId"
+                onValueChange={(_, form) => form?.requestSubmit()}
+                options={context.organizations.map((item) => ({ value: item.id, label: item.name }))}
+                value={context.organization.id}
+              />
+            </form>
+          ) : null}
+          <div className="ml-auto flex items-center gap-3">
+            <span className="relative w-10 h-10 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm">
+              {context.userName.trim().slice(0, 1)}
+              <i aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </span>
+            <div className="flex flex-col">
+              <strong className="text-sm font-semibold text-slate-800 leading-tight">{context.userName}</strong>
+              <small className="text-xs text-slate-500">{context.roleLabel}</small>
+            </div>
+          </div>
+        </header>
+        <main className="w-full max-w-[1460px] mx-auto p-6 lg:p-8 flex-1">{children}</main>
+      </div>
     </div>
-  </div>;
+  );
 }
