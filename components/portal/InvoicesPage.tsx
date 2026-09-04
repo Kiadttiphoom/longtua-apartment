@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Eye,
   FileText,
+  Layers,
   LayoutGrid,
   List,
   Pencil,
@@ -25,6 +26,7 @@ import {
   PortalForm,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money, thaiDate } from "@/lib/format";
 import type { Invoice, Lease, Meter, MeterReading, Property, PropertySettings, Room, Tenant } from "@/components/portal/types";
@@ -59,13 +61,19 @@ export function InvoicesPage({
 }) {
   const [selected, setSelected] = useState<Invoice | "create" | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
-  const [propertyFilter, setPropertyFilter] = useState("all");
+  const [activePropertyId, setActivePropertyId] = useState(() => properties[0]?.id ?? "");
+  const [floor, setFloor] = useState("all");
   const [leaseId, setLeaseId] = useState("");
   const [periodMonth, setPeriodMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [defaultDueAt] = useState(() => new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+
+  const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
+    ? activePropertyId
+    : properties[0]?.id ?? "";
+  const activeProperty = properties.find((p) => p.id === resolvedPropertyId);
 
   const editing = selected && selected !== "create" ? selected : null;
   const propertyMap = useMemo(() => new Map(properties.map((item) => [item.id, item.name])), [properties]);
@@ -91,16 +99,38 @@ export function InvoicesPage({
     });
   }, [selectedLease, selectedSettings, meters, readings, periodMonth]);
 
-  const totalInvoicesCount = invoices.length;
-  const totalBilledAmount = useMemo(() => invoices.reduce((sum, item) => sum + Number(item.total), 0), [invoices]);
-  const totalPaidAmount = useMemo(() => invoices.reduce((sum, item) => sum + (Number(item.total) - Number(item.balance_due)), 0), [invoices]);
-  const totalBalanceDue = useMemo(() => invoices.reduce((sum, item) => sum + Number(item.balance_due), 0), [invoices]);
+  const propertyInvoices = useMemo(
+    () => invoices.filter((item) => item.property_id === resolvedPropertyId),
+    [invoices, resolvedPropertyId]
+  );
+
+  const floorLabel = (key: string) => `ชั้น ${key}`;
+
+  const floorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const inv of propertyInvoices) {
+      const room = roomMap.get(inv.room_id);
+      const floorKey = room?.floor || "1";
+      counts.set(floorKey, (counts.get(floorKey) ?? 0) + 1);
+    }
+    return Array.from(counts, ([value, count]) => ({
+      value,
+      count,
+      label: floorLabel(value),
+    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+  }, [propertyInvoices, roomMap]);
+
+  const totalInvoicesCount = propertyInvoices.length;
+  const totalBilledAmount = useMemo(() => propertyInvoices.reduce((sum, item) => sum + Number(item.total), 0), [propertyInvoices]);
+  const totalPaidAmount = useMemo(() => propertyInvoices.reduce((sum, item) => sum + (Number(item.total) - Number(item.balance_due)), 0), [propertyInvoices]);
+  const totalBalanceDue = useMemo(() => propertyInvoices.reduce((sum, item) => sum + Number(item.balance_due), 0), [propertyInvoices]);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
-    return invoices.filter((item) => {
+    return propertyInvoices.filter((item) => {
       const room = roomMap.get(item.room_id);
-      const matchesProperty = propertyFilter === "all" || item.property_id === propertyFilter;
+      const floorKey = room?.floor || "1";
+      const matchesFloor = floor === "all" || floorKey === floor;
       const matchesStatus = status === "all" || item.status === status;
       const matchesSearch =
         !keyword ||
@@ -108,9 +138,27 @@ export function InvoicesPage({
           (value) => value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesProperty && matchesStatus && matchesSearch;
+      return matchesFloor && matchesStatus && matchesSearch;
     });
-  }, [invoices, propertyFilter, propertyMap, query, roomMap, status]);
+  }, [propertyInvoices, floor, propertyMap, query, roomMap, status]);
+
+  const visibleFloorGroups = useMemo(() => {
+    if (floor !== "all") {
+      return [{ value: floor, label: floorLabel(floor), invoices: filtered }];
+    }
+    const groups = new Map<string, typeof filtered>();
+    for (const inv of filtered) {
+      const room = roomMap.get(inv.room_id);
+      const floorKey = room?.floor || "1";
+      if (!groups.has(floorKey)) groups.set(floorKey, []);
+      groups.get(floorKey)!.push(inv);
+    }
+    return Array.from(groups, ([value, list]) => ({
+      value,
+      label: floorLabel(value),
+      invoices: list,
+    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+  }, [floor, filtered, roomMap]);
 
   const viewingProperty = viewingInvoice ? properties.find((p) => p.id === viewingInvoice.property_id) : undefined;
   const viewingRoom = viewingInvoice ? roomMap.get(viewingInvoice.room_id) : undefined;
@@ -220,64 +268,95 @@ export function InvoicesPage({
         </button>
       </section>
 
-      {properties.length > 1 ? (
-        <section aria-label="เลือกหอพัก" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-              <Building2 aria-hidden="true" className="text-blue-600" size={16} strokeWidth={2.2} />
-              <span>เลือกหอพักเพื่อกรองใบแจ้งหนี้</span>
-            </div>
-            <small className="text-xs font-semibold text-slate-500">
-              {properties.length.toLocaleString("th-TH")} หอพัก · {invoices.length.toLocaleString("th-TH")} ฉบับ
-            </small>
-          </header>
-          <div aria-label="รายชื่อหอพัก" className="flex gap-2.5 overflow-x-auto p-3" role="group">
+      {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
+      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+        <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-2">
+            <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
+            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงใบแจ้งหนี้</strong>
+          </div>
+          <small className="text-xs text-slate-500 font-semibold">
+            {properties.length} หอพัก · {invoices.length} ใบแจ้งหนี้ทั้งหมดในระบบ
+          </small>
+        </header>
+        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+          {properties.map((property) => {
+            const active = property.id === resolvedPropertyId;
+            const propRooms = rooms.filter((r) => r.property_id === property.id);
+            const propInvoices = invoices.filter((inv) => inv.property_id === property.id);
+            return (
+              <button
+                aria-selected={active}
+                className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
+                }`}
+                key={property.id}
+                onClick={() => {
+                  setActivePropertyId(property.id);
+                  setFloor("all");
+                  setQuery("");
+                }}
+                role="tab"
+                type="button"
+              >
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                  <Building2 size={18} strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <span className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    {propRooms.length} ห้อง · บิล <strong className="text-blue-600 font-bold">{propInvoices.length}</strong> ฉบับ
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
+      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
+          <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
+          <span>ชั้น:</span>
+        </div>
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+          <button
+            aria-selected={floor === "all"}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            }`}
+            onClick={() => setFloor("all")}
+            role="tab"
+            type="button"
+          >
+            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyInvoices.length})</span>
+          </button>
+          {floorOptions.map((option) => (
             <button
-              aria-pressed={propertyFilter === "all"}
-              className={`min-w-[168px] rounded-xl border px-4 py-3 text-left text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
-                propertyFilter === "all"
-                  ? "border-blue-500 bg-blue-50/70 text-blue-950 shadow-xs ring-2 ring-blue-500/15"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+              aria-selected={floor === option.value}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
-              onClick={() => setPropertyFilter("all")}
+              key={option.value}
+              onClick={() => setFloor(option.value)}
+              role="tab"
               type="button"
             >
-              <span className="flex items-center gap-2">
-                <Building2 aria-hidden="true" size={15} />
-                ทุกหอพัก
-              </span>
-              <span className="mt-1 block text-[11px] font-medium text-slate-500">{invoices.length.toLocaleString("th-TH")} ฉบับในระบบ</span>
+              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
             </button>
-            {properties.map((prop) => {
-              const propInvoiceCount = invoices.filter((inv) => inv.property_id === prop.id).length;
-              const isSelected = propertyFilter === prop.id;
-              return (
-                <button
-                  aria-pressed={isSelected}
-                  className={`min-w-[190px] rounded-xl border px-4 py-3 text-left text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-50/70 text-blue-950 shadow-xs ring-2 ring-blue-500/15"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                  key={prop.id}
-                  onClick={() => setPropertyFilter(prop.id)}
-                  type="button"
-                >
-                  <span className="block truncate">{prop.name}</span>
-                  <span className="mt-1 block text-[11px] font-medium text-slate-500">{propInvoiceCount.toLocaleString("th-TH")} ใบแจ้งหนี้</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+          ))}
+        </div>
+      </nav>
 
       <CollectionToolbar
         actions={
           <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
             <button
               aria-label="มุมมองตาราง"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                 viewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
@@ -288,7 +367,7 @@ export function InvoicesPage({
             </button>
             <button
               aria-label="มุมมองการ์ด"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                 viewMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
@@ -299,7 +378,7 @@ export function InvoicesPage({
             </button>
           </div>
         }
-        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${invoices.length.toLocaleString("th-TH")} ฉบับ`}
+        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyInvoices.length.toLocaleString("th-TH")} ฉบับ (${activeProperty?.name ?? "หอพัก"})`}
         filter={{
           label: "กรองสถานะ",
           value: status,
@@ -325,6 +404,7 @@ export function InvoicesPage({
             <DataTable
               headers={[
                 "เลขที่เอกสาร / ห้อง",
+                "ชั้น",
                 "ผู้เช่าหลัก",
                 "ยอดรวมสุทธิ",
                 "ยอดคงเหลือค้าง",
@@ -347,6 +427,9 @@ export function InvoicesPage({
                       <strong className="text-slate-900 font-mono font-bold block">{item.invoice_number}</strong>
                       <small className="text-slate-400">ออกเมื่อ {thaiDate(item.issued_at)} · {propName ?? "หอพัก"}</small>
                     </div>
+                  </div>,
+                  <div className="flex items-center" key="floor">
+                    <span className="text-xs font-semibold text-slate-700">{room?.floor ? `ชั้น ${room.floor}` : "—"}</span>
                   </div>,
                   <div className="flex flex-col text-xs" key="tenant">
                     {tenant ? (
@@ -409,109 +492,128 @@ export function InvoicesPage({
             />
           </div>
         ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((item) => {
-              const room = roomMap.get(item.room_id);
-              const lease = leases.find((l) => l.id === item.lease_id) || leases.find((l) => l.room_id === item.room_id && l.status === "active");
-              const tenant = lease ? tenantMap.get(lease.primary_tenant_id) : undefined;
-              const propName = propertyMap.get(item.property_id);
+          <div className="space-y-8 mb-6">
+            {visibleFloorGroups.map((group) => (
+              <section className="space-y-4" key={group.value}>
+                <header className="flex items-baseline gap-2.5">
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <span>{group.label}</span>
+                  </h2>
+                  <span className="text-xs text-slate-400 font-semibold">({group.invoices.length} ใบแจ้งหนี้)</span>
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {group.invoices.map((item) => {
+                    const room = roomMap.get(item.room_id);
+                    const lease = leases.find((l) => l.id === item.lease_id) || leases.find((l) => l.room_id === item.room_id && l.status === "active");
+                    const tenant = lease ? tenantMap.get(lease.primary_tenant_id) : undefined;
+                    const propName = propertyMap.get(item.property_id);
 
-              return (
-                <article
-                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
-                  key={item.id}
-                >
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-                  <div>
-                    <header className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                          {room?.room_number ?? "—"}
-                        </span>
-                        <div className="min-w-0">
-                          <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-blue-600 transition-colors">
-                            {item.invoice_number}
-                          </h2>
-                          <span className="text-xs text-slate-400 block truncate mt-0.5">
-                            {propName ?? "หอพัก"} · ออกเมื่อ {thaiDate(item.issued_at)}
-                          </span>
-                        </div>
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </header>
-                    <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-2 mb-4">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-8 h-8 rounded-full bg-white text-blue-700 font-bold text-xs flex items-center justify-center border border-slate-200 shrink-0 shadow-2xs">
-                          {(tenant?.full_name || "ผ").slice(0, 1)}
-                        </span>
-                        <div className="min-w-0">
-                          <strong className="text-xs font-bold text-slate-900 block truncate">{tenant?.full_name ?? "—"}</strong>
-                          <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                            {tenant?.phone ? `โทร. ${tenant.phone}` : "ไม่มีเบอร์โทร"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
-                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดรวมสุทธิ</dt>
-                        <dd className="text-base font-mono font-black text-slate-900 mt-1">{money(Number(item.total))}</dd>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">ครบกำหนด {thaiDate(item.due_at)}</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดคงเหลือ</dt>
-                        <dd className={`text-base font-mono font-black mt-1 ${Number(item.balance_due) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                          {money(Number(item.balance_due))}
-                        </dd>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          {Number(item.balance_due) <= 0 ? "ชำระครบถ้วน" : "รอชำระ"}
-                        </span>
-                      </div>
-                    </dl>
-                    {item.note ? (
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed">
-                        <strong className="font-bold text-slate-800">หมายเหตุ:</strong> {item.note}
-                      </div>
-                    ) : null}
-                  </div>
-                  <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
-                    <button
-                      className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
-                      onClick={() => setViewingInvoice(item)}
-                      title="ดูใบแจ้งหนี้"
-                      type="button"
-                    >
-                      <Eye size={15} strokeWidth={2.2} />
-                      <span>ดูบิล</span>
-                    </button>
-                    <button
-                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
-                      onClick={() => {
-                        setViewingInvoice(item);
-                        setTimeout(() => window.print(), 150);
-                      }}
-                      title="พิมพ์ใบแจ้งหนี้"
-                      type="button"
-                    >
-                      <Printer size={15} strokeWidth={2.2} />
-                      <span>พิมพ์</span>
-                    </button>
-                    {canEdit && !["paid", "void"].includes(item.status) ? (
-                      <button
-                        aria-label={`แก้ไขใบแจ้งหนี้ ${item.invoice_number}`}
-                        className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                        onClick={() => setSelected(item)}
-                        title="แก้ไขใบแจ้งหนี้"
-                        type="button"
+                    return (
+                      <article
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        key={item.id}
                       >
-                        <Pencil size={14} strokeWidth={2.2} />
-                      </button>
-                    ) : null}
-                  </footer>
-                </article>
-              );
-            })}
-          </section>
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+                        <div>
+                          <header className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                {room?.room_number ?? "—"}
+                              </span>
+                              <div className="min-w-0">
+                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-blue-600 transition-colors">
+                                  {item.invoice_number}
+                                </h2>
+                                <span className="text-xs text-slate-400 block truncate mt-0.5">
+                                  {propName ?? "หอพัก"} · ชั้น {room?.floor ?? "1"}
+                                </span>
+                              </div>
+                            </div>
+                            <StatusBadge status={item.status} />
+                          </header>
+                          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-2 mb-4">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-8 h-8 rounded-full bg-white text-blue-700 font-bold text-xs flex items-center justify-center border border-slate-200 shrink-0 shadow-2xs">
+                                {(tenant?.full_name || "ผ").slice(0, 1)}
+                              </span>
+                              <div className="min-w-0">
+                                <strong className="text-xs font-bold text-slate-900 block truncate">{tenant?.full_name ?? "—"}</strong>
+                                <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                                  {tenant?.phone ? `โทร. ${tenant.phone}` : "ไม่มีเบอร์โทร"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
+                            <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดรวมสุทธิ</dt>
+                              <dd className="text-base font-mono font-black text-slate-900 mt-1">{money(Number(item.total))}</dd>
+                              <span className="text-[10px] text-slate-400 block mt-0.5">ครบกำหนด {thaiDate(item.due_at)}</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดคงเหลือ</dt>
+                              <dd className={`text-base font-mono font-black mt-1 ${Number(item.balance_due) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                                {money(Number(item.balance_due))}
+                              </dd>
+                              <span className="text-[10px] text-slate-400 block mt-0.5">
+                                {Number(item.balance_due) <= 0 ? "ชำระครบถ้วน" : "รอชำระ"}
+                              </span>
+                            </div>
+                          </dl>
+                          {item.note ? (
+                            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed">
+                              <strong className="font-bold text-slate-800">หมายเหตุ:</strong> {item.note}
+                            </div>
+                          ) : null}
+                        </div>
+                        <footer className="pt-4 border-t border-slate-100 space-y-2">
+                          {/* Row 1: ดูบิล / พิมพ์ */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
+                              onClick={() => setViewingInvoice(item)}
+                              title="ดูใบแจ้งหนี้"
+                              type="button"
+                            >
+                              <Eye size={15} strokeWidth={2.2} />
+                              <span>ดูบิล</span>
+                            </button>
+                            <button
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
+                              onClick={() => {
+                                setViewingInvoice(item);
+                                setTimeout(() => window.print(), 150);
+                              }}
+                              title="พิมพ์ใบแจ้งหนี้"
+                              type="button"
+                            >
+                              <Printer size={15} strokeWidth={2.2} />
+                              <span>พิมพ์</span>
+                            </button>
+                          </div>
+
+                          {/* Row 2: แก้ไขใบแจ้งหนี้ (ถ้ายังไม่ชำระและมีสิทธิ์) */}
+                          {canEdit && !["paid", "void"].includes(item.status) ? (
+                            <button
+                              aria-label={`แก้ไขใบแจ้งหนี้ ${item.invoice_number}`}
+                              className="w-full h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+                              onClick={() => setSelected(item)}
+                              title="แก้ไขใบแจ้งหนี้"
+                              type="button"
+                            >
+                              <Pencil size={14} strokeWidth={2.2} />
+                              <span>แก้ไขใบแจ้งหนี้</span>
+                            </button>
+                          ) : null}
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         )
       ) : (
         <EmptyState
@@ -701,16 +803,17 @@ export function InvoicesPage({
                             <span>รอบเดือนที่เรียกเก็บ <span className="text-rose-500">*</span></span>
                           </span>
                         </label>
-                        <input
-                          aria-invalid={Boolean(errors.periodMonth)}
-                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                        <DateTimeControl
+                          ariaLabel="รอบเดือนที่เรียกเก็บ"
                           defaultValue={periodMonth}
+                          invalid={Boolean(errors.periodMonth)}
+                          mode="month"
                           name="periodMonth"
-                          onChange={(e) => {
-                            setPeriodMonth(e.target.value);
+                          onValueChange={(val) => {
+                            setPeriodMonth(val);
                             clear("periodMonth");
                           }}
-                          type="month"
+                          placeholder="เลือกรอบเดือน"
                         />
                       </div>
                     </div>
@@ -750,13 +853,14 @@ export function InvoicesPage({
                         </span>
                         <span className="text-[11px] text-slate-400 font-normal">กำหนดให้ชำระภายในวันนี้</span>
                       </label>
-                      <input
-                        aria-invalid={Boolean(errors.dueAt)}
-                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                      <DateTimeControl
+                        ariaLabel="วันครบกำหนดชำระ"
                         defaultValue={defaultDueAt}
+                        invalid={Boolean(errors.dueAt)}
+                        mode="date"
                         name="dueAt"
-                        onChange={() => clear("dueAt")}
-                        type="date"
+                        onValueChange={() => clear("dueAt")}
+                        placeholder="เลือกวันครบกำหนดชำระ"
                       />
                       {errors.dueAt ? (
                         <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.dueAt}</p>

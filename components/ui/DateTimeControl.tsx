@@ -3,12 +3,14 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, X } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { SelectControl } from "@/components/ui/SelectControl";
 
 export type DateTimeMode = "date" | "month" | "time" | "datetime-local";
 
 type DateTimeControlProps = {
   name: string;
-  mode: DateTimeMode;
+  mode?: DateTimeMode;
+  type?: DateTimeMode;
   defaultValue?: string | number | null;
   placeholder?: string;
   invalid?: boolean;
@@ -16,11 +18,13 @@ type DateTimeControlProps = {
   min?: string | number;
   max?: string | number;
   ariaLabel?: string;
+  className?: string;
   onValueChange?: (value: string) => void;
 };
 
 const weekdays = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
 const monthNames = Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat("th-TH", { month: "short" }).format(new Date(2026, month, 1)));
+const monthNamesLong = Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat("th-TH", { month: "long" }).format(new Date(2026, month, 1)));
 const pad = (value: number) => String(value).padStart(2, "0");
 const dateValue = (year: number, month: number, day: number) => `${year}-${pad(month + 1)}-${pad(day)}`;
 
@@ -47,13 +51,20 @@ function displayValue(value: string, mode: DateTimeMode) {
   return mode === "datetime-local" ? `${formattedDate} · ${pad(parsed.hour)}:${pad(parsed.minute)} น.` : formattedDate;
 }
 
-export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid = false, disabled = false, min, max, ariaLabel, onValueChange }: DateTimeControlProps) {
+export function DateTimeControl({ name, mode, type, defaultValue, placeholder, invalid = false, disabled = false, min, max, ariaLabel, className, onValueChange }: DateTimeControlProps) {
+  const activeMode = mode ?? type ?? "date";
   const panelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const initialValue = String(defaultValue ?? "");
   const initial = parseValue(initialValue);
   const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    if (defaultValue !== undefined) {
+      setValue(String(defaultValue ?? ""));
+    }
+  }, [defaultValue]);
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(initial.year);
   const [viewMonth, setViewMonth] = useState(initial.month);
@@ -66,6 +77,31 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
     const firstWeekday = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
     return Array.from({ length: 42 }, (_, index) => new Date(viewYear, viewMonth, index - firstWeekday + 1));
   }, [viewYear, viewMonth]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const start = Math.min(viewYear - 10, currentYear - 80);
+    const end = Math.max(viewYear + 10, currentYear + 30);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [viewYear]);
+
+  const monthOptions = useMemo(
+    () =>
+      monthNamesLong.map((monthName, index) => ({
+        value: String(index),
+        label: monthName,
+      })),
+    [],
+  );
+
+  const yearSelectOptions = useMemo(
+    () =>
+      yearOptions.map((y) => ({
+        value: String(y),
+        label: `พ.ศ. ${y + 543} (${y})`,
+      })),
+    [yearOptions],
+  );
 
   const updatePosition = useCallback(() => {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -98,8 +134,14 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
     if (!open) return;
     updatePosition();
     const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!triggerRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
+      const target = event.target as Element;
+      if (
+        !triggerRef.current?.contains(target) &&
+        !panelRef.current?.contains(target) &&
+        !target?.closest?.('[role="listbox"], [role="option"]')
+      ) {
+        setOpen(false);
+      }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); setOpen(false); triggerRef.current?.focus(); }
@@ -122,7 +164,7 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
     const candidate = dateValue(date.getFullYear(), date.getMonth(), date.getDate());
     if (isDisabledDate(candidate)) return;
     setViewYear(date.getFullYear()); setViewMonth(date.getMonth()); setDay(date.getDate());
-    if (mode === "date") commit(candidate);
+    if (activeMode === "date") commit(candidate);
   };
   const today = new Date();
   const selectedDate = dateValue(viewYear, viewMonth, day);
@@ -172,19 +214,19 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
 
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div
-      className="fixed z-[100] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 overflow-hidden"
+      className="fixed z-[150] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 overflow-hidden"
       id={panelId}
       ref={panelRef}
       style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
     >
-      {mode !== "time" ? (
+      {activeMode !== "time" ? (
         <>
-          <header className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <header className="flex items-center justify-between pb-3 border-b border-slate-100 gap-1.5">
             <button
-              aria-label={mode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"}
-              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+              aria-label={activeMode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
               onClick={() =>
-                mode === "month"
+                activeMode === "month"
                   ? setViewYear((current) => current - 1)
                   : viewMonth === 0
                   ? (setViewYear((current) => current - 1), setViewMonth(11))
@@ -192,18 +234,42 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
               }
               type="button"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
-            <strong className="text-sm font-bold text-slate-800">
-              {mode === "month"
-                ? String(viewYear + 543)
-                : new Intl.DateTimeFormat("th-TH", { month: "long", year: "numeric" }).format(new Date(viewYear, viewMonth, 1))}
-            </strong>
+
+            <div className="flex items-center gap-1.5 min-w-0">
+              {activeMode !== "month" ? (
+                <div className="w-[124px]">
+                  <SelectControl
+                    ariaLabel="เลือกเดือน"
+                    onValueChange={(val) => setViewMonth(Number(val))}
+                    options={monthOptions}
+                    panelWidth={140}
+                    searchable={false}
+                    triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800"
+                    value={String(viewMonth)}
+                  />
+                </div>
+              ) : null}
+
+              <div className="w-[145px]">
+                <SelectControl
+                  ariaLabel="เลือกปี"
+                  onValueChange={(val) => setViewYear(Number(val))}
+                  options={yearSelectOptions}
+                  panelWidth={175}
+                  searchable={true}
+                  triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800 font-mono"
+                  value={String(viewYear)}
+                />
+              </div>
+            </div>
+
             <button
-              aria-label={mode === "month" ? "ปีถัดไป" : "เดือนถัดไป"}
-              className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+              aria-label={activeMode === "month" ? "ปีถัดไป" : "เดือนถัดไป"}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
               onClick={() =>
-                mode === "month"
+                activeMode === "month"
                   ? setViewYear((current) => current + 1)
                   : viewMonth === 11
                   ? (setViewYear((current) => current + 1), setViewMonth(0))
@@ -211,10 +277,10 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
               }
               type="button"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </header>
-          {mode === "month" ? (
+          {activeMode === "month" ? (
             <div className="grid grid-cols-3 gap-2 py-3">
               {monthNames.map((monthName, index) => (
                 <button
@@ -270,8 +336,8 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
           )}
         </>
       ) : null}
-      {mode === "time" || mode === "datetime-local" ? clock : null}
-      {mode !== "month" ? (
+      {activeMode === "time" || activeMode === "datetime-local" ? clock : null}
+      {activeMode !== "month" ? (
         <footer className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
           <button
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-30 cursor-pointer"
@@ -282,7 +348,7 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
             <X size={14} />
             <span>ล้างค่า</span>
           </button>
-          {mode === "date" ? (
+          {activeMode === "date" ? (
             <button
               className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
               onClick={() => commit(dateValue(today.getFullYear(), today.getMonth(), today.getDate()))}
@@ -293,7 +359,7 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
           ) : (
             <button
               className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white shadow-xs cursor-pointer"
-              onClick={() => commit(mode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)}
+              onClick={() => commit(activeMode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)}
               type="button"
             >
               ยืนยันเวลา
@@ -314,23 +380,23 @@ export function DateTimeControl({ name, mode, defaultValue, placeholder, invalid
         aria-haspopup="dialog"
         aria-invalid={invalid}
         aria-label={ariaLabel}
-        className={`w-full h-10 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-[13px] font-medium outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
+        className={`w-full h-11 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-xs font-bold outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
           invalid
             ? "border-rose-300 bg-rose-50/40 text-rose-900"
             : open
-            ? "border-blue-500 bg-white ring-2 ring-blue-100 text-slate-900"
-            : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
-        }`}
+            ? "border-blue-600 bg-white ring-4 ring-blue-500/15 text-slate-900 shadow-2xs"
+            : "border-slate-200/90 bg-slate-50/50 hover:bg-white text-slate-800 hover:border-slate-300"
+        } ${className ?? ""}`}
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openPanel())}
         ref={triggerRef}
         role="combobox"
         type="button"
       >
-        <span className={value ? "text-slate-800 truncate" : "text-slate-400 truncate"}>
-          {displayValue(value, mode) || placeholder || (mode === "month" ? "เลือกเดือน" : mode === "time" ? "เลือกเวลา" : "เลือกวันที่")}
+        <span className={value ? "text-slate-800 truncate font-mono font-bold" : "text-slate-400 truncate font-normal"}>
+          {displayValue(value, activeMode) || placeholder || (activeMode === "month" ? "เลือกเดือน" : activeMode === "time" ? "เลือกเวลา" : "เลือกวันที่")}
         </span>
-        {mode === "time" ? <Clock3 className="text-slate-400 shrink-0" size={16} /> : <CalendarDays className="text-slate-400 shrink-0" size={16} />}
+        {activeMode === "time" ? <Clock3 className="text-slate-400 shrink-0" size={16} /> : <CalendarDays className="text-slate-400 shrink-0" size={16} />}
       </button>
       {panel}
     </div>

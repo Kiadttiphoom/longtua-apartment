@@ -68,7 +68,12 @@ export function Modal({
     document.body.style.overflow = "hidden";
 
     const focusableSelector = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
-    const focusFrame = requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus());
+    const focusFrame = requestAnimationFrame(() => {
+      const bodyTarget = dialogRef.current?.querySelector<HTMLElement>(
+        'section > :not(header) input:not([disabled]), section > :not(header) select:not([disabled]), section > :not(header) textarea:not([disabled]), section > :not(header) button:not([disabled])'
+      );
+      (bodyTarget ?? dialogRef.current?.querySelector<HTMLElement>(focusableSelector))?.focus();
+    });
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !pendingRef.current) {
         event.preventDefault();
@@ -129,7 +134,7 @@ export function Modal({
             {headerActions}
             <button
               aria-label="ปิด"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-slate-200"
               disabled={pending}
               onClick={onClose}
               type="button"

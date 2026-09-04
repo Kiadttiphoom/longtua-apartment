@@ -621,42 +621,7 @@ export function GuestroomsPage({
                                     {item.room_number}
                                   </strong>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                  <StatusBadge compact status={item.status} />
-                                  {tenant && canManageTenantPortal ? (
-                                    <button
-                                      aria-label={`${portalAccount ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
-                                      className="w-7 h-7 rounded-lg flex items-center justify-center border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                      onClick={() => setPortalTarget({ room: item, tenant })}
-                                      title={portalAccount ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
-                                      type="button"
-                                    >
-                                      <UserRoundCheck size={13} strokeWidth={2.2} />
-                                    </button>
-                                  ) : null}
-                                  {canEdit ? (
-                                    <button
-                                      aria-label={`แก้ไขห้อง ${item.room_number}`}
-                                      className="w-7 h-7 rounded-lg flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                      onClick={() => setSelected(item)}
-                                      title="แก้ไขห้องพัก"
-                                      type="button"
-                                    >
-                                      <Pencil size={13} strokeWidth={2.2} />
-                                    </button>
-                                  ) : null}
-                                  {canDelete && !activeLease ? (
-                                    <button
-                                      aria-label={`ลบห้อง ${item.room_number}`}
-                                      className="w-7 h-7 rounded-lg flex items-center justify-center border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                      onClick={() => setDeleteTarget(item)}
-                                      title="ลบห้องพัก"
-                                      type="button"
-                                    >
-                                      <Trash2 size={13} strokeWidth={2.2} />
-                                    </button>
-                                  ) : null}
-                                </div>
+                                <StatusBadge compact status={item.status} />
                               </header>
 
                               <dl className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-center">
@@ -664,67 +629,111 @@ export function GuestroomsPage({
                                   <dt className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ชั้น</dt>
                                   <dd className="text-xs font-bold text-slate-800 mt-0.5">{item.floor || "ไม่ระบุ"}</dd>
                                 </div>
-                                  <div>
-                                    <dt className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ค่าเช่า / เดือน</dt>
-                                    <dd className="text-xs font-black text-blue-600 mt-0.5 tabular-nums">{money(Number(item.base_rent))}</dd>
-                                  </div>
-                                </dl>
-
-                                <div className="h-12 px-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs flex items-center">
-                                  {tenant ? (
-                                    <div className="flex items-center gap-2 text-slate-700 w-full min-w-0">
-                                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                                        <UserRound size={13} strokeWidth={2.2} />
-                                      </span>
-                                      <div className="flex flex-col min-w-0 truncate">
-                                        <strong className="font-bold text-slate-900 truncate leading-tight">{tenant.full_name}</strong>
-                                        <span className="text-slate-400 text-[10px] truncate">
-                                          สัญญาถึง {activeLease?.end_date ? thaiDate(activeLease.end_date) : "—"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center justify-center gap-1.5 text-emerald-600 text-[11px] font-bold w-full">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                      <span>ห้องว่าง พร้อมทำสัญญา</span>
-                                    </div>
-                                  )}
+                                <div>
+                                  <dt className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ค่าเช่า / เดือน</dt>
+                                  <dd className="text-xs font-black text-blue-600 mt-0.5 tabular-nums">{money(Number(item.base_rent))}</dd>
                                 </div>
+                              </dl>
 
-                                <footer className="mt-auto pt-3 border-t border-slate-100">
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {item.status === "vacant" ? (
-                                      <button
-                                        className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                        onClick={() => router.push(`/leases`)}
-                                        title="ทำสัญญาเช่า"
-                                        type="button"
-                                      >
-                                        <FilePlus size={14} strokeWidth={2.2} />
-                                        <span>ทำสัญญา</span>
-                                      </button>
-                                    ) : (
-                                      <button
-                                        className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                        onClick={() => router.push(`/leases`)}
-                                        title="ดูสัญญาเช่า"
-                                        type="button"
-                                      >
-                                        <FileText size={14} strokeWidth={2.2} />
-                                        <span>ดูสัญญา</span>
-                                      </button>
-                                    )}
+                              <div className="h-12 px-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs flex items-center">
+                                {tenant ? (
+                                  <div className="flex items-center gap-2 text-slate-700 w-full min-w-0">
+                                    <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                      <UserRound size={13} strokeWidth={2.2} />
+                                    </span>
+                                    <div className="flex flex-col min-w-0 truncate">
+                                      <strong className="font-bold text-slate-900 truncate leading-tight">{tenant.full_name}</strong>
+                                      <span className="text-slate-400 text-[10px] truncate">
+                                        สัญญาถึง {activeLease?.end_date ? thaiDate(activeLease.end_date) : "—"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1.5 text-emerald-600 text-[11px] font-bold w-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span>ห้องว่าง พร้อมทำสัญญา</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <footer className="mt-auto pt-3 border-t border-slate-100 space-y-2">
+                                {/* Row 1: สัญญา / มิเตอร์ */}
+                                <div className="grid grid-cols-2 gap-2">
+                                  {item.status === "vacant" ? (
                                     <button
-                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                      onClick={() => router.push(`/meters`)}
-                                      title="บันทึกมิเตอร์"
+                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      onClick={() => router.push(`/leases`)}
+                                      title="ทำสัญญาเช่า"
                                       type="button"
                                     >
-                                      <Zap size={14} strokeWidth={2.2} />
-                                      <span>มิเตอร์</span>
+                                      <FilePlus size={14} strokeWidth={2.2} />
+                                      <span>ทำสัญญา</span>
                                     </button>
-                                  </div>
-                                </footer>
+                                  ) : (
+                                    <button
+                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      onClick={() => router.push(`/leases`)}
+                                      title="ดูสัญญาเช่า"
+                                      type="button"
+                                    >
+                                      <FileText size={14} strokeWidth={2.2} />
+                                      <span>ดูสัญญา</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                    onClick={() => router.push(`/meters`)}
+                                    title="บันทึกมิเตอร์"
+                                    type="button"
+                                  >
+                                    <Zap size={14} strokeWidth={2.2} />
+                                    <span>มิเตอร์</span>
+                                  </button>
+                                </div>
+
+                                {/* Row 2: จัดการห้อง / บัญชีผู้เช่า */}
+                                <div className="grid grid-cols-2 gap-2">
+                                  {canEdit ? (
+                                    <button
+                                      aria-label={`แก้ไขห้อง ${item.room_number}`}
+                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      onClick={() => setSelected(item)}
+                                      title="แก้ไขห้องพัก"
+                                      type="button"
+                                    >
+                                      <Pencil size={14} strokeWidth={2.2} />
+                                      <span>แก้ไขห้อง</span>
+                                    </button>
+                                  ) : (
+                                    <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                                  )}
+                                  {tenant && canManageTenantPortal ? (
+                                    <button
+                                      aria-label={`${portalAccount ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
+                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      onClick={() => setPortalTarget({ room: item, tenant })}
+                                      title={portalAccount ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
+                                      type="button"
+                                    >
+                                      <UserRoundCheck size={14} strokeWidth={2.2} />
+                                      <span>บัญชีผู้เช่า</span>
+                                    </button>
+                                  ) : canDelete && !activeLease ? (
+                                    <button
+                                      aria-label={`ลบห้อง ${item.room_number}`}
+                                      className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      onClick={() => setDeleteTarget(item)}
+                                      title="ลบห้องพัก"
+                                      type="button"
+                                    >
+                                      <Trash2 size={14} strokeWidth={2.2} />
+                                      <span>ลบห้อง</span>
+                                    </button>
+                                  ) : (
+                                    <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                                  )}
+                                </div>
+                              </footer>
                               </article>
                             );
                           })}

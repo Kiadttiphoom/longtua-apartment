@@ -1,4 +1,39 @@
 import { SubscriptionPage } from "@/components/portal/SubscriptionPage";
 import { requirePortalContext } from "@/lib/portal/context";
+import { createClient } from "@/lib/supabase/server";
 
-export default async function Page() { const context = await requirePortalContext(); return <SubscriptionPage subscription={context.subscription} />; }
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function Page() {
+  const context = await requirePortalContext();
+  const supabase = await createClient();
+
+  const [propRes, roomRes, userRes] = await Promise.all([
+    supabase
+      .from("properties")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organization.id),
+    supabase
+      .from("rooms")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organization.id),
+    supabase
+      .from("organization_members")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organization.id)
+      .eq("status", "active"),
+  ]);
+
+  return (
+    <SubscriptionPage
+      subscription={context.subscription}
+      usage={{
+        propertyCount: propRes.count ?? 0,
+        roomCount: roomRes.count ?? 0,
+        userCount: userRes.count ?? 0,
+      }}
+    />
+  );
+}
+

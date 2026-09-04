@@ -14,6 +14,7 @@ import {
   FileText,
   Home,
   LayoutGrid,
+  Layers,
   List,
   Pencil,
   Phone,
@@ -37,6 +38,7 @@ import {
   PortalForm,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { TenantPortalAccountModal } from "@/components/portal/TenantPortalAccountModal";
 import { money, thaiBahtText, thaiDate } from "@/lib/format";
@@ -77,7 +79,8 @@ export function LeasesPage({
   const [selected, setSelected] = useState<Lease | "create" | null>(null);
   const [viewingLease, setViewingLease] = useState<ViewingLeaseTarget | null>(null);
   const [portalTarget, setPortalTarget] = useState<LeasePortalTarget | null>(null);
-  const [propertyFilter, setPropertyFilter] = useState("all");
+  const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
+  const [floor, setFloor] = useState("all");
   const [modalPropertyId, setModalPropertyId] = useState("");
   const [formRoomId, setFormRoomId] = useState("");
   const [formTenantId, setFormTenantId] = useState("");
@@ -100,16 +103,40 @@ export function LeasesPage({
     [rooms, modalPropertyId]
   );
 
-  const totalCount = leases.length;
-  const activeCount = useMemo(() => leases.filter((item) => item.status === "active").length, [leases]);
-  const draftCount = useMemo(() => leases.filter((item) => item.status === "draft").length, [leases]);
-  const endedCount = useMemo(() => leases.filter((item) => item.status === "ended" || item.status === "cancelled").length, [leases]);
+  const activeProperty = properties.find((p) => p.id === activePropertyId) ?? properties[0];
+  const resolvedPropertyId = activeProperty?.id ?? "";
+
+  const floorKey = (room?: Room) => (room?.floor ? String(room.floor) : "1");
+  const floorLabel = (key: string) => `ชั้น ${key}`;
+
+  const propertyLeases = useMemo(() => {
+    if (!resolvedPropertyId) return leases;
+    return leases.filter((item) => item.property_id === resolvedPropertyId);
+  }, [leases, resolvedPropertyId]);
+
+  const floorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of propertyLeases) {
+      const room = roomMap.get(item.room_id);
+      const key = floorKey(room);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
+      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    );
+  }, [propertyLeases, roomMap]);
+
+  const totalCount = propertyLeases.length;
+  const activeCount = useMemo(() => propertyLeases.filter((item) => item.status === "active").length, [propertyLeases]);
+  const draftCount = useMemo(() => propertyLeases.filter((item) => item.status === "draft").length, [propertyLeases]);
+  const endedCount = useMemo(() => propertyLeases.filter((item) => item.status === "ended" || item.status === "cancelled").length, [propertyLeases]);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
-    return leases.filter((item) => {
+    return propertyLeases.filter((item) => {
       const room = roomMap.get(item.room_id);
-      const matchesProperty = propertyFilter === "all" || item.property_id === propertyFilter;
+      const itemFloor = floorKey(room);
+      const matchesFloor = floor === "all" || itemFloor === floor;
       const matchesStatus =
         status === "all"
           ? true
@@ -128,9 +155,27 @@ export function LeasesPage({
           item.terms,
         ].some((value) => value?.toLocaleLowerCase("th-TH").includes(keyword));
 
-      return matchesProperty && matchesStatus && matchesSearch;
+      return matchesFloor && matchesStatus && matchesSearch;
     });
-  }, [leases, propertyFilter, propertyMap, query, roomMap, status, tenantById, tenantMap]);
+  }, [propertyLeases, roomMap, floor, status, query, propertyMap, tenantMap, tenantById]);
+
+  const visibleFloorGroups = useMemo(() => {
+    if (floor !== "all") {
+      return [{ value: floor, label: floorLabel(floor), leases: filtered }];
+    }
+    const groups = new Map<string, Lease[]>();
+    for (const item of filtered) {
+      const room = roomMap.get(item.room_id);
+      const key = floorKey(room);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    }
+    return Array.from(groups, ([value, list]) => ({
+      value,
+      label: floorLabel(value),
+      leases: list,
+    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+  }, [floor, filtered, roomMap]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -241,48 +286,95 @@ export function LeasesPage({
         </button>
       </section>
 
-      {properties.length > 1 ? (
-        <section aria-label="เลือกหอพัก" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
-              propertyFilter === "all"
-                ? "bg-blue-600 text-white shadow-sm shadow-blue-500/25"
-                : "bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-            }`}
-            onClick={() => setPropertyFilter("all")}
-            type="button"
-          >
-            <Building2 size={14} />
-            <span>ทุกหอพัก ({leases.length})</span>
-          </button>
-          {properties.map((prop) => {
-            const propLeaseCount = leases.filter((l) => l.property_id === prop.id).length;
-            const isSelected = propertyFilter === prop.id;
+      {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
+      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+        <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-2">
+            <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
+            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายการสัญญาเช่า</strong>
+          </div>
+          <small className="text-xs text-slate-500 font-semibold">
+            {properties.length} หอพัก · {leases.length} สัญญาทั้งหมดในระบบ
+          </small>
+        </header>
+        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+          {properties.map((property) => {
+            const active = property.id === resolvedPropertyId;
+            const propRooms = rooms.filter((r) => r.property_id === property.id);
+            const propLeases = leases.filter((l) => l.property_id === property.id);
             return (
               <button
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
-                  isSelected
-                    ? "bg-blue-600 text-white shadow-sm shadow-blue-500/25"
-                    : "bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                aria-selected={active}
+                className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
-                key={prop.id}
-                onClick={() => setPropertyFilter(prop.id)}
+                key={property.id}
+                onClick={() => {
+                  setActivePropertyId(property.id);
+                  setFloor("all");
+                  setQuery("");
+                }}
+                role="tab"
                 type="button"
               >
-                <Building2 size={14} />
-                <span>{prop.name} ({propLeaseCount})</span>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                  <Building2 size={18} strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <span className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    {propRooms.length} ห้อง · มีสัญญา <strong className="text-blue-600 font-bold">{propLeases.length}</strong> ฉบับ
+                  </span>
+                </div>
               </button>
             );
           })}
-        </section>
-      ) : null}
+        </div>
+      </section>
+
+      {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
+      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
+          <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
+          <span>ชั้น:</span>
+        </div>
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+          <button
+            aria-selected={floor === "all"}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            }`}
+            onClick={() => setFloor("all")}
+            role="tab"
+            type="button"
+          >
+            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyLeases.length})</span>
+          </button>
+          {floorOptions.map((option) => (
+            <button
+              aria-selected={floor === option.value}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+              key={option.value}
+              onClick={() => setFloor(option.value)}
+              role="tab"
+              type="button"
+            >
+              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+            </button>
+          ))}
+        </div>
+      </nav>
 
       <CollectionToolbar
         actions={
           <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
             <button
               aria-label="มุมมองตาราง"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                 viewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
@@ -293,7 +385,7 @@ export function LeasesPage({
             </button>
             <button
               aria-label="มุมมองการ์ด"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                 viewMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
@@ -304,7 +396,7 @@ export function LeasesPage({
             </button>
           </div>
         }
-        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${leases.length.toLocaleString("th-TH")} ฉบับ`}
+        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyLeases.length.toLocaleString("th-TH")} ฉบับ (${activeProperty?.name ?? "หอพัก"})`}
         filter={{
           label: "กรองสถานะ",
           value: status,
@@ -329,6 +421,7 @@ export function LeasesPage({
               headers={[
                 "เลขที่สัญญา",
                 "ห้อง / หอพัก",
+                "ชั้น",
                 "ผู้เช่าหลัก",
                 "ระยะเวลาสัญญา",
                 "ค่าเช่า / ประกัน",
@@ -358,8 +451,11 @@ export function LeasesPage({
                     </span>
                     <div className="flex flex-col text-xs min-w-0">
                       <span className="text-slate-800 font-bold truncate">{propName ?? "หอพัก"}</span>
-                      <small className="text-slate-400">ชั้น {room?.floor ?? "1"}</small>
                     </div>
+                  </div>,
+
+                  <div className="flex items-center" key="floor">
+                    <span className="text-xs font-semibold text-slate-700">{room?.floor ? `ชั้น ${room.floor}` : "—"}</span>
                   </div>,
 
                   <div className="flex items-center gap-2.5" key="tenant">
@@ -456,142 +552,168 @@ export function LeasesPage({
             />
           </div>
         ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((item) => {
-              const room = roomMap.get(item.room_id);
-              const tenant = tenantById.get(item.primary_tenant_id);
-              const account = portalAccountMap.get(item.primary_tenant_id);
-              const propName = propertyMap.get(item.property_id);
+          <div className="space-y-8 mb-6">
+            {visibleFloorGroups.map((group) => (
+              <section className="space-y-4" key={group.value}>
+                <header className="flex items-baseline gap-2.5">
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <span>{group.label}</span>
+                  </h2>
+                  <span className="text-xs text-slate-400 font-semibold">({group.leases.length} ฉบับ)</span>
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {group.leases.map((item) => {
+                    const room = roomMap.get(item.room_id);
+                    const tenant = tenantById.get(item.primary_tenant_id);
+                    const account = portalAccountMap.get(item.primary_tenant_id);
+                    const propName = propertyMap.get(item.property_id);
 
-              return (
-                <article
-                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
-                  key={item.id}
-                >
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
-                  <div>
-                    <header className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                          {room?.room_number ?? "—"}
-                        </span>
-                        <div className="min-w-0">
-                          <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-blue-600 transition-colors">
-                            {item.lease_number}
-                          </h2>
-                          <span className="text-xs text-slate-400 block truncate mt-0.5">
-                            {propName ?? "หอพัก"} · ชั้น {room?.floor ?? "1"}
-                          </span>
-                        </div>
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </header>
-
-                    <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-2 mb-4">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-8 h-8 rounded-full bg-white text-blue-700 font-bold text-xs flex items-center justify-center border border-slate-200 shrink-0 shadow-2xs">
-                          {(tenant?.full_name || "ผ").slice(0, 1)}
-                        </span>
-                        <div className="min-w-0">
-                          <strong className="text-xs font-bold text-slate-900 block truncate">{tenant?.full_name ?? "—"}</strong>
-                          <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                            {tenant?.phone ? `โทร. ${tenant.phone}` : "ไม่มีเบอร์โทร"}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-200/80 shrink-0 shadow-2xs">
-                        <UsersRound size={12} className="text-slate-400" /> {item.occupant_count} คน
-                      </span>
-                    </div>
-
-                    <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
-                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ค่าเช่ารายเดือน</dt>
-                        <dd className="text-sm font-black text-slate-900 mt-1">{money(Number(item.rent_amount))}</dd>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">ประกัน {money(Number(item.deposit_amount))}</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                        <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ระยะเวลาสัญญา</dt>
-                        <dd className="text-xs font-bold text-slate-800 mt-1 truncate">{thaiDate(item.start_date)}</dd>
-                        <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
-                          ถึง {item.end_date ? thaiDate(item.end_date) : "ไม่ระบุ"}
-                        </span>
-                      </div>
-                    </dl>
-
-                    {item.terms ? (
-                      <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs text-amber-950 line-clamp-2 mb-4 leading-relaxed">
-                        <strong className="font-bold">ข้อตกลง:</strong> {item.terms}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
-                    <button
-                      className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
-                      onClick={() =>
-                        setViewingLease({
-                          lease: item,
-                          tenant,
-                          room,
-                          propertyName: propName,
-                        })
-                      }
-                      title="ดูรายละเอียดสัญญา"
-                      type="button"
-                    >
-                      <Eye size={15} strokeWidth={2.2} />
-                      <span>ดูสัญญา</span>
-                    </button>
-                    <button
-                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
-                      onClick={() => {
-                        setViewingLease({
-                          lease: item,
-                          tenant,
-                          room,
-                          propertyName: propName,
-                        });
-                        setTimeout(() => window.print(), 150);
-                      }}
-                      title="พิมพ์สัญญาเช่า"
-                      type="button"
-                    >
-                      <Printer size={15} strokeWidth={2.2} />
-                      <span>พิมพ์</span>
-                    </button>
-                    {canEdit ? (
-                      <button
-                        aria-label={`แก้ไขสัญญา ${item.lease_number}`}
-                        className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                        onClick={() => {
-                          setSelected(item);
-                          setModalPropertyId(item.property_id);
-                          setFormStatus(item.status);
-                        }}
-                        title="แก้ไขสัญญา"
-                        type="button"
+                    return (
+                      <article
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        key={item.id}
                       >
-                        <Pencil size={14} strokeWidth={2.2} />
-                      </button>
-                    ) : null}
-                    {tenant && canManageTenantPortal && ["draft", "active"].includes(item.status) ? (
-                      <button
-                        aria-label={`${account ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
-                        className="w-9.5 h-9.5 rounded-xl flex items-center justify-center border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs shrink-0"
-                        onClick={() => setPortalTarget({ lease: item, tenant, room })}
-                        title={account ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
-                        type="button"
-                      >
-                        <UserRoundCheck size={16} strokeWidth={2.2} />
-                      </button>
-                    ) : null}
-                  </footer>
-                </article>
-              );
-            })}
-          </section>
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
+                        <div>
+                          <header className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                {room?.room_number ?? "—"}
+                              </span>
+                              <div className="min-w-0">
+                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-blue-600 transition-colors">
+                                  {item.lease_number}
+                                </h2>
+                                <span className="text-xs text-slate-400 block truncate mt-0.5">
+                                  {propName ?? "หอพัก"} · ชั้น {room?.floor ?? "1"}
+                                </span>
+                              </div>
+                            </div>
+                            <StatusBadge status={item.status} />
+                          </header>
+
+                          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-2 mb-4">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-8 h-8 rounded-full bg-white text-blue-700 font-bold text-xs flex items-center justify-center border border-slate-200 shrink-0 shadow-2xs">
+                                {(tenant?.full_name || "ผ").slice(0, 1)}
+                              </span>
+                              <div className="min-w-0">
+                                <strong className="text-xs font-bold text-slate-900 block truncate">{tenant?.full_name ?? "—"}</strong>
+                                <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                                  {tenant?.phone ? `โทร. ${tenant.phone}` : "ไม่มีเบอร์โทร"}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-200/80 shrink-0 shadow-2xs">
+                              <UsersRound size={12} className="text-slate-400" /> {item.occupant_count} คน
+                            </span>
+                          </div>
+
+                          <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
+                            <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ค่าเช่ารายเดือน</dt>
+                              <dd className="text-sm font-black text-slate-900 mt-1">{money(Number(item.rent_amount))}</dd>
+                              <span className="text-[10px] text-slate-400 block mt-0.5">ประกัน {money(Number(item.deposit_amount))}</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ระยะเวลาสัญญา</dt>
+                              <dd className="text-xs font-bold text-slate-800 mt-1 truncate">{thaiDate(item.start_date)}</dd>
+                              <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                                ถึง {item.end_date ? thaiDate(item.end_date) : "ไม่ระบุ"}
+                              </span>
+                            </div>
+                          </dl>
+
+                          {item.terms ? (
+                            <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs text-amber-950 line-clamp-2 mb-4 leading-relaxed">
+                              <strong className="font-bold">ข้อตกลง:</strong> {item.terms}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <footer className="pt-4 border-t border-slate-100 space-y-2">
+                          {/* Row 1: ดูสัญญา / พิมพ์ */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
+                              onClick={() =>
+                                setViewingLease({
+                                  lease: item,
+                                  tenant,
+                                  room,
+                                  propertyName: propName,
+                                })
+                              }
+                              title="ดูรายละเอียดสัญญา"
+                              type="button"
+                            >
+                              <Eye size={15} strokeWidth={2.2} />
+                              <span>ดูสัญญา</span>
+                            </button>
+                            <button
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
+                              onClick={() => {
+                                setViewingLease({
+                                  lease: item,
+                                  tenant,
+                                  room,
+                                  propertyName: propName,
+                                });
+                                setTimeout(() => window.print(), 150);
+                              }}
+                              title="พิมพ์สัญญาเช่า A4"
+                              type="button"
+                            >
+                              <Printer size={15} strokeWidth={2.2} />
+                              <span>พิมพ์</span>
+                            </button>
+                          </div>
+
+                          {/* Row 2: แก้ไขสัญญา / บัญชีผู้เช่า */}
+                          <div className="grid grid-cols-2 gap-2">
+                            {canEdit ? (
+                              <button
+                                aria-label={`แก้ไขสัญญา ${item.lease_number}`}
+                                className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+                                onClick={() => {
+                                  setSelected(item);
+                                  setModalPropertyId(item.property_id);
+                                  setFormStatus(item.status);
+                                }}
+                                title="แก้ไขสัญญา"
+                                type="button"
+                              >
+                                <Pencil size={14} strokeWidth={2.2} />
+                                <span>แก้ไขสัญญา</span>
+                              </button>
+                            ) : (
+                              <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                            )}
+                            {tenant && canManageTenantPortal && ["draft", "active"].includes(item.status) ? (
+                              <button
+                                aria-label={`${account ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
+                                className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs"
+                                onClick={() => setPortalTarget({ lease: item, tenant, room })}
+                                title={account ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
+                                type="button"
+                              >
+                                <UserRoundCheck size={15} strokeWidth={2.2} />
+                                <span>บัญชีผู้เช่า</span>
+                              </button>
+                            ) : (
+                              <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                            )}
+                          </div>
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         )
       ) : (
         <EmptyState
@@ -1006,12 +1128,15 @@ export function LeasesPage({
                         <span>วันเริ่มสัญญา <span className="text-rose-500">*</span></span>
                       </span>
                     </label>
-                    <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                    <DateTimeControl
+                      ariaLabel="วันเริ่มสัญญา"
                       defaultValue={editing?.start_date || new Date().toISOString().slice(0, 10)}
-                      name="startDate"
-                      onChange={() => clear("startDate")}
+                      invalid={Boolean(errors.startDate)}
+                      mode="date"
                       type="date"
+                      name="startDate"
+                      onValueChange={() => clear("startDate")}
+                      placeholder="เลือกวันเริ่มสัญญา"
                     />
                     {errors.startDate ? (
                       <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.startDate}</p>
@@ -1026,12 +1151,14 @@ export function LeasesPage({
                       </span>
                       <span className="text-[10px] text-slate-400 font-normal">ถ้ามี</span>
                     </label>
-                    <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                    <DateTimeControl
+                      ariaLabel="วันสิ้นสุดสัญญา"
                       defaultValue={editing?.end_date ?? ""}
+                      invalid={Boolean(errors.endDate)}
+                      mode="date"
                       name="endDate"
-                      onChange={() => clear("endDate")}
-                      type="date"
+                      onValueChange={() => clear("endDate")}
+                      placeholder="เลือกวันสิ้นสุดสัญญา"
                     />
                     {errors.endDate ? (
                       <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.endDate}</p>

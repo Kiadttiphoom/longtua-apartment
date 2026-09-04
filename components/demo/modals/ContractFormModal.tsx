@@ -16,6 +16,8 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { DateTimeControl } from "@/components/ui/DateTimeControl";
+import { SelectControl } from "@/components/ui/SelectControl";
 import type { ContractRecord } from "../types";
 
 export function ContractFormModal({
@@ -185,15 +187,17 @@ export function ContractFormModal({
                   <span>สถานะสัญญา</span>
                 </span>
               </label>
-              <select
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all cursor-pointer"
+              <SelectControl
+                ariaLabel="สถานะสัญญา"
+                onValueChange={(val) => update("status", val as "active" | "expired" | "draft")}
+                options={[
+                  { value: "active", label: "มีผลอยู่ (Active)" },
+                  { value: "draft", label: "ร่างสัญญา (Draft)" },
+                  { value: "expired", label: "หมดอายุแล้ว (Expired)" },
+                ]}
+                searchable={false}
                 value={form.status}
-                onChange={(e) => update("status", e.target.value as "active" | "expired" | "draft")}
-              >
-                <option value="active">มีผลอยู่ (Active)</option>
-                <option value="draft">ร่างสัญญา (Draft)</option>
-                <option value="expired">หมดอายุแล้ว (Expired)</option>
-              </select>
+              />
             </div>
           </div>
 
@@ -205,11 +209,13 @@ export function ContractFormModal({
                   <span>วันที่เริ่มสัญญา <span className="text-rose-500">*</span></span>
                 </span>
               </label>
-              <input
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
-                value={form.startDate}
-                onChange={(e) => update("startDate", e.target.value)}
-                placeholder="เช่น 1 มี.ค. 2568"
+              <DateTimeControl
+                ariaLabel="วันที่เริ่มสัญญา"
+                defaultValue={form.startDate}
+                mode="date"
+                name="startDate"
+                onValueChange={(val) => update("startDate", val)}
+                placeholder="เลือกวันที่เริ่มสัญญา"
               />
             </div>
 
@@ -220,11 +226,13 @@ export function ContractFormModal({
                   <span>วันที่สิ้นสุดสัญญา <span className="text-rose-500">*</span></span>
                 </span>
               </label>
-              <input
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
-                value={form.endDate}
-                onChange={(e) => update("endDate", e.target.value)}
-                placeholder="เช่น 28 ก.พ. 2569"
+              <DateTimeControl
+                ariaLabel="วันที่สิ้นสุดสัญญา"
+                defaultValue={form.endDate}
+                mode="date"
+                name="endDate"
+                onValueChange={(val) => update("endDate", val)}
+                placeholder="เลือกวันที่สิ้นสุดสัญญา"
               />
             </div>
           </div>

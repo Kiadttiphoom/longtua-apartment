@@ -362,9 +362,9 @@ export function DormitoriesPage({
                       </div>
 
                       {/* Footer Actions */}
-                      <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
+                      <footer className="pt-4 border-t border-slate-100 space-y-2">
                         <button
-                          className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
+                          className="w-full h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
                           onClick={() => router.push(`/guestrooms`)}
                           title="ดูห้องพัก"
                           type="button"
@@ -372,28 +372,37 @@ export function DormitoriesPage({
                           <DoorOpen size={15} strokeWidth={2.2} />
                           <span>ดูห้องพัก ({propertyRooms.length})</span>
                         </button>
-                        {canEdit ? (
-                          <button
-                            aria-label={`แก้ไขหอพัก ${item.name}`}
-                            className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                            onClick={() => setSelected(item)}
-                            title="แก้ไขหอพัก"
-                            type="button"
-                          >
-                            <Pencil size={14} strokeWidth={2.2} />
-                            <span>แก้ไข</span>
-                          </button>
-                        ) : null}
-                        {canDelete ? (
-                          <button
-                            aria-label={`ลบหอพัก ${item.name}`}
-                            className="h-9.5 px-3 rounded-xl flex items-center justify-center text-xs font-bold bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer"
-                            onClick={() => setDeleteTarget(item)}
-                            title="ลบหอพัก"
-                            type="button"
-                          >
-                            <Trash2 size={14} strokeWidth={2.2} />
-                          </button>
+                        {canEdit || canDelete ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {canEdit ? (
+                              <button
+                                aria-label={`แก้ไขหอพัก ${item.name}`}
+                                className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+                                onClick={() => setSelected(item)}
+                                title="แก้ไขหอพัก"
+                                type="button"
+                              >
+                                <Pencil size={14} strokeWidth={2.2} />
+                                <span>แก้ไขหอพัก</span>
+                              </button>
+                            ) : (
+                              <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                            )}
+                            {canDelete ? (
+                              <button
+                                aria-label={`ลบหอพัก ${item.name}`}
+                                className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
+                                onClick={() => setDeleteTarget(item)}
+                                title="ลบหอพัก"
+                                type="button"
+                              >
+                                <Trash2 size={14} strokeWidth={2.2} />
+                                <span>ลบหอพัก</span>
+                              </button>
+                            ) : (
+                              <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
+                            )}
+                          </div>
                         ) : null}
                       </footer>
                     </article>

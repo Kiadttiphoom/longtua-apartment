@@ -6,6 +6,7 @@ import {
   CreditCard,
   Hash,
   KeyRound,
+  Layers,
   LayoutGrid,
   ListFilter,
   Mail,
@@ -35,7 +36,7 @@ import {
 } from "@/components/portal/PortalUI";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { TenantPortalAccountModal } from "@/components/portal/TenantPortalAccountModal";
-import type { Lease, Tenant } from "@/components/portal/types";
+import type { Lease, Property, Room, Tenant } from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
 import { validateTenant } from "@/lib/portal/validation.mjs";
 
@@ -43,6 +44,8 @@ export function TenantsPage({
   organizationId,
   items,
   leases = [],
+  properties = [],
+  rooms = [],
   portalAccounts,
   canCreate,
   canEdit,
@@ -51,6 +54,8 @@ export function TenantsPage({
   organizationId: string;
   items: Tenant[];
   leases?: Lease[];
+  properties?: Property[];
+  rooms?: Room[];
   portalAccounts: TenantPortalAccountSummary[];
   canCreate: boolean;
   canEdit: boolean;
@@ -60,6 +65,8 @@ export function TenantsPage({
   const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
   const [portalTarget, setPortalTarget] = useState<Tenant | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
+  const [floor, setFloor] = useState("all");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [editingStatus, setEditingStatus] = useState("active");
@@ -70,21 +77,86 @@ export function TenantsPage({
     [portalAccounts]
   );
 
-  const activeCount = useMemo(() => items.filter((item) => item.status === "active").length, [items]);
-  const formerCount = useMemo(() => items.filter((item) => item.status === "former").length, [items]);
+  const roomMap = useMemo(() => new Map(rooms.map((r) => [r.id, r])), [rooms]);
+
+  // Map tenantId -> active lease and room
+  const tenantLeaseMap = useMemo(() => {
+    const map = new Map<string, { lease: Lease; room?: Room }>();
+    for (const lease of leases) {
+      if (lease.status === "active") {
+        const room = roomMap.get(lease.room_id);
+        map.set(lease.primary_tenant_id, { lease, room });
+      }
+    }
+    return map;
+  }, [leases, roomMap]);
+
+  const activeProperty = properties.find((p) => p.id === activePropertyId) ?? properties[0];
+  const resolvedPropertyId = activeProperty?.id ?? "";
+
+  const floorKey = (room?: Room) => (room?.floor ? String(room.floor) : "1");
+  const floorLabel = (key: string) => `ชั้น ${key}`;
+
+  const propertyTenants = useMemo(() => {
+    if (!resolvedPropertyId) return items;
+    return items.filter((tenant) => {
+      const leaseInfo = tenantLeaseMap.get(tenant.id);
+      if (leaseInfo?.room) {
+        return leaseInfo.room.property_id === resolvedPropertyId;
+      }
+      return properties.length <= 1;
+    });
+  }, [items, tenantLeaseMap, resolvedPropertyId, properties.length]);
+
+  const floorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const tenant of propertyTenants) {
+      const leaseInfo = tenantLeaseMap.get(tenant.id);
+      const key = floorKey(leaseInfo?.room);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
+      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    );
+  }, [propertyTenants, tenantLeaseMap]);
+
+  const activeCount = useMemo(() => propertyTenants.filter((item) => item.status === "active").length, [propertyTenants]);
+  const formerCount = useMemo(() => propertyTenants.filter((item) => item.status === "former").length, [propertyTenants]);
   const portalCount = useMemo(() => portalAccounts.length, [portalAccounts]);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th");
-    return items.filter(
-      (item) =>
-        (status === "all" || item.status === status) &&
-        (!keyword ||
-          [item.full_name, item.phone, item.email, item.address].some((value) =>
-            value?.toLocaleLowerCase("th").includes(keyword)
-          ))
-    );
-  }, [items, query, status]);
+    return propertyTenants.filter((item) => {
+      const leaseInfo = tenantLeaseMap.get(item.id);
+      const itemFloor = floorKey(leaseInfo?.room);
+      const matchesFloor = floor === "all" || itemFloor === floor;
+      const matchesStatus = status === "all" || item.status === status;
+      const matchesSearch =
+        !keyword ||
+        [item.full_name, item.phone, item.email, item.address, leaseInfo?.room?.room_number].some((value) =>
+          value?.toLocaleLowerCase("th").includes(keyword)
+        );
+      return matchesFloor && matchesStatus && matchesSearch;
+    });
+  }, [propertyTenants, tenantLeaseMap, floor, status, query]);
+
+  const visibleFloorGroups = useMemo(() => {
+    if (floor !== "all") {
+      return [{ value: floor, label: floorLabel(floor), tenants: filtered }];
+    }
+    const groups = new Map<string, Tenant[]>();
+    for (const tenant of filtered) {
+      const leaseInfo = tenantLeaseMap.get(tenant.id);
+      const key = floorKey(leaseInfo?.room);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(tenant);
+    }
+    return Array.from(groups, ([value, list]) => ({
+      value,
+      label: floorLabel(value),
+      tenants: list,
+    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+  }, [floor, filtered, tenantLeaseMap]);
 
   return (
     <>
@@ -189,6 +261,92 @@ export function TenantsPage({
         </div>
       </section>
 
+      {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
+      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+        <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-2">
+            <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
+            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายชื่อผู้เช่า</strong>
+          </div>
+          <small className="text-xs text-slate-500 font-semibold">
+            {properties.length} หอพัก · {items.length} ผู้เช่าทั้งหมดในระบบ
+          </small>
+        </header>
+        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+          {properties.map((property) => {
+            const active = property.id === resolvedPropertyId;
+            const propRooms = rooms.filter((r) => r.property_id === property.id);
+            const propTenants = items.filter((t) => {
+              const info = tenantLeaseMap.get(t.id);
+              return info?.room?.property_id === property.id;
+            });
+            return (
+              <button
+                aria-selected={active}
+                className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
+                }`}
+                key={property.id}
+                onClick={() => {
+                  setActivePropertyId(property.id);
+                  setFloor("all");
+                  setQuery("");
+                }}
+                role="tab"
+                type="button"
+              >
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                  <Building2 size={18} strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <span className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    {propRooms.length} ห้อง · พักอยู่ <strong className="text-blue-600 font-bold">{propTenants.length}</strong> คน
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
+      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
+          <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
+          <span>ชั้น:</span>
+        </div>
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+          <button
+            aria-selected={floor === "all"}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            }`}
+            onClick={() => setFloor("all")}
+            role="tab"
+            type="button"
+          >
+            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyTenants.length})</span>
+          </button>
+          {floorOptions.map((option) => (
+            <button
+              aria-selected={floor === option.value}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+              key={option.value}
+              onClick={() => setFloor(option.value)}
+              role="tab"
+              type="button"
+            >
+              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {/* Collection Toolbar */}
       <CollectionToolbar
         actions={
@@ -217,7 +375,7 @@ export function TenantsPage({
             </button>
           </div>
         }
-        description={`พบ ${filtered.length.toLocaleString("th-TH")} จาก ${items.length.toLocaleString("th-TH")} คน`}
+        description={`พบ ${filtered.length.toLocaleString("th-TH")} จาก ${propertyTenants.length.toLocaleString("th-TH")} คน (${activeProperty?.name ?? "หอพัก"})`}
         filter={{
           label: "กรองสถานะผู้เช่า",
           value: status,
@@ -230,7 +388,7 @@ export function TenantsPage({
           ],
         }}
         onQueryChange={setQuery}
-        placeholder="ค้นหาชื่อ เบอร์โทร อีเมล หรือที่อยู่"
+        placeholder="ค้นหาชื่อ เบอร์โทร หรือห้องพัก"
         query={query}
         title="รายชื่อผู้เช่า"
       />
@@ -241,6 +399,7 @@ export function TenantsPage({
             <DataTable
               headers={[
                 "ชื่อผู้เช่า / บัตรประชาชน",
+                "ห้องพัก / ชั้น",
                 "เบอร์โทรศัพท์ / อีเมล",
                 "ที่อยู่ติดต่อ",
                 "บัญชีเข้าใช้",
@@ -249,6 +408,7 @@ export function TenantsPage({
               ]}
               rows={filtered.map((item) => {
                 const account = accountMap.get(item.id);
+                const leaseInfo = tenantLeaseMap.get(item.id);
                 return [
                   <div className="flex items-center gap-3.5" key="name">
                     <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 font-bold text-sm shadow-2xs">
@@ -262,6 +422,16 @@ export function TenantsPage({
                           : "ไม่ระบุบัตร ปชช."}
                       </small>
                     </div>
+                  </div>,
+                  <div className="flex flex-col text-xs" key="room">
+                    {leaseInfo?.room ? (
+                      <>
+                        <strong className="text-slate-900 font-bold">ห้อง {leaseInfo.room.room_number}</strong>
+                        <span className="text-slate-500 font-medium text-[11px]">{leaseInfo.room.floor ? `ชั้น ${leaseInfo.room.floor}` : "ไม่ระบุชั้น"}</span>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 text-xs">— ยังไม่มีห้อง —</span>
+                    )}
                   </div>,
                   <div className="flex flex-col text-xs" key="contact">
                     <strong className="text-slate-800 font-bold font-mono">{item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}</strong>
@@ -324,111 +494,123 @@ export function TenantsPage({
             />
           </div>
         ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
-            {filtered.map((item) => {
-              const account = accountMap.get(item.id);
-              return (
-                <article
-                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
-                  key={item.id}
-                >
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+          <div className="space-y-8 mb-6">
+            {visibleFloorGroups.map((group) => (
+              <section className="space-y-4" key={group.value}>
+                <header className="flex items-baseline gap-2.5">
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <span>{group.label}</span>
+                  </h2>
+                  <span className="text-xs text-slate-400 font-semibold">({group.tenants.length} คน)</span>
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {group.tenants.map((item) => {
+                    const account = accountMap.get(item.id);
+                    const leaseInfo = tenantLeaseMap.get(item.id);
+                    return (
+                      <article
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        key={item.id}
+                      >
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
 
-                  <div>
-                    {/* Header */}
-                    <header className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                          {item.full_name.slice(0, 1)}
-                        </span>
-                        <div className="min-w-0">
-                          <h2 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-                            {item.full_name}
-                          </h2>
-                          <span className="text-xs font-mono font-medium text-slate-400 block truncate mt-0.5">
-                            {item.id_card_last4
-                              ? `บัตร ปชช. •••• ${item.id_card_last4}`
-                              : "ไม่ระบุบัตร ปชช."}
-                          </span>
+                        <div>
+                          {/* Header */}
+                          <header className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                                {item.full_name.slice(0, 1)}
+                              </span>
+                              <div className="min-w-0">
+                                <h2 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                  {item.full_name}
+                                </h2>
+                                <span className="text-xs font-mono font-medium text-slate-400 block truncate mt-0.5">
+                                  {leaseInfo?.room ? `ห้อง ${leaseInfo.room.room_number} (ชั้น ${leaseInfo.room.floor ?? "1"})` : item.id_card_last4 ? `บัตร ปชช. •••• ${item.id_card_last4}` : "ไม่ระบุบัตร ปชช."}
+                                </span>
+                              </div>
+                            </div>
+                            <StatusBadge status={item.status} />
+                          </header>
+
+                          {/* Contact info list */}
+                          <div className="space-y-2 my-4">
+                            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                              <Phone size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
+                              <span className="font-bold text-slate-800 font-mono">{item.phone || "ยังไม่มีเบอร์โทรศัพท์"}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                              <Mail size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
+                              <span className="text-slate-700 truncate font-medium">{item.email || "ยังไม่มีอีเมล"}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                              <MapPin size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
+                              <span className="text-slate-600 truncate">{item.address || "ยังไม่มีที่อยู่"}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </header>
 
-                    {/* Contact info list */}
-                    <div className="space-y-2 my-4">
-                      <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <Phone size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                        <span className="font-bold text-slate-800 font-mono">{item.phone || "ยังไม่มีเบอร์โทรศัพท์"}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <Mail size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                        <span className="text-slate-700 truncate font-medium">{item.email || "ยังไม่มีอีเมล"}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <MapPin size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                        <span className="text-slate-600 truncate">{item.address || "ยังไม่มีที่อยู่"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <footer className="mt-2 pt-3.5 border-t border-slate-100">
-                    <div className="flex items-center justify-between text-xs mb-3">
-                      <span className="text-slate-400 font-medium">สถานะบัญชี</span>
-                      {account ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                          <UserRoundCheck size={13} strokeWidth={2.2} />
-                          <span>{account.username}</span>
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-xs font-normal">ยังไม่มีบัญชีเข้าใช้</span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        aria-label={`${account ? "จัดการ" : "เปิด"}บัญชี Tenant Portal ให้ ${item.full_name}`}
-                        className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                        onClick={() => setPortalTarget(item)}
-                        title={account ? "จัดการบัญชีผู้เช่า" : "เปิดบัญชีผู้เช่า"}
-                        type="button"
-                      >
-                        <UserRoundCheck size={14} strokeWidth={2.2} />
-                        <span>{account ? "จัดการบัญชี" : "สร้างบัญชี"}</span>
-                      </button>
-                      {canEdit ? (
-                        <button
-                          aria-label={`แก้ไขข้อมูล ${item.full_name}`}
-                          className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                          onClick={() => {
-                            setEditingStatus(item.status);
-                            setSelected(item);
-                          }}
-                          title="แก้ไขผู้เช่า"
-                          type="button"
-                        >
-                          <Pencil size={14} strokeWidth={2.2} />
-                          <span>แก้ไขข้อมูล</span>
-                        </button>
-                      ) : null}
-                    </div>
-                    {canDelete ? (
-                      <button
-                        aria-label={`ลบข้อมูล ${item.full_name}`}
-                        className="w-full mt-2 h-8 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-rose-200 bg-rose-50/70 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                        onClick={() => setDeletingTenant(item)}
-                        title="ลบข้อมูลผู้เช่า"
-                        type="button"
-                      >
-                        <Trash2 size={13} strokeWidth={2.2} />
-                        <span>ลบข้อมูลผู้เช่า</span>
-                      </button>
-                    ) : null}
-                  </footer>
-                </article>
-              );
-            })}
-          </section>
+                        {/* Footer */}
+                        <footer className="mt-2 pt-3.5 border-t border-slate-100">
+                          <div className="flex items-center justify-between text-xs mb-3">
+                            <span className="text-slate-400 font-medium">สถานะบัญชี</span>
+                            {account ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                <UserRoundCheck size={13} strokeWidth={2.2} />
+                                <span>{account.username}</span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-xs font-normal">ยังไม่มีบัญชีเข้าใช้</span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              aria-label={`${account ? "จัดการ" : "เปิด"}บัญชี Tenant Portal ให้ ${item.full_name}`}
+                              className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              onClick={() => setPortalTarget(item)}
+                              title={account ? "จัดการบัญชีผู้เช่า" : "เปิดบัญชีผู้เช่า"}
+                              type="button"
+                            >
+                              <UserRoundCheck size={14} strokeWidth={2.2} />
+                              <span>{account ? "จัดการบัญชี" : "สร้างบัญชี"}</span>
+                            </button>
+                            {canEdit ? (
+                              <button
+                                aria-label={`แก้ไขข้อมูล ${item.full_name}`}
+                                className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                onClick={() => {
+                                  setEditingStatus(item.status);
+                                  setSelected(item);
+                                }}
+                                title="แก้ไขผู้เช่า"
+                                type="button"
+                              >
+                                <Pencil size={14} strokeWidth={2.2} />
+                                <span>แก้ไขข้อมูล</span>
+                              </button>
+                            ) : null}
+                          </div>
+                          {canDelete ? (
+                            <button
+                              aria-label={`ลบข้อมูล ${item.full_name}`}
+                              className="w-full mt-2 h-8 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-rose-200 bg-rose-50/70 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              onClick={() => setDeletingTenant(item)}
+                              title="ลบข้อมูลผู้เช่า"
+                              type="button"
+                            >
+                              <Trash2 size={13} strokeWidth={2.2} />
+                              <span>ลบข้อมูลผู้เช่า</span>
+                            </button>
+                          ) : null}
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         )
       ) : (
         <EmptyState

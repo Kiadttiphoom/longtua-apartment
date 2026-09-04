@@ -1,8 +1,27 @@
+"use client";
+
 import { CheckCircle2, Crown, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { PageHeader } from "@/components/portal/PortalUI";
 import type { PageContentProps } from "../types";
 
 export function SubscriptionsPage({ onToast }: PageContentProps) {
+  const statusConfig = {
+    active: {
+      label: "เปิดใช้งานแล้ว (Active)",
+      badgeBg: "bg-emerald-50 border-emerald-200",
+      badgeText: "text-emerald-700",
+      desc: "แพ็กเกจของท่านเปิดใช้งานสมบูรณ์และพร้อมใช้งานได้ต่อเนื่อง",
+    },
+    trialing: {
+      label: "ช่วงทดลองใช้ฟรี (Trial)",
+      badgeBg: "bg-blue-50 border-blue-200",
+      badgeText: "text-blue-700",
+      desc: "ท่านกำลังใช้งานระบบในช่วงทดลองใช้งาน 30 วัน พร้อมฟังก์ชันเต็มรูปแบบ",
+    },
+  };
+
+  const current = statusConfig.active;
+
   const features = [
     "จัดการหอพักและห้องพักได้สูงสุด 100 ห้อง",
     "ออกสัญญาเช่าและใบเสร็จรับเงิน",
@@ -14,14 +33,14 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
   ];
 
   return (
-    <>
+    <div className="space-y-8 animate-in fade-in duration-300">
       <PageHeader
         description="ตรวจสอบสถานะบริการ สิทธิ์การใช้งาน และแพ็กเกจของกิจการ"
         title="แพ็กเกจและบริการ"
       />
 
       <div className="space-y-6">
-        {/* Main Status Hero Card */}
+        {/* Main Status Hero Card (Matching Portal SubscriptionPage) */}
         <section className="p-6 lg:p-8 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
@@ -30,15 +49,13 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h2 className="text-xl font-bold text-slate-800 tracking-tight">Standard Package</h2>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-700">
-                  เปิดใช้งานแล้ว (Active)
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${current.badgeBg} ${current.badgeText}`}>
+                  {current.label}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500">
-                แพ็กเกจของท่านเปิดใช้งานสมบูรณ์และพร้อมใช้งานได้ต่อเนื่อง
-              </p>
+              <p className="text-xs sm:text-sm text-slate-500">{current.desc}</p>
               <p className="text-xs font-medium text-slate-700 pt-1">
-                รอบถัดไปวันที่: <strong className="text-blue-600">25 กันยายน 2569</strong>
+                รอบถัดไปวันที่: <strong className="text-blue-600 font-bold">25 กันยายน 2569</strong>
               </p>
             </div>
           </div>
@@ -78,13 +95,13 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
               </p>
             </div>
 
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-              <span>สายด่วน: 02-XXX-XXXX</span>
-              <span className="font-semibold text-white">support@longtua.com</span>
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+              <span>โทร: 063-090-7500 · LINE: p.pond29</span>
+              <span className="font-semibold text-white">official.longtua@gmail.com</span>
             </div>
           </div>
         </section>
       </div>
-    </>
+    </div>
   );
 }

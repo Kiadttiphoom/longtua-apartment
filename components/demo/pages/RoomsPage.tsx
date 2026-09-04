@@ -492,18 +492,7 @@ export function RoomsPage({
                             {item.number}
                           </strong>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <StatusBadge compact status={isVacant ? "vacant" : "occupied"} />
-                          <button
-                            aria-label={`แก้ไขห้อง ${item.number}`}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
-                            onClick={() => onToast("เปิดแก้ไขห้องพัก")}
-                            title="แก้ไขห้องพัก"
-                            type="button"
-                          >
-                            <Pencil size={13} strokeWidth={2.2} />
-                          </button>
-                        </div>
+                        <StatusBadge compact status={isVacant ? "vacant" : "occupied"} />
                       </header>
 
                       <dl className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-center">
@@ -538,7 +527,8 @@ export function RoomsPage({
                         )}
                       </div>
 
-                      <footer className="mt-auto pt-3 border-t border-slate-100">
+                      <footer className="mt-auto pt-3 border-t border-slate-100 space-y-2">
+                        {/* Row 1: สัญญา / มิเตอร์ */}
                         <div className="grid grid-cols-2 gap-2">
                           {isVacant ? (
                             <button
@@ -570,6 +560,43 @@ export function RoomsPage({
                             <Zap size={14} strokeWidth={2.2} />
                             <span>มิเตอร์</span>
                           </button>
+                        </div>
+
+                        {/* Row 2: แก้ไขห้อง / บัญชีผู้เช่าหรือลบห้อง */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            aria-label={`แก้ไขห้อง ${item.number}`}
+                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            onClick={() => onToast("เปิดแก้ไขห้องพัก")}
+                            title="แก้ไขห้องพัก"
+                            type="button"
+                          >
+                            <Pencil size={14} strokeWidth={2.2} />
+                            <span>แก้ไขห้อง</span>
+                          </button>
+                          {!isVacant ? (
+                            <button
+                              aria-label={`จัดการบัญชีผู้เช่า ${item.tenant}`}
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              onClick={() => onToast(`จัดการบัญชีผู้เช่าห้อง ${item.number}`)}
+                              title="จัดการบัญชีผู้เช่า"
+                              type="button"
+                            >
+                              <UserRoundCheck size={14} strokeWidth={2.2} />
+                              <span>บัญชีผู้เช่า</span>
+                            </button>
+                          ) : (
+                            <button
+                              aria-label={`ลบห้อง ${item.number}`}
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              onClick={() => onToast(`ลบห้องพัก ${item.number} เรียบร้อยแล้ว`)}
+                              title="ลบห้องพัก"
+                              type="button"
+                            >
+                              <Trash2 size={14} strokeWidth={2.2} />
+                              <span>ลบห้อง</span>
+                            </button>
+                          )}
                         </div>
                       </footer>
                     </article>

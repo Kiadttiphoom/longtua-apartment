@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { SelectControl } from "@/components/ui/SelectControl";
 import type { Company } from "../types";
 
 export function CompanyPanel({
@@ -107,17 +108,20 @@ export function CompanyPanel({
 
           <div className="flex flex-col gap-3.5">
             <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">แพ็กเกจ</h3>
-            <label className="flex flex-col gap-1.5 font-medium text-slate-600">
-              <span>เลือกแพ็กเกจ</span>
-              <select
-                className="h-10 px-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 outline-none text-slate-800 text-xs font-semibold cursor-pointer"
+            <div className="flex flex-col gap-1.5 font-medium text-slate-600">
+              <span className="text-xs font-bold text-slate-800">เลือกแพ็กเกจ</span>
+              <SelectControl
+                ariaLabel="เลือกแพ็กเกจ"
+                defaultValue="Starter"
                 name="plan"
-              >
-                <option value="Starter">Starter (฿790/เดือน - 1 หอพัก 50 ห้อง)</option>
-                <option value="Business">Business (฿1,590/เดือน - 3 หอพัก 200 ห้อง)</option>
-                <option value="Trial">Trial (ทดลองฟรี 30 วัน)</option>
-              </select>
-            </label>
+                options={[
+                  { value: "Starter", label: "Starter (฿790/เดือน - 1 หอพัก 50 ห้อง)" },
+                  { value: "Business", label: "Business (฿1,590/เดือน - 3 หอพัก 200 ห้อง)" },
+                  { value: "Trial", label: "Trial (ทดลองฟรี 30 วัน)" },
+                ]}
+                searchable={false}
+              />
+            </div>
           </div>
 
           <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">

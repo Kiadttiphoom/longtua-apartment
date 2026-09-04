@@ -5,10 +5,11 @@ import { useState } from "react";
 import {
   Building2, CalendarRange, CircleDollarSign, FileText, Gauge, Home, KeyRound,
   LayoutDashboard, LogOut, Menu, ReceiptText, Settings, Users, WalletCards, X,
+  AlertTriangle, ArrowLeft,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { logoutAction } from "@/app/auth/actions";
-import { switchOrganizationAction } from "@/app/(portal)/actions";
+import { switchOrganizationAction, stopImpersonatingAction } from "@/app/(portal)/actions";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { AppNavLink } from "@/components/ui/AppNavLink";
 
@@ -20,6 +21,7 @@ type ShellProps = {
     organization: { id: string; name: string };
     organizations: Array<{ id: string; name: string }>;
     menus: Array<{ code: string; label: string; href: string }>;
+    isImpersonating?: boolean;
   };
 };
 
@@ -121,6 +123,23 @@ export function PortalShell({ children, context }: ShellProps) {
         />
       ) : null}
       <div className="min-w-0 flex flex-col">
+        {context.isImpersonating && (
+          <div className="bg-amber-500 text-slate-950 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-sm border-b border-amber-600/30">
+            <div className="flex items-center gap-2 text-xs font-bold tracking-wide">
+              <AlertTriangle size={16} className="text-slate-950 shrink-0" />
+              <span>โหมดเข้าดูแทนลูกค้า (Impersonation Mode) — กิจการ: <strong className="underline font-extrabold">{context.organization.name}</strong></span>
+            </div>
+            <form action={stopImpersonatingAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 text-white hover:bg-black text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                <ArrowLeft size={13} />
+                <span>กลับสู่หน้า Super Admin</span>
+              </button>
+            </form>
+          </div>
+        )}
         <header className="sticky top-0 z-30 min-h-[70px] px-6 lg:px-8 flex items-center gap-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
           <button
             className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"

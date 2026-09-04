@@ -8,7 +8,10 @@ import { isSystemAdmin } from "@/lib/auth/system-admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
+import { createAdminClient } from "@/lib/supabase/admin";
+
 export const ACTIVE_ORGANIZATION_COOKIE = "longtua_active_organization";
+export const IMPERSONATE_ORGANIZATION_COOKIE = "longtua_impersonate_organization";
 
 const menuPaths: Record<string, string> = {
   customer_overview: "/dashboard",
@@ -47,10 +50,16 @@ export type PortalContext = {
   roleLabel: string;
   organization: { id: string; name: string };
   organizations: Array<{ id: string; name: string }>;
-  subscription: { status: string; trial_ends_at: string | null };
+  subscription: {
+    status: string;
+    trial_ends_at: string | null;
+    max_properties?: number | null;
+    max_rooms?: number | null;
+  };
   permissions: string[];
   granularReady: boolean;
   menus: Array<{ code: string; label: string; href: string }>;
+  isImpersonating?: boolean;
 };
 
 export const requirePortalContext = cache(async (): Promise<PortalContext> => {
@@ -60,7 +69,41 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
   const { data: authData, error: authError } = await supabase.auth.getClaims();
   const userId = authData?.claims?.sub;
   if (authError || !userId) redirect("/login");
-  if (await isSystemAdmin(userId)) redirect("/admin");
+
+  const cookieStore = await cookies();
+  const isSysAdmin = await isSystemAdmin(userId);
+  const impersonatedOrgId = isSysAdmin ? cookieStore.get(IMPERSONATE_ORGANIZATION_COOKIE)?.value : undefined;
+
+  if (isSysAdmin && !impersonatedOrgId) redirect("/admin");
+
+  if (isSysAdmin && impersonatedOrgId) {
+    const admin = createAdminClient();
+    const [{ data: targetOrg }, { data: profile }, { data: subResult }] = await Promise.all([
+      admin.from("organizations").select("id, name").eq("id", impersonatedOrgId).maybeSingle(),
+      admin.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
+      admin.from("subscriptions").select("status, trial_ends_at, max_properties, max_rooms").eq("organization_id", impersonatedOrgId).maybeSingle(),
+    ]);
+
+    if (!targetOrg) {
+      redirect("/admin/organizations");
+    }
+
+    const fallback = fallbackMenus.map(([code, label]) => ({ code, label, href: menuPaths[code] }));
+
+    return {
+      userId,
+      userName: `${profile?.display_name ?? "Super Admin"} (เข้าดูแทน)`,
+      roleCode: "owner",
+      roleLabel: "Super Admin [โหมดเข้าดูแทน]",
+      organization: targetOrg,
+      organizations: [targetOrg],
+      subscription: subResult ?? { status: "active", trial_ends_at: null, max_properties: 1, max_rooms: 10 },
+      permissions: fallbackMenus.map(([code]) => `${code}:view`),
+      granularReady: false,
+      menus: fallback,
+      isImpersonating: true,
+    };
+  }
 
   const [{ data: profile }, { data: memberships, error: membershipError }] = await Promise.all([
     supabase.from("profiles").select("display_name, status").eq("id", userId).maybeSingle(),
@@ -76,7 +119,6 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
     .order("created_at");
   if (organizationError || !organizations?.length) redirect("/login");
 
-  const cookieStore = await cookies();
   const requestedOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
   const membership = memberships.find((item) => item.organization_id === requestedOrganizationId) ?? memberships[0];
   const organization = organizations.find((item) => item.id === membership.organization_id);
@@ -84,7 +126,7 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
 
   const [access, subscriptionResult] = await Promise.all([
     getOrganizationAccess(userId, organization.id),
-    supabase.from("subscriptions").select("status, trial_ends_at").eq("organization_id", organization.id).single(),
+    supabase.from("subscriptions").select("status, trial_ends_at, max_properties, max_rooms").eq("organization_id", organization.id).single(),
   ]);
   if (!access || subscriptionResult.error || !subscriptionResult.data) redirect("/login");
 

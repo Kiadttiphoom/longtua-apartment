@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, MessageCircle, XCircle } from "lucide-react";
-import { approveTrialRequestAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, setRegistrationEnabledAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
+import { AlertTriangle, CheckCircle2, MessageCircle, Package, Pencil, Save, XCircle } from "lucide-react";
+import { approveTrialRequestAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, setRegistrationEnabledAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
 import { AdminTable, dateInput, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
 import { RolePermissionMatrix, UserPermissionMatrix } from "@/components/admin/PermissionMatrix";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -149,47 +149,337 @@ export function AdminLineView() {
   );
 }
 
-export function AdminSubscriptionsView({ subscriptions, organizationMap }: Pick<AdminViewContentProps, "subscriptions" | "organizationMap">) {
-  return (
-    <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-      <div>
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">แพ็กเกจ</span>
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">จัดการสิทธิ์และแพ็กเกจใช้งาน</h2>
-      </div>
+export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organizationMap }: Pick<AdminViewContentProps, "subscriptions" | "subscriptionPlans" | "organizationMap">) {
+  const plans = subscriptionPlans && subscriptionPlans.length > 0 ? subscriptionPlans : [];
 
-      <AdminTable
-        headers={["กิจการ", "Trial", "สิ้นสุดรอบ", "จัดการสิทธิ์ใช้งาน"]}
-        rows={subscriptions.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
-          thaiDate(item.trial_ends_at),
-          thaiDate(item.current_period_end),
-          <form action={updateSubscriptionAction} className="inline-flex items-center gap-2" key="f">
-            <input name="organizationId" type="hidden" value={item.organization_id} />
-            <select
-              className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-              defaultValue={item.status}
-              name="status"
+  return (
+    <div className="space-y-8">
+      {/* Section 1: Subscription Plans Catalogue */}
+      <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-wider mb-1">
+              <Package size={13} />
+              <span>SUBSCRIPTION PLANS CATALOGUE</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">แคตตาล็อกแพ็กเกจราคา</h2>
+            <p className="text-xs text-slate-500">
+              ข้อมูลแพ็กเกจนี้ถูกบันทึกในฐานข้อมูลและส่งต่อไปยังหน้าเว็บ longtua.com ผ่าน API <code>/api/public/plans</code>
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {plans.map((plan) => (
+            <details
+              key={plan.code}
+              className="group border border-slate-200 rounded-xl overflow-hidden bg-white hover:border-slate-300 transition-colors"
             >
-              {subscriptionStatuses.map((status) => (
-                <option key={status} value={status}>{statusLabel(status)}</option>
-              ))}
-            </select>
-            <input
-              className="h-8 px-2 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-              defaultValue={dateInput(item.access_until)}
-              name="accessUntil"
-              type="date"
-            />
-            <button
-              className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-              type="submit"
-            >
-              บันทึก
-            </button>
-          </form>,
-        ])}
-      />
-    </section>
+              <summary className="p-4 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70 hover:bg-slate-50 transition-colors select-none">
+                <div className="flex items-center gap-3">
+                  <span className={`w-2.5 h-2.5 rounded-full ${plan.is_active ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-slate-300"}`} />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-slate-800">{plan.name}</span>
+                      <code className="text-[11px] px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-mono">
+                        {plan.code}
+                      </code>
+                      {plan.badge ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                          {plan.badge}
+                        </span>
+                      ) : null}
+                      {plan.popular ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                          ยอดนิยม
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">{plan.target_audience || "—"}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="text-right">
+                    <span className="font-bold text-slate-800 text-sm">
+                      {plan.price_monthly === 0 ? "ฟรี" : `฿${plan.price_monthly.toLocaleString()}`}
+                    </span>
+                    <span className="text-slate-400 text-[11px]"> / {plan.period}</span>
+                  </div>
+                  <div className="hidden sm:flex flex-col text-[11px] text-slate-500 border-l border-slate-200 pl-4 space-y-0.5">
+                    <span>{plan.max_properties_label || `${plan.max_properties} หอพัก`} · {plan.max_rooms_label || `${plan.max_rooms} ห้อง`}</span>
+                    <span className="text-emerald-700 font-medium">
+                      {plan.max_slip_verifications_label || `ตรวจสลิป ${plan.max_slip_verifications} ครั้ง`}
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 group-open:text-slate-400 ml-2">
+                    <Pencil size={13} />
+                    <span className="group-open:hidden">แก้ไข</span>
+                    <span className="hidden group-open:inline">ย่อ</span>
+                  </span>
+                </div>
+              </summary>
+
+              <form action={saveSubscriptionPlanAction} className="p-5 border-t border-slate-200 bg-white space-y-4">
+                <input type="hidden" name="code" value={plan.code} />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ชื่อแพ็กเกจ (Name)</label>
+                    <input
+                      name="name"
+                      defaultValue={plan.name}
+                      required
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ราคาต่อเดือน (บาท)</label>
+                    <input
+                      name="priceMonthly"
+                      type="number"
+                      min={0}
+                      defaultValue={plan.price_monthly}
+                      required
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ระยะเวลา (Period)</label>
+                    <input
+                      name="period"
+                      defaultValue={plan.period || "เดือน"}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">Badge ป้ายกำกับ</label>
+                    <input
+                      name="badge"
+                      defaultValue={plan.badge || ""}
+                      placeholder="เช่น ⭐ ยอดนิยม หรือ สำหรับองค์กร"
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาหอพัก (Max Properties)</label>
+                    <div className="flex gap-2">
+                      <input
+                        name="maxProperties"
+                        type="number"
+                        min={1}
+                        defaultValue={plan.max_properties}
+                        required
+                        className="w-20 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        name="maxPropertiesLabel"
+                        defaultValue={plan.max_properties_label}
+                        placeholder="Label เช่น 1 หอพัก"
+                        className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาห้องพัก (Max Rooms)</label>
+                    <div className="flex gap-2">
+                      <input
+                        name="maxRooms"
+                        type="number"
+                        min={1}
+                        defaultValue={plan.max_rooms}
+                        required
+                        className="w-20 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        name="maxRoomsLabel"
+                        defaultValue={plan.max_rooms_label}
+                        placeholder="Label เช่น รวมสูงสุด 100 ห้อง"
+                        className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาผู้ใช้งาน (-1 = ไม่จำกัด)</label>
+                    <div className="flex gap-2">
+                      <input
+                        name="maxUsers"
+                        type="number"
+                        defaultValue={plan.max_users}
+                        required
+                        className="w-20 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        name="maxUsersLabel"
+                        defaultValue={plan.max_users_label}
+                        placeholder="Label เช่น ผู้ใช้งาน 5 คน"
+                        className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาตรวจสลิป (ต่อเดือน)</label>
+                    <div className="flex gap-2">
+                      <input
+                        name="maxSlipVerifications"
+                        type="number"
+                        min={0}
+                        defaultValue={plan.max_slip_verifications}
+                        required
+                        className="w-20 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        name="maxSlipVerificationsLabel"
+                        defaultValue={plan.max_slip_verifications_label}
+                        placeholder="Label เช่น ตรวจสลิป 150 ครั้ง / เดือน"
+                        className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">กลุ่มเป้าหมาย (Target Audience)</label>
+                    <input
+                      name="targetAudience"
+                      defaultValue={plan.target_audience}
+                      placeholder="เช่น เจ้าของหลายอาคาร หรือหอพักขนาดกลาง"
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-6 pt-5">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        name="popular"
+                        value="true"
+                        defaultChecked={Boolean(plan.popular)}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>ตั้งเป็นแพ็กเกจยอดนิยม (Highlighted)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        value="true"
+                        defaultChecked={plan.is_active}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>เปิดใช้งานแพ็กเกจนี้</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                    รายการฟีเจอร์ (1 บรรทัด = 1 ฟังก์ชัน)
+                  </label>
+                  <textarea
+                    name="features"
+                    rows={4}
+                    defaultValue={Array.isArray(plan.features) ? plan.features.join("\n") : ""}
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-xs font-sans bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="ตรวจสลิปโอนเงินอัตโนมัติ&#10;บันทึกมิเตอร์น้ำ-ไฟ&#10;ใบแจ้งหนี้ & ใบเสร็จรับเงินดิจิทัล"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                  >
+                    <Save size={14} />
+                    <span>บันทึกการเปลี่ยนแปลงแพ็กเกจ {plan.name}</span>
+                  </button>
+                </div>
+              </form>
+            </details>
+          ))}
+
+          {plans.length === 0 ? (
+            <div className="p-8 text-center rounded-xl bg-slate-50 border border-dashed border-slate-200 text-slate-400 text-xs">
+              ยังไม่มีข้อมูลแพ็กเกจในตาราง subscription_plans กรุณารัน migration <code>20260904170000_subscription_plans_and_usage.sql</code>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      {/* Section 2: Active Subscriptions List */}
+      <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+        <div>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การสมัครใช้งานจริง</span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">สถานะสมาชิกและโควตารายกิจการ</h2>
+        </div>
+
+        <AdminTable
+          headers={["กิจการ", "Trial", "สิ้นสุดรอบ", "โควตาหอ/ห้อง", "จัดการสิทธิ์ใช้งาน"]}
+          rows={subscriptions.map((item) => [
+            organizationMap.get(item.organization_id) ?? "—",
+            thaiDate(item.trial_ends_at),
+            thaiDate(item.current_period_end),
+            <span key="q" className="text-xs text-slate-600 font-medium">
+              {item.max_properties ?? 1} หอ / {item.max_rooms ?? 100} ห้อง
+            </span>,
+            <form action={updateSubscriptionAction} className="inline-flex flex-wrap items-center gap-2" key="f">
+              <input name="organizationId" type="hidden" value={item.organization_id} />
+              <select
+                className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                defaultValue={item.status}
+                name="status"
+              >
+                {subscriptionStatuses.map((status) => (
+                  <option key={status} value={status}>{statusLabel(status)}</option>
+                ))}
+              </select>
+              <input
+                className="h-8 px-2 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                defaultValue={dateInput(item.access_until)}
+                name="accessUntil"
+                title="อนุญาตให้เข้าใช้งานได้ถึง"
+                type="date"
+              />
+              <div className="flex items-center gap-1">
+                <input
+                  className="h-8 w-14 px-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 text-center focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  defaultValue={item.max_properties ?? 1}
+                  min={1}
+                  max={50}
+                  name="maxProperties"
+                  placeholder="หอ"
+                  title="โควตาหอพักสูงสุด"
+                  type="number"
+                />
+                <span className="text-[11px] text-slate-400">หอ</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <input
+                  className="h-8 w-16 px-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 text-center focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  defaultValue={item.max_rooms ?? 100}
+                  min={1}
+                  max={5000}
+                  name="maxRooms"
+                  placeholder="ห้อง"
+                  title="โควตาห้องพักสูงสุด"
+                  type="number"
+                />
+                <span className="text-[11px] text-slate-400">ห้อง</span>
+              </div>
+              <button
+                className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                type="submit"
+              >
+                บันทึก
+              </button>
+            </form>,
+          ])}
+        />
+      </section>
+    </div>
   );
 }
 

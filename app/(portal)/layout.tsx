@@ -9,5 +9,6 @@ export default async function PortalLayout({ children }: { children: React.React
     organization: context.organization,
     organizations: context.organizations,
     menus: context.menus,
+    isImpersonating: context.isImpersonating,
   }}>{children}</PortalShell>;
 }

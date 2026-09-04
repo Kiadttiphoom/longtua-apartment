@@ -3,9 +3,15 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
+import { ACTIVE_ORGANIZATION_COOKIE, IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export async function stopImpersonatingAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete(IMPERSONATE_ORGANIZATION_COOKIE);
+  redirect("/admin/organizations");
+}
 
 export async function switchOrganizationAction(formData: FormData) {
   const organizationId = String(formData.get("organizationId") ?? "");

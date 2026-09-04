@@ -13,6 +13,8 @@ export default async function Page() {
       canEdit={can(context, "customer_tenants", "update")}
       items={data.tenants}
       leases={data.leases}
+      properties={data.properties}
+      rooms={data.rooms}
       organizationId={context.organization.id}
       portalAccounts={accounts}
     />

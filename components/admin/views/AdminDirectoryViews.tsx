@@ -1,6 +1,7 @@
-import { resetUserPasswordAction, updateOrganizationAction, updateUserStatusAction } from "@/app/(admin)/admin/actions";
+import { impersonateOrganizationAction, resetUserPasswordAction, updateOrganizationAction, updateUserStatusAction } from "@/app/(admin)/admin/actions";
 import { AdminTable, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Eye } from "lucide-react";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
 
 const organizationStatuses = ["active", "suspended", "closed"];
@@ -14,9 +15,9 @@ export function AdminOrganizationsView({ organizations, profileMap, memberCountB
       </div>
 
       <AdminTable
-        headers={["ชื่อกิจการ", "เจ้าของ", "สมาชิก", "วันที่สมัคร", "ควบคุมสถานะ"]}
+        headers={["ชื่อกิจการ", "เจ้าของ", "สมาชิก", "วันที่สมัคร", "ควบคุมสถานะ", "เข้าดูแทน"]}
         rows={organizations.map((item) => [
-          item.name,
+          <strong key="n" className="text-xs font-bold text-slate-800 block">{item.name}</strong>,
           profileMap.get(item.owner_user_id) ?? "—",
           memberCountByOrganization.get(item.id) ?? 0,
           thaiDate(item.created_at),
@@ -37,6 +38,17 @@ export function AdminOrganizationsView({ organizations, profileMap, memberCountB
               type="submit"
             >
               บันทึก
+            </button>
+          </form>,
+          <form action={impersonateOrganizationAction} key="imp">
+            <input name="organizationId" type="hidden" value={item.id} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold cursor-pointer transition-colors"
+              title={`เข้าดูหน้าจอในฐานะกิจการ ${item.name}`}
+            >
+              <Eye size={13} className="text-amber-700" />
+              <span>เข้าดูแทน</span>
             </button>
           </form>,
         ])}

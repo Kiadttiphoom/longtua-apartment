@@ -453,27 +453,33 @@ export function UsersPage({
                   </div>
 
                   {/* Footer Actions */}
-                  <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
+                  <footer className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
                     <button
-                      className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-2xs cursor-pointer"
+                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-2xs cursor-pointer"
                       onClick={() => setEditingMember(m)}
                       title="แก้ไข / เปลี่ยนรหัสผ่าน"
                       type="button"
                     >
                       <Pencil size={14} strokeWidth={2.2} />
-                      <span>แก้ไข / รีเซ็ตรหัสผ่าน</span>
+                      <span>แก้ไข / รีเซ็ต</span>
                     </button>
                     {m.roleCode !== "owner" ? (
                       <button
                         aria-label={`ลบผู้ใช้ ${m.name}`}
-                        className="h-9.5 px-3 rounded-xl flex items-center justify-center text-xs font-bold bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer"
+                        className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
                         onClick={() => setDeletingMember(m)}
                         title="ลบผู้ใช้"
                         type="button"
                       >
                         <Trash2 size={14} strokeWidth={2.2} />
+                        <span>ลบผู้ใช้</span>
                       </button>
-                    ) : null}
+                    ) : (
+                      <div className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold border border-dashed border-slate-200 bg-slate-50/50 text-slate-400 select-none">
+                        <ShieldCheck size={14} strokeWidth={2.2} />
+                        <span>เจ้าของหลัก</span>
+                      </div>
+                    )}
                   </footer>
                 </article>
               );

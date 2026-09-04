@@ -16,6 +16,8 @@ type SelectControlProps = {
   invalid?: boolean;
   searchable?: boolean;
   ariaLabel?: string;
+  triggerClassName?: string;
+  panelWidth?: number;
   onValueChange?: (value: string, form: HTMLFormElement | null) => void;
 };
 
@@ -31,6 +33,8 @@ export function SelectControl({
   invalid = false,
   searchable,
   ariaLabel,
+  triggerClassName,
+  panelWidth,
   onValueChange,
 }: SelectControlProps) {
   const listboxId = useId();
@@ -59,7 +63,7 @@ export function SelectControl({
     const preferredHeight = Math.min(360, Math.max(180, filtered.length * 44 + (hasSearch ? 58 : 12)));
     const opensAbove = roomBelow < Math.min(preferredHeight, 240) && rect.top > roomBelow;
     const maxHeight = Math.max(160, Math.min(preferredHeight, opensAbove ? rect.top - viewportPadding : roomBelow));
-    const width = Math.max(rect.width, 240);
+    const width = panelWidth ?? Math.max(rect.width, 240);
     const left = Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - width - viewportPadding);
     setPosition({ left, top: opensAbove ? Math.max(viewportPadding, rect.top - maxHeight - 8) : rect.bottom + 8, width, maxHeight });
   }, [filtered.length, hasSearch]);
@@ -131,7 +135,7 @@ export function SelectControl({
 
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div
-      className="fixed z-[100] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden"
+      className="fixed z-[200] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden"
       ref={panelRef}
       style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
     >
@@ -216,13 +220,19 @@ export function SelectControl({
         aria-haspopup="listbox"
         aria-invalid={invalid}
         aria-label={ariaLabel}
-        className={`w-full h-10 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-[13px] font-medium outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
-          invalid
-            ? "border-rose-300 bg-rose-50/40 text-rose-900"
-            : open
-            ? "border-blue-500 bg-white ring-2 ring-blue-100 text-slate-900"
-            : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
-        }`}
+        className={
+          triggerClassName
+            ? `${triggerClassName} flex items-center justify-between gap-1.5 outline-none cursor-pointer transition-all ${
+                open ? "ring-2 ring-blue-500/20" : ""
+              }`
+            : `w-full h-10 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-[13px] font-medium outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
+                invalid
+                  ? "border-rose-300 bg-rose-50/40 text-rose-900"
+                  : open
+                  ? "border-blue-500 bg-white ring-2 ring-blue-100 text-slate-900"
+                  : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
+              }`
+        }
         disabled={disabled}
         onClick={() => (open ? closePanel() : openPanel())}
         onKeyDown={handleKeyDown}

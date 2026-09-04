@@ -7,6 +7,7 @@ import { normalizeUsername } from "@/lib/auth/validation.mjs";
 import { hasOrganizationPermission, type MenuActionCode } from "@/lib/auth/organization-access";
 import { getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
 import { calculateInvoiceBreakdown, invoiceMissingMessage } from "@/lib/portal/invoice-calculation.mjs";
+import { getPlanByQuota } from "@/lib/portal/plans";
 
 export type DashboardActionResult = { ok: boolean; message: string; requestId?: string };
 
@@ -41,7 +42,17 @@ function logFailure(requestId: string, stage: string, error: unknown) {
 
 type ActionContext =
   | { ok: false; error: DashboardActionResult }
-  | { ok: true; supabase: Awaited<ReturnType<typeof createClient>>; organizationId: string; userId: string };
+  | {
+      ok: true;
+      supabase: Awaited<ReturnType<typeof createClient>>;
+      organizationId: string;
+      userId: string;
+      subscription: {
+        status: string;
+        max_properties: number | null;
+        max_rooms: number | null;
+      };
+    };
 
 async function actionContext(formData: FormData, menuCode: string, actionCode: MenuActionCode): Promise<ActionContext> {
   const organizationId = text(formData, "organizationId");
@@ -62,7 +73,7 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
       .maybeSingle(),
     supabase
       .from("subscriptions")
-      .select("status, access_until, grace_ends_at")
+      .select("status, access_until, grace_ends_at, max_properties, max_rooms")
       .eq("organization_id", organizationId)
       .maybeSingle(),
   ]);
@@ -81,7 +92,17 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
     || (subscription.status === "past_due" && accessUntil && new Date(accessUntil) > new Date());
 
   if (!writable) return { ok: false, error: fail("แพ็กเกจหมดอายุแล้ว ขณะนี้เปิดดูข้อมูลได้อย่างเดียว") };
-  return { ok: true, supabase, organizationId, userId };
+  return {
+    ok: true,
+    supabase,
+    organizationId,
+    userId,
+    subscription: {
+      status: subscription.status,
+      max_properties: subscription.max_properties ?? 1,
+      max_rooms: subscription.max_rooms ?? 10,
+    },
+  };
 }
 
 function success(message: string): DashboardActionResult {
@@ -95,6 +116,20 @@ export async function createPropertyAction(formData: FormData): Promise<Dashboar
   const context = await actionContext(formData, "customer_properties", "create");
   if (!context.ok) return context.error;
 
+  const maxProperties = context.subscription.max_properties;
+  if (maxProperties != null) {
+    const { count, error: countError } = await context.supabase
+      .from("properties")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organizationId);
+
+    if (!countError && typeof count === "number" && count >= maxProperties) {
+      return fail(
+        `แพ็กเกจของคุณจำกัดที่ ${maxProperties} หอพัก (ปัจจุบันมีแล้ว ${count} หอพัก) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มหอพักใหม่`
+      );
+    }
+  }
+
   const name = text(formData, "name");
   if (name.length < 1 || name.length > 160) return fail("กรุณากรอกชื่อหอพักไม่เกิน 160 ตัวอักษร");
 
@@ -106,6 +141,9 @@ export async function createPropertyAction(formData: FormData): Promise<Dashboar
   });
   if (error) {
     logFailure(requestId, "property.create", error);
+    if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Property limit reached")) {
+      return { ...fail("คุณสร้างหอพักครบตามจำนวนที่แพ็กเกจกำหนดแล้ว กรุณาอัปเกรดแพ็กเกจ"), requestId };
+    }
     return { ...fail("เพิ่มหอพักไม่สำเร็จ"), requestId };
   }
   return success("เพิ่มหอพักเรียบร้อยแล้ว");
@@ -136,15 +174,35 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
     return fail("หมายเลขห้องแต่ละห้องต้องมีความยาว 1–40 ตัวอักษร");
   }
 
+  const maxRooms = context.subscription.max_rooms;
+  if (maxRooms != null) {
+    const { count, error: countError } = await context.supabase
+      .from("rooms")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organizationId);
+
+    if (!countError && typeof count === "number") {
+      const requestedRooms = (roomNumbers as string[]).map((r) => r.trim());
+      if (count + requestedRooms.length > maxRooms) {
+        return fail(
+          `แพ็กเกจของคุณจำกัดที่ ${maxRooms} ห้อง ปัจจุบันมีแล้ว ${count} ห้อง (ต้องการเพิ่ม ${requestedRooms.length} ห้อง รวมเป็น ${count + requestedRooms.length} ห้อง) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มห้อง`
+        );
+      }
+    }
+  }
+
   const { data, error } = await context.supabase.rpc("create_rooms_with_meters", {
     target_organization_id: context.organizationId,
     target_property_id: propertyId,
-    requested_room_numbers: roomNumbers.map((roomNumber) => roomNumber.trim()),
+    requested_room_numbers: roomNumbers.map((roomNumber) => (roomNumber as string).trim()),
     room_floor: floor || null,
     room_base_rent: baseRent,
   });
   if (error || !data || typeof data !== "object" || Array.isArray(data)) {
     logFailure(requestId, "room.create_bulk", error);
+    if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Room limit reached")) {
+      return { ...fail("จำนวนห้องเกินขีดจำกัดของแพ็กเกจ กรุณาอัปเกรดแพ็กเกจ"), requestId };
+    }
     return { ...fail("เพิ่มห้องไม่สำเร็จ กรุณาตรวจหมายเลขห้องและลองอีกครั้ง"), requestId };
   }
 
@@ -853,6 +911,21 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
   if (!usernameOrEmail) return fail("กรุณากรอกชื่อผู้ใช้หรืออีเมล");
   if (password.length < 6) return fail("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
   if (!["manager", "accounting", "staff"].includes(roleCode)) return fail("ระดับสิทธิ์ไม่ถูกต้อง");
+
+  const plan = getPlanByQuota(context.subscription.max_properties, context.subscription.max_rooms);
+  if (plan.maxUsers > 0) {
+    const { count: currentMemberCount } = await context.supabase
+      .from("organization_members")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organizationId)
+      .eq("status", "active");
+
+    if (typeof currentMemberCount === "number" && currentMemberCount >= plan.maxUsers) {
+      return fail(
+        `แพ็กเกจของคุณ (${plan.name}) จำกัดผู้ใช้งานที่ ${plan.maxUsers} คน (ปัจจุบันมีแล้ว ${currentMemberCount} คน) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มผู้ใช้งาน`
+      );
+    }
+  }
 
   const admin = createAdminClient();
   const normalizedUser = usernameOrEmail.toLowerCase();

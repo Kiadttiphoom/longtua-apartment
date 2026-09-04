@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { serverError } from "@/lib/server-log";
 import { requirePortalContext } from "@/lib/portal/context";
 import { getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
@@ -9,7 +10,7 @@ import type { PortalData } from "@/components/portal/types";
 
 export const loadPortalData = cache(async (): Promise<PortalData> => {
   const context = await requirePortalContext();
-  const supabase = await createClient();
+  const supabase = context.isImpersonating ? createAdminClient() : await createClient();
   const organizationId = context.organization.id;
   const results = await Promise.all([
     supabase.from("properties").select("id, name, address, phone, status").eq("organization_id", organizationId).order("created_at"),

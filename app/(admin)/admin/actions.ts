@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isSystemAdmin } from "@/lib/auth/system-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CODE_PATTERN = /^[a-z][a-z0-9_]{2,49}$/;
@@ -76,9 +78,20 @@ export async function approveTrialRequestAction(formData: FormData) {
     reviewer_user_id: context.userId,
   });
   if (error) failed("trial-requests", context.requestId, "trial_request.approve", error);
+
+  // Ensure trial subscription quotas adhere to standard Trial tier (1 property, 10 rooms)
+  const approvedRecord = Array.isArray(approved) ? approved[0] : approved;
+  const createdOrgId = approvedRecord?.organization_id;
+  if (createdOrgId) {
+    await context.admin
+      .from("subscriptions")
+      .update({ max_properties: 1, max_rooms: 10 })
+      .eq("organization_id", createdOrgId);
+  }
+
   await audit(context, "trial_request.approved", "trial_request", requestId, before, approved);
   revalidatePath("/registration/pending");
-  done("trial-requests", "อนุมัติคำขอและเริ่ม Trial 30 วันแล้ว");
+  done("trial-requests", "อนุมัติคำขอและเริ่ม Trial 30 วันแล้ว (โควตา 1 หอพัก 10 ห้อง)");
 }
 
 export async function rejectTrialRequestAction(formData: FormData) {
@@ -115,6 +128,24 @@ export async function updateOrganizationAction(formData: FormData) {
   if (error) failed("organizations", context.requestId, "organization.update", error);
   await audit(context, "organization.status_updated", "organization", id, before, after);
   done("organizations", "อัปเดตสถานะกิจการแล้ว");
+}
+
+export async function impersonateOrganizationAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "organizationId");
+  if (!UUID_PATTERN.test(id)) failed("organizations", context.requestId, "organization.impersonate_validation", new Error("Invalid organization id"));
+  const { data: org } = await context.admin.from("organizations").select("id, name").eq("id", id).maybeSingle();
+  if (!org) failed("organizations", context.requestId, "organization.not_found", new Error("Organization not found"));
+  await audit(context, "organization.impersonated", "organization", id, null, { action: "impersonate_start", target_org: org.name });
+  const cookieStore = await cookies();
+  cookieStore.set(IMPERSONATE_ORGANIZATION_COOKIE, id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 4, // 4 hours
+  });
+  redirect("/dashboard");
 }
 
 export async function updateUserStatusAction(formData: FormData) {
@@ -166,15 +197,95 @@ export async function updateSubscriptionAction(formData: FormData) {
   const organizationId = text(formData, "organizationId");
   const status = text(formData, "status");
   const accessUntil = text(formData, "accessUntil");
+  const maxPropertiesRaw = text(formData, "maxProperties");
+  const maxRoomsRaw = text(formData, "maxRooms");
   const allowed = ["trialing", "active", "past_due", "readonly", "paused", "cancelled"];
   if (!UUID_PATTERN.test(organizationId) || !allowed.includes(status)) failed("subscriptions", context.requestId, "subscription.validation", new Error("Invalid subscription update"));
   const { data: before } = await context.admin.from("subscriptions").select("*").eq("organization_id", organizationId).single();
   const updates: Record<string, unknown> = { status, access_until: accessUntil ? new Date(`${accessUntil}T23:59:59+07:00`).toISOString() : null, updated_at: new Date().toISOString() };
   if (status === "trialing" && accessUntil) updates.trial_ends_at = updates.access_until;
+  if (maxPropertiesRaw && !isNaN(Number(maxPropertiesRaw))) updates.max_properties = Math.max(1, Math.min(1000, Number(maxPropertiesRaw)));
+  if (maxRoomsRaw && !isNaN(Number(maxRoomsRaw))) updates.max_rooms = Math.max(1, Math.min(10000, Number(maxRoomsRaw)));
   const { data: after, error } = await context.admin.from("subscriptions").update(updates).eq("organization_id", organizationId).select("*").single();
   if (error) failed("subscriptions", context.requestId, "subscription.update", error);
   await audit(context, "subscription.updated", "subscription", organizationId, before, after);
-  done("subscriptions", "อัปเดต Subscription แล้ว");
+  done("subscriptions", "อัปเดต Subscription และโควตาแล้ว");
+}
+
+export async function saveSubscriptionPlanAction(formData: FormData) {
+  const context = await adminContext();
+  const code = text(formData, "code").toLowerCase();
+  const name = text(formData, "name");
+  const priceMonthlyRaw = text(formData, "priceMonthly");
+  const period = text(formData, "period") || "เดือน";
+  const targetAudience = text(formData, "targetAudience");
+  const badge = text(formData, "badge") || null;
+  const popular = text(formData, "popular") === "true";
+  const maxPropertiesRaw = text(formData, "maxProperties");
+  const maxPropertiesLabel = text(formData, "maxPropertiesLabel");
+  const maxRoomsRaw = text(formData, "maxRooms");
+  const maxRoomsLabel = text(formData, "maxRoomsLabel");
+  const maxUsersRaw = text(formData, "maxUsers");
+  const maxUsersLabel = text(formData, "maxUsersLabel");
+  const maxSlipVerificationsRaw = text(formData, "maxSlipVerifications");
+  const maxSlipVerificationsLabel = text(formData, "maxSlipVerificationsLabel");
+  const featuresRaw = text(formData, "features");
+  const ctaLabel = text(formData, "ctaLabel") || "เลือกแพ็กเกจ";
+  const ctaHref = text(formData, "ctaHref") || "/contact";
+  const ctaVariant = text(formData, "ctaVariant") || "secondary";
+  const isActive = text(formData, "isActive") !== "false";
+
+  if (!CODE_PATTERN.test(code) || name.length < 2) {
+    failed("subscriptions", context.requestId, "subscription_plan.validation", new Error("Invalid plan code or name"));
+  }
+
+  let parsedFeatures: string[] = [];
+  if (featuresRaw) {
+    try {
+      if (featuresRaw.startsWith("[")) {
+        parsedFeatures = JSON.parse(featuresRaw);
+      } else {
+        parsedFeatures = featuresRaw.split("\n").map((s) => s.trim()).filter(Boolean);
+      }
+    } catch {
+      parsedFeatures = featuresRaw.split("\n").map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
+  const payload: Record<string, unknown> = {
+    name,
+    badge,
+    popular,
+    price_monthly: Math.max(0, Number(priceMonthlyRaw) || 0),
+    period,
+    target_audience: targetAudience,
+    max_properties: Number(maxPropertiesRaw) || 1,
+    max_properties_label: maxPropertiesLabel || `${maxPropertiesRaw || 1} หอพัก`,
+    max_rooms: Number(maxRoomsRaw) || 10,
+    max_rooms_label: maxRoomsLabel || `สูงสุด ${maxRoomsRaw || 10} ห้อง`,
+    max_users: Number(maxUsersRaw) || 1,
+    max_users_label: maxUsersLabel || (Number(maxUsersRaw) === -1 ? "ผู้ใช้งานไม่จำกัด" : `ผู้ใช้งาน ${maxUsersRaw || 1} คน`),
+    max_slip_verifications: Number(maxSlipVerificationsRaw) || 15,
+    max_slip_verifications_label: maxSlipVerificationsLabel || `ตรวจสลิป ${maxSlipVerificationsRaw || 15} ครั้ง`,
+    features: parsedFeatures,
+    cta_label: ctaLabel,
+    cta_href: ctaHref,
+    cta_variant: ctaVariant,
+    is_active: isActive,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: before } = await context.admin.from("subscription_plans").select("*").eq("code", code).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("subscription_plans")
+    .upsert({ ...payload, code })
+    .select("*")
+    .single();
+
+  if (error) failed("subscriptions", context.requestId, "subscription_plan.save", error);
+  await audit(context, before ? "subscription_plan.updated" : "subscription_plan.created", "subscription_plan", code, before, after);
+  revalidatePath("/admin/subscriptions");
+  done("subscriptions", `บันทึกข้อมูลแพ็กเกจ ${name} เรียบร้อยแล้ว`);
 }
 
 export async function saveRoleAction(formData: FormData) {

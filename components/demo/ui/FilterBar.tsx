@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { SelectControl } from "@/components/ui/SelectControl";
 
 export function FilterBar({
   placeholder,
@@ -35,17 +36,18 @@ export function FilterBar({
       {filters.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {filters.map((f) => (
-            <select
-              key={f.label}
-              className="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold outline-none cursor-pointer transition-colors"
-            >
-              <option value="">{f.label}</option>
-              {f.options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <div key={f.label} className="min-w-[150px]">
+              <SelectControl
+                ariaLabel={f.label}
+                options={[
+                  { value: "", label: f.label },
+                  ...f.options.map((opt) => ({ value: opt, label: opt })),
+                ]}
+                placeholder={f.label}
+                searchable={false}
+                value=""
+              />
+            </div>
           ))}
         </div>
       ) : null}

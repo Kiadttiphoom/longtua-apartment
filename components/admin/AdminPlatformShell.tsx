@@ -5,6 +5,7 @@ import { Activity, BookOpenCheck, Building2, CalendarRange, CircleDollarSign, Cl
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { logoutAction } from "@/app/auth/actions";
 import { AppNavLink } from "@/components/ui/AppNavLink";
+import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 
 const navigation = [
   ["overview", "ภาพรวมระบบ", LayoutDashboard], ["trial-requests", "คำขอทดลองใช้", ClipboardCheck], ["organizations", "กิจการ", Building2], ["properties", "หอพัก", Hotel], ["users", "ผู้ใช้งาน", Users], ["rooms", "ห้องพัก", KeyRound], ["tenants", "ผู้เช่า", Users], ["leases", "สัญญาเช่า", CalendarRange], ["meters", "มิเตอร์", Gauge], ["invoices", "ใบแจ้งหนี้", FileText], ["payments", "รับชำระ", WalletCards], ["receivables", "ยอดค้าง", ReceiptText], ["reports", "รายงาน", BookOpenCheck], ["line", "LINE แจ้งเตือน", MessageCircle], ["subscriptions", "แพ็กเกจและบริการ", CircleDollarSign], ["roles", "Role", UserCog], ["permissions", "Permission", KeyRound], ["menus", "เมนูระบบ", Menu], ["audit", "Audit Log", Activity], ["settings", "ตั้งค่าระบบ", Settings],
@@ -34,6 +35,9 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
             <strong className="text-xs font-bold text-white truncate">{profileName}</strong>
             <small className="text-[10px] text-slate-400">Super Admin · Longtua</small>
           </div>
+        </div>
+        <div className="px-3 mb-2">
+          <AdminGlobalSearch />
         </div>
         <nav aria-label="เมนูระบบ" className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
           {adminCategories.map((group) => {

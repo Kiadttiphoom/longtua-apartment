@@ -11,6 +11,7 @@ import {
   Gauge,
   History,
   Info,
+  Layers,
   LayoutGrid,
   List,
   Sparkles,
@@ -26,6 +27,7 @@ import {
   PageHeader,
   PortalForm,
 } from "@/components/portal/PortalUI";
+import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import type { Meter, MeterReading, Property, Room } from "@/components/portal/types";
 import { thaiDate } from "@/lib/format";
@@ -51,7 +53,8 @@ export function MetersPage({
 }: MetersPageProps) {
   const [open, setOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [propertyFilter, setPropertyFilter] = useState("all");
+  const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
+  const [floor, setFloor] = useState("all");
   const [modalPropertyId, setModalPropertyId] = useState("");
   const [modalRoomId, setModalRoomId] = useState("");
   const [meterType, setMeterType] = useState("electric");
@@ -62,6 +65,32 @@ export function MetersPage({
   const propertyMap = useMemo(() => new Map(properties.map((item) => [item.id, item.name])), [properties]);
   const roomMap = useMemo(() => new Map(rooms.map((item) => [item.id, item])), [rooms]);
   const meterMap = useMemo(() => new Map(meters.map((item) => [item.id, item])), [meters]);
+
+  const activeProperty = properties.find((item) => item.id === activePropertyId) ?? properties[0];
+  const resolvedPropertyId = activeProperty?.id ?? "";
+
+  const floorKey = (room?: Room) => (room?.floor ? String(room.floor) : "1");
+  const floorLabel = (key: string) => `ชั้น ${key}`;
+
+  const propertyReadings = useMemo(() => {
+    return readings.filter((item) => {
+      const meter = meterMap.get(item.meter_id);
+      return meter?.property_id === resolvedPropertyId;
+    });
+  }, [readings, meterMap, resolvedPropertyId]);
+
+  const floorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const reading of propertyReadings) {
+      const meter = meterMap.get(reading.meter_id);
+      const room = roomMap.get(meter?.room_id ?? "");
+      const key = floorKey(room);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
+      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    );
+  }, [propertyReadings, meterMap, roomMap]);
 
   const selectedMeter = useMemo(
     () => meters.find((item) => item.room_id === modalRoomId && item.meter_type === meterType),
@@ -74,42 +103,62 @@ export function MetersPage({
   );
   const draftKey = `${selectedMeter?.id ?? "none"}-${periodMonth}-${draft.mode}`;
 
-  // Stats calculation
-  const totalCount = readings.length;
+  // Stats calculation for current property
+  const totalCount = propertyReadings.length;
   const electricCount = useMemo(
-    () => readings.filter((item) => meterMap.get(item.meter_id)?.meter_type === "electric").length,
-    [readings, meterMap]
+    () => propertyReadings.filter((item) => meterMap.get(item.meter_id)?.meter_type === "electric").length,
+    [propertyReadings, meterMap]
   );
   const waterCount = useMemo(
-    () => readings.filter((item) => meterMap.get(item.meter_id)?.meter_type === "water").length,
-    [readings, meterMap]
+    () => propertyReadings.filter((item) => meterMap.get(item.meter_id)?.meter_type === "water").length,
+    [propertyReadings, meterMap]
   );
   const totalUnits = useMemo(
     () =>
-      readings.reduce((sum, item) => {
+      propertyReadings.reduce((sum, item) => {
         const usage = Number(item.current_value) - Number(item.previous_value);
         return sum + (usage > 0 ? usage : 0);
       }, 0),
-    [readings]
+    [propertyReadings]
   );
 
   // Filtered readings
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
-    return readings.filter((item) => {
+    return propertyReadings.filter((item) => {
       const meter = meterMap.get(item.meter_id);
       const room = roomMap.get(meter?.room_id ?? "");
-      const matchesProperty = propertyFilter === "all" || meter?.property_id === propertyFilter;
+      const itemFloor = floorKey(room);
+      const matchesFloor = floor === "all" || itemFloor === floor;
       const matchesType = typeFilter === "all" || meter?.meter_type === typeFilter;
       const matchesSearch =
         !keyword ||
-        [room?.room_number, propertyMap.get(meter?.property_id ?? ""), item.period_month].some(
+        [room?.room_number, item.period_month].some(
           (value) => value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesProperty && matchesType && matchesSearch;
+      return matchesFloor && matchesType && matchesSearch;
     });
-  }, [meterMap, propertyFilter, propertyMap, query, readings, roomMap, typeFilter]);
+  }, [propertyReadings, meterMap, roomMap, floor, typeFilter, query]);
+
+  const visibleFloorGroups = useMemo(() => {
+    if (floor !== "all") {
+      return [{ value: floor, label: floorLabel(floor), readings: filtered }];
+    }
+    const groups = new Map<string, MeterReading[]>();
+    for (const reading of filtered) {
+      const meter = meterMap.get(reading.meter_id);
+      const room = roomMap.get(meter?.room_id ?? "");
+      const key = floorKey(room);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(reading);
+    }
+    return Array.from(groups, ([value, list]) => ({
+      value,
+      label: floorLabel(value),
+      readings: list,
+    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+  }, [floor, filtered, meterMap, roomMap]);
 
   const contextMessage = !modalRoomId
     ? "เลือกห้องพักและประเภทมิเตอร์ ระบบจะค้นหาเลขรอบล่าสุดให้อัตโนมัติ"
@@ -225,44 +274,88 @@ export function MetersPage({
         </div>
       </section>
 
-      {/* Property Filter Tabs (When > 1 properties exist) */}
-      {properties.length > 1 ? (
-        <section aria-label="เลือกหอพัก" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
-              propertyFilter === "all"
-                ? "bg-blue-600 text-white shadow-sm shadow-blue-500/25"
-                : "bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-            }`}
-            onClick={() => setPropertyFilter("all")}
-            type="button"
-          >
-            <Building2 size={14} />
-            <span>ทุกหอพัก ({readings.length})</span>
-          </button>
-          {properties.map((prop) => {
-            const propReadingCount = readings.filter(
-              (r) => meterMap.get(r.meter_id)?.property_id === prop.id
-            ).length;
-            const isSelected = propertyFilter === prop.id;
+      {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
+      <section aria-label="เลือกหอพัก" className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+        <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-2">
+            <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
+            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายการมิเตอร์</strong>
+          </div>
+          <small className="text-xs text-slate-500 font-semibold">
+            {properties.length} หอพัก · {readings.length} รายการจดมิเตอร์ในระบบ
+          </small>
+        </header>
+        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+          {properties.map((property) => {
+            const active = property.id === resolvedPropertyId;
+            const propRooms = rooms.filter((r) => r.property_id === property.id);
+            const propReadings = readings.filter((r) => meterMap.get(r.meter_id)?.property_id === property.id);
             return (
               <button
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
-                  isSelected
-                    ? "bg-blue-600 text-white shadow-sm shadow-blue-500/25"
-                    : "bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                aria-selected={active}
+                className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
-                key={prop.id}
-                onClick={() => setPropertyFilter(prop.id)}
+                key={property.id}
+                onClick={() => {
+                  setActivePropertyId(property.id);
+                  setFloor("all");
+                  setQuery("");
+                }}
+                role="tab"
                 type="button"
               >
-                <Building2 size={14} />
-                <span>{prop.name} ({propReadingCount})</span>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                  <Building2 size={18} strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <span className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    {propRooms.length} ห้อง · จดแล้ว <strong className="text-blue-600 font-bold">{propReadings.length}</strong>
+                  </span>
+                </div>
               </button>
             );
           })}
-        </section>
-      ) : null}
+        </div>
+      </section>
+
+      {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
+      <nav aria-label="เลือกชั้น" className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
+          <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
+          <span>ชั้น:</span>
+        </div>
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+          <button
+            aria-selected={floor === "all"}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            }`}
+            onClick={() => setFloor("all")}
+            role="tab"
+            type="button"
+          >
+            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyReadings.length})</span>
+          </button>
+          {floorOptions.map((option) => (
+            <button
+              aria-selected={floor === option.value}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+              key={option.value}
+              onClick={() => setFloor(option.value)}
+              role="tab"
+              type="button"
+            >
+              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+            </button>
+          ))}
+        </div>
+      </nav>
 
       {/* Collection Toolbar */}
       <CollectionToolbar
@@ -292,7 +385,7 @@ export function MetersPage({
             </button>
           </div>
         }
-        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${readings.length.toLocaleString("th-TH")} รายการ`}
+        description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyReadings.length.toLocaleString("th-TH")} รายการ (${activeProperty?.name ?? "หอพัก"})`}
         filter={{
           label: "กรองประเภท",
           value: typeFilter,
@@ -304,7 +397,7 @@ export function MetersPage({
           ],
         }}
         onQueryChange={setQuery}
-        placeholder="ค้นหาห้อง, หอพัก หรือรอบเดือน (เช่น 2026-09)..."
+        placeholder="ค้นหาห้อง หรือรอบเดือน (เช่น 2026-09)..."
         query={query}
         title="ประวัติการจดมิเตอร์"
       />
@@ -315,7 +408,9 @@ export function MetersPage({
           <div className="w-full">
             <DataTable
               headers={[
-                "ห้อง / หอพัก",
+                "ห้องพัก",
+                "ชั้น",
+                "หอพัก",
                 "ประเภทมิเตอร์",
                 "รอบบิล",
                 "เลขอ่านครั้งก่อน",
@@ -330,18 +425,25 @@ export function MetersPage({
                 const usage = Number(item.current_value) - Number(item.previous_value);
 
                 return [
-                  // 1. ห้อง / หอพัก
+                  // 1. ห้องพัก
                   <div className="flex items-center gap-2.5" key="room">
                     <span className="inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-lg bg-blue-50/80 text-blue-900 border border-blue-200 text-xs font-black">
                       {room?.room_number ?? "—"}
                     </span>
-                    <div className="flex flex-col text-xs min-w-0">
-                      <strong className="text-slate-900 font-bold truncate">ห้อง {room?.room_number ?? "—"}</strong>
-                      <small className="text-slate-400">{propertyMap.get(meter?.property_id ?? "") ?? "—"}</small>
-                    </div>
+                    <strong className="text-slate-900 font-bold text-xs truncate">ห้อง {room?.room_number ?? "—"}</strong>
                   </div>,
 
-                  // 2. ประเภทมิเตอร์
+                  // 2. ชั้น
+                  <span className="text-slate-700 text-xs font-semibold" key="floor">
+                    {room?.floor ? `ชั้น ${room.floor}` : "ไม่ระบุ"}
+                  </span>,
+
+                  // 3. หอพัก
+                  <span className="text-slate-600 text-xs font-medium" key="property">
+                    {propertyMap.get(meter?.property_id ?? "") ?? "—"}
+                  </span>,
+
+                  // 4. ประเภทมิเตอร์
                   <span
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shadow-2xs ${
                       isElectric
@@ -354,28 +456,28 @@ export function MetersPage({
                     {isElectric ? "ไฟฟ้า" : "น้ำประปา"}
                   </span>,
 
-                  // 3. รอบบิล
+                  // 5. รอบบิล
                   <strong className="text-xs font-bold text-slate-800" key="period">
                     {formatThaiBillingMonth(item.period_month)}
                   </strong>,
 
-                  // 4. เลขครั้งก่อน
+                  // 6. เลขครั้งก่อน
                   <span className="text-xs font-mono font-medium text-slate-500" key="prev">
                     {Number(item.previous_value).toLocaleString("th-TH")}
                   </span>,
 
-                  // 5. เลขครั้งนี้
+                  // 7. เลขครั้งนี้
                   <strong className="text-xs font-mono font-bold text-slate-900" key="curr">
                     {Number(item.current_value).toLocaleString("th-TH")}
                   </strong>,
 
-                  // 6. หน่วยที่ใช้
+                  // 8. หน่วยที่ใช้
                   <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-black text-xs" key="units">
                     <span>{usage.toLocaleString("th-TH")}</span>
                     <span className="text-[10px] font-sans font-bold">หน่วย</span>
                   </div>,
 
-                  // 7. วันที่จดจริง
+                  // 9. วันที่จดจริง
                   <span className="text-xs text-slate-400" key="date">
                     {thaiDate(item.read_at)}
                   </span>,
@@ -384,92 +486,105 @@ export function MetersPage({
             />
           </div>
         ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((item) => {
-              const meter = meterMap.get(item.meter_id);
-              const room = roomMap.get(meter?.room_id ?? "");
-              const isElectric = meter?.meter_type === "electric";
-              const usage = Number(item.current_value) - Number(item.previous_value);
+          <div className="space-y-8">
+            {visibleFloorGroups.map((group) => (
+              <section className="space-y-4" key={group.value}>
+                <header className="flex items-baseline gap-2.5">
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <span>{group.label}</span>
+                  </h2>
+                  <span className="text-xs text-slate-400 font-semibold">({group.readings.length} รายการ)</span>
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {group.readings.map((item) => {
+                    const meter = meterMap.get(item.meter_id);
+                    const room = roomMap.get(meter?.room_id ?? "");
+                    const isElectric = meter?.meter_type === "electric";
+                    const usage = Number(item.current_value) - Number(item.previous_value);
 
-              return (
-                <article
-                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
-                  key={item.id}
-                >
-                  {/* Ambient Glow */}
-                  <div
-                    className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500 ${
-                      isElectric ? "bg-gradient-to-bl from-amber-500/10 to-transparent" : "bg-gradient-to-bl from-cyan-500/10 to-transparent"
-                    }`}
-                  />
-
-                  <div>
-                    {/* Header: Room & Meter Type */}
-                    <header className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span
-                          className={`w-12 h-12 rounded-xl text-white font-black text-sm shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                            isElectric
-                              ? "bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/25"
-                              : "bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-cyan-500/25"
-                          }`}
-                        >
-                          {room?.room_number ?? "—"}
-                        </span>
-                        <div className="min-w-0">
-                          <h2 className="text-sm font-bold text-slate-900 truncate">ห้อง {room?.room_number ?? "—"}</h2>
-                          <span className="text-xs text-slate-400 block truncate mt-0.5">
-                            {propertyMap.get(meter?.property_id ?? "") ?? "หอพัก"} · ชั้น {room?.floor ?? "1"}
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${
-                          isElectric
-                            ? "bg-amber-50 text-amber-800 border-amber-200"
-                            : "bg-cyan-50 text-cyan-800 border-cyan-200"
-                        }`}
+                    return (
+                      <article
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        key={item.id}
                       >
-                        {isElectric ? <Zap size={12} strokeWidth={2.2} /> : <Droplets size={12} strokeWidth={2.2} />}
-                        {isElectric ? "ไฟฟ้า" : "น้ำประปา"}
-                      </span>
-                    </header>
+                        {/* Ambient Glow */}
+                        <div
+                          className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500 ${
+                            isElectric ? "bg-gradient-to-bl from-amber-500/10 to-transparent" : "bg-gradient-to-bl from-cyan-500/10 to-transparent"
+                          }`}
+                        />
 
-                    {/* 3-Column Reading Stats Container */}
-                    <div className="grid grid-cols-3 gap-2 text-center p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs mb-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ก่อนหน้า</span>
-                        <strong className="text-xs font-mono font-bold text-slate-600 block mt-1">
-                          {Number(item.previous_value).toLocaleString("th-TH")}
-                        </strong>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ปัจจุบัน</span>
-                        <strong className="text-xs font-mono font-bold text-slate-900 block mt-1">
-                          {Number(item.current_value).toLocaleString("th-TH")}
-                        </strong>
-                      </div>
-                      <div className="bg-emerald-50/90 rounded-xl py-1 border border-emerald-200/60 shadow-2xs">
-                        <span className="text-[10px] font-bold text-emerald-700 block uppercase tracking-wider">ใช้ไป</span>
-                        <strong className="text-xs font-mono font-black text-emerald-800 block mt-0.5">
-                          {usage.toLocaleString("th-TH")}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
+                        <div>
+                          {/* Header: Room & Meter Type */}
+                          <header className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span
+                                className={`w-12 h-12 rounded-xl text-white font-black text-sm shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                                  isElectric
+                                    ? "bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/25"
+                                    : "bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-cyan-500/25"
+                                }`}
+                              >
+                                {room?.room_number ?? "—"}
+                              </span>
+                              <div className="min-w-0">
+                                <h2 className="text-sm font-bold text-slate-900 truncate">ห้อง {room?.room_number ?? "—"}</h2>
+                                <span className="text-xs text-slate-400 block truncate mt-0.5">
+                                  {propertyMap.get(meter?.property_id ?? "") ?? "หอพัก"} · ชั้น {room?.floor ?? "1"}
+                                </span>
+                              </div>
+                            </div>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${
+                                isElectric
+                                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                                  : "bg-cyan-50 text-cyan-800 border-cyan-200"
+                              }`}
+                            >
+                              {isElectric ? <Zap size={12} strokeWidth={2.2} /> : <Droplets size={12} strokeWidth={2.2} />}
+                              {isElectric ? "ไฟฟ้า" : "น้ำประปา"}
+                            </span>
+                          </header>
 
-                  {/* Footer: Period & Date */}
-                  <footer className="pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center gap-1 font-medium text-slate-600">
-                      <Calendar size={13} className="text-slate-400" />
-                      <span>รอบ {formatThaiBillingMonth(item.period_month)}</span>
-                    </span>
-                    <span>จดเมื่อ {thaiDate(item.read_at)}</span>
-                  </footer>
-                </article>
-              );
-            })}
-          </section>
+                          {/* 3-Column Reading Stats Container */}
+                          <div className="grid grid-cols-3 gap-2 text-center p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs mb-4">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ก่อนหน้า</span>
+                              <strong className="text-xs font-mono font-bold text-slate-600 block mt-1">
+                                {Number(item.previous_value).toLocaleString("th-TH")}
+                              </strong>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ปัจจุบัน</span>
+                              <strong className="text-xs font-mono font-bold text-slate-900 block mt-1">
+                                {Number(item.current_value).toLocaleString("th-TH")}
+                              </strong>
+                            </div>
+                            <div className="bg-emerald-50/90 rounded-xl py-1 border border-emerald-200/60 shadow-2xs">
+                              <span className="text-[10px] font-bold text-emerald-700 block uppercase tracking-wider">ใช้ไป</span>
+                              <strong className="text-xs font-mono font-black text-emerald-800 block mt-0.5">
+                                {usage.toLocaleString("th-TH")}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer: Period & Date */}
+                        <footer className="pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                          <span className="flex items-center gap-1 font-medium text-slate-600">
+                            <Calendar size={13} className="text-slate-400" />
+                            <span>รอบ {formatThaiBillingMonth(item.period_month)}</span>
+                          </span>
+                          <span>จดเมื่อ {thaiDate(item.read_at)}</span>
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         )
       ) : (
         <EmptyState
@@ -604,15 +719,18 @@ export function MetersPage({
                       </span>
                       <span className="text-[11px] text-slate-400 font-normal">ประจำเดือน</span>
                     </label>
-                    <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                    <DateTimeControl
+                      ariaLabel="รอบเดือนที่จด"
                       defaultValue={periodMonth}
+                      invalid={Boolean(errors.periodMonth)}
+                      mode="month"
+                      type="month"
                       name="periodMonth"
-                      onChange={(e) => {
-                        setPeriodMonth(e.target.value);
+                      onValueChange={(val) => {
+                        setPeriodMonth(val);
                         clear("periodMonth");
                       }}
-                      type="month"
+                      placeholder="เลือกรอบเดือน"
                     />
                     {errors.periodMonth ? (
                       <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.periodMonth}</p>
@@ -627,12 +745,14 @@ export function MetersPage({
                       </span>
                       <span className="text-[11px] text-slate-400 font-normal">วันที่บันทึก</span>
                     </label>
-                    <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
+                    <DateTimeControl
+                      ariaLabel="วันที่จดจริง"
                       defaultValue={new Date().toISOString().slice(0, 10)}
+                      invalid={Boolean(errors.recordedAt)}
+                      mode="date"
                       name="recordedAt"
-                      onChange={() => clear("recordedAt")}
-                      type="date"
+                      onValueChange={() => clear("recordedAt")}
+                      placeholder="เลือกวันที่จดจริง"
                     />
                     {errors.recordedAt ? (
                       <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.recordedAt}</p>
