@@ -101,4 +101,23 @@
     background: transparent !important;
     overflow: visible !important;
   }
+
+  .thai-lease-document {
+    color: #0f172a !important;
+    font-size: 9.5pt !important;
+    line-height: 1.5 !important;
+  }
+
+  .thai-lease-document .contract-summary,
+  .thai-lease-document .contract-parties,
+  .thai-lease-document .contract-execution,
+  .thai-lease-document tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .thai-lease-document .contract-appendix {
+    break-before: page;
+    page-break-before: always;
+  }
 }

@@ -67,12 +67,12 @@ export function Modal({
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.body.style.overflow = "hidden";
 
-    const focusableSelector = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+    const focusableSelector = 'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
     const focusFrame = requestAnimationFrame(() => {
       const bodyTarget = dialogRef.current?.querySelector<HTMLElement>(
-        'section > :not(header) input:not([disabled]), section > :not(header) select:not([disabled]), section > :not(header) textarea:not([disabled]), section > :not(header) button:not([disabled])'
+        'section > :not(header) input:not([disabled]):not([type="hidden"]), section > :not(header) select:not([disabled]), section > :not(header) textarea:not([disabled]), section > :not(header) button:not([disabled])'
       );
-      (bodyTarget ?? dialogRef.current?.querySelector<HTMLElement>(focusableSelector))?.focus();
+      (bodyTarget ?? dialogRef.current?.querySelector<HTMLElement>(focusableSelector))?.focus({ preventScroll: true });
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !pendingRef.current) {
@@ -119,18 +119,18 @@ export function Modal({
         aria-describedby={description ? "portal-modal-description" : undefined}
         aria-modal="true"
         aria-labelledby="portal-modal-title"
-        className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl flex flex-col border border-slate-100 print:static print:block print:w-full print:max-w-none print:max-h-none print:shadow-none print:border-none print:p-0 print:overflow-visible ${className ?? ""}`}
+        className={`w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col border border-slate-100 print:static print:block print:w-full print:max-w-none print:max-h-none print:shadow-none print:border-none print:p-0 print:overflow-visible ${className ?? ""}`}
         ref={dialogRef}
         role="dialog"
-        style={maxWidth ? { width: `min(${typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth}, 95vw)` } : undefined}
+        style={maxWidth ? { maxWidth } : undefined}
         tabIndex={-1}
       >
-        <header className="min-h-[64px] px-6 py-4 flex items-center justify-between border-b border-slate-100 print:hidden">
-          <div>
+        <header className="min-h-[64px] shrink-0 px-6 py-5 flex items-center justify-between gap-4 border-b border-slate-100 print:hidden">
+          <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold text-slate-900 leading-tight" id="portal-modal-title">{title}</h2>
             {description ? <p className="text-xs text-slate-500 mt-1" id="portal-modal-description">{description}</p> : null}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {headerActions}
             <button
               aria-label="ปิด"
@@ -143,7 +143,9 @@ export function Modal({
             </button>
           </div>
         </header>
-        {children}
+        <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain print:overflow-visible">
+          {children}
+        </div>
       </section>
     </div>,
     document.body,
@@ -168,7 +170,7 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
   const clear = (name: string) => setErrors((current) => current[name] ? Object.fromEntries(Object.entries(current).filter(([key]) => key !== name)) : current);
 
   return (
-    <form className="portal-form" noValidate onSubmit={(event) => {
+    <form className="portal-form min-w-0 [&_.grid>*]:min-w-0" noValidate onSubmit={(event) => {
         event.preventDefault();
         const form = event.currentTarget;
         const formData = new FormData(form);

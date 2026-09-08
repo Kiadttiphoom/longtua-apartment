@@ -6,18 +6,14 @@ import {
   Building2,
   CalendarCheck,
   CalendarRange,
-  CheckCircle2,
   Coins,
   DoorOpen,
   Eye,
   FileText,
-  Home,
   LayoutGrid,
   Layers,
   List,
   Pencil,
-  Phone,
-  Plus,
   Printer,
   ShieldCheck,
   Sparkles,
@@ -25,12 +21,10 @@ import {
   UserRound,
   UserRoundCheck,
   UsersRound,
-  X,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
-  EditButton,
   EmptyState,
   Modal,
   PageHeader,
@@ -38,19 +32,19 @@ import {
 } from "@/components/portal/PortalUI";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
-import { money, thaiBahtText } from "@/lib/format";
+import { ThaiResidentialLeaseDocument } from "@/components/contracts/ThaiResidentialLeaseDocument";
 import type { ContractRecord, PageContentProps } from "../types";
 
 export function ContractsPage({
   isLocked,
   onToast,
   contracts,
-  onViewContract,
   onEditContract,
   onDeleteContract,
   activeProperty,
   properties,
   meterRooms,
+  ownerName,
 }: PageContentProps) {
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [query, setQuery] = useState("");
@@ -721,81 +715,31 @@ export function ContractsPage({
           title={`สัญญาเช่าห้องพักเลขที่ ${viewingContract.id}`}
         >
           <div className="p-6 space-y-6">
-            <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm print:border-none print:shadow-none font-serif text-slate-900 space-y-6 leading-relaxed">
-              <div className="text-center space-y-2 border-b border-slate-200 pb-6">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
-                  สัญญาเช่าห้องพักอาศัย
-                </h2>
-                <p className="text-sm text-slate-500 font-sans">{activeProperty.name}</p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-mono font-bold text-slate-700">
-                  เลขที่เอกสาร: {viewingContract.id}
-                </div>
-              </div>
-
-              <div className="space-y-4 text-sm font-sans">
-                <p>
-                  สัญญาฉบับนี้ทำขึ้น ณ <strong>{activeProperty.name}</strong> ตั้งอยู่เลขที่{" "}
-                  <strong>{activeProperty.address || "51/23 ถนนสารันต์"}</strong> เมื่อวันที่{" "}
-                  <strong>{viewingContract.startDate}</strong> ระหว่าง
-                </p>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <p>
-                    <strong>ผู้ให้เช่า:</strong> กิจการ {activeProperty.name}
-                  </p>
-                  <p>
-                    <strong>ผู้เช่า:</strong> คุณ{viewingContract.tenantName}{" "}
-                    {viewingContract.tenantIdCard ? `(เลขบัตรประชาชน ${viewingContract.tenantIdCard})` : ""}{" "}
-                    เบอร์โทรศัพท์ {viewingContract.tenantPhone || "—"}
-                  </p>
-                </div>
-
-                <h3 className="font-bold text-base text-slate-800 pt-2">ข้อตกลงและเงื่อนไขการเช่า</h3>
-                <ol className="list-decimal list-inside space-y-2 text-slate-700 leading-relaxed">
-                  <li>
-                    ผู้ให้เช่าตกลงให้เช่า และผู้เช่าตกลงเช่าห้องพักเลขที่{" "}
-                    <strong className="text-blue-600 font-bold">ห้อง {viewingContract.roomNumber}</strong> ของ{" "}
-                    {activeProperty.name} เพื่อการอยู่อาศัยเท่านั้น
-                  </li>
-                  <li>
-                    ระยะเวลาการเช่า เริ่มตั้งแต่วันที่ <strong>{viewingContract.startDate}</strong> ถึงวันที่{" "}
-                    <strong>{viewingContract.endDate || "ไม่ระบุวันสิ้นสุด"}</strong>
-                  </li>
-                  <li>
-                    อัตราค่าเช่าเดือนละ{" "}
-                    <strong className="font-bold">
-                      {money(viewingContract.rent)} ({thaiBahtText(viewingContract.rent)})
-                    </strong>{" "}
-                    โดยผู้เช่าตกลงชำระค่าเช่าล่วงหน้าภายในวันที่ 5 ของทุกเดือน
-                  </li>
-                  <li>
-                    ในวันทำสัญญานี้ ผู้เช่าได้วางเงินประกันความเสียหายจำนวน{" "}
-                    <strong className="font-bold">
-                      {money(viewingContract.deposit)} ({thaiBahtText(viewingContract.deposit)})
-                    </strong>{" "}
-                    และค่าเช่าล่วงหน้าจำนวน{" "}
-                    <strong className="font-bold">
-                      {money(viewingContract.advanceRent)} ({thaiBahtText(viewingContract.advanceRent)})
-                    </strong>{" "}
-                    แก่ผู้ให้เช่าเรียบร้อยแล้ว
-                  </li>
-                  {viewingContract.customClauses ? (
-                    <li>
-                      <strong>ข้อตกลงพิเศษเพิ่มเติม:</strong> {viewingContract.customClauses}
-                    </li>
-                  ) : null}
-                </ol>
-
-                <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
-                  <div className="space-y-8">
-                    <p>ลงชื่อ..................................................ผู้ให้เช่า</p>
-                    <p>({activeProperty.settings.accountName || "ผู้มีอำนาจลงนาม"})</p>
-                  </div>
-                  <div className="space-y-8">
-                    <p>ลงชื่อ..................................................ผู้เช่า</p>
-                    <p>({viewingContract.tenantName})</p>
-                  </div>
-                </div>
-              </div>
+            <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm print:border-none print:shadow-none">
+              <ThaiResidentialLeaseDocument
+                advanceAmount={viewingContract.advanceRent}
+                contractDate={viewingContract.startDate}
+                customTerms={viewingContract.customClauses}
+                depositAmount={viewingContract.deposit}
+                dueDay={currentProperty.settings.dueDay}
+                electricRate={currentProperty.settings.electricRate}
+                endDate={viewingContract.endDate}
+                landlordName={`กิจการ ${currentProperty.name}`}
+                landlordRepresentative={currentProperty.settings.accountName || ownerName}
+                leaseNumber={viewingContract.id}
+                occupantCount={1}
+                propertyAddress={currentProperty.address}
+                propertyName={currentProperty.name}
+                propertyPhone={currentProperty.phone}
+                rentAmount={viewingContract.rent}
+                roomNumber={viewingContract.roomNumber}
+                startDate={viewingContract.startDate}
+                tenantIdCard={viewingContract.tenantIdCard}
+                tenantName={viewingContract.tenantName}
+                tenantPhone={viewingContract.tenantPhone}
+                waterBillingMethod="flat_room"
+                waterRate={currentProperty.settings.waterRate}
+              />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">

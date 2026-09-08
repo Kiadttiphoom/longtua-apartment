@@ -6,32 +6,26 @@ import {
   Building2,
   CalendarCheck,
   CalendarRange,
-  CheckCircle2,
   Coins,
-  CreditCard,
   DoorOpen,
   Eye,
   FileText,
-  Home,
   LayoutGrid,
   Layers,
   List,
   Pencil,
   Phone,
-  Plus,
   Printer,
   ShieldCheck,
   Sparkles,
   UserRound,
   UserRoundCheck,
   UsersRound,
-  X,
 } from "lucide-react";
 import { createLeaseAction, updateLeaseAction } from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
-  EditButton,
   EmptyState,
   Modal,
   PageHeader,
@@ -41,13 +35,15 @@ import {
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { TenantPortalAccountModal } from "@/components/portal/TenantPortalAccountModal";
-import { money, thaiBahtText, thaiDate } from "@/lib/format";
-import type { Lease, Property, Room, Tenant } from "@/components/portal/types";
+import { LeaseDocumentWorkspace } from "@/components/contracts/LeaseDocumentWorkspace";
+import { money, thaiDate } from "@/lib/format";
+import type { Lease, Property, PropertySettings, Room, Tenant } from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
 import { validateLease } from "@/lib/portal/validation.mjs";
 
 type LeasePortalTarget = { lease: Lease; tenant: Tenant; room?: Room };
 type ViewingLeaseTarget = {
+  printRequested?: boolean;
   lease: Lease;
   tenant?: Tenant;
   room?: Room;
@@ -56,8 +52,10 @@ type ViewingLeaseTarget = {
 
 export function LeasesPage({
   organizationId,
+  organizationName,
   leases,
   properties,
+  settings,
   rooms,
   tenants,
   portalAccounts,
@@ -66,8 +64,10 @@ export function LeasesPage({
   canManageTenantPortal,
 }: {
   organizationId: string;
+  organizationName: string;
   leases: Lease[];
   properties: Property[];
+  settings: PropertySettings[];
   rooms: Room[];
   tenants: Tenant[];
   portalAccounts: TenantPortalAccountSummary[];
@@ -78,6 +78,7 @@ export function LeasesPage({
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [selected, setSelected] = useState<Lease | "create" | null>(null);
   const [viewingLease, setViewingLease] = useState<ViewingLeaseTarget | null>(null);
+  const [documentDirty, setDocumentDirty] = useState(false);
   const [portalTarget, setPortalTarget] = useState<LeasePortalTarget | null>(null);
   const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
   const [floor, setFloor] = useState("all");
@@ -90,6 +91,7 @@ export function LeasesPage({
 
   const editing = selected && selected !== "create" ? selected : null;
   const propertyMap = useMemo(() => new Map(properties.map((item) => [item.id, item.name])), [properties]);
+  const propertySettingsMap = useMemo(() => new Map(settings.map((item) => [item.property_id, item])), [settings]);
   const roomMap = useMemo(() => new Map(rooms.map((item) => [item.id, item])), [rooms]);
   const tenantById = useMemo(() => new Map(tenants.map((item) => [item.id, item])), [tenants]);
   const tenantMap = useMemo(() => new Map(tenants.map((item) => [item.id, item.full_name])), [tenants]);
@@ -511,9 +513,7 @@ export function LeasesPage({
                           lease: item,
                           tenant,
                           room,
-                          propertyName: propName,
-                        });
-                        setTimeout(() => window.print(), 150);
+                          propertyName: propName, printRequested: true, });
                       }}
                       title="พิมพ์สัญญาเช่า A4"
                       type="button"
@@ -659,9 +659,7 @@ export function LeasesPage({
                                   lease: item,
                                   tenant,
                                   room,
-                                  propertyName: propName,
-                                });
-                                setTimeout(() => window.print(), 150);
+                                  propertyName: propName, printRequested: true, });
                               }}
                               title="พิมพ์สัญญาเช่า A4"
                               type="button"
@@ -731,7 +729,7 @@ export function LeasesPage({
           className="contract-modal"
           headerActions={
             <>
-              {canEdit ? (
+              {canEdit && !documentDirty ? (
                 <button
                   className="h-8.5 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
                   onClick={() => {
@@ -747,130 +745,50 @@ export function LeasesPage({
                   <span>แก้ไขสัญญา</span>
                 </button>
               ) : null}
-              <button
-                className="h-8.5 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs print:hidden"
-                onClick={() => window.print()}
-                type="button"
-              >
-                <Printer size={14} strokeWidth={2.2} />
-                <span>พิมพ์สัญญา A4</span>
-              </button>
             </>
           }
           maxWidth={840}
-          onClose={() => setViewingLease(null)}
+          onClose={() => {
+            if (!documentDirty || window.confirm("มีข้อความที่ยังไม่ได้บันทึก ต้องการปิดสัญญาหรือไม่?")) {
+              setDocumentDirty(false);
+              setViewingLease(null);
+            }
+          }}
           title={`สัญญาเช่าเลขที่ ${viewingLease.lease.lease_number}`}
         >
-          <div className="p-6 sm:p-10 overflow-y-auto text-slate-800 text-xs sm:text-[13px] leading-relaxed space-y-5 font-sans" id="print-area">
-            <div className="text-center pb-5 border-b border-slate-200 space-y-1">
-              <div className="flex justify-center mb-2">
-                <span className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-2xs">
-                  <Building2 size={24} strokeWidth={2.2} />
-                </span>
-              </div>
-              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
-                {viewingLease.propertyName || "หนังสือสัญญาเช่าห้องพักอาศัย"}
-              </h1>
-              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
-                หนังสือสัญญาเช่าห้องพักอาศัย (Residential Lease Agreement)
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl text-xs text-slate-700 font-medium border border-slate-200">
-              <div><strong>เลขที่สัญญา:</strong> {viewingLease.lease.lease_number}</div>
-              <div><strong>วันเริ่มสัญญา:</strong> {thaiDate(viewingLease.lease.start_date)}</div>
-              <div><strong>ห้องพัก:</strong> ห้อง {viewingLease.room?.room_number ?? "—"}</div>
-              <div>
-                <strong>สถานะ:</strong>{" "}
-                <span className="font-bold text-blue-600 uppercase">{viewingLease.lease.status}</span>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-slate-700 leading-relaxed">
-              <p>
-                สัญญาเช่าฉบับนี้ทำขึ้นระหว่าง <strong>ผู้ให้เช่า</strong> กับ{" "}
-                <strong>{viewingLease.tenant?.full_name || "..................................................."}</strong>{" "}
-                (ผู้เช่า) {viewingLease.tenant?.phone ? `เบอร์โทรศัพท์ ${viewingLease.tenant.phone}` : ""}{" "}
-                {viewingLease.tenant?.id_card_last4 ? `(เลขบัตรประชาชนลงท้าย ${viewingLease.tenant.id_card_last4})` : ""}{" "}
-                โดยมีข้อตกลงและเงื่อนไขการเช่าดังต่อไปนี้:
-              </p>
-
-              <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-2 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <strong>1. ทรัพย์สินที่เช่า:</strong> ห้องพักหมายเลข <strong>{viewingLease.room?.room_number ?? "—"}</strong> ชั้น {viewingLease.room?.floor ?? "1"}
-                  </div>
-                  <div>
-                    <strong>2. จำนวนผู้พักอาศัย:</strong> {viewingLease.lease.occupant_count} คน
-                  </div>
-                  <div>
-                    <strong>3. วันที่เริ่มสัญญา:</strong> {thaiDate(viewingLease.lease.start_date)}
-                  </div>
-                  <div>
-                    <strong>4. วันที่สิ้นสุดสัญญา:</strong> {viewingLease.lease.end_date ? thaiDate(viewingLease.lease.end_date) : "ไม่ได้ระบุวันสิ้นสุด (ต่อสัญญาแบบเดือนต่อเดือน)"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2 text-xs">
-                <h3 className="font-bold text-blue-950 flex items-center gap-1.5">
-                  <Coins size={14} className="text-blue-600" />
-                  <span>เงื่อนไขทางการเงิน</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="p-2.5 rounded-lg bg-white border border-blue-100">
-                    <span className="text-[11px] text-slate-500 block">อัตราค่าเช่า</span>
-                    <strong className="text-sm font-bold text-slate-900 block mt-0.5">
-                      {money(Number(viewingLease.lease.rent_amount))} / เดือน
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                      ({thaiBahtText(Number(viewingLease.lease.rent_amount))})
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white border border-blue-100">
-                    <span className="text-[11px] text-slate-500 block">เงินประกันความเสียหาย</span>
-                    <strong className="text-sm font-bold text-slate-900 block mt-0.5">
-                      {money(Number(viewingLease.lease.deposit_amount))}
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                      ({thaiBahtText(Number(viewingLease.lease.deposit_amount))})
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white border border-blue-100">
-                    <span className="text-[11px] text-slate-500 block">ค่าเช่าล่วงหน้า</span>
-                    <strong className="text-sm font-bold text-slate-900 block mt-0.5">
-                      {money(Number(viewingLease.lease.advance_amount))}
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                      ({thaiBahtText(Number(viewingLease.lease.advance_amount))})
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {viewingLease.lease.terms ? (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                  <h3 className="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-                    <CheckCircle2 size={14} className="text-emerald-600" />
-                    <span>ข้อกำหนดและระเบียบปฏิบัติเพิ่มเติม</span>
-                  </h3>
-                  <p className="text-slate-700 whitespace-pre-line leading-relaxed">
-                    {viewingLease.lease.terms}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
-              <div className="space-y-8">
-                <div className="border-b border-slate-300 w-48 mx-auto" />
-                <p>ลงชื่อ ........................................................... ผู้ให้เช่า</p>
-              </div>
-              <div className="space-y-8">
-                <div className="border-b border-slate-300 w-48 mx-auto" />
-                <p>ลงชื่อ ........................................................... ผู้เช่า</p>
-              </div>
-            </div>
+          <div>
+            <LeaseDocumentWorkspace
+              key={viewingLease.lease.id}
+              autoPrint={viewingLease.printRequested}
+              leaseId={viewingLease.lease.id}
+              organizationId={organizationId}
+              canEdit={canEdit}
+              onDirtyChange={setDocumentDirty}
+              advanceAmount={Number(viewingLease.lease.advance_amount)}
+              contractDate={viewingLease.lease.start_date}
+              customTerms={viewingLease.lease.terms}
+              depositAmount={Number(viewingLease.lease.deposit_amount)}
+              dueDay={propertySettingsMap.get(viewingLease.lease.property_id)?.due_day}
+              electricRate={propertySettingsMap.get(viewingLease.lease.property_id)?.electric_rate}
+              endDate={viewingLease.lease.end_date}
+              floor={viewingLease.room?.floor}
+              landlordName={organizationName}
+              landlordRepresentative={propertySettingsMap.get(viewingLease.lease.property_id)?.account_name}
+              leaseNumber={viewingLease.lease.lease_number}
+              occupantCount={viewingLease.lease.occupant_count}
+              propertyAddress={properties.find((item) => item.id === viewingLease.lease.property_id)?.address}
+              propertyName={viewingLease.propertyName || properties.find((item) => item.id === viewingLease.lease.property_id)?.name || "หอพัก"}
+              propertyPhone={properties.find((item) => item.id === viewingLease.lease.property_id)?.phone}
+              rentAmount={Number(viewingLease.lease.rent_amount)}
+              roomNumber={viewingLease.room?.room_number || "—"}
+              startDate={viewingLease.lease.start_date}
+              tenantAddress={viewingLease.tenant?.address}
+              tenantIdCard={viewingLease.tenant?.id_card_last4 ? `${"·".repeat(9)}${viewingLease.tenant.id_card_last4}` : null}
+              tenantName={viewingLease.tenant?.full_name || ""}
+              tenantPhone={viewingLease.tenant?.phone}
+              waterBillingMethod={propertySettingsMap.get(viewingLease.lease.property_id)?.water_billing_method}
+              waterRate={propertySettingsMap.get(viewingLease.lease.property_id)?.water_rate}
+            />
           </div>
         </Modal>
       ) : null}

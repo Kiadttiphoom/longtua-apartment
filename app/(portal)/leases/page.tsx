@@ -8,8 +8,10 @@ export default async function Page() {
   const portalAccounts = await loadTenantPortalAccountSummaries(context.organization.id);
   return <LeasesPage
     organizationId={context.organization.id}
+    organizationName={context.organization.name}
     leases={data.leases}
     properties={data.properties}
+    settings={data.settings}
     rooms={data.rooms}
     tenants={data.tenants}
     portalAccounts={portalAccounts}

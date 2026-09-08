@@ -372,7 +372,7 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
   ) : null;
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <input name={name} readOnly type="hidden" value={value} />
       <button
         aria-controls={panelId}
@@ -380,7 +380,7 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
         aria-haspopup="dialog"
         aria-invalid={invalid}
         aria-label={ariaLabel}
-        className={`w-full h-11 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-xs font-bold outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
+        className={`w-full min-w-0 h-11 px-3.5 flex items-center justify-between gap-2 rounded-xl border text-xs font-bold outline-none transition-all cursor-pointer disabled:bg-slate-50 disabled:text-slate-400 ${
           invalid
             ? "border-rose-300 bg-rose-50/40 text-rose-900"
             : open

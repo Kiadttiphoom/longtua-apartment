@@ -8,8 +8,51 @@ import { hasOrganizationPermission, type MenuActionCode } from "@/lib/auth/organ
 import { getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
 import { calculateInvoiceBreakdown, invoiceMissingMessage } from "@/lib/portal/invoice-calculation.mjs";
 import { getPlanByQuota } from "@/lib/portal/plans";
+import { validateLeaseContent } from "@/lib/contracts/lease-content.mjs";
+import { loadLeaseSnapshot } from "@/lib/contracts/server";
+import type { LeaseContent, LeaseDocumentVersion } from "@/lib/contracts/types";
 
 export type DashboardActionResult = { ok: boolean; message: string; requestId?: string };
+
+export async function saveLeaseDocumentAction(formData: FormData): Promise<DashboardActionResult & { version?: LeaseDocumentVersion; templateId?: string }> {
+  const context = await actionContext(formData, "customer_leases", "update");
+  if (!context.ok) return context.error;
+  const leaseId = text(formData, "leaseId");
+  const parentId = text(formData, "parentId") || null;
+  const target = text(formData, "target");
+  if (!UUID_PATTERN.test(leaseId) || (parentId && !UUID_PATTERN.test(parentId)) || !["lease", "template"].includes(target)) return fail("ข้อมูลสัญญาไม่ถูกต้อง");
+  const raw = text(formData, "content");
+  if (raw.length > 150000) return fail("ข้อความสัญญายาวเกินกำหนด");
+  let content: LeaseContent;
+  try { content = JSON.parse(raw); } catch { return fail("รูปแบบข้อความสัญญาไม่ถูกต้อง"); }
+  const validationError = validateLeaseContent(content);
+  if (validationError) return fail(validationError);
+  // Whitelist fields. No user-supplied financial snapshot or HTML is accepted.
+  content = { version: 1, title: content.title.trim(), clauses: content.clauses.map(c => ({ id: c.id, title: c.title.trim(), body: c.body.trim() })) };
+  if (target === "template") {
+    const templateContext = await actionContext(formData, "customer_settings", "update");
+    if (!templateContext.ok) return templateContext.error;
+  }
+  try {
+    const { lease, snapshot } = await loadLeaseSnapshot(context.supabase, context.organizationId, leaseId);
+    if (target === "template") {
+      const { data, error } = await context.supabase.from("property_lease_templates").insert({
+        organization_id: context.organizationId, property_id: lease.property_id, parent_id: parentId, content, created_by: context.userId,
+      }).select("id").single();
+      if (error) return fail(error.code === "23505" ? "แม่แบบถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดสัญญาใหม่ก่อนบันทึก" : "บันทึกแม่แบบไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration");
+      revalidatePath("/leases");
+      return { ok: true, message: "บันทึกแม่แบบสำหรับสัญญาใหม่ของหอพักนี้แล้ว", templateId: data.id };
+    }
+    const { data, error } = await context.supabase.from("lease_document_versions").insert({
+      organization_id: context.organizationId, lease_id: leaseId, parent_id: parentId, content, snapshot, created_by: context.userId,
+    }).select("id,created_at,content,snapshot").single();
+    if (error) return fail(error.code === "23505" ? "สัญญาถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดใหม่เพื่อโหลดฉบับล่าสุด ข้อความในช่องแก้ไขยังอยู่" : "บันทึกข้อความไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration");
+    revalidatePath("/leases");
+    return { ok: true, message: "บันทึกฉบับใหม่แล้ว สามารถพิมพ์หรือเปิดประวัติฉบับเดิมได้", version: data as LeaseDocumentVersion };
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง");
+  }
+}
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
