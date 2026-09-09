@@ -11,12 +11,18 @@
     "admin:create": "node --env-file=.env.local scripts/create-super-admin.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1128.0",
+    "@aws-sdk/s3-request-presigner": "^3.1128.0",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.4",
+    "@types/qrcode": "^1.5.6",
+    "heic-to": "1.5.2",
     "lucide-react": "^0.468.0",
     "next": "16.3.3",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -12,8 +12,14 @@ export const loadTenantPortalData = cache(async () => {
     supabase.from("leases").select("id, property_id, room_id, lease_number, start_date, end_date, rent_amount, deposit_amount, advance_amount, occupant_count, terms, status").eq("primary_tenant_id", tenantId).order("created_at", { ascending: false }),
     supabase.from("rooms").select("id, property_id, room_number, floor").eq("organization_id", organizationId),
     supabase.from("properties").select("id, name, address, phone").eq("organization_id", organizationId),
-    supabase.from("property_settings").select("property_id, promptpay_id, account_name, invoice_note").eq("organization_id", organizationId),
-    supabase.from("rent_invoices").select("id, lease_id, property_id, room_id, invoice_number, issued_at, due_at, total, balance_due, status, note").eq("organization_id", organizationId).order("issued_at", { ascending: false }),
+    (async () => {
+      const full = await supabase.from("property_settings").select("property_id, promptpay_id, account_name, invoice_note, bank_name, bank_account_no, bank_account_name").eq("organization_id", organizationId);
+      if (!full.error) return full;
+      const withBank = await supabase.from("property_settings").select("property_id, promptpay_id, account_name, invoice_note, bank_name").eq("organization_id", organizationId);
+      if (!withBank.error) return withBank;
+      return await supabase.from("property_settings").select("property_id, promptpay_id, account_name, invoice_note").eq("organization_id", organizationId);
+    })(),
+    supabase.from("rent_invoices").select("id, lease_id, property_id, room_id, invoice_number, issued_at, due_at, total, balance_due, status, note, billing_cycles(period_month)").eq("organization_id", organizationId).order("issued_at", { ascending: false }),
     supabase.from("rent_invoice_items").select("id, rent_invoice_id, item_type, description, quantity, unit_price, amount").eq("organization_id", organizationId),
     supabase.from("rent_payment_allocations").select("rent_payment_id, rent_invoice_id, amount").eq("organization_id", organizationId),
     supabase.from("rent_payments").select("id, receipt_number, paid_at, amount, method, reference, status").eq("organization_id", organizationId).order("paid_at", { ascending: false }),
@@ -22,10 +28,13 @@ export const loadTenantPortalData = cache(async () => {
   ]);
   const errors = [tenant, organization, leases, rooms, properties, settings, invoices, invoiceItems, allocations, payments, submissions, versions].flatMap((result) => result.error ? [result.error] : []);
   if (errors.length) throw new Error("โหลดข้อมูล Tenant Portal ไม่สำเร็จ");
+  const ownLeaseIds = new Set((leases.data ?? []).map(lease => lease.id));
+  const ownInvoices = (invoices.data ?? []).filter(invoice => invoice.lease_id && ownLeaseIds.has(invoice.lease_id));
+  const ownInvoiceIds = new Set(ownInvoices.map(invoice => invoice.id));
   return {
     context,
     tenant: tenant.data!, organization: organization.data!,
     leases: leases.data ?? [], rooms: rooms.data ?? [], properties: properties.data ?? [], settings: settings.data ?? [],
-    invoices: invoices.data ?? [], invoiceItems: invoiceItems.data ?? [], allocations: allocations.data ?? [], payments: payments.data ?? [], submissions: submissions.data ?? [], versions: versions.data ?? [],
+    invoices: ownInvoices, invoiceItems: (invoiceItems.data ?? []).filter(item => ownInvoiceIds.has(item.rent_invoice_id)), allocations: allocations.data ?? [], payments: payments.data ?? [], submissions: submissions.data ?? [], versions: versions.data ?? [],
   };
 });

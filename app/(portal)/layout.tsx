@@ -1,8 +1,11 @@
 import { PortalShell } from "@/components/portal/PortalShell";
 import { requirePortalContext } from "@/lib/portal/context";
+import { loadPortalMenuBadges } from "@/lib/portal/badges";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const context = await requirePortalContext();
+  const menuBadges = await loadPortalMenuBadges(context.organization.id, context.isImpersonating);
+
   return <PortalShell context={{
     userName: context.userName,
     roleLabel: context.roleLabel,
@@ -10,5 +13,6 @@ export default async function PortalLayout({ children }: { children: React.React
     organizations: context.organizations,
     menus: context.menus,
     isImpersonating: context.isImpersonating,
+    menuBadges,
   }}>{children}</PortalShell>;
 }

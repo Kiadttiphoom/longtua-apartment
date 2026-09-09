@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, Pencil, Plus, Trash2, TriangleAlert, X } from "lucide-react";
 import type { DashboardActionResult } from "@/app/(portal)/resource-actions";
+import { alertSuccess, alertError } from "@/lib/sweetalert";
 import { DateTimeControl, type DateTimeMode } from "@/components/ui/DateTimeControl";
 import { SelectControl, type SelectOption } from "@/components/ui/SelectControl";
 export { DataTable } from "@/components/ui/DataTable";
@@ -183,11 +184,20 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
           return;
         }
         startTransition(async () => {
-          const nextResult = await action(formData);
-          setResult(nextResult);
-          if (nextResult.ok) {
-            router.refresh();
-            onSuccess();
+          try {
+            const nextResult = await action(formData);
+            setResult(nextResult);
+            if (nextResult.ok) {
+              onSuccess();
+              router.refresh();
+              await alertSuccess("บันทึกข้อมูลสำเร็จ", nextResult.message || "ระบบบันทึกข้อมูลเรียบร้อยแล้ว");
+            } else {
+              await alertError("บันทึกไม่สำเร็จ", nextResult.message || "กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง");
+            }
+          } catch {
+            const errMsg = "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง";
+            setResult({ ok: false, message: errMsg });
+            await alertError("เกิดข้อผิดพลาด", errMsg);
           }
         });
       }}
@@ -251,11 +261,20 @@ export function DeleteConfirmation({ action, organizationId, entityId, entityFie
           formData.set(entityField, entityId);
           setResult(null);
           startTransition(async () => {
-            const nextResult = await action(formData);
-            setResult(nextResult);
-            if (nextResult.ok) {
-              router.refresh();
-              onClose();
+            try {
+              const nextResult = await action(formData);
+              setResult(nextResult);
+              if (nextResult.ok) {
+                onClose();
+                router.refresh();
+                await alertSuccess("ลบข้อมูลสำเร็จ", nextResult.message || "รายการถูกลบเรียบร้อยแล้ว");
+              } else {
+                await alertError("ลบข้อมูลไม่สำเร็จ", nextResult.message || "ไม่สามารถลบรายการได้");
+              }
+            } catch {
+              const errMsg = "ลบข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง";
+              setResult({ ok: false, message: errMsg });
+              await alertError("เกิดข้อผิดพลาด", errMsg);
             }
           });
         }}

@@ -15,6 +15,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
+import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
 import { DataTable, EmptyState, PageHeader, StatusBadge } from "@/components/portal/PortalUI";
 import type { Invoice, Property, Room } from "@/components/portal/types";
 import { money, thaiDate } from "@/lib/format";
@@ -33,6 +34,8 @@ export function ReceivablesPage({
   const [query, setQuery] = useState("");
   const [urgency, setUrgency] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("month");
+  const [dateFilterValue, setDateFilterValue] = useState("");
 
   const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
     ? activePropertyId
@@ -88,6 +91,16 @@ export function ReceivablesPage({
     [propertyInvoices]
   );
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<string>([String(currentYear)]);
+    for (const inv of propertyInvoices) {
+      if (inv.issued_at) years.add(inv.issued_at.slice(0, 4));
+      if (inv.due_at) years.add(inv.due_at.slice(0, 4));
+    }
+    return Array.from(years).sort().reverse();
+  }, [propertyInvoices]);
+
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
     return propertyInvoices.filter((item) => {
@@ -102,9 +115,22 @@ export function ReceivablesPage({
           value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesFloor && matchesUrgency && matchesSearch;
+      let matchesDate = true;
+      if (dateFilterValue) {
+        const issued = item.issued_at || "";
+        const due = item.due_at || "";
+        if (dateFilterMode === "date") {
+          matchesDate = issued.slice(0, 10) === dateFilterValue || due.slice(0, 10) === dateFilterValue;
+        } else if (dateFilterMode === "month") {
+          matchesDate = issued.slice(0, 7) === dateFilterValue || due.slice(0, 7) === dateFilterValue;
+        } else if (dateFilterMode === "year") {
+          matchesDate = issued.slice(0, 4) === dateFilterValue || due.slice(0, 4) === dateFilterValue;
+        }
+      }
+
+      return matchesFloor && matchesUrgency && matchesSearch && matchesDate;
     });
-  }, [propertyInvoices, floor, today, urgency, query, roomMap]);
+  }, [propertyInvoices, floor, today, urgency, query, roomMap, dateFilterValue, dateFilterMode]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -336,6 +362,17 @@ export function ReceivablesPage({
           </div>
         }
         description={`พบ ${filtered.length.toLocaleString("th-TH")} จาก ${propertyInvoices.length.toLocaleString("th-TH")} รายการค้าง (${activeProperty?.name ?? "หอพัก"})`}
+        extraFilters={
+          <DateFilterControl
+            availableYears={availableYears}
+            mode={dateFilterMode}
+            onModeChange={setDateFilterMode}
+            onValueChange={setDateFilterValue}
+            value={dateFilterValue}
+            placeholderDate="ทุกวันที่ออก/ครบกำหนด"
+            placeholderMonth="ทุกรอบเดือนบิล"
+          />
+        }
         filter={{
           label: "กรองสถานะกำหนดชำระ",
           value: urgency,

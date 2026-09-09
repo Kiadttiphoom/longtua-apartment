@@ -4,8 +4,6 @@ import { useMemo, useState } from "react";
 import {
   Building2,
   Calendar,
-  CalendarRange,
-  CheckCircle2,
   DoorOpen,
   Droplets,
   Gauge,
@@ -14,6 +12,8 @@ import {
   Layers,
   LayoutGrid,
   List,
+  Lock,
+  Pencil,
   Sparkles,
   TrendingUp,
   Zap,
@@ -28,10 +28,11 @@ import {
   PortalForm,
 } from "@/components/portal/PortalUI";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
+import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
 import { SelectControl } from "@/components/ui/SelectControl";
-import type { Meter, MeterReading, Property, Room } from "@/components/portal/types";
+import type { Invoice, Meter, MeterReading, Property, Room } from "@/components/portal/types";
 import { thaiDate } from "@/lib/format";
-import { formatThaiBillingMonth, getMeterReadingDefaults } from "@/lib/portal/meter-reading.mjs";
+import { formatThaiBillingMonth, getMeterReadingDefaults, getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
 import { validateMeter } from "@/lib/portal/validation.mjs";
 
 type MetersPageProps = {
@@ -40,6 +41,8 @@ type MetersPageProps = {
   rooms: Room[];
   meters: Meter[];
   readings: MeterReading[];
+  invoices?: Invoice[];
+  submissions?: { id: string; invoice_id: string; status: string }[];
   canCreate: boolean;
 };
 
@@ -49,6 +52,8 @@ export function MetersPage({
   rooms,
   meters,
   readings,
+  invoices = [],
+  submissions = [],
   canCreate,
 }: MetersPageProps) {
   const [open, setOpen] = useState(false);
@@ -61,6 +66,8 @@ export function MetersPage({
   const [periodMonth, setPeriodMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("month");
+  const [dateFilterValue, setDateFilterValue] = useState("");
 
   const propertyMap = useMemo(() => new Map(properties.map((item) => [item.id, item.name])), [properties]);
   const roomMap = useMemo(() => new Map(rooms.map((item) => [item.id, item])), [rooms]);
@@ -103,6 +110,151 @@ export function MetersPage({
   );
   const draftKey = `${selectedMeter?.id ?? "none"}-${periodMonth}-${draft.mode}`;
 
+  const getLockStatusForReading = (reading: MeterReading) => {
+    if (!invoices || invoices.length === 0) return { isLocked: false };
+    const meter = meterMap.get(reading.meter_id);
+    if (!meter) return { isLocked: false };
+
+    const readingMonth = reading.period_month?.slice(0, 7) || "";
+    const activeInvoice = invoices.find(
+      (inv) =>
+        inv.room_id === meter.room_id &&
+        inv.status !== "void" &&
+        (inv.billing_cycle_id === reading.billing_cycle_id ||
+          inv.issued_at?.slice(0, 7) === readingMonth)
+    );
+
+    if (!activeInvoice) return { isLocked: false };
+
+    if (activeInvoice.status === "paid" || Number(activeInvoice.balance_due) <= 0) {
+      return {
+        isLocked: true,
+        reason: "paid" as const,
+        badgeLabel: "ชำระแล้ว",
+        badgeStyle: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        invoiceNumber: activeInvoice.invoice_number,
+        message: `ใบแจ้งหนี้รอบนี้ (${activeInvoice.invoice_number}) ชำระเงินเรียบร้อยแล้ว ล็อกการแก้ไข`,
+      };
+    }
+
+    const hasPendingSlip = submissions?.some(
+      (s) => s.invoice_id === activeInvoice.id && s.status === "pending"
+    );
+    if (hasPendingSlip) {
+      return {
+        isLocked: true,
+        reason: "pending_slip" as const,
+        badgeLabel: "รอตรวจสลิป",
+        badgeStyle: "bg-amber-50 text-amber-700 border-amber-200",
+        invoiceNumber: activeInvoice.invoice_number,
+        message: `มีสลิปรอการตรวจสอบ (${activeInvoice.invoice_number}) ล็อกการแก้ไข`,
+      };
+    }
+
+    return {
+      isLocked: true,
+      reason: "issued" as const,
+      badgeLabel: "ออกบิลแล้ว",
+      badgeStyle: "bg-blue-50 text-blue-700 border-blue-200",
+      invoiceNumber: activeInvoice.invoice_number,
+      message: `ออกใบแจ้งหนี้แล้ว (${activeInvoice.invoice_number}) ต้องยกเลิกใบแจ้งหนี้ก่อนถึงจะแก้ไขได้`,
+    };
+  };
+
+  const modalLock = useMemo(() => {
+    if (!modalRoomId || !periodMonth || !invoices || invoices.length === 0) {
+      return { isLocked: false };
+    }
+
+    const activeInvoice = invoices.find((inv) => {
+      if (inv.room_id !== modalRoomId || inv.status === "void") return false;
+      const invMonth = inv.issued_at ? inv.issued_at.slice(0, 7) : "";
+      const matchingReading = readings.find(
+        (r) =>
+          selectedMeter &&
+          r.meter_id === selectedMeter.id &&
+          r.period_month?.slice(0, 7) === periodMonth
+      );
+      if (matchingReading && inv.billing_cycle_id === matchingReading.billing_cycle_id) {
+        return true;
+      }
+      return invMonth === periodMonth;
+    });
+
+    if (!activeInvoice) return { isLocked: false };
+
+    if (activeInvoice.status === "paid" || Number(activeInvoice.balance_due) <= 0) {
+      return {
+        isLocked: true,
+        reason: "paid" as const,
+        invoiceNumber: activeInvoice.invoice_number,
+        message: `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากใบแจ้งหนี้รอบนี้ (${activeInvoice.invoice_number}) ชำระเงินเรียบร้อยแล้ว`,
+      };
+    }
+
+    const hasPendingSlip = submissions?.some(
+      (s) => s.invoice_id === activeInvoice.id && s.status === "pending"
+    );
+    if (hasPendingSlip) {
+      return {
+        isLocked: true,
+        reason: "pending_slip" as const,
+        invoiceNumber: activeInvoice.invoice_number,
+        message: `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากมีสลิปชำระเงิน (${activeInvoice.invoice_number}) อยู่ระหว่างรอการตรวจสอบ กรุณากดไม่อนุมัติสลิปก่อน`,
+      };
+    }
+
+    return {
+      isLocked: true,
+      reason: "issued" as const,
+      invoiceNumber: activeInvoice.invoice_number,
+      message: `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากมีการออกใบแจ้งหนี้แล้ว (${activeInvoice.invoice_number}) กรุณาไปที่เมนูใบแจ้งหนี้เพื่อยกเลิกบิลก่อนหากต้องการแก้ไขเลขมิเตอร์`,
+    };
+  }, [modalRoomId, periodMonth, invoices, readings, selectedMeter, submissions]);
+
+  const editButton = (reading: MeterReading) => {
+    const meter = meterMap.get(reading.meter_id);
+    if (!canCreate || !meter) return null;
+    const lock = getLockStatusForReading(reading);
+
+    if (lock.isLocked) {
+      return (
+        <button
+          type="button"
+          className="h-9 min-w-44 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-100/80 text-slate-500 hover:bg-slate-200/80 transition-all cursor-pointer shadow-2xs"
+          aria-label={`ดูเลขมิเตอร์ห้อง ${roomMap.get(meter.room_id)?.room_number ?? ""} (${lock.badgeLabel})`}
+          title={lock.message}
+          onClick={() => {
+            setModalPropertyId(meter.property_id);
+            setModalRoomId(meter.room_id);
+            setMeterType(meter.meter_type);
+            setPeriodMonth(reading.period_month.slice(0, 7));
+            setOpen(true);
+          }}
+        >
+          <Lock size={13} strokeWidth={2.2} /> <span>{lock.badgeLabel} (ล็อก)</span>
+        </button>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        className="h-9 min-w-44 px-3 rounded-xl inline-flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+        aria-label={`แก้ไขเลขมิเตอร์ห้อง ${roomMap.get(meter.room_id)?.room_number ?? ""} ${formatThaiBillingMonth(reading.period_month)}`}
+        onClick={() => {
+          setModalPropertyId(meter.property_id);
+          setModalRoomId(meter.room_id);
+          setMeterType(meter.meter_type);
+          setPeriodMonth(reading.period_month.slice(0, 7));
+          setOpen(true);
+        }}
+      >
+        <Pencil size={14} strokeWidth={2.2} /> <span>แก้ไขมิเตอร์</span>
+      </button>
+    );
+  };
+
   // Stats calculation for current property
   const totalCount = propertyReadings.length;
   const electricCount = useMemo(
@@ -122,6 +274,16 @@ export function MetersPage({
     [propertyReadings]
   );
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<string>([String(currentYear)]);
+    for (const r of propertyReadings) {
+      if (r.period_month) years.add(r.period_month.slice(0, 4));
+      if (r.read_at) years.add(r.read_at.slice(0, 4));
+    }
+    return Array.from(years).sort().reverse();
+  }, [propertyReadings]);
+
   // Filtered readings
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
@@ -137,9 +299,22 @@ export function MetersPage({
           (value) => value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesFloor && matchesType && matchesSearch;
+      let matchesDate = true;
+      if (dateFilterValue) {
+        const period = item.period_month || "";
+        const readAt = item.read_at || "";
+        if (dateFilterMode === "date") {
+          matchesDate = readAt.slice(0, 10) === dateFilterValue;
+        } else if (dateFilterMode === "month") {
+          matchesDate = period.slice(0, 7) === dateFilterValue || readAt.slice(0, 7) === dateFilterValue;
+        } else if (dateFilterMode === "year") {
+          matchesDate = period.slice(0, 4) === dateFilterValue || readAt.slice(0, 4) === dateFilterValue;
+        }
+      }
+
+      return matchesFloor && matchesType && matchesSearch && matchesDate;
     });
-  }, [propertyReadings, meterMap, roomMap, floor, typeFilter, query]);
+  }, [propertyReadings, meterMap, roomMap, floor, typeFilter, query, dateFilterValue, dateFilterMode]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -386,6 +561,16 @@ export function MetersPage({
           </div>
         }
         description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyReadings.length.toLocaleString("th-TH")} รายการ (${activeProperty?.name ?? "หอพัก"})`}
+        extraFilters={
+          <DateFilterControl
+            availableYears={availableYears}
+            mode={dateFilterMode}
+            onModeChange={setDateFilterMode}
+            onValueChange={setDateFilterValue}
+            value={dateFilterValue}
+            placeholderMonth="ทุกรอบบิล (ด/ป)"
+          />
+        }
         filter={{
           label: "กรองประเภท",
           value: typeFilter,
@@ -417,6 +602,7 @@ export function MetersPage({
                 "เลขอ่านครั้งนี้",
                 "หน่วยที่ใช้",
                 "วันที่จดจริง",
+                ...(canCreate ? ["จัดการ"] : []),
               ]}
               rows={filtered.map((item) => {
                 const meter = meterMap.get(item.meter_id);
@@ -481,6 +667,7 @@ export function MetersPage({
                   <span className="text-xs text-slate-400" key="date">
                     {thaiDate(item.read_at)}
                   </span>,
+                  ...(canCreate ? [<span key="edit">{editButton(item)}</span>] : []),
                 ];
               })}
             />
@@ -502,6 +689,8 @@ export function MetersPage({
                     const room = roomMap.get(meter?.room_id ?? "");
                     const isElectric = meter?.meter_type === "electric";
                     const usage = Number(item.current_value) - Number(item.previous_value);
+
+                    const lock = getLockStatusForReading(item);
 
                     return (
                       <article
@@ -535,16 +724,27 @@ export function MetersPage({
                                 </span>
                               </div>
                             </div>
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${
-                                isElectric
-                                  ? "bg-amber-50 text-amber-800 border-amber-200"
-                                  : "bg-cyan-50 text-cyan-800 border-cyan-200"
-                              }`}
-                            >
-                              {isElectric ? <Zap size={12} strokeWidth={2.2} /> : <Droplets size={12} strokeWidth={2.2} />}
-                              {isElectric ? "ไฟฟ้า" : "น้ำประปา"}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                              {lock.isLocked && (
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${lock.badgeStyle}`}
+                                  title={lock.message}
+                                >
+                                  <Lock size={11} strokeWidth={2.2} />
+                                  <span>{lock.badgeLabel}</span>
+                                </span>
+                              )}
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${
+                                  isElectric
+                                    ? "bg-amber-50 text-amber-800 border-amber-200"
+                                    : "bg-cyan-50 text-cyan-800 border-cyan-200"
+                                }`}
+                              >
+                                {isElectric ? <Zap size={12} strokeWidth={2.2} /> : <Droplets size={12} strokeWidth={2.2} />}
+                                {isElectric ? "ไฟฟ้า" : "น้ำประปา"}
+                              </span>
+                            </div>
                           </header>
 
                           {/* 3-Column Reading Stats Container */}
@@ -578,6 +778,7 @@ export function MetersPage({
                           </span>
                           <span>จดเมื่อ {thaiDate(item.read_at)}</span>
                         </footer>
+                        {canCreate ? <div className="flex justify-end mt-2">{editButton(item)}</div> : null}
                       </article>
                     );
                   })}
@@ -607,11 +808,39 @@ export function MetersPage({
             onCancel={() => setOpen(false)}
             onSuccess={() => setOpen(false)}
             organizationId={organizationId}
-            submitLabel={draft.mode === "edit" ? "บันทึกการแก้ไขเลขมิเตอร์" : "บันทึกเลขมิเตอร์"}
+            submitLabel={
+              modalLock.isLocked
+                ? "ล็อกการแก้ไข (ไม่สามารถบันทึกได้)"
+                : draft.mode === "edit"
+                ? "บันทึกการแก้ไขเลขมิเตอร์"
+                : "บันทึกเลขมิเตอร์"
+            }
+            submitDisabled={modalLock.isLocked}
+            submitDisabledReason={modalLock.isLocked ? modalLock.message : undefined}
             validate={validateMeter}
           >
             {(errors, clear) => (
               <div className="space-y-4 text-xs">
+                {/* Lock Alert Banner if active invoice exists */}
+                {modalLock.isLocked ? (
+                  <div
+                    role="alert"
+                    className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-start gap-2.5 ${
+                      modalLock.reason === "paid"
+                        ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                        : modalLock.reason === "pending_slip"
+                        ? "bg-amber-50 text-amber-900 border-amber-200"
+                        : "bg-rose-50 text-rose-900 border-rose-200"
+                    }`}
+                  >
+                    <Lock size={16} className="shrink-0 mt-0.5" />
+                    <div className="leading-relaxed">
+                      <strong className="block font-bold">ล็อกการแก้ไขมิเตอร์รอบเดือนนี้</strong>
+                      <p className="mt-0.5 font-normal">{modalLock.message}</p>
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* Value Banner */}
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
@@ -639,14 +868,20 @@ export function MetersPage({
                   </label>
                   <SelectControl
                     ariaLabel="หอพัก"
+                    name="propertyId"
+                    invalid={Boolean(errors.propertyId)}
                     onValueChange={(val) => {
                       setModalPropertyId(val);
                       setModalRoomId("");
+                      clear("propertyId");
                     }}
                     options={properties.map((item) => ({ value: item.id, label: item.name }))}
                     placeholder="เลือกหอพัก"
                     value={modalPropertyId}
                   />
+                  {errors.propertyId ? (
+                    <p role="alert" className="mt-1 text-rose-600 text-[11px] font-bold">{errors.propertyId}</p>
+                  ) : null}
                 </div>
 
                 {/* Room & Meter Type */}
@@ -661,9 +896,11 @@ export function MetersPage({
                     </label>
                     <SelectControl
                       ariaLabel="ห้องพัก"
+                      name="roomId"
+                      invalid={Boolean(errors.roomId)}
                       onValueChange={(val) => {
                         setModalRoomId(val);
-                        clear("meterId");
+                        clear("roomId");
                       }}
                       options={rooms
                         .filter((item) => !modalPropertyId || item.property_id === modalPropertyId)
@@ -674,8 +911,8 @@ export function MetersPage({
                       placeholder="เลือกห้องพัก"
                       value={modalRoomId}
                     />
-                    {errors.meterId ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.meterId}</p>
+                    {errors.roomId ? (
+                      <p role="alert" className="mt-1 text-rose-600 text-[11px] font-bold">{errors.roomId}</p>
                     ) : null}
                   </div>
 
@@ -693,6 +930,7 @@ export function MetersPage({
                     </label>
                     <SelectControl
                       ariaLabel="ประเภทมิเตอร์"
+                      name="meterType"
                       onValueChange={(val) => setMeterType(val)}
                       options={[
                         { value: "electric", label: "ไฟฟ้า (Electric)" },
@@ -797,12 +1035,17 @@ export function MetersPage({
                         <Gauge size={16} strokeWidth={2.2} />
                       </span>
                       <input
-                        className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                        className={`w-full h-11 pl-10 pr-3.5 rounded-xl border text-xs font-mono font-bold transition-all ${
+                          modalLock.isLocked
+                            ? "bg-slate-100/90 border-slate-200 text-slate-500 cursor-not-allowed"
+                            : "border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 text-slate-900 placeholder:text-slate-400"
+                        }`}
                         defaultValue={draft.currentValue}
+                        disabled={modalLock.isLocked}
                         min={draft.previousValue}
                         name="currentValue"
                         onChange={() => clear("currentValue")}
-                        placeholder="กรอกเลขอ่านปัจจุบัน"
+                        placeholder={modalLock.isLocked ? "ถูกล็อกไม่ให้แก้ไข" : "กรอกเลขอ่านปัจจุบัน"}
                         step="0.01"
                         type="number"
                       />

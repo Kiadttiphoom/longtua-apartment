@@ -59,7 +59,7 @@ test("portalDeleteActions_followGranularPermissionAndPreserveReferencedHistory",
 
 test("portalForms_disableNativeTooltipsAndRenderInlineErrors", () => {
   const ui = read("components/portal/PortalUI.tsx");
-  assert.match(ui, /<form className="portal-form" noValidate/);
+  assert.match(ui, /<form className="portal-form[^\"]*" noValidate/);
   assert.match(ui, /aria-invalid=\{Boolean\(error\)\}/);
   assert.match(ui, /className="field-error"/);
   assert.match(ui, /querySelector<HTMLElement>\('\[aria-invalid="true"\]'\)/);

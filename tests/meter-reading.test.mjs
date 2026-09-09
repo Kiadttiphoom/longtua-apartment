@@ -2,7 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { getMeterReadingDefaults, getRelatedPeriodMonth } from "../lib/portal/meter-reading.mjs";
+import { formatThaiBillingMonth, getMeterReadingDefaults, getRelatedPeriodMonth } from "../lib/portal/meter-reading.mjs";
+
+test("meterReading_formatsDatabaseDateAndMonthForDisplay", () => {
+  assert.equal(formatThaiBillingMonth("2026-09-01"), formatThaiBillingMonth("2026-09"));
+  assert.match(formatThaiBillingMonth("2026-09-01"), /2569/);
+  assert.equal(formatThaiBillingMonth(""), "");
+});
 
 const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), "utf8");
 const readings = [
@@ -44,4 +50,15 @@ test("meterReading_serverDerivesPreviousValueAndRejectsLowerCurrentValue", () =>
   assert.doesNotMatch(action, /numberValue\(formData, "previousValue"\)/);
   assert.match(action, /billing_cycles!inner\(period_month\)/);
   assert.match(action, /currentValue < previousValue/);
+});
+
+test("meterReading_serverBlocksEditingWhenInvoiceIsActiveOrPaidOrPendingSlip", () => {
+  const actions = read("app/(portal)/resource-actions.ts");
+  const start = actions.indexOf("export async function saveMeterReadingAction");
+  const end = actions.indexOf("\nexport async function", start + 10);
+  const action = actions.slice(start, end);
+  assert.match(action, /from\("rent_invoices"\)/);
+  assert.match(action, /activeInvoice\.status === "paid"/);
+  assert.match(action, /from\("payment_submissions"\)/);
+  assert.match(action, /neq\(["']status["'],\s*["']void["']\)/);
 });

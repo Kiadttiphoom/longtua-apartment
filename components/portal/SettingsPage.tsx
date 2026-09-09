@@ -5,8 +5,8 @@ import {
   Building2,
   CalendarDays,
   Coins,
-  CreditCard,
   Droplets,
+  Landmark,
   Pencil,
   QrCode,
   Sparkles,
@@ -24,6 +24,8 @@ import { SelectControl } from "@/components/ui/SelectControl";
 import { money } from "@/lib/format";
 import type { Property, PropertySettings } from "@/components/portal/types";
 import { validateSettings } from "@/lib/portal/validation.mjs";
+import { BankSelector } from "@/components/portal/BankSelector";
+import { parsePaymentSettings } from "@/lib/constants/banks";
 
 const waterMethodLabels: Record<PropertySettings["water_billing_method"], string> = {
   meter: "ตามมิเตอร์ (บาท/หน่วย)",
@@ -108,9 +110,9 @@ export function SettingsPage({
             <QrCode aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
-            <span className="block text-xs font-bold text-slate-500">ผูก PromptPay</span>
+            <span className="block text-xs font-bold text-slate-500">บัญชีรับเงิน</span>
             <strong className="mt-0.5 block text-2xl font-black tracking-tight text-blue-900 tabular-nums">
-              {properties.filter((item) => settingsMap.get(item.id)?.promptpay_id).length.toLocaleString("th-TH")} แห่ง
+              {properties.filter((item) => parsePaymentSettings(settingsMap.get(item.id)).hasAny).length.toLocaleString("th-TH")} แห่ง
             </strong>
           </div>
         </div>
@@ -130,6 +132,7 @@ export function SettingsPage({
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
           {filtered.map((property) => {
             const item = settingsMap.get(property.id);
+            const paymentInfo = parsePaymentSettings(item);
             return (
               <article className="group relative overflow-hidden p-6 flex flex-col gap-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1" key={property.id}>
                 <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent blur-xl transition-transform duration-500 group-hover:scale-125" />
@@ -185,11 +188,27 @@ export function SettingsPage({
                     </div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2">
-                    <QrCode className="text-purple-500 shrink-0" size={16} />
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">PromptPay</span>
+                    {paymentInfo.bank ? (
+                      <div className="h-6 w-6 rounded-md overflow-hidden bg-white border border-slate-200 p-0.5 shrink-0 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={paymentInfo.bank.image} alt={paymentInfo.bank.name} className="h-full w-full object-contain" />
+                      </div>
+                    ) : paymentInfo.hasPromptpay ? (
+                      <div className="h-6 w-6 rounded-md overflow-hidden bg-white border border-slate-200 p-0.5 shrink-0 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/images/bank/พร้อมเพย์.png" alt="พร้อมเพย์" className="h-full w-full object-contain" />
+                      </div>
+                    ) : (
+                      <Landmark className="text-slate-400 shrink-0" size={16} />
+                    )}
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        {paymentInfo.hasBank && paymentInfo.hasPromptpay
+                          ? "ธนาคาร + พร้อมเพย์"
+                          : paymentInfo.bank?.shortName || (paymentInfo.hasPromptpay ? "พร้อมเพย์" : "ช่องทางรับเงิน")}
+                      </span>
                       <strong className="text-xs font-bold text-slate-800 block truncate">
-                        {item?.promptpay_id || "ยังไม่ผูก"}
+                        {paymentInfo.bankAccountNo || paymentInfo.promptpayId || "ยังไม่ตั้ง"}
                       </strong>
                     </div>
                   </div>
@@ -406,64 +425,84 @@ export function SettingsPage({
                   </div>
                 </div>
 
-                {/* PromptPay Info */}
-                <div className="flex items-center gap-3 pt-1">
-                  <strong className="whitespace-nowrap text-xs font-black text-slate-900">ข้อมูลรับชำระเงิน</strong>
+                {/* Payment Methods Section Header */}
+                <div className="flex items-center gap-3 pt-2">
+                  <strong className="whitespace-nowrap text-xs font-black text-slate-900">ช่องทางรับชำระเงิน (เลือกใส่ได้ทั้ง 2 ช่องทาง)</strong>
                   <span className="h-px flex-1 bg-slate-200" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <QrCode size={14} className="text-slate-500" />
-                        <span>เลขพร้อมเพย์ (PromptPay ID)</span>
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-normal">เบอร์โทร / เลขนิติบุคคล</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <QrCode size={16} strokeWidth={2.2} />
-                      </span>
-                      <input
-                        className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
-                        defaultValue={selected.promptpay_id ?? ""}
-                        aria-invalid={Boolean(errors.promptpayId)}
-                        name="promptpayId"
-                        onChange={() => clear("promptpayId")}
-                        placeholder="เช่น 0812345678 หรือ 010555..."
-                      />
-                    </div>
-                    {errors.promptpayId ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.promptpayId}</p>
-                    ) : null}
-                  </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <CreditCard size={14} className="text-slate-500" />
-                        <span>ชื่อบัญชีพร้อมเพย์</span>
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-normal">แสดงในใบแจ้งหนี้</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <CreditCard size={16} strokeWidth={2.2} />
-                      </span>
-                      <input
-                        className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
-                        defaultValue={selected.account_name ?? ""}
-                        aria-invalid={Boolean(errors.accountName)}
-                        name="accountName"
-                        onChange={() => clear("accountName")}
-                        placeholder="เช่น บจก. หอพักดีเลิศ หรือ นายสมศักดิ์"
-                      />
+                {(() => {
+                  const paymentInfo = parsePaymentSettings(selected);
+                  return (
+                    <div className="space-y-4">
+                      {/* 1. Bank Account Section */}
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <Landmark size={14} className="text-blue-600" />
+                            <span>1. บัญชีธนาคาร (โอนเข้าบัญชี)</span>
+                          </span>
+                          <span className="text-[11px] text-slate-400">ระบุหากต้องการรับโอนธนาคาร</span>
+                        </div>
+
+                        <BankSelector initialBank={paymentInfo.bankKey} allowNone={true} />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">เลขที่บัญชีธนาคาร</label>
+                            <input
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200/90 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                              defaultValue={paymentInfo.bankAccountNo}
+                              name="bankAccountNo"
+                              placeholder="เช่น 123-4-56789-0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อบัญชีธนาคาร</label>
+                            <input
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200/90 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
+                              defaultValue={paymentInfo.bankAccountName}
+                              name="bankAccountName"
+                              placeholder="เช่น บจก. หอพักดีเลิศ"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. PromptPay Section */}
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <QrCode size={14} className="text-blue-600" />
+                            <span>2. พร้อมเพย์ (PromptPay)</span>
+                          </span>
+                          <span className="text-[11px] text-slate-400">ระบุหากต้องการรับสแกน/เบอร์พร้อมเพย์</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">หมายเลขพร้อมเพย์</label>
+                            <input
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200/90 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                              defaultValue={paymentInfo.promptpayId}
+                              name="promptpayId"
+                              placeholder="เบอร์โทร / เลขบัตร ปชช. / เลขนิติบุคคล"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อบัญชีพร้อมเพย์</label>
+                            <input
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200/90 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
+                              defaultValue={paymentInfo.promptpayName}
+                              name="promptpayName"
+                              placeholder="เช่น นายสมศักดิ์ หรือ บจก. หอพักดีเลิศ"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {errors.accountName ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.accountName}</p>
-                    ) : null}
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             )}
           </PortalForm>

@@ -15,10 +15,11 @@ type CollectionToolbarProps = {
     options: SelectOption[];
     onChange: (value: string) => void;
   };
+  extraFilters?: React.ReactNode;
   actions?: React.ReactNode;
 };
 
-export function CollectionToolbar({ title, description, query, onQueryChange, placeholder, filter, actions }: CollectionToolbarProps) {
+export function CollectionToolbar({ title, description, query, onQueryChange, placeholder, filter, extraFilters, actions }: CollectionToolbarProps) {
   return (
     <section className="mb-6 p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
       <div className="flex flex-col min-w-[180px] mr-auto">
@@ -36,6 +37,7 @@ export function CollectionToolbar({ title, description, query, onQueryChange, pl
           value={query}
         />
       </label>
+      {extraFilters ? <div className="flex items-center gap-2">{extraFilters}</div> : null}
       {filter ? (
         <div className="min-w-[160px]">
           <SelectControl ariaLabel={filter.label} onValueChange={filter.onChange} options={filter.options} value={filter.value} />

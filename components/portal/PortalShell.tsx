@@ -22,6 +22,7 @@ type ShellProps = {
     organizations: Array<{ id: string; name: string }>;
     menus: Array<{ code: string; label: string; href: string }>;
     isImpersonating?: boolean;
+    menuBadges?: Record<string, number>;
   };
 };
 
@@ -44,6 +45,7 @@ const menuCategoryOrder = [
 export function PortalShell({ children, context }: ShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const totalBadgeCount = Object.values(context.menuBadges ?? {}).reduce((sum, val) => sum + val, 0);
 
   // Group context.menus by category
   const knownCodes = new Set(menuCategoryOrder.flatMap((g) => g.codes));
@@ -84,6 +86,7 @@ export function PortalShell({ children, context }: ShellProps) {
               {group.items.map((item) => {
                 const Icon = icons[item.code] ?? Home;
                 const active = pathname === item.href;
+                const badge = context.menuBadges?.[item.code] ?? 0;
                 return (
                   <AppNavLink
                     active={active}
@@ -98,6 +101,14 @@ export function PortalShell({ children, context }: ShellProps) {
                   >
                     <Icon size={18} />
                     <span className="flex-1 text-left">{item.label}</span>
+                    {badge > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10.5px] font-black text-white bg-rose-500 rounded-full shadow-xs ring-2 ring-rose-500/30 shrink-0"
+                        title={`มี ${badge} รายการที่ต้องดำเนินการ`}
+                      >
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
                   </AppNavLink>
                 );
               })}
@@ -142,12 +153,15 @@ export function PortalShell({ children, context }: ShellProps) {
         )}
         <header className="sticky top-0 z-30 min-h-[70px] px-6 lg:px-8 flex items-center gap-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
           <button
-            className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
+            className="relative lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
             onClick={() => setMobileOpen(true)}
             aria-label="เปิดเมนู"
             type="button"
           >
             <Menu size={20} />
+            {totalBadgeCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+            )}
           </button>
           {context.organizations.length > 1 ? (
             <form action={switchOrganizationAction} className="flex items-center gap-2">

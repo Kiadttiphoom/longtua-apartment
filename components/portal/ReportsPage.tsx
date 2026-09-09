@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Building2,
   CalendarClock,
@@ -10,23 +10,63 @@ import {
 } from "lucide-react";
 import type { PortalData } from "@/components/portal/types";
 import { EmptyState, PageHeader } from "@/components/portal/PortalUI";
+import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
 import { money } from "@/lib/format";
 
 export function ReportsPage({ data }: { data: PortalData }) {
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("month");
+  const [dateFilterValue, setDateFilterValue] = useState("");
+
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<string>([String(currentYear)]);
+    for (const p of data.payments) {
+      if (p.paid_at) years.add(p.paid_at.slice(0, 4));
+    }
+    for (const inv of data.invoices) {
+      if (inv.issued_at) years.add(inv.issued_at.slice(0, 4));
+      if (inv.due_at) years.add(inv.due_at.slice(0, 4));
+    }
+    return Array.from(years).sort().reverse();
+  }, [data.payments, data.invoices]);
+
+  const filteredPayments = useMemo(() => {
+    if (!dateFilterValue) return data.payments;
+    return data.payments.filter((item) => {
+      const paidAt = item.paid_at || "";
+      if (dateFilterMode === "date") return paidAt.slice(0, 10) === dateFilterValue;
+      if (dateFilterMode === "month") return paidAt.slice(0, 7) === dateFilterValue;
+      if (dateFilterMode === "year") return paidAt.slice(0, 4) === dateFilterValue;
+      return true;
+    });
+  }, [data.payments, dateFilterValue, dateFilterMode]);
+
+  const filteredInvoices = useMemo(() => {
+    if (!dateFilterValue) return data.invoices;
+    return data.invoices.filter((item) => {
+      const issued = item.issued_at || "";
+      const due = item.due_at || "";
+      if (dateFilterMode === "date") return issued.slice(0, 10) === dateFilterValue || due.slice(0, 10) === dateFilterValue;
+      if (dateFilterMode === "month") return issued.slice(0, 7) === dateFilterValue || due.slice(0, 7) === dateFilterValue;
+      if (dateFilterMode === "year") return issued.slice(0, 4) === dateFilterValue || due.slice(0, 4) === dateFilterValue;
+      return true;
+    });
+  }, [data.invoices, dateFilterValue, dateFilterMode]);
+
   const revenue = useMemo(
     () =>
-      data.payments
+      filteredPayments
         .filter((item) => item.status === "confirmed")
         .reduce((sum, item) => sum + Number(item.amount), 0),
-    [data.payments]
+    [filteredPayments]
   );
 
   const outstanding = useMemo(
     () =>
-      data.invoices
+      filteredInvoices
         .filter((item) => item.status !== "void")
         .reduce((sum, item) => sum + Number(item.balance_due), 0),
-    [data.invoices]
+    [filteredInvoices]
   );
 
   const totalRoomsCount = data.rooms.length;
@@ -37,10 +77,10 @@ export function ReportsPage({ data }: { data: PortalData }) {
   const propertyReports = useMemo(() => {
     return data.properties.map((property) => {
       const rooms = data.rooms.filter((room) => room.property_id === property.id);
-      const payments = data.payments.filter(
+      const payments = filteredPayments.filter(
         (payment) => payment.property_id === property.id && payment.status === "confirmed"
       );
-      const invoices = data.invoices.filter(
+      const invoices = filteredInvoices.filter(
         (invoice) => invoice.property_id === property.id && invoice.status !== "void"
       );
       const occupied = rooms.filter((room) => room.status === "occupied").length;
@@ -52,7 +92,7 @@ export function ReportsPage({ data }: { data: PortalData }) {
         outstanding: invoices.reduce((sum, item) => sum + Number(item.balance_due), 0),
       };
     });
-  }, [data.invoices, data.payments, data.properties, data.rooms]);
+  }, [filteredInvoices, filteredPayments, data.properties, data.rooms]);
 
   return (
     <div className="portal-refined-page space-y-8">
@@ -60,6 +100,27 @@ export function ReportsPage({ data }: { data: PortalData }) {
         description="ผลการดำเนินงาน อัตราการเข้าพัก และรายรับจากข้อมูลจริงของทุกหอพัก"
         title="รายงานและสถิติภาพรวม"
       />
+
+      {/* Date Filter Toolbar */}
+      <section className="p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="flex flex-col min-w-[200px] mr-auto">
+          <strong className="text-slate-800 text-[15px] font-bold">ช่วงเวลาสรุปรายงาน</strong>
+          <span className="text-slate-500 text-xs mt-0.5">
+            {dateFilterValue
+              ? `กรองสถิติตาม${dateFilterMode === "date" ? "วันที่" : dateFilterMode === "month" ? "รอบเดือน" : "ปี"} ${dateFilterValue}`
+              : "แสดงข้อมูลสะสมภาพรวมทั้งหมด (เลือกวัน/เดือน/ปี เพื่อกรองสถิติ)"}
+          </span>
+        </div>
+        <DateFilterControl
+          availableYears={availableYears}
+          mode={dateFilterMode}
+          onModeChange={setDateFilterMode}
+          onValueChange={setDateFilterValue}
+          value={dateFilterValue}
+          placeholderDate="เลือกวันที่สรุปรายงาน"
+          placeholderMonth="เลือกรอบเดือนรายงาน"
+        />
+      </section>
 
       {/* 4-Metric Hero Stat Cards */}
       <section aria-label="ภาพรวมสถิติ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

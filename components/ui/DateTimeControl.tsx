@@ -56,15 +56,13 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
   const panelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const initialValue = String(defaultValue ?? "");
-  const initial = parseValue(initialValue);
-  const [value, setValue] = useState(initialValue);
-
-  useEffect(() => {
-    if (defaultValue !== undefined) {
-      setValue(String(defaultValue ?? ""));
-    }
-  }, [defaultValue]);
+  const [prevDefaultValue, setPrevDefaultValue] = useState(defaultValue);
+  const [value, setValue] = useState(String(defaultValue ?? ""));
+  if (defaultValue !== prevDefaultValue) {
+    setPrevDefaultValue(defaultValue);
+    setValue(String(defaultValue ?? ""));
+  }
+  const initial = parseValue(value);
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(initial.year);
   const [viewMonth, setViewMonth] = useState(initial.month);
@@ -106,14 +104,45 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
   const updatePosition = useCallback(() => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      setOpen(false);
+      return;
+    }
+
     const viewportPadding = 12;
-    const width = Math.min(360, window.innerWidth - viewportPadding * 2);
-    const desiredHeight = mode === "month" ? 330 : mode === "time" ? 390 : 500;
+    const isMobile = window.innerWidth < 480;
+    const width = isMobile ? window.innerWidth - viewportPadding * 2 : Math.min(360, window.innerWidth - viewportPadding * 2);
+    const panelMeasuredHeight = panelRef.current?.offsetHeight;
+    const estimatedHeight = activeMode === "month" ? 230 : activeMode === "time" ? 340 : activeMode === "datetime-local" ? 520 : 380;
+    const contentHeight = panelMeasuredHeight || estimatedHeight;
+
     const roomBelow = window.innerHeight - rect.bottom - viewportPadding;
-    const opensAbove = roomBelow < Math.min(desiredHeight, 300) && rect.top > roomBelow;
-    const maxHeight = Math.max(240, Math.min(desiredHeight, opensAbove ? rect.top - viewportPadding : roomBelow));
-    setPosition({ left: Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - width - viewportPadding), top: opensAbove ? Math.max(viewportPadding, rect.top - maxHeight - 8) : rect.bottom + 8, width, maxHeight });
-  }, [mode]);
+    const roomAbove = rect.top - viewportPadding;
+
+    const opensAbove = roomBelow < contentHeight && roomAbove > roomBelow;
+
+    let top: number;
+    let maxHeight: number;
+
+    if (opensAbove) {
+      maxHeight = Math.min(contentHeight, Math.max(180, roomAbove));
+      top = Math.max(viewportPadding, rect.top - (panelMeasuredHeight || maxHeight) - 8);
+    } else {
+      maxHeight = Math.min(contentHeight, Math.max(180, roomBelow));
+      top = rect.bottom + 8;
+    }
+
+    if (window.innerHeight < 680 && activeMode === "datetime-local" && roomBelow < 380 && roomAbove < 380) {
+      maxHeight = Math.min(520, window.innerHeight - viewportPadding * 2);
+      top = Math.max(viewportPadding, Math.round((window.innerHeight - maxHeight) / 2));
+    }
+
+    const left = isMobile
+      ? viewportPadding
+      : Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - width - viewportPadding);
+
+    setPosition({ left, top, width, maxHeight });
+  }, [activeMode]);
 
   const openPanel = () => {
     if (disabled) return;
@@ -133,6 +162,8 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
   useEffect(() => {
     if (!open) return;
     updatePosition();
+    const frame = requestAnimationFrame(() => updatePosition());
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Element;
       if (
@@ -143,19 +174,34 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
         setOpen(false);
       }
     };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); setOpen(false); triggerRef.current?.focus(); }
     };
-    const handleViewportChange = () => updatePosition();
+
+    const handleResize = () => updatePosition();
+
+    const handleScroll = (event: Event) => {
+      const target = event.target as Node | null;
+      // Scrolling inside the panel (e.g. year select list or clock time list) should not close the panel
+      if (panelRef.current && target && panelRef.current.contains(target)) {
+        return;
+      }
+      // Scrolling the page closes the popover to prevent detachment
+      setOpen(false);
+    };
+
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("scroll", handleViewportChange, true);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
+
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", handleViewportChange);
-      window.removeEventListener("scroll", handleViewportChange, true);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [open, updatePosition]);
 
@@ -173,7 +219,7 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
     <div className="flex gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 my-2">
       <div className="flex-1">
         <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5 text-center">ชั่วโมง</span>
-        <div className="grid grid-cols-6 gap-1 max-h-28 overflow-y-auto p-1">
+        <div className="grid grid-cols-6 gap-1 max-h-36 overflow-y-auto p-1">
           {Array.from({ length: 24 }, (_, index) => (
             <button
               aria-pressed={hour === index}
@@ -191,7 +237,7 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
       </div>
       <div className="flex-1">
         <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5 text-center">นาที</span>
-        <div className="grid grid-cols-4 gap-1 max-h-28 overflow-y-auto p-1">
+        <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto p-1">
           {Array.from(new Set([...Array.from({ length: 12 }, (_, index) => index * 5), minute]))
             .sort((a, b) => a - b)
             .map((item) => (
@@ -214,131 +260,134 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
 
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div
-      className="fixed z-[150] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 overflow-hidden"
+      className="fixed z-[150] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden"
       id={panelId}
       ref={panelRef}
       style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
     >
       {activeMode !== "time" ? (
-        <>
-          <header className="flex items-center justify-between pb-3 border-b border-slate-100 gap-1.5">
-            <button
-              aria-label={activeMode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
-              onClick={() =>
-                activeMode === "month"
-                  ? setViewYear((current) => current - 1)
-                  : viewMonth === 0
-                  ? (setViewYear((current) => current - 1), setViewMonth(11))
-                  : setViewMonth((current) => current - 1)
-              }
-              type="button"
-            >
-              <ChevronLeft size={16} />
-            </button>
+        <header className="shrink-0 flex items-center justify-between p-3.5 pb-2.5 border-b border-slate-100 gap-1.5 bg-white">
+          <button
+            aria-label={activeMode === "month" ? "ปีก่อนหน้า" : "เดือนก่อนหน้า"}
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+            onClick={() =>
+              activeMode === "month"
+                ? setViewYear((current) => current - 1)
+                : viewMonth === 0
+                ? (setViewYear((current) => current - 1), setViewMonth(11))
+                : setViewMonth((current) => current - 1)
+            }
+            type="button"
+          >
+            <ChevronLeft size={16} />
+          </button>
 
-            <div className="flex items-center gap-1.5 min-w-0">
-              {activeMode !== "month" ? (
-                <div className="w-[124px]">
-                  <SelectControl
-                    ariaLabel="เลือกเดือน"
-                    onValueChange={(val) => setViewMonth(Number(val))}
-                    options={monthOptions}
-                    panelWidth={140}
-                    searchable={false}
-                    triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800"
-                    value={String(viewMonth)}
-                  />
-                </div>
-              ) : null}
-
-              <div className="w-[145px]">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {activeMode !== "month" ? (
+              <div className="w-[124px]">
                 <SelectControl
-                  ariaLabel="เลือกปี"
-                  onValueChange={(val) => setViewYear(Number(val))}
-                  options={yearSelectOptions}
-                  panelWidth={175}
-                  searchable={true}
-                  triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800 font-mono"
-                  value={String(viewYear)}
+                  ariaLabel="เลือกเดือน"
+                  onValueChange={(val) => setViewMonth(Number(val))}
+                  options={monthOptions}
+                  panelWidth={140}
+                  searchable={false}
+                  triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800"
+                  value={String(viewMonth)}
                 />
               </div>
-            </div>
+            ) : null}
 
-            <button
-              aria-label={activeMode === "month" ? "ปีถัดไป" : "เดือนถัดไป"}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
-              onClick={() =>
-                activeMode === "month"
-                  ? setViewYear((current) => current + 1)
-                  : viewMonth === 11
-                  ? (setViewYear((current) => current + 1), setViewMonth(0))
-                  : setViewMonth((current) => current + 1)
-              }
-              type="button"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </header>
-          {activeMode === "month" ? (
-            <div className="grid grid-cols-3 gap-2 py-3">
-              {monthNames.map((monthName, index) => (
-                <button
-                  className={`py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                    value === `${viewYear}-${pad(index + 1)}`
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-                  key={monthName}
-                  onClick={() => commit(`${viewYear}-${pad(index + 1)}`)}
-                  type="button"
-                >
-                  {monthName}
-                </button>
+            <div className="w-[145px]">
+              <SelectControl
+                ariaLabel="เลือกปี"
+                onValueChange={(val) => setViewYear(Number(val))}
+                options={yearSelectOptions}
+                panelWidth={175}
+                searchable={true}
+                triggerClassName="w-full h-8 px-2 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 text-xs font-bold text-slate-800 font-mono"
+                value={String(viewYear)}
+              />
+            </div>
+          </div>
+
+          <button
+            aria-label={activeMode === "month" ? "ปีถัดไป" : "เดือนถัดไป"}
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+            onClick={() =>
+              activeMode === "month"
+                ? setViewYear((current) => current + 1)
+                : viewMonth === 11
+                ? (setViewYear((current) => current + 1), setViewMonth(0))
+                : setViewMonth((current) => current + 1)
+            }
+            type="button"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </header>
+      ) : null}
+
+      <div className="flex-1 min-h-0 overflow-y-auto px-3.5 py-1">
+        {activeMode === "month" ? (
+          <div className="grid grid-cols-3 gap-2 py-3">
+            {monthNames.map((monthName, index) => (
+              <button
+                className={`py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  value === `${viewYear}-${pad(index + 1)}`
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "text-slate-700 hover:bg-slate-100"
+                }`}
+                key={monthName}
+                onClick={() => commit(`${viewYear}-${pad(index + 1)}`)}
+                type="button"
+              >
+                {monthName}
+              </button>
+            ))}
+          </div>
+        ) : activeMode !== "time" ? (
+          <div className="py-2.5">
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-1.5">
+              {weekdays.map((weekday) => (
+                <span key={weekday}>{weekday}</span>
               ))}
             </div>
-          ) : (
-            <div className="py-3">
-              <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-1.5">
-                {weekdays.map((weekday) => (
-                  <span key={weekday}>{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {calendarDays.map((date) => {
-                  const candidate = dateValue(date.getFullYear(), date.getMonth(), date.getDate());
-                  const isToday = candidate === dateValue(today.getFullYear(), today.getMonth(), today.getDate());
-                  const isSelected = candidate === selectedDate;
-                  const isOutside = date.getMonth() !== viewMonth;
-                  return (
-                    <button
-                      aria-label={new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(date)}
-                      className={`h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
-                        isSelected
-                          ? "bg-blue-600 text-white font-bold shadow-xs"
-                          : isToday
-                          ? "border border-blue-400 text-blue-600 font-semibold"
-                          : isOutside
-                          ? "text-slate-300 hover:bg-slate-50"
-                          : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                      disabled={isDisabledDate(candidate)}
-                      key={candidate}
-                      onClick={() => selectDay(date)}
-                      type="button"
-                    >
-                      {date.getDate()}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {calendarDays.map((date) => {
+                const candidate = dateValue(date.getFullYear(), date.getMonth(), date.getDate());
+                const isToday = candidate === dateValue(today.getFullYear(), today.getMonth(), today.getDate());
+                const isSelected = candidate === selectedDate;
+                const isOutside = date.getMonth() !== viewMonth;
+                return (
+                  <button
+                    aria-label={new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(date)}
+                    className={`h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+                      isSelected
+                        ? "bg-blue-600 text-white font-bold shadow-xs"
+                        : isToday
+                        ? "border border-blue-400 text-blue-600 font-semibold"
+                        : isOutside
+                        ? "text-slate-300 hover:bg-slate-50"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                    disabled={isDisabledDate(candidate)}
+                    key={candidate}
+                    onClick={() => selectDay(date)}
+                    type="button"
+                  >
+                    {date.getDate()}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </>
-      ) : null}
-      {activeMode === "time" || activeMode === "datetime-local" ? clock : null}
+          </div>
+        ) : null}
+
+        {activeMode === "time" || activeMode === "datetime-local" ? clock : null}
+      </div>
+
       {activeMode !== "month" ? (
-        <footer className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
+        <footer className="shrink-0 flex items-center justify-between p-3 border-t border-slate-100 bg-white gap-2">
           <button
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-30 cursor-pointer"
             disabled={!value}
@@ -348,23 +397,50 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
             <X size={14} />
             <span>ล้างค่า</span>
           </button>
-          {activeMode === "date" ? (
-            <button
-              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
-              onClick={() => commit(dateValue(today.getFullYear(), today.getMonth(), today.getDate()))}
-              type="button"
-            >
-              วันนี้
-            </button>
-          ) : (
-            <button
-              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white shadow-xs cursor-pointer"
-              onClick={() => commit(activeMode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)}
-              type="button"
-            >
-              ยืนยันเวลา
-            </button>
-          )}
+
+          <div className="flex items-center gap-1.5">
+            {activeMode === "datetime-local" && (
+              <button
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition"
+                onClick={() => {
+                  const now = new Date();
+                  const yr = now.getFullYear();
+                  const m = now.getMonth();
+                  const d = now.getDate();
+                  const h = now.getHours();
+                  const min5 = Math.floor(now.getMinutes() / 5) * 5;
+                  setViewYear(yr);
+                  setViewMonth(m);
+                  setDay(d);
+                  setHour(h);
+                  setMinute(min5);
+                  commit(`${dateValue(yr, m, d)}T${pad(h)}:${pad(min5)}`);
+                }}
+                type="button"
+                title="ตั้งเวลาเป็นเวลาปัจจุบัน"
+              >
+                ตอนนี้
+              </button>
+            )}
+
+            {activeMode === "date" ? (
+              <button
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
+                onClick={() => commit(dateValue(today.getFullYear(), today.getMonth(), today.getDate()))}
+                type="button"
+              >
+                วันนี้
+              </button>
+            ) : (
+              <button
+                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-xs cursor-pointer transition"
+                onClick={() => commit(activeMode === "time" ? `${pad(hour)}:${pad(minute)}` : `${selectedDate}T${pad(hour)}:${pad(minute)}`)}
+                type="button"
+              >
+                ตกลง
+              </button>
+            )}
+          </div>
         </footer>
       ) : null}
     </div>,

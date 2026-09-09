@@ -481,6 +481,38 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     return { ...fail("สร้างรอบบิลไม่สำเร็จ"), requestId };
   }
 
+  // ตรวจสอบว่ารอบบิลและห้องนี้มีใบแจ้งหนี้ที่ยังใช้งานอยู่หรือไม่
+  const { data: activeInvoice } = await context.supabase
+    .from("rent_invoices")
+    .select("id, invoice_number, status, balance_due, total")
+    .eq("organization_id", context.organizationId)
+    .eq("room_id", roomId)
+    .eq("billing_cycle_id", cycle.id)
+    .neq("status", "void")
+    .maybeSingle();
+
+  if (activeInvoice) {
+    if (activeInvoice.status === "paid" || Number(activeInvoice.balance_due) <= 0) {
+      return fail("ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากใบแจ้งหนี้รอบนี้ชำระเงินเรียบร้อยแล้ว");
+    }
+
+    const { data: pendingSubmission } = await context.supabase
+      .from("payment_submissions")
+      .select("id")
+      .eq("organization_id", context.organizationId)
+      .eq("invoice_id", activeInvoice.id)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (pendingSubmission) {
+      return fail("ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากผู้เช่าแนบสลิปรอการตรวจสอบอยู่ (กรุณากดไม่อนุมัติสลิปก่อน)");
+    }
+
+    return fail(
+      `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากมีการออกใบแจ้งหนี้แล้ว (${activeInvoice.invoice_number}) กรุณายกเลิกใบแจ้งหนี้ก่อนหากต้องการแก้ไขเลขมิเตอร์`
+    );
+  }
+
   const { data: existingReading, error: existingError } = await context.supabase
     .from("meter_readings")
     .select("previous_value")
@@ -538,12 +570,25 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
 
   const { data: invoice, error: invoiceError } = await context.supabase
     .from("rent_invoices")
-    .select("id, property_id, balance_due")
+    .select("id, property_id, balance_due, status")
     .eq("id", invoiceId)
     .eq("organization_id", context.organizationId)
     .single();
   if (invoiceError || !invoice) return fail("ไม่พบใบแจ้งหนี้");
+  if (invoice.status === "void") return fail("ไม่สามารถบันทึกรับชำระสำหรับใบแจ้งหนี้ที่ถูกยกเลิกแล้ว");
+  if (invoice.status === "paid" || Number(invoice.balance_due) <= 0) return fail("ใบแจ้งหนี้นี้ได้รับการชำระเงินเรียบร้อยแล้ว");
   if (amount > Number(invoice.balance_due)) return fail("ยอดรับชำระมากกว่ายอดคงเหลือ");
+
+  const { data: pendingSubmissions } = await context.supabase
+    .from("payment_submissions")
+    .select("id")
+    .eq("invoice_id", invoiceId)
+    .eq("organization_id", context.organizationId)
+    .eq("status", "pending")
+    .limit(1);
+  if (pendingSubmissions && pendingSubmissions.length > 0) {
+    return fail("ใบแจ้งหนี้นี้มีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาไปตรวจสอบสลิปในเมนู 'การชำระเงิน' แทนการบันทึกรับเงินซ้ำ");
+  }
 
   const { data: payment, error } = await context.supabase.from("rent_payments").insert({
     organization_id: context.organizationId,
@@ -596,17 +641,70 @@ export async function updatePropertySettingsAction(formData: FormData): Promise<
   if (!["meter", "per_person", "flat_room"].includes(waterBillingMethod)) return fail("วิธีคิดค่าน้ำไม่ถูกต้อง");
   if (![billDay, dueDay].every((value) => Number.isInteger(value) && value >= 1 && value <= 28)) return fail("วันออกบิลและวันครบกำหนดต้องอยู่ระหว่าง 1–28");
 
-  const { error } = await context.supabase.from("property_settings").update({
+  const bankName = text(formData, "bankName") || null;
+  const bankAccountNo = text(formData, "bankAccountNo") || null;
+  const bankAccountName = text(formData, "bankAccountName") || null;
+  const promptpayId = text(formData, "promptpayId") || null;
+  const promptpayName = text(formData, "promptpayName") || null;
+
+  // JSON fallback structure in case bank columns don't exist in property_settings
+  const jsonFallback = JSON.stringify({
+    bankKey: bankName,
+    bankAccountNo,
+    bankAccountName,
+    promptpayId,
+    promptpayName,
+  });
+
+  const payload: Record<string, unknown> = {
     electric_rate: electricRate,
     water_rate: waterRate,
     water_billing_method: waterBillingMethod,
     bill_day: billDay,
     due_day: dueDay,
     late_fee: lateFee,
-    promptpay_id: text(formData, "promptpayId") || null,
-    account_name: text(formData, "accountName") || null,
+    promptpay_id: promptpayId,
+    account_name: promptpayName || bankAccountName,
     invoice_note: text(formData, "invoiceNote") || null,
-  }).eq("property_id", propertyId).eq("organization_id", context.organizationId);
+    bank_name: bankName,
+    bank_account_no: bankAccountNo,
+    bank_account_name: bankAccountName,
+  };
+
+  let { error } = await context.supabase
+    .from("property_settings")
+    .update(payload)
+    .eq("property_id", propertyId)
+    .eq("organization_id", context.organizationId);
+
+  // If column doesn't exist error (42703), fallback to removing newer columns and storing JSON in account_name
+  if (error && (error.code === "42703" || error.message?.includes("bank_"))) {
+    delete payload.bank_account_no;
+    delete payload.bank_account_name;
+    // Try with only bank_name first
+    let retry = await context.supabase
+      .from("property_settings")
+      .update({
+        ...payload,
+        account_name: jsonFallback,
+      })
+      .eq("property_id", propertyId)
+      .eq("organization_id", context.organizationId);
+
+    if (retry.error && (retry.error.code === "42703" || retry.error.message?.includes("bank_name"))) {
+      delete payload.bank_name;
+      retry = await context.supabase
+        .from("property_settings")
+        .update({
+          ...payload,
+          account_name: jsonFallback,
+        })
+        .eq("property_id", propertyId)
+        .eq("organization_id", context.organizationId);
+    }
+    error = retry.error;
+  }
+
   if (error) {
     logFailure(requestId, "settings.update", error);
     return { ...fail("บันทึกการตั้งค่าไม่สำเร็จ"), requestId };
@@ -723,7 +821,7 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
 
 export async function reviewPaymentSubmissionAction(formData: FormData): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData, "customer_payments", "update");
+  const context = await actionContext(formData, "customer_payments", "create");
   if (!context.ok) return context.error;
   const submissionId = text(formData, "submissionId"), decision = text(formData, "decision");
   if (!UUID_PATTERN.test(submissionId) || !["approve", "reject"].includes(decision)) return fail("ไม่พบรายการหลักฐานที่ต้องการตรวจสอบ");
@@ -736,7 +834,7 @@ export async function reviewPaymentSubmissionAction(formData: FormData): Promise
     const { data, error } = await context.supabase.from("payment_submissions").update({ status: "rejected", rejection_reason: reason, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", submissionId).eq("organization_id", context.organizationId).eq("status", "pending").select("id").maybeSingle();
     if (error || !data) return fail("รายการนี้อาจถูกตรวจสอบไปแล้ว กรุณาโหลดหน้าใหม่");
   }
-  revalidatePath("/payments"); revalidatePath("/tenant"); revalidatePath("/tenant/bills");
+  revalidatePath("/payments"); revalidatePath("/tenant"); revalidatePath("/tenant/bills"); revalidatePath("/invoices"); revalidatePath("/receivables");
   return success(decision === "approve" ? "ยืนยันยอดและตัดใบแจ้งหนี้แล้ว" : "ส่งรายการกลับให้ผู้เช่าแก้ไขแล้ว");
 }
 
@@ -894,6 +992,18 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
   if (![rentAmount, depositAmount, advanceAmount].every((value) => Number.isFinite(value) && value >= 0)) return fail("จำนวนเงินในสัญญาไม่ถูกต้อง");
   if (!Number.isInteger(occupantCount) || occupantCount < 1 || occupantCount > 50) return fail("จำนวนผู้พักต้องอยู่ระหว่าง 1–50 คน");
   if (!["draft", "active", "ended", "cancelled"].includes(status)) return fail("สถานะสัญญาไม่ถูกต้อง");
+  if (["ended", "cancelled"].includes(status)) {
+    const { data: pendingSubmissions } = await context.supabase
+      .from("payment_submissions")
+      .select("id")
+      .eq("lease_id", leaseId)
+      .eq("organization_id", context.organizationId)
+      .eq("status", "pending")
+      .limit(1);
+    if (pendingSubmissions && pendingSubmissions.length > 0) {
+      return fail("ไม่สามารถสิ้นสุดหรือยกเลิกสัญญาได้ เนื่องจากมีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาตรวจสอบสลิปก่อนดำเนินการ");
+    }
+  }
   const { data, error } = await context.supabase.from("leases").update({
     lease_number: leaseNumber, start_date: startDate, end_date: endDate || null, rent_amount: rentAmount,
     deposit_amount: depositAmount, advance_amount: advanceAmount, terms: text(formData, "terms") || null, status,
@@ -938,6 +1048,62 @@ export async function updateInvoiceAction(formData: FormData): Promise<Dashboard
     return { ...fail("แก้ไขใบแจ้งหนี้ไม่สำเร็จ เอกสารอาจชำระแล้วหรือเลขที่ซ้ำ"), requestId };
   }
   return success("แก้ไขใบแจ้งหนี้เรียบร้อยแล้ว");
+}
+
+export async function cancelInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
+  const requestId = crypto.randomUUID();
+  const context = await actionContext(formData, "customer_invoices", "delete");
+  if (!context.ok) return context.error;
+  const invoiceId = text(formData, "invoiceId");
+  if (!UUID_PATTERN.test(invoiceId)) return fail("ไม่พบใบแจ้งหนี้ที่ต้องการยกเลิก");
+
+  const { data: invoice } = await context.supabase
+    .from("rent_invoices")
+    .select("id, status, balance_due, total")
+    .eq("id", invoiceId)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
+
+  if (!invoice) return fail("ไม่พบใบแจ้งหนี้");
+  if (invoice.status === "paid") return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่ชำระแล้วได้");
+  if (invoice.status === "void") return fail("ใบแจ้งหนี้นี้ถูกยกเลิกไปแล้ว");
+  if (Number(invoice.balance_due) < Number(invoice.total)) {
+    return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีการชำระเงินแล้วได้");
+  }
+
+  const { data: submissions } = await context.supabase
+    .from("payment_submissions")
+    .select("id, status")
+    .eq("invoice_id", invoiceId)
+    .in("status", ["pending", "approved"]);
+
+  if (submissions && submissions.length > 0) {
+    const hasPending = submissions.some((s) => s.status === "pending");
+    if (hasPending) {
+      return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีรายการชำระเงินรออนุมัติได้ เนื่องจากมีสลิปรอการตรวจสอบอยู่ กรุณากดไม่อนุมัติสลิปก่อนดำเนินการ");
+    }
+    return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีรายการชำระเงินอนุมัติผ่านแล้วได้");
+  }
+
+  const { error } = await context.supabase
+    .from("rent_invoices")
+    .update({ status: "void" })
+    .eq("id", invoiceId)
+    .eq("organization_id", context.organizationId);
+
+  if (error) {
+    logFailure(requestId, "invoice.cancel", error);
+    return { ...fail("ยกเลิกใบแจ้งหนี้ไม่สำเร็จ"), requestId };
+  }
+
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "invoice.cancelled",
+    entity_type: "rent_invoice",
+    entity_id: invoiceId,
+  });
+
+  return success("ยกเลิกใบแจ้งหนี้เรียบร้อยแล้ว");
 }
 
 export async function createOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {

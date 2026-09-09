@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { InvoiceDocument } from "@/components/portal/InvoiceDocument";
+import { printDocument } from "@/lib/portal/print-document";
+import { alertWarning } from "@/lib/sweetalert";
 import {
   Building2,
   Calendar,
@@ -15,8 +18,9 @@ import {
   ReceiptText,
   ShieldCheck,
   Sparkles,
+  XCircle,
 } from "lucide-react";
-import { createInvoiceAction, updateInvoiceAction } from "@/app/(portal)/resource-actions";
+import { cancelInvoiceAction, createInvoiceAction, updateInvoiceAction } from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
@@ -27,6 +31,7 @@ import {
   StatusBadge,
 } from "@/components/portal/PortalUI";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
+import { DateFilterControl } from "@/components/portal/DateFilterControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money, thaiDate } from "@/lib/format";
 import type { Invoice, Lease, Meter, MeterReading, Property, PropertySettings, Room, Tenant } from "@/components/portal/types";
@@ -46,6 +51,7 @@ export function InvoicesPage({
   settings,
   canCreate,
   canEdit,
+  submissions = [],
 }: {
   organizationId: string;
   invoices: Invoice[];
@@ -58,9 +64,83 @@ export function InvoicesPage({
   settings: PropertySettings[];
   canCreate: boolean;
   canEdit: boolean;
+  submissions?: { id: string; invoice_id: string; status: string }[];
 }) {
   const [selected, setSelected] = useState<Invoice | "create" | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
+
+  const submissionStatusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of submissions) {
+      if (s.invoice_id) {
+        if (s.status === "pending") {
+          map.set(s.invoice_id, "pending");
+        } else if (s.status === "approved" && !map.has(s.invoice_id)) {
+          map.set(s.invoice_id, "approved");
+        }
+      }
+    }
+    return map;
+  }, [submissions]);
+
+  const isInvoiceCancellable = (invoice: Invoice) => {
+    const subStatus = submissionStatusMap.get(invoice.id);
+    const hasPendingSubmission = subStatus === "pending";
+    const hasApprovedSubmission = subStatus === "approved";
+    const isPaidOrPartial = invoice.status === "paid" || invoice.status === "partial" || Number(invoice.balance_due) < Number(invoice.total);
+
+    // ไม่สามารถยกเลิกได้ ถ้ามีสถานะ รออนุมัติ หรืออนุมัติผ่าน
+    if (hasPendingSubmission || hasApprovedSubmission || isPaidOrPartial) {
+      return false;
+    }
+    return canEdit && ["draft", "issued", "overdue"].includes(invoice.status) && Number(invoice.balance_due) === Number(invoice.total);
+  };
+
+  const cancelButton = (invoice: Invoice) => {
+    if (!canEdit || invoice.status === "void") return null;
+    const subStatus = submissionStatusMap.get(invoice.id);
+    const hasPendingSubmission = subStatus === "pending";
+    const isPaidOrPartial =
+      invoice.status === "paid" ||
+      invoice.status === "partial" ||
+      Number(invoice.balance_due) < Number(invoice.total);
+
+    if (isPaidOrPartial) return null;
+
+    if (hasPendingSubmission) {
+      return (
+        <button
+          type="button"
+          className="px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 cursor-pointer"
+          onClick={() => {
+            void alertWarning(
+              "ไม่สามารถยกเลิกใบแจ้งหนี้ได้",
+              "มีสลิปชำระเงินที่ผู้เช่าแนบมารอการตรวจสอบ กรุณากด 'ไม่อนุมัติ' สลิปก่อน จึงจะสามารถยกเลิกใบแจ้งหนี้ได้"
+            );
+          }}
+          title="มีสลิปรอตรวจสอบ กรุณากดไม่อนุมัติสลิปก่อนยกเลิกบิล"
+          aria-label={`ยกเลิกใบแจ้งหนี้ ${invoice.invoice_number}`}
+        >
+          ยกเลิกใบแจ้งหนี้
+        </button>
+      );
+    }
+
+    if (isInvoiceCancellable(invoice)) {
+      return (
+        <button
+          type="button"
+          className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 cursor-pointer"
+          onClick={() => setCancellingInvoice(invoice)}
+          aria-label={`ยกเลิกใบแจ้งหนี้ ${invoice.invoice_number}`}
+        >
+          ยกเลิกใบแจ้งหนี้
+        </button>
+      );
+    }
+    return null;
+  };
   const [activePropertyId, setActivePropertyId] = useState(() => properties[0]?.id ?? "");
   const [floor, setFloor] = useState("all");
   const [leaseId, setLeaseId] = useState("");
@@ -69,6 +149,8 @@ export function InvoicesPage({
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [dateFilterMode, setDateFilterMode] = useState<"date" | "month" | "year">("month");
+  const [dateFilterValue, setDateFilterValue] = useState("");
 
   const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
     ? activePropertyId
@@ -104,6 +186,16 @@ export function InvoicesPage({
     [invoices, resolvedPropertyId]
   );
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<string>([String(currentYear)]);
+    for (const inv of propertyInvoices) {
+      if (inv.issued_at) years.add(inv.issued_at.slice(0, 4));
+      if (inv.due_at) years.add(inv.due_at.slice(0, 4));
+    }
+    return Array.from(years).sort().reverse();
+  }, [propertyInvoices]);
+
   const floorLabel = (key: string) => `ชั้น ${key}`;
 
   const floorOptions = useMemo(() => {
@@ -138,9 +230,22 @@ export function InvoicesPage({
           (value) => value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesFloor && matchesStatus && matchesSearch;
+      let matchesDate = true;
+      if (dateFilterValue) {
+        const issued = item.issued_at || "";
+        const due = item.due_at || "";
+        if (dateFilterMode === "date") {
+          matchesDate = issued.slice(0, 10) === dateFilterValue || due.slice(0, 10) === dateFilterValue;
+        } else if (dateFilterMode === "month") {
+          matchesDate = issued.slice(0, 7) === dateFilterValue || due.slice(0, 7) === dateFilterValue;
+        } else if (dateFilterMode === "year") {
+          matchesDate = issued.slice(0, 4) === dateFilterValue || due.slice(0, 4) === dateFilterValue;
+        }
+      }
+
+      return matchesFloor && matchesStatus && matchesSearch && matchesDate;
     });
-  }, [propertyInvoices, floor, propertyMap, query, roomMap, status]);
+  }, [propertyInvoices, floor, propertyMap, query, roomMap, status, dateFilterValue, dateFilterMode]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -379,6 +484,15 @@ export function InvoicesPage({
           </div>
         }
         description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyInvoices.length.toLocaleString("th-TH")} ฉบับ (${activeProperty?.name ?? "หอพัก"})`}
+        extraFilters={
+          <DateFilterControl
+            availableYears={availableYears}
+            mode={dateFilterMode}
+            onModeChange={setDateFilterMode}
+            onValueChange={setDateFilterValue}
+            value={dateFilterValue}
+          />
+        }
         filter={{
           label: "กรองสถานะ",
           value: status,
@@ -453,7 +567,23 @@ export function InvoicesPage({
                   <span className="text-xs text-slate-700 font-medium" key="due">
                     {thaiDate(item.due_at)}
                   </span>,
-                  <StatusBadge key="status" status={item.status} />,
+                  <StatusBadge
+                    key="status"
+                    label={
+                      submissionStatusMap.get(item.id) === "pending"
+                        ? "รออนุมัติ"
+                        : item.status === "paid" || submissionStatusMap.get(item.id) === "approved"
+                        ? "อนุมัติผ่าน"
+                        : undefined
+                    }
+                    status={
+                      submissionStatusMap.get(item.id) === "pending"
+                        ? "pending"
+                        : item.status === "paid" || submissionStatusMap.get(item.id) === "approved"
+                        ? "paid"
+                        : item.status
+                    }
+                  />,
                   <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
@@ -467,8 +597,7 @@ export function InvoicesPage({
                     <button
                       className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0"
                       onClick={() => {
-                        setViewingInvoice(item);
-                        setTimeout(() => window.print(), 150);
+                        void printDocument(() => setViewingInvoice(item));
                       }}
                       title="พิมพ์ใบแจ้งหนี้ A4"
                       type="button"
@@ -486,6 +615,7 @@ export function InvoicesPage({
                         <Pencil size={14} strokeWidth={2.2} />
                       </button>
                     ) : null}
+                    {cancelButton(item)}
                   </div>,
                 ];
               })}
@@ -530,7 +660,22 @@ export function InvoicesPage({
                                 </span>
                               </div>
                             </div>
-                            <StatusBadge status={item.status} />
+                            <StatusBadge
+                              label={
+                                submissionStatusMap.get(item.id) === "pending"
+                                  ? "รออนุมัติ"
+                                  : item.status === "paid" || submissionStatusMap.get(item.id) === "approved"
+                                  ? "อนุมัติผ่าน"
+                                  : undefined
+                              }
+                              status={
+                                submissionStatusMap.get(item.id) === "pending"
+                                  ? "pending"
+                                  : item.status === "paid" || submissionStatusMap.get(item.id) === "approved"
+                                  ? "paid"
+                                  : item.status
+                              }
+                            />
                           </header>
                           <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-2 mb-4">
                             <div className="flex items-center gap-2.5 min-w-0">
@@ -557,7 +702,11 @@ export function InvoicesPage({
                                 {money(Number(item.balance_due))}
                               </dd>
                               <span className="text-[10px] text-slate-400 block mt-0.5">
-                                {Number(item.balance_due) <= 0 ? "ชำระครบถ้วน" : "รอชำระ"}
+                                {submissionStatusMap.get(item.id) === "pending"
+                                  ? "รอตรวจสอบยอดโอน"
+                                  : Number(item.balance_due) <= 0
+                                  ? "ชำระครบถ้วน"
+                                  : "รอชำระ"}
                               </span>
                             </div>
                           </dl>
@@ -582,8 +731,7 @@ export function InvoicesPage({
                             <button
                               className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
                               onClick={() => {
-                                setViewingInvoice(item);
-                                setTimeout(() => window.print(), 150);
+                                void printDocument(() => setViewingInvoice(item));
                               }}
                               title="พิมพ์ใบแจ้งหนี้"
                               type="button"
@@ -593,19 +741,41 @@ export function InvoicesPage({
                             </button>
                           </div>
 
-                          {/* Row 2: แก้ไขใบแจ้งหนี้ (ถ้ายังไม่ชำระและมีสิทธิ์) */}
-                          {canEdit && !["paid", "void"].includes(item.status) ? (
-                            <button
-                              aria-label={`แก้ไขใบแจ้งหนี้ ${item.invoice_number}`}
-                              className="w-full h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                              onClick={() => setSelected(item)}
-                              title="แก้ไขใบแจ้งหนี้"
-                              type="button"
-                            >
-                              <Pencil size={14} strokeWidth={2.2} />
-                              <span>แก้ไขใบแจ้งหนี้</span>
-                            </button>
-                          ) : null}
+                          {/* Row 2: จัดการใบแจ้งหนี้ (แก้ไข / ยกเลิก รวม 2 ปุ่ม) */}
+                          {(() => {
+                            const canCancel = isInvoiceCancellable(item);
+                            const canModify = canEdit && !["paid", "void"].includes(item.status);
+                            if (!canModify && !canCancel) return null;
+
+                            return (
+                              <div className={`grid ${canModify && canCancel ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
+                                {canModify ? (
+                                  <button
+                                    aria-label={`แก้ไขใบแจ้งหนี้ ${item.invoice_number}`}
+                                    className="h-9 px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+                                    onClick={() => setSelected(item)}
+                                    title="แก้ไขใบแจ้งหนี้"
+                                    type="button"
+                                  >
+                                    <Pencil size={14} strokeWidth={2.2} className="shrink-0" />
+                                    <span className="truncate">แก้ไขใบแจ้งหนี้</span>
+                                  </button>
+                                ) : null}
+                                {canCancel ? (
+                                  <button
+                                    aria-label={`ยกเลิกใบแจ้งหนี้ ${item.invoice_number}`}
+                                    className="h-9 px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
+                                    onClick={() => setCancellingInvoice(item)}
+                                    title="ยกเลิกใบแจ้งหนี้"
+                                    type="button"
+                                  >
+                                    <XCircle size={14} strokeWidth={2.2} className="shrink-0" />
+                                    <span className="truncate">ยกเลิกใบแจ้งหนี้</span>
+                                  </button>
+                                ) : null}
+                              </div>
+                            );
+                          })()}
                         </footer>
                       </article>
                     );
@@ -622,13 +792,24 @@ export function InvoicesPage({
         />
       )}
 
+      {cancellingInvoice ? (
+        <Modal title="ยืนยันยกเลิกใบแจ้งหนี้" onClose={() => setCancellingInvoice(null)}>
+          <PortalForm action={cancelInvoiceAction} organizationId={organizationId} validate={() => ({})} submitLabel="ยืนยันยกเลิกใบแจ้งหนี้" onCancel={() => setCancellingInvoice(null)} onSuccess={() => setCancellingInvoice(null)}>
+            {() => <>
+              <input name="invoiceId" type="hidden" value={cancellingInvoice.id} />
+              <strong>{cancellingInvoice.invoice_number}</strong>
+              <p className="text-sm text-slate-600">ใบแจ้งหนี้จะเปลี่ยนเป็นสถานะยกเลิกและไม่นับเป็นยอดค้างชำระ โดยยังเก็บประวัติไว้ ไม่สามารถยกเลิกรายการที่รับชำระแล้วได้</p>
+            </>}
+          </PortalForm>
+        </Modal>
+      ) : null}
       {viewingInvoice ? (
         <Modal
           className="contract-modal portal-refined-modal"
           headerActions={
             <button
               className="h-8.5 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs print:hidden"
-              onClick={() => window.print()}
+              onClick={() => void printDocument()}
               type="button"
             >
               <Printer size={14} strokeWidth={2.2} />
@@ -639,71 +820,7 @@ export function InvoicesPage({
           onClose={() => setViewingInvoice(null)}
           title={`ใบแจ้งหนี้เลขที่ ${viewingInvoice.invoice_number}`}
         >
-          <div className="p-6 sm:p-10 overflow-y-auto text-slate-800 text-xs sm:text-[13px] leading-relaxed space-y-5 font-sans" id="print-area">
-            <div className="flex items-start justify-between border-b border-slate-200 pb-5">
-              <div>
-                <h1 className="text-xl font-black text-slate-900">{viewingProperty?.name || "หอพัก"}</h1>
-                <p className="text-xs text-slate-500 mt-1">{viewingProperty?.address}</p>
-                {viewingProperty?.phone ? (
-                  <p className="text-xs text-slate-500">โทรศัพท์: {viewingProperty.phone}</p>
-                ) : null}
-              </div>
-              <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 font-extrabold text-sm rounded-lg border border-blue-100">
-                  ใบแจ้งหนี้ / INVOICE
-                </span>
-                <p className="text-xs font-mono font-bold text-slate-900 mt-2">เลขที่: {viewingInvoice.invoice_number}</p>
-                <p className="text-[11px] text-slate-400">วันที่ออก: {thaiDate(viewingInvoice.issued_at)}</p>
-                <p className="text-[11px] font-bold text-rose-600">ครบกำหนด: {thaiDate(viewingInvoice.due_at)}</p>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-slate-400 block text-[11px] font-bold">ข้อมูลผู้เช่า</span>
-                <strong className="text-slate-900 font-bold block mt-0.5">{viewingTenant?.full_name || "—"}</strong>
-                <span className="text-slate-500 block mt-0.5">{viewingTenant?.phone ? `โทร. ${viewingTenant.phone}` : ""}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block text-[11px] font-bold">ห้องพักที่เช่า</span>
-                <strong className="text-slate-900 font-bold block mt-0.5">ห้อง {viewingRoom?.room_number ?? "—"}</strong>
-                <span className="text-slate-500 block mt-0.5">ชั้น {viewingRoom?.floor ?? "1"}</span>
-              </div>
-            </div>
-            <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
-              <div className="bg-slate-100 p-3 font-bold text-slate-800 flex justify-between border-b border-slate-200">
-                <span>รายการเรียกเก็บ</span>
-                <span>จำนวนเงิน (บาท)</span>
-              </div>
-              <div className="divide-y divide-slate-100 p-3 space-y-2">
-                <div className="flex justify-between py-1">
-                  <span>ค่าเช่าห้องพักประจำงวด</span>
-                  <strong className="font-mono">{money(Number(viewingInvoice.subtotal))}</strong>
-                </div>
-              </div>
-              <div className="bg-slate-50 p-3.5 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
-                <span>ยอดรวมทั้งสิ้น</span>
-                <span className="text-blue-600 font-mono font-black text-base">{money(Number(viewingInvoice.total))}</span>
-              </div>
-            </div>
-            {viewingSettings?.promptpay_id ? (
-              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs flex items-center justify-between">
-                <div>
-                  <strong className="text-blue-950 font-bold block">ช่องทางชำระเงินผ่าน พร้อมเพย์ (PromptPay)</strong>
-                  <span className="text-blue-900 font-mono font-bold block mt-1">
-                    หมายเลข: {viewingSettings.promptpay_id}
-                  </span>
-                  {viewingSettings.account_name ? (
-                    <span className="text-slate-500 block text-[11px] mt-0.5">ชื่อบัญชี: {viewingSettings.account_name}</span>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-            {viewingInvoice.note ? (
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
-                <strong>หมายเหตุ:</strong> {viewingInvoice.note}
-              </div>
-            ) : null}
-          </div>
+          <InvoiceDocument invoice={viewingInvoice} property={viewingProperty} room={viewingRoom} tenant={viewingTenant} settings={viewingSettings} />
         </Modal>
       ) : null}
 
@@ -746,6 +863,8 @@ export function InvoicesPage({
                 {editing ? (
                   <>
                     <input name="invoiceId" type="hidden" value={editing.id} />
+                    <input name="invoiceNumber" type="hidden" value={editing.invoice_number} />
+                    <DateTimeControl name="dueAt" ariaLabel="วันครบกำหนดชำระ" defaultValue={editing.due_at.slice(0, 10)} invalid={Boolean(errors.dueAt)} onValueChange={() => clear("dueAt")} />
                     <div>
                       <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
@@ -764,6 +883,7 @@ export function InvoicesPage({
                   <>
                     <input name="leaseId" type="hidden" value={leaseId} />
                     <input name="itemsJson" type="hidden" value={JSON.stringify(preview?.items ?? [])} />
+                    <p className="text-xs text-slate-500">ระบบจะออกเลขที่ใบแจ้งหนี้อัตโนมัติเมื่อบันทึก</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                       <div>

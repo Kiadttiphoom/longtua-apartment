@@ -1,11 +1,11 @@
 "use client";
+import { PaymentReviewControls } from "@/components/portal/PaymentReviewControls";
 
 import { useMemo, useState } from "react";
 import {
   Banknote,
   Building2,
   Calendar,
-  CheckCircle2,
   Clock3,
   CreditCard,
   ExternalLink,
@@ -15,13 +15,13 @@ import {
   Layers,
   LayoutGrid,
   List,
+  Maximize2,
   Printer,
   Receipt,
   ShieldCheck,
   Sparkles,
-  XCircle,
 } from "lucide-react";
-import { recordPaymentAction, reviewPaymentSubmissionAction } from "@/app/(portal)/resource-actions";
+import { recordPaymentAction } from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
@@ -32,6 +32,7 @@ import {
   StatusBadge,
 } from "@/components/portal/PortalUI";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
+import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money, thaiBahtText, thaiDate } from "@/lib/format";
 import type { Invoice, Payment, Property, Room, Tenant } from "@/components/portal/types";
@@ -61,6 +62,7 @@ export function PaymentsPage({
   rooms = [],
   submissions = [],
   canCreate,
+  canReview = false,
 }: {
   organizationId: string;
   payments: Payment[];
@@ -70,6 +72,7 @@ export function PaymentsPage({
   rooms?: Room[];
   submissions?: PaymentSubmission[];
   canCreate: boolean;
+  canReview?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [activePropertyId, setActivePropertyId] = useState(() => properties[0]?.id ?? "");
@@ -80,6 +83,9 @@ export function PaymentsPage({
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState("all");
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("month");
+  const [dateFilterValue, setDateFilterValue] = useState("");
+  const [viewingSlipUrl, setViewingSlipUrl] = useState<string | null>(null);
 
   const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
     ? activePropertyId
@@ -94,6 +100,9 @@ export function PaymentsPage({
 
   const openInvoices = invoices.filter((item) => Number(item.balance_due) > 0 && item.status !== "void");
   const selectedOpenInvoice = openInvoices.find((item) => item.id === formInvoiceId);
+  const pendingSubmissionInvoiceIds = useMemo(() => {
+    return new Set(submissions.filter((s) => s.status === "pending").map((s) => s.invoice_id));
+  }, [submissions]);
   const month = new Date().toISOString().slice(0, 7).replace("-", "");
 
   const propertyPayments = useMemo(
@@ -140,6 +149,15 @@ export function PaymentsPage({
   const pendingSubmissionsCount = submissions.length;
   const openInvoicesCount = openInvoices.filter((inv) => inv.property_id === resolvedPropertyId).length;
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<string>([String(currentYear)]);
+    for (const p of propertyPayments) {
+      if (p.paid_at) years.add(p.paid_at.slice(0, 4));
+    }
+    return Array.from(years).sort().reverse();
+  }, [propertyPayments]);
+
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
     return propertyPayments.filter((item) => {
@@ -153,9 +171,21 @@ export function PaymentsPage({
           value?.toLocaleLowerCase("th-TH").includes(keyword)
         );
 
-      return matchesFloor && matchesMethod && matchesSearch;
+      let matchesDate = true;
+      if (dateFilterValue) {
+        const paidAt = item.paid_at || "";
+        if (dateFilterMode === "date") {
+          matchesDate = paidAt.slice(0, 10) === dateFilterValue;
+        } else if (dateFilterMode === "month") {
+          matchesDate = paidAt.slice(0, 7) === dateFilterValue;
+        } else if (dateFilterMode === "year") {
+          matchesDate = paidAt.slice(0, 4) === dateFilterValue;
+        }
+      }
+
+      return matchesFloor && matchesMethod && matchesSearch && matchesDate;
     });
-  }, [propertyPayments, floor, method, propertyMap, query]);
+  }, [propertyPayments, floor, method, propertyMap, query, dateFilterValue, dateFilterMode]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -370,58 +400,87 @@ export function PaymentsPage({
           </header>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {submissions.map((item) => (
-              <article className="p-4 rounded-xl bg-white border border-amber-200 shadow-xs flex flex-col gap-3" key={item.id}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <strong className="text-xs font-bold text-slate-800 block truncate">{tenantMap.get(item.tenant_id) ?? "ผู้เช่า"}</strong>
-                    <small className="text-[11px] text-slate-400 block truncate">
-                      {invoiceMap.get(item.invoice_id) ?? "ใบแจ้งหนี้"} · โอนเมื่อ {thaiDate(item.paid_at)}
-                    </small>
-                  </div>
-                  <strong className="text-sm font-bold text-emerald-600 shrink-0">{money(Number(item.amount))}</strong>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs p-2.5 rounded-lg bg-slate-50 text-slate-600">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">ช่องทาง</span>
-                    <span className="font-medium text-slate-800">{methodLabel(item.method)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">อ้างอิง</span>
-                    <span className="font-medium text-slate-800 truncate block">{item.reference || "—"}</span>
-                  </div>
-                </div>
-                {item.slipUrl ? (
-                  <a
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                    href={item.slipUrl}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink size={13} /> ดูภาพสลิปโอนเงิน
-                  </a>
-                ) : null}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                  <form action={async (formData: FormData) => { await reviewPaymentSubmissionAction(formData); }}>
-                    <input name="submissionId" type="hidden" value={item.id} />
-                    <input name="decision" type="hidden" value="approved" />
-                    <button
-                      className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all"
-                      type="submit"
+              <article
+                className="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-xs flex flex-col gap-3.5 hover:border-amber-300 transition"
+                key={item.id}
+              >
+                <div className="flex flex-col sm:flex-row gap-3.5">
+                  {/* Slip Image Preview */}
+                  {item.slipUrl ? (
+                    <div
+                      onClick={() => setViewingSlipUrl(item.slipUrl)}
+                      className="group relative w-full sm:w-36 h-48 sm:h-auto shrink-0 cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center shadow-2xs hover:border-blue-400 transition"
+                      title="คลิกเพื่อดูสลิปขนาดใหญ่"
                     >
-                      <CheckCircle2 size={14} /> อนุมัติ
-                    </button>
-                  </form>
-                  <form action={async (formData: FormData) => { await reviewPaymentSubmissionAction(formData); }}>
-                    <input name="submissionId" type="hidden" value={item.id} />
-                    <input name="decision" type="hidden" value="rejected" />
-                    <button
-                      className="w-full h-8.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all"
-                      type="submit"
-                    >
-                      <XCircle size={14} /> ไม่อนุมัติ
-                    </button>
-                  </form>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.slipUrl}
+                        alt="สลิปโอนเงิน"
+                        className="h-full w-full object-contain p-1 rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white text-[11px] font-bold backdrop-blur-2xs">
+                        <Maximize2 size={16} />
+                        <span>แตะดูภาพใหญ่</span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Details */}
+                  <div className="min-w-0 flex-1 flex flex-col justify-between gap-2.5">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <strong className="text-sm font-bold text-slate-900 block truncate">
+                            {tenantMap.get(item.tenant_id) ?? "ผู้เช่า"}
+                          </strong>
+                          <small className="text-xs text-slate-500 block truncate mt-0.5">
+                            {invoiceMap.get(item.invoice_id) ?? "ใบแจ้งหนี้"} · โอนเมื่อ {thaiDate(item.paid_at)}
+                          </small>
+                        </div>
+                        <strong className="text-base font-black text-emerald-600 shrink-0 font-mono">
+                          {money(Number(item.amount))}
+                        </strong>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs p-2.5 rounded-xl bg-slate-50 text-slate-600 mt-2.5 border border-slate-100">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-semibold">ช่องทางชำระ</span>
+                          <span className="font-bold text-slate-800">{methodLabel(item.method)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-semibold">เลขอ้างอิง</span>
+                          <span className="font-bold font-mono text-slate-800 truncate block">
+                            {item.reference || "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {item.slipUrl ? (
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setViewingSlipUrl(item.slipUrl)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+                        >
+                          <Maximize2 size={13} /> ขยายภาพสลิป
+                        </button>
+                        <span className="text-slate-300">·</span>
+                        <a
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                          href={item.slipUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          <ExternalLink size={13} /> เปิดแท็บใหม่
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
+
+                {/* Review Controls (Approve & Reject) */}
+                {canReview ? <PaymentReviewControls organizationId={organizationId} submissionId={item.id} /> : null}
               </article>
             ))}
           </div>
@@ -456,6 +515,17 @@ export function PaymentsPage({
           </div>
         }
         description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyPayments.length.toLocaleString("th-TH")} รายการ (${activeProperty?.name ?? "หอพัก"})`}
+        extraFilters={
+          <DateFilterControl
+            availableYears={availableYears}
+            mode={dateFilterMode}
+            onModeChange={setDateFilterMode}
+            onValueChange={setDateFilterValue}
+            value={dateFilterValue}
+            placeholderDate="ทุกวันที่รับชำระ"
+            placeholderMonth="ทุกเดือนที่รับชำระ"
+          />
+        }
         filter={{
           label: "กรองช่องทาง",
           value: method,
@@ -759,7 +829,9 @@ export function PaymentsPage({
                     }}
                     options={openInvoices.map((item) => ({
                       value: item.id,
-                      label: `${item.invoice_number} — ยอดค้าง ${money(Number(item.balance_due))}`,
+                      label: `${item.invoice_number} — ยอดค้าง ${money(Number(item.balance_due))}${
+                        pendingSubmissionInvoiceIds.has(item.id) ? " (⚠️ มีสลิปรอตรวจ)" : ""
+                      }`,
                     }))}
                     placeholder="เลือกใบแจ้งหนี้"
                     value={formInvoiceId}
@@ -768,16 +840,23 @@ export function PaymentsPage({
                     <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.invoiceId}</p>
                   ) : null}
                   {selectedOpenInvoice ? (
-                    <div aria-live="polite" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3">
-                      <div>
-                        <span className="block text-[11px] font-medium text-emerald-700">ยอดคงเหลือของบิลที่เลือก</span>
-                        <strong className="mt-0.5 block font-mono text-sm font-black text-emerald-900">
-                          {money(Number(selectedOpenInvoice.balance_due))}
-                        </strong>
+                    <div className="mt-3 space-y-2">
+                      <div aria-live="polite" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3">
+                        <div>
+                          <span className="block text-[11px] font-medium text-emerald-700">ยอดคงเหลือของบิลที่เลือก</span>
+                          <strong className="mt-0.5 block font-mono text-sm font-black text-emerald-900">
+                            {money(Number(selectedOpenInvoice.balance_due))}
+                          </strong>
+                        </div>
+                        <span className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-800 shadow-xs">
+                          {propertyMap.get(selectedOpenInvoice.property_id) ?? "หอพัก"}
+                        </span>
                       </div>
-                      <span className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-800 shadow-xs">
-                        {propertyMap.get(selectedOpenInvoice.property_id) ?? "หอพัก"}
-                      </span>
+                      {pendingSubmissionInvoiceIds.has(selectedOpenInvoice.id) ? (
+                        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs font-semibold text-amber-900">
+                          <span>⚠️ ใบแจ้งหนี้นี้มีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาไปตรวจสอบสลิปในส่วน &apos;สลิปรอตรวจสอบ&apos; แทนการบันทึกรับเงินซ้ำ</span>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -906,6 +985,35 @@ export function PaymentsPage({
               </div>
             )}
           </PortalForm>
+        </Modal>
+      ) : null}
+
+      {viewingSlipUrl ? (
+        <Modal
+          className="portal-refined-modal"
+          headerActions={
+            <a
+              className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
+              href={viewingSlipUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <ExternalLink size={14} strokeWidth={2.2} />
+              <span>เปิดแท็บใหม่</span>
+            </a>
+          }
+          maxWidth={480}
+          onClose={() => setViewingSlipUrl(null)}
+          title="หลักฐานการโอนเงิน (สลิป)"
+        >
+          <div className="p-4 sm:p-6 flex items-center justify-center bg-slate-50/60">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="สลิปโอนเงิน"
+              className="max-h-[72vh] w-auto rounded-xl object-contain shadow-xs border border-slate-200/80 bg-white"
+              src={viewingSlipUrl}
+            />
+          </div>
         </Modal>
       ) : null}
     </div>

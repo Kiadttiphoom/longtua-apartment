@@ -55,18 +55,31 @@ export function SelectControl({
     return needle ? options.filter((option) => `${option.label} ${option.description ?? ""} ${option.value}`.toLocaleLowerCase("th-TH").includes(needle)) : options;
   }, [options, query]);
 
+  const closePanel = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+  }, []);
+
   const updatePosition = useCallback(() => {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      closePanel();
+      return;
+    }
     const viewportPadding = 12;
     const roomBelow = window.innerHeight - rect.bottom - viewportPadding;
-    const preferredHeight = Math.min(360, Math.max(180, filtered.length * 44 + (hasSearch ? 58 : 12)));
-    const opensAbove = roomBelow < Math.min(preferredHeight, 240) && rect.top > roomBelow;
-    const maxHeight = Math.max(160, Math.min(preferredHeight, opensAbove ? rect.top - viewportPadding : roomBelow));
+    const roomAbove = rect.top - viewportPadding;
+    const measuredHeight = panelRef.current?.offsetHeight;
+    const preferredHeight = Math.min(360, Math.max(140, filtered.length * 44 + (hasSearch ? 58 : 12)));
+    const contentHeight = measuredHeight || preferredHeight;
+    const opensAbove = roomBelow < contentHeight && roomAbove > roomBelow;
+    const maxHeight = Math.max(140, Math.min(preferredHeight, opensAbove ? roomAbove : roomBelow));
     const width = panelWidth ?? Math.max(rect.width, 240);
     const left = Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - width - viewportPadding);
-    setPosition({ left, top: opensAbove ? Math.max(viewportPadding, rect.top - maxHeight - 8) : rect.bottom + 8, width, maxHeight });
-  }, [filtered.length, hasSearch]);
+    const top = opensAbove ? Math.max(viewportPadding, rect.top - (measuredHeight || maxHeight) - 8) : rect.bottom + 8;
+    setPosition({ left, top, width, maxHeight });
+  }, [closePanel, filtered.length, hasSearch, panelWidth]);
 
   const openPanel = () => {
     if (disabled) return;
@@ -74,11 +87,6 @@ export function SelectControl({
     const selectedIndex = filtered.findIndex((option) => option.value === selectedValue);
     setActiveIndex(Math.max(0, selectedIndex));
     setOpen(true);
-  };
-
-  const closePanel = () => {
-    setOpen(false);
-    setQuery("");
   };
 
   const choose = (nextValue: string) => {
@@ -92,22 +100,38 @@ export function SelectControl({
   useEffect(() => {
     if (!open) return;
     updatePosition();
+    const frameMeasurer = requestAnimationFrame(() => updatePosition());
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!buttonRef.current?.contains(target) && !panelRef.current?.contains(target)) closePanel();
     };
-    const handleViewportChange = () => updatePosition();
+
+    const handleResize = () => updatePosition();
+
+    const handleScroll = (event: Event) => {
+      const target = event.target as Node | null;
+      // Scrolling inside the dropdown list should not close the panel
+      if (panelRef.current && target && panelRef.current.contains(target)) {
+        return;
+      }
+      // Scrolling the page closes the select panel cleanly
+      closePanel();
+    };
+
     document.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("scroll", handleViewportChange, true);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
     const frame = requestAnimationFrame(() => { if (hasSearch) searchRef.current?.focus(); });
+
     return () => {
+      cancelAnimationFrame(frameMeasurer);
       cancelAnimationFrame(frame);
       document.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("resize", handleViewportChange);
-      window.removeEventListener("scroll", handleViewportChange, true);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [open, hasSearch, updatePosition]);
+  }, [closePanel, open, hasSearch, updatePosition]);
 
   const moveActive = (delta: number) => {
     if (!filtered.length) return;
