@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "sweetalert2/dist/sweetalert2.min.css";
 
+/* Match alert corners to the app's rounded dialogs and controls. */
+.swal2-popup {
+  --swal2-border-radius: 1rem;
+  --swal2-input-border-radius: 0.75rem;
+  --swal2-confirm-button-border-radius: 0.75rem;
+  --swal2-deny-button-border-radius: 0.75rem;
+  --swal2-cancel-button-border-radius: 0.75rem;
+}
+
 @layer base {
   * {
     box-sizing: border-box;

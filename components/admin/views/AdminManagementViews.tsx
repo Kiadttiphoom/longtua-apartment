@@ -24,7 +24,7 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
           <div>
             <strong className="text-sm font-bold text-amber-950 block">รอตรวจสอบ {pendingCount} คำขอ</strong>
             <p className="text-xs text-amber-800 mt-0.5">
-              อนุมัติเมื่อยืนยันว่าเป็นผู้ประกอบการจริงแล้วเท่านั้น ระบบจะสร้าง 1 กิจการ 1 หอ และเริ่ม Trial 30 วัน (สูงสุด 100 ห้อง)
+              รับสูงสุด 20 กิจการทั้งระบบ อนุมัติเมื่อยืนยันว่าเป็นผู้ประกอบการจริงแล้วเท่านั้น ระบบจะสร้าง 1 กิจการ 1 หอ และเริ่ม Trial 30 วัน (สูงสุด 10 ห้อง)
             </p>
           </div>
         </div>
@@ -827,7 +827,7 @@ export function AdminSettingsView({ registration }: Pick<AdminViewContentProps, 
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การตั้งค่าระบบ</span>
         <h2 className="text-lg font-bold text-slate-800 tracking-tight">เปิด/ปิดคำขอทดลองใช้</h2>
         <p className="text-xs text-slate-500 max-w-xl">
-          ควบคุม API ที่รับคำขอจาก <code>longtua.com/apartment/register</code> ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ และคำขอที่ส่งแล้วไม่ถูกลบ
+          ควบคุมการรับคำขอจากหน้าสมัครสมาชิกในแอปและเว็บไซต์หลัก เมื่อครบ 20 กิจการจะไม่รับสมัครหรืออนุมัติเพิ่ม แม้เปิดสวิตช์ไว้ ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ และคำขอที่ส่งแล้วไม่ถูกลบ
         </p>
       </div>
       <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ function source(relativePath) {
 const migration = source("../supabase/migrations/20260828090230_super_admin_and_registration_control.sql");
 const managementMigration = source("../supabase/migrations/20260828091931_admin_management_catalog.sql");
 const granularMigration = source("../supabase/migrations/20260828101032_granular_menu_permissions.sql");
-const trialRequestApi = source("../app/api/public/trial-requests/route.ts");
+const trialRequestApi = source("../lib/auth/create-trial-request.ts");
 const adminActions = source("../app/(admin)/admin/actions.ts");
 const adminPage = source("../components/admin/AdminSectionPage.tsx");
 const adminShell = source("../components/admin/AdminPlatformShell.tsx");

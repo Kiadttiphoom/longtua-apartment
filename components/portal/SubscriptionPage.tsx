@@ -401,7 +401,7 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
       {/* Contact & Support Modal */}
       {showContactModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -475,7 +475,7 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
                   </div>
                   <a
                     href="mailto:official.longtua@gmail.com"
-                    className="block text-xs font-bold text-slate-700 hover:text-blue-600 hover:underline pt-0.5 truncate"
+                    className="block text-xs font-bold text-slate-700 hover:text-blue-600 hover:underline pt-0.5 break-all"
                     title="official.longtua@gmail.com"
                   >
                     official.longtua@gmail.com
@@ -509,4 +509,3 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
     </>
   );
 }
-

@@ -11,7 +11,7 @@ import {
 
 const authActionsSource = readFileSync(fileURLToPath(new URL("../app/auth/actions.ts", import.meta.url)), "utf8");
 const loginFormSource = readFileSync(fileURLToPath(new URL("../components/auth/LoginForm.tsx", import.meta.url)), "utf8");
-const trialRequestRouteSource = readFileSync(fileURLToPath(new URL("../app/api/public/trial-requests/route.ts", import.meta.url)), "utf8");
+const trialRequestRouteSource = readFileSync(fileURLToPath(new URL("../lib/auth/create-trial-request.ts", import.meta.url)), "utf8");
 
 test("normalizeUsername_mixedCaseAndWhitespace_returnsCanonicalLoginKey", () => {
   assert.equal(normalizeUsername("  Somchai.Owner  "), "somchai.owner");

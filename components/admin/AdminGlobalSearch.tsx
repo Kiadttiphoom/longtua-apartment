@@ -33,6 +33,7 @@ const defaultItems: SearchItem[] = [
   { title: "แพ็กเกจและบริการ", subtitle: "จัดการ Trial โควตาห้อง/หอ และวันหมดอายุ", category: "ระบบ", href: "/admin/subscriptions", icon: CircleDollarSign },
   { title: "Role & สิทธิ์", subtitle: "สร้างและแก้ไขบทบาทระดับแพลตฟอร์มหรือกิจการ", category: "ความปลอดภัย", href: "/admin/roles", icon: ShieldCheck },
   { title: "Permission Matrix", subtitle: "กำหนดสิทธิ์อย่างละเอียดในแต่ละ Role", category: "ความปลอดภัย", href: "/admin/permissions", icon: ShieldCheck },
+  { title: "Monitor", subtitle: "กิจกรรมผู้ใช้ กราฟ และข้อผิดพลาดของระบบ", category: "ระบบ", href: "/admin/monitor", icon: FileText },
   { title: "Audit Log", subtitle: "ประวัติการดำเนินการทั้งหมดของ Super Admin", category: "ความปลอดภัย", href: "/admin/audit", icon: FileText },
   { title: "ตั้งค่าระบบ", subtitle: "เปิด/ปิดรับคำขอทดลองใช้", category: "ระบบ", href: "/admin/settings", icon: ShieldCheck },
 ];

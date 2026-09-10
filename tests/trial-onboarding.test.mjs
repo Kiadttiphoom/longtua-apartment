@@ -16,24 +16,29 @@ function functionBody(sql, functionName) {
 
 const migration = source("../supabase/migrations/20260829103004_trial_approval_workflow.sql");
 
-test("trialRegistration_legacyRegisterRoute_redirectsToMarketingRegistration", () => {
-  const registerPage = source("../app/register/page.tsx");
-  const registrationConfig = source("../lib/auth/trial-registration.ts");
-
-  assert.match(registerPage, /permanentRedirect\(marketingRegistrationUrl\(\)\)/);
-  assert.match(registrationConfig, /MARKETING_REGISTRATION_URL/);
-  assert.match(registrationConfig, /https:\/\/longtua\.com\/apartment\/register/);
-  assert.doesNotMatch(registerPage, /RegisterForm|registerAction/);
+test("trialRegistration_rendersLocalFormWithRegistrationSwitch", () => {
+  const page = source("../app/register/page.tsx");
+  const form = source("../components/auth/RegisterForm.tsx");
+  const action = source("../app/register/actions.ts");
+  assert.match(page, /await isRegistrationEnabled/);
+  assert.match(page, /enabled=\{registration.configured && registration.enabled && capacity !== null && !capacity.full\}/);
+  assert.doesNotMatch(page, /permanentRedirect/);
+  assert.match(form, /useActionState\(registerAction/);
+  assert.match(form, /!enabled/);
+  assert.match(form, /state.status === "success"/);
+  assert.match(action, /await createTrialRequest/);
+  assert.match(action, /formData.get\("accepted"\) === "on"/);
+  assert.doesNotMatch(form, /TRIAL_REQUEST_API_SECRET/);
 });
 
-test("loginUi_hasSupportContactAndDoesNotOfferSignup", () => {
+test("loginUi_hasSupportContactAndSignup", () => {
   const loginForm = source("../components/auth/LoginForm.tsx");
   const loginPage = source("../app/login/page.tsx");
 
   assert.match(loginForm, /ติดต่อผู้ดูแลระบบ/);
   assert.match(loginForm, /href=\{supportUrl\}/);
   assert.match(loginPage, /supportContactUrl\(\)/);
-  assert.doesNotMatch(loginForm, /สมัครสมาชิก|สมัครใช้งาน|ทดลองใช้|href=["']\/register/);
+  assert.match(loginForm, /href="\/register">สมัครสมาชิก/);
 });
 
 test("publicTrialApi_requiresServerSecretAndCreatesPendingRequest", () => {
@@ -43,12 +48,14 @@ test("publicTrialApi_requiresServerSecretAndCreatesPendingRequest", () => {
   assert.match(route, /authorization\.startsWith\("Bearer "\)/);
   assert.match(route, /timingSafeEqual\(expectedHash, suppliedHash\)/);
   assert.match(route, /if \(!hasValidApiSecret\(request\)\)[\s\S]*?401/);
-  assert.match(route, /await isRegistrationEnabled\(\)/);
-  assert.match(route, /admin\.auth\.admin\.createUser\(/);
-  assert.match(route, /admin\.rpc\("create_trial_request"/);
-  assert.match(route, /status: "pending"/);
-  assert.match(route, /loginUrl: `\$\{appUrl\}\/login`/);
-  assert.match(route, /await admin\.auth\.admin\.deleteUser\(authUserId\)/);
+  assert.match(route, /return createTrialRequest\(body, request.nextUrl.origin\)/);
+  const service = source("../lib/auth/create-trial-request.ts");
+  assert.match(service, /await isRegistrationEnabled\(\)/);
+  assert.match(service, /admin\.auth\.admin\.createUser\(/);
+  assert.match(service, /admin\.rpc\("create_trial_request"/);
+  assert.match(service, /status: "pending"/);
+  assert.match(service, /loginUrl: `\$\{appUrl\}\/login`/);
+  assert.match(service, /await admin\.auth\.admin\.deleteUser\(authUserId\)/);
 
   const createRequest = functionBody(migration, "public.create_trial_request");
   assert.match(createRequest, /insert into public\.profiles[\s\S]*?'pending'/);

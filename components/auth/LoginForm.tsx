@@ -100,6 +100,7 @@ export function LoginForm({ supportUrl = "https://longtua.com/contact" }: { supp
           </form>
 
           <div className="pt-4 border-t border-slate-100 flex flex-col items-center gap-2 text-center text-xs text-slate-500">
+            <p>ยังไม่มีบัญชี? <Link className="font-semibold text-blue-600 hover:text-blue-700" href="/register">สมัครสมาชิก</Link></p>
             <p>
               ต้องการความช่วยเหลือ?{" "}
               <Link className="font-semibold text-blue-600 hover:text-blue-700" href={supportUrl}>

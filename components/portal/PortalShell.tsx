@@ -138,7 +138,7 @@ export function PortalShell({ children, context }: ShellProps) {
           <div className="bg-amber-500 text-slate-950 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-sm border-b border-amber-600/30">
             <div className="flex items-center gap-2 text-xs font-bold tracking-wide">
               <AlertTriangle size={16} className="text-slate-950 shrink-0" />
-              <span>โหมดเข้าดูแทนลูกค้า (Impersonation Mode) — กิจการ: <strong className="underline font-extrabold">{context.organization.name}</strong></span>
+              <span>Super Admin กำลังจัดการข้อมูล — กิจการ: <strong className="underline font-extrabold">{context.organization.name}</strong></span>
             </div>
             <form action={stopImpersonatingAction}>
               <button

@@ -1,3 +1,4 @@
+import { AdminManageOrganizationButton } from "@/components/admin/AdminManageOrganization";
 import { AdminTable, money } from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
@@ -13,7 +14,7 @@ export function AdminPropertiesView({ properties, rooms, organizationMap, proper
       <AdminTable
         headers={["กิจการ", "ชื่อหอพัก", "ที่อยู่", "โทรศัพท์", "จำนวนห้อง", "สถานะ"]}
         rows={properties.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="properties" /></div>,
           item.name,
           item.address || "—",
           item.phone || "—",
@@ -37,7 +38,7 @@ export function AdminRoomsView({ rooms, organizationMap, propertyMap, roomsReady
       <AdminTable
         headers={["กิจการ", "หอพัก", "ห้อง", "ชั้น", "ค่าเช่า", "สถานะ"]}
         rows={rooms.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="rooms" /></div>,
           propertyMap.get(item.property_id) ?? "—",
           item.room_number,
           item.floor || "—",

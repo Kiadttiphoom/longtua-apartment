@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { isSystemAdmin } from "@/lib/auth/system-admin";
+import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { readPrivateSlip } from "@/lib/storage/private-r2";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -39,7 +42,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .eq("status", "active")
     .maybeSingle();
 
-  if (!account) {
+  const managingOrganization = await isSystemAdmin(auth.claims.sub)
+    && (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value === file.organization_id;
+  if (!account && !managingOrganization) {
     return new Response("Not found", {
       status: 404,
       headers: { ...baseHeaders, "Cache-Control": "private, no-store" },
@@ -75,4 +80,3 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
   }
 }
-

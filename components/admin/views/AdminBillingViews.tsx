@@ -1,3 +1,4 @@
+import { AdminManageOrganizationButton } from "@/components/admin/AdminManageOrganization";
 import { Hotel, KeyRound, ReceiptText, WalletCards } from "lucide-react";
 import { AdminTable, money, thaiDate } from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -16,7 +17,7 @@ export function AdminMetersView({ meters, organizationMap, propertyMap, roomMap,
         rows={meters.map((item) => {
           const reading = latestReadingByMeter.get(item.id);
           return [
-            organizationMap.get(item.organization_id) ?? "—",
+            <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="meters" /></div>,
             `${propertyMap.get(item.property_id) ?? "—"} / ${roomMap.get(item.room_id) ?? "—"}`,
             item.meter_type === "electric" ? "ไฟฟ้า" : "น้ำ",
             reading ? Number(reading.current_value).toLocaleString("th-TH") : "—",
@@ -42,7 +43,7 @@ export function AdminInvoicesView({ invoices, organizationMap, propertyMap, room
       <AdminTable
         headers={["กิจการ", "เลขที่ใบแจ้งหนี้", "หอ/ห้อง", "วันที่ออก", "ครบกำหนด", "ยอดรวม", "คงเหลือ", "สถานะ"]}
         rows={invoices.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="invoices" /></div>,
           item.invoice_number,
           `${propertyMap.get(item.property_id) ?? "—"} / ${roomMap.get(item.room_id) ?? "—"}`,
           thaiDate(item.issued_at),
@@ -68,7 +69,7 @@ export function AdminPaymentsView({ payments, organizationMap, propertyMap, paym
       <AdminTable
         headers={["กิจการ", "เลขที่ใบเสร็จ", "หอพัก", "วันที่รับ", "ยอดเงิน", "ช่องทาง", "อ้างอิง", "สถานะ"]}
         rows={payments.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="payments" /></div>,
           item.receipt_number,
           propertyMap.get(item.property_id) ?? "—",
           thaiDate(item.paid_at),
@@ -96,7 +97,7 @@ export function AdminReceivablesView({ invoices, organizationMap, roomMap }: Pic
         rows={invoices
           .filter((item) => Number(item.balance_due) > 0 && item.status !== "void")
           .map((item) => [
-            organizationMap.get(item.organization_id) ?? "—",
+            <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="receivables" /></div>,
             item.invoice_number,
             roomMap.get(item.room_id) ?? "—",
             thaiDate(item.due_at),

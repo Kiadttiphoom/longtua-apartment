@@ -1,3 +1,5 @@
+import { AdminManageOrganization } from "@/components/admin/AdminManageOrganization";
+import { adminManagementPaths } from "@/lib/portal/admin-management-paths";
 import { ShieldCheck } from "lucide-react";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
 import { AdminOverviewView } from "@/components/admin/views/AdminOverviewView";
@@ -7,7 +9,7 @@ import { AdminTenantViews, AdminLeasesView } from "@/components/admin/views/Admi
 import { AdminMetersView, AdminInvoicesView, AdminPaymentsView, AdminReceivablesView, AdminReportsView } from "@/components/admin/views/AdminBillingViews";
 import { AdminLineView, AdminSubscriptionsView, AdminRolesView, AdminPermissionsView, AdminMenusView, AdminAuditView, AdminSettingsView, AdminTrialRequestsView } from "@/components/admin/views/AdminManagementViews";
 
-export function AdminViewContent({ view, title, description, params, catalogReady, granularPermissionsReady, organizationCount, profileCount, organizations, profiles, subscriptions, subscriptionPlans, properties, rooms, tenants, leases, meters, invoices, payments, roles, permissions, menus, audits, trialRequests, propertiesReady, roomsReady, tenantsReady, leasesReady, metersReady, invoicesReady, paymentsReady, registration, systemAdminIds, organizationMap, profileMap, propertyMap, roomMap, tenantMap, latestReadingByMeter, memberCountByOrganization, organizationCountByUser, matrixActions, matrixMenus, matrixRoles, selectedRoleId, selectedOrganizationId, selectedOrganizationUsers, selectedUserId, totalBilled, totalOutstanding, totalCollected, occupiedRooms }: AdminViewContentProps) {
+export function AdminViewContent({ view, title, description, params, catalogReady, granularPermissionsReady, organizationCount, profileCount, organizations, profiles, memberships, subscriptions, subscriptionPlans, properties, rooms, tenants, leases, meters, invoices, payments, roles, permissions, menus, audits, trialRequests, propertiesReady, roomsReady, tenantsReady, leasesReady, metersReady, invoicesReady, paymentsReady, registration, systemAdminIds, organizationMap, profileMap, propertyMap, roomMap, tenantMap, latestReadingByMeter, memberCountByOrganization, organizationCountByUser, matrixActions, matrixMenus, matrixRoles, selectedRoleId, selectedOrganizationId, selectedOrganizationUsers, selectedUserId, totalBilled, totalOutstanding, totalCollected, occupiedRooms }: AdminViewContentProps) {
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
@@ -27,6 +29,12 @@ export function AdminViewContent({ view, title, description, params, catalogRead
         </div>
       ) : null}
 
+      {params.notice ? (
+        <div role="status" className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+          {params.notice}
+        </div>
+      ) : null}
+
       {params.error ? (
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
           บันทึกไม่สำเร็จ · รหัสอ้างอิง {params.error}
@@ -39,11 +47,13 @@ export function AdminViewContent({ view, title, description, params, catalogRead
         </div>
       ) : null}
 
+      {Object.hasOwn(adminManagementPaths, view) ? <AdminManageOrganization section={view} organizations={organizations} /> : null}
+
       {view === "overview" ? <AdminOverviewView organizationCount={organizationCount} profileCount={profileCount} subscriptions={subscriptions} organizations={organizations} memberCountByOrganization={memberCountByOrganization} /> : null}
       {view === "trial-requests" ? <AdminTrialRequestsView trialRequests={trialRequests} /> : null}
       {view === "organizations" ? <AdminOrganizationsView organizations={organizations} profileMap={profileMap} memberCountByOrganization={memberCountByOrganization} /> : null}
       {view === "properties" ? <AdminPropertiesView properties={properties} rooms={rooms} organizationMap={organizationMap} propertiesReady={propertiesReady} /> : null}
-      {view === "users" ? <AdminUsersView profiles={profiles} systemAdminIds={systemAdminIds} organizationCountByUser={organizationCountByUser} /> : null}
+      {view === "users" ? <AdminUsersView memberships={memberships} organizationMap={organizationMap} profiles={profiles} systemAdminIds={systemAdminIds} organizationCountByUser={organizationCountByUser} /> : null}
       {view === "rooms" ? <AdminRoomsView rooms={rooms} organizationMap={organizationMap} propertyMap={propertyMap} roomsReady={roomsReady} /> : null}
       {view === "tenants" ? <AdminTenantViews tenants={tenants} organizationMap={organizationMap} tenantsReady={tenantsReady} /> : null}
       {view === "leases" ? <AdminLeasesView leases={leases} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} tenantMap={tenantMap} leasesReady={leasesReady} /> : null}

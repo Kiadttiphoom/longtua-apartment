@@ -1,3 +1,4 @@
+import { AdminManageOrganizationButton } from "@/components/admin/AdminManageOrganization";
 import { AdminTable, money, thaiDate } from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
@@ -13,7 +14,7 @@ export function AdminTenantViews({ tenants, organizationMap, tenantsReady }: Pic
       <AdminTable
         headers={["กิจการ", "ชื่อผู้เช่า", "โทรศัพท์", "อีเมล", "สถานะ", "วันที่สร้าง"]}
         rows={tenants.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="tenants" /></div>,
           item.full_name,
           item.phone || "—",
           item.email || "—",
@@ -37,7 +38,7 @@ export function AdminLeasesView({ leases, organizationMap, propertyMap, roomMap,
       <AdminTable
         headers={["กิจการ", "เลขที่สัญญา", "หอ/ห้อง", "ผู้เช่า", "ระยะเวลา", "ค่าเช่า", "สถานะ"]}
         rows={leases.map((item) => [
-          organizationMap.get(item.organization_id) ?? "—",
+          <div key="organization" className="space-y-2"><span>{organizationMap.get(item.organization_id) ?? "—"}</span><AdminManageOrganizationButton organizationId={item.organization_id} section="leases" /></div>,
           item.lease_number,
           `${propertyMap.get(item.property_id) ?? "—"} / ${roomMap.get(item.room_id) ?? "—"}`,
           tenantMap.get(item.primary_tenant_id) ?? "—",

@@ -1,12 +1,16 @@
 "use server";
 
+import { scheduleMonitorEvent } from "@/lib/monitor/events";
+
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isSystemAdmin } from "@/lib/auth/system-admin";
+import { getRegistrationCapacity, REGISTRATION_CAPACITY_MESSAGE } from "@/lib/auth/registration-capacity";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
+import { adminManagementPaths } from "@/lib/portal/admin-management-paths";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CODE_PATTERN = /^[a-z][a-z0-9_]{2,49}$/;
@@ -45,6 +49,7 @@ function done(view: string, message: string): never {
 }
 
 function failed(view: string, requestId: string, stage: string, error: unknown): never {
+  scheduleMonitorEvent(stage, "error", requestId, error);
   const details = error && typeof error === "object" ? error as { code?: string; message?: string } : {};
   console.error(`[admin] ${JSON.stringify({ requestId, stage, code: details.code, message: details.message ?? "Unexpected admin error" })}`);
   redirect(`${adminPath(view)}?error=${requestId}`);
@@ -73,10 +78,14 @@ export async function approveTrialRequestAction(formData: FormData) {
     .maybeSingle();
   if (beforeError || !before || before.status !== "pending") failed("trial-requests", context.requestId, "trial_request.pending_lookup", beforeError ?? new Error("Pending request not found"));
 
+  const capacity = await getRegistrationCapacity();
+  if (capacity.full) redirect(`/admin/trial-requests?notice=${encodeURIComponent(REGISTRATION_CAPACITY_MESSAGE)}`);
+
   const { data: approved, error } = await context.admin.rpc("approve_trial_request", {
     target_request_id: requestId,
     reviewer_user_id: context.userId,
   });
+  if (error?.message === "registration_organization_limit_reached") redirect(`/admin/trial-requests?notice=${encodeURIComponent(REGISTRATION_CAPACITY_MESSAGE)}`);
   if (error) failed("trial-requests", context.requestId, "trial_request.approve", error);
 
   // Ensure trial subscription quotas adhere to standard Trial tier (1 property, 10 rooms)
@@ -91,6 +100,7 @@ export async function approveTrialRequestAction(formData: FormData) {
 
   await audit(context, "trial_request.approved", "trial_request", requestId, before, approved);
   revalidatePath("/registration/pending");
+  revalidatePath("/register");
   done("trial-requests", "อนุมัติคำขอและเริ่ม Trial 30 วันแล้ว (โควตา 1 หอพัก 10 ห้อง)");
 }
 
@@ -124,7 +134,9 @@ export async function updateOrganizationAction(formData: FormData) {
   const status = text(formData, "status");
   if (!UUID_PATTERN.test(id) || !["active", "suspended", "closed"].includes(status)) failed("organizations", context.requestId, "organization.validation", new Error("Invalid organization update"));
   const { data: before } = await context.admin.from("organizations").select("id, name, status").eq("id", id).single();
-  const { data: after, error } = await context.admin.from("organizations").update({ status }).eq("id", id).select("id, name, status").single();
+  const name = formData.has("name") ? text(formData, "name") : before?.name;
+  if (!name || name.length < 2 || name.length > 160) failed("organizations", context.requestId, "organization.name_validation", new Error("Invalid organization name"));
+  const { data: after, error } = await context.admin.from("organizations").update({ name, status }).eq("id", id).select("id, name, status").single();
   if (error) failed("organizations", context.requestId, "organization.update", error);
   await audit(context, "organization.status_updated", "organization", id, before, after);
   done("organizations", "อัปเดตสถานะกิจการแล้ว");
@@ -133,6 +145,8 @@ export async function updateOrganizationAction(formData: FormData) {
 export async function impersonateOrganizationAction(formData: FormData) {
   const context = await adminContext();
   const id = text(formData, "organizationId");
+  const section = text(formData, "section");
+  const destination = Object.hasOwn(adminManagementPaths, section) ? adminManagementPaths[section] : "/dashboard";
   if (!UUID_PATTERN.test(id)) failed("organizations", context.requestId, "organization.impersonate_validation", new Error("Invalid organization id"));
   const { data: org } = await context.admin.from("organizations").select("id, name").eq("id", id).maybeSingle();
   if (!org) failed("organizations", context.requestId, "organization.not_found", new Error("Organization not found"));
@@ -145,7 +159,7 @@ export async function impersonateOrganizationAction(formData: FormData) {
     path: "/",
     maxAge: 60 * 60 * 4, // 4 hours
   });
-  redirect("/dashboard");
+  redirect(destination);
 }
 
 export async function updateUserStatusAction(formData: FormData) {

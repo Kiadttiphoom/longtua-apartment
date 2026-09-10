@@ -8,7 +8,7 @@ import { AppNavLink } from "@/components/ui/AppNavLink";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 
 const navigation = [
-  ["overview", "ภาพรวมระบบ", LayoutDashboard], ["trial-requests", "คำขอทดลองใช้", ClipboardCheck], ["organizations", "กิจการ", Building2], ["properties", "หอพัก", Hotel], ["users", "ผู้ใช้งาน", Users], ["rooms", "ห้องพัก", KeyRound], ["tenants", "ผู้เช่า", Users], ["leases", "สัญญาเช่า", CalendarRange], ["meters", "มิเตอร์", Gauge], ["invoices", "ใบแจ้งหนี้", FileText], ["payments", "รับชำระ", WalletCards], ["receivables", "ยอดค้าง", ReceiptText], ["reports", "รายงาน", BookOpenCheck], ["line", "LINE แจ้งเตือน", MessageCircle], ["subscriptions", "แพ็กเกจและบริการ", CircleDollarSign], ["roles", "Role", UserCog], ["permissions", "Permission", KeyRound], ["menus", "เมนูระบบ", Menu], ["audit", "Audit Log", Activity], ["settings", "ตั้งค่าระบบ", Settings],
+  ["overview", "ภาพรวมระบบ", LayoutDashboard], ["trial-requests", "คำขอทดลองใช้", ClipboardCheck], ["organizations", "กิจการ", Building2], ["properties", "หอพัก", Hotel], ["users", "ผู้ใช้งาน", Users], ["rooms", "ห้องพัก", KeyRound], ["tenants", "ผู้เช่า", Users], ["leases", "สัญญาเช่า", CalendarRange], ["meters", "มิเตอร์", Gauge], ["invoices", "ใบแจ้งหนี้", FileText], ["payments", "รับชำระ", WalletCards], ["receivables", "ยอดค้าง", ReceiptText], ["reports", "รายงาน", BookOpenCheck], ["line", "LINE แจ้งเตือน", MessageCircle], ["subscriptions", "แพ็กเกจและบริการ", CircleDollarSign], ["roles", "Role", UserCog], ["permissions", "Permission", KeyRound], ["menus", "เมนูระบบ", Menu], ["monitor", "Monitor", Activity], ["audit", "Audit Log", Activity], ["settings", "ตั้งค่าระบบ", Settings],
 ] as const;
 
 const adminCategories = [
@@ -16,7 +16,7 @@ const adminCategories = [
   { label: "จัดการหอพัก", keys: ["rooms", "tenants", "leases"] },
   { label: "การเงิน", keys: ["meters", "invoices", "payments", "receivables", "reports"] },
   { label: "บริการเสริม", keys: ["line"] },
-  { label: "ระบบ", keys: ["subscriptions", "roles", "permissions", "menus", "audit", "settings"] },
+  { label: "ระบบ", keys: ["subscriptions", "roles", "permissions", "menus", "monitor", "audit", "settings"] },
 ];
 
 export function AdminPlatformShell({ profileName, children }: { profileName: string; children: React.ReactNode }) {

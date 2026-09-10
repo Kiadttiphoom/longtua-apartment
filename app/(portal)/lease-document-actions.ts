@@ -26,6 +26,6 @@ export async function loadLeaseDocumentAction(leaseId: string): Promise<{ ok: tr
   return { ok: true, state: {
     storageReady: true, versions: versions.data as LeaseDocumentVersion[], template: template.data?.content as LeaseContent ?? null,
     templateId: template.data?.id ?? null, initialTemplate: initialTemplate.data?.content as LeaseContent ?? null,
-    canSaveTemplate: can(context, "customer_settings", "update") && can(context, "customer_leases", "update") && !context.isImpersonating,
+    canSaveTemplate: can(context, "customer_settings", "update") && can(context, "customer_leases", "update"),
   } };
 }

@@ -1,5 +1,7 @@
 "use server";
 
+import { scheduleMonitorEvent } from "@/lib/monitor/events";
+
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
@@ -52,6 +54,7 @@ function errorState(
 }
 
 function logAuthFailure(requestId: string, stage: string, error: unknown) {
+  scheduleMonitorEvent(stage, "error", requestId, error);
   const details = error && typeof error === "object"
     ? error as { code?: unknown; message?: unknown }
     : {};
@@ -138,6 +141,7 @@ export async function loginAction(
     return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
   }
 
+  scheduleMonitorEvent("auth.login", "success", requestId);
   if (profileStatus === "pending") redirect("/registration/pending");
   if (authUserId && await isSystemAdmin(authUserId)) redirect("/admin");
   if (authUserId && await isTenantUser(authUserId)) redirect("/tenant");

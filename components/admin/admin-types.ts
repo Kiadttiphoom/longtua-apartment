@@ -49,7 +49,7 @@ export type AdminViewContentProps = {
   view: string;
   title: string;
   description: string;
-  params: { mode?: "role" | "user"; role?: string; organization?: string; user?: string; saved?: string; error?: string };
+  params: { mode?: "role" | "user"; role?: string; organization?: string; user?: string; saved?: string; error?: string; notice?: string };
   catalogReady: boolean;
   granularPermissionsReady: boolean;
   organizationCount: number;

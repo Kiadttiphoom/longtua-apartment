@@ -1,6 +1,11 @@
 "use server";
 
+import { scheduleMonitorEvent } from "@/lib/monitor/events";
+
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { isSystemAdmin } from "@/lib/auth/system-admin";
+import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizeUsername } from "@/lib/auth/validation.mjs";
@@ -69,7 +74,8 @@ function fail(message: string): DashboardActionResult {
   return { ok: false, message };
 }
 
-function logFailure(requestId: string, stage: string, error: unknown) {
+function logFailure(requestId: string, stage: string, error: unknown, organizationId?: string) {
+  scheduleMonitorEvent(stage, "error", requestId, error, undefined, organizationId);
   const details = error && typeof error === "object"
     ? error as { code?: unknown; message?: unknown; details?: unknown }
     : {};
@@ -105,6 +111,17 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
   const { data: authData, error: authError } = await supabase.auth.getClaims();
   const userId = authData?.claims?.sub;
   if (authError || !userId) return { ok: false, error: fail("กรุณาเข้าสู่ระบบอีกครั้ง") };
+
+  if (await isSystemAdmin(userId)) {
+    const selectedOrganizationId = (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value;
+    if (selectedOrganizationId !== organizationId) return { ok: false, error: fail("กิจการที่เลือกเปลี่ยนไป กรุณาเปิดหน้าจัดการกิจการใหม่อีกครั้ง") };
+    // Keep the authenticated client so database policies and audit logs retain
+    // the real administrator identity. Database helpers authorize active admins.
+    const { data: organization, error: organizationError } = await supabase.from("organizations").select("id").eq("id", organizationId).maybeSingle();
+    const { data: subscription, error: subscriptionError } = await supabase.from("subscriptions").select("status, max_properties, max_rooms").eq("organization_id", organizationId).maybeSingle();
+    if (organizationError || subscriptionError || !organization || !subscription) return { ok: false, error: fail("เปิดจัดการกิจการไม่สำเร็จ กรุณาตรวจสิทธิ์ Super Admin ในฐานข้อมูล") };
+    return { ok: true, supabase, organizationId, userId, subscription };
+  }
 
   const [{ data: membership }, { data: subscription }] = await Promise.all([
     supabase
@@ -148,7 +165,8 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
   };
 }
 
-function success(message: string): DashboardActionResult {
+function success(message: string, organizationId?: string): DashboardActionResult {
+  scheduleMonitorEvent("portal.operation", "success", undefined, undefined, message, organizationId);
   revalidatePath("/dashboard");
   revalidatePath("/", "layout");
   return { ok: true, message };
@@ -183,13 +201,13 @@ export async function createPropertyAction(formData: FormData): Promise<Dashboar
     property_phone: text(formData, "phone"),
   });
   if (error) {
-    logFailure(requestId, "property.create", error);
+    logFailure(requestId, "property.create", error, context.organizationId);
     if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Property limit reached")) {
       return { ...fail("คุณสร้างหอพักครบตามจำนวนที่แพ็กเกจกำหนดแล้ว กรุณาอัปเกรดแพ็กเกจ"), requestId };
     }
     return { ...fail("เพิ่มหอพักไม่สำเร็จ"), requestId };
   }
-  return success("เพิ่มหอพักเรียบร้อยแล้ว");
+  return success("เพิ่มหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function createRoomAction(formData: FormData): Promise<DashboardActionResult> {
@@ -242,7 +260,7 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
     room_base_rent: baseRent,
   });
   if (error || !data || typeof data !== "object" || Array.isArray(data)) {
-    logFailure(requestId, "room.create_bulk", error);
+    logFailure(requestId, "room.create_bulk", error, context.organizationId);
     if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Room limit reached")) {
       return { ...fail("จำนวนห้องเกินขีดจำกัดของแพ็กเกจ กรุณาอัปเกรดแพ็กเกจ"), requestId };
     }
@@ -255,7 +273,7 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
   if (createdCount < 1) return fail("ไม่มีห้องใหม่ให้เพิ่ม หมายเลขห้องอาจมีอยู่แล้วทั้งหมด");
 
   const skippedMessage = skippedCount > 0 ? ` ข้ามหมายเลขที่ซ้ำ ${skippedCount} ห้อง` : "";
-  return success(`เพิ่มห้องพัก ${createdCount} ห้องเรียบร้อยแล้ว${skippedMessage}`);
+  return success(`เพิ่มห้องพัก ${createdCount} ห้องเรียบร้อยแล้ว${skippedMessage}`, context.organizationId);
 }
 
 export async function createTenantAction(formData: FormData): Promise<DashboardActionResult> {
@@ -278,11 +296,11 @@ export async function createTenantAction(formData: FormData): Promise<DashboardA
   }).select("id").single();
 
   if (error || !data) {
-    logFailure(requestId, "tenant.create", error);
+    logFailure(requestId, "tenant.create", error, context.organizationId);
     return { ...fail("เพิ่มผู้เช่าไม่สำเร็จ"), requestId };
   }
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "tenant.created", entity_type: "tenant", entity_id: data.id });
-  return success("เพิ่มผู้เช่าเรียบร้อยแล้ว");
+  return success("เพิ่มผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function createLeaseAction(formData: FormData): Promise<DashboardActionResult> {
@@ -320,12 +338,12 @@ export async function createLeaseAction(formData: FormData): Promise<DashboardAc
   }).select("id").single();
 
   if (error || !data) {
-    logFailure(requestId, "lease.create", error);
+    logFailure(requestId, "lease.create", error, context.organizationId);
     return { ...fail("สร้างสัญญาไม่สำเร็จ ห้องนี้อาจมีสัญญาที่ใช้งานอยู่แล้ว"), requestId };
   }
   await context.supabase.from("rooms").update({ status: "occupied" }).eq("id", roomId).eq("organization_id", context.organizationId);
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "lease.created", entity_type: "lease", entity_id: data.id });
-  return success("สร้างสัญญาเช่าเรียบร้อยแล้ว");
+  return success("สร้างสัญญาเช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function createInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
@@ -358,7 +376,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     .select("id")
     .single();
   if (cycleError || !cycle) {
-    logFailure(requestId, "invoice.billing_cycle", cycleError);
+    logFailure(requestId, "invoice.billing_cycle", cycleError, context.organizationId);
     return { ...fail("สร้างรอบบิลไม่สำเร็จ"), requestId };
   }
 
@@ -371,7 +389,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     .neq("status", "void")
     .maybeSingle();
   if (existingInvoiceError) {
-    logFailure(requestId, "invoice.duplicate_check", existingInvoiceError);
+    logFailure(requestId, "invoice.duplicate_check", existingInvoiceError, context.organizationId);
     return { ...fail("ตรวจสอบใบแจ้งหนี้เดิมไม่สำเร็จ"), requestId };
   }
   if (existingInvoice) return fail("สัญญานี้มีใบแจ้งหนี้ของรอบเดือนดังกล่าวแล้ว");
@@ -381,7 +399,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     context.supabase.from("meters").select("id, room_id, meter_type, status").eq("organization_id", context.organizationId).eq("room_id", lease.room_id).eq("status", "active"),
   ]);
   if (settingsError || metersError || !settings) {
-    logFailure(requestId, "invoice.billing_sources", settingsError ?? metersError);
+    logFailure(requestId, "invoice.billing_sources", settingsError ?? metersError, context.organizationId);
     return { ...fail("โหลดการตั้งค่าค่าน้ำและค่าไฟไม่สำเร็จ"), requestId };
   }
 
@@ -390,7 +408,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     ? await context.supabase.from("meter_readings").select("meter_id, previous_value, current_value, usage_value").eq("organization_id", context.organizationId).eq("billing_cycle_id", cycle.id).in("meter_id", meterIds)
     : { data: [], error: null };
   if (readingsError) {
-    logFailure(requestId, "invoice.meter_readings", readingsError);
+    logFailure(requestId, "invoice.meter_readings", readingsError, context.organizationId);
     return { ...fail("โหลดเลขมิเตอร์ของรอบบิลไม่สำเร็จ"), requestId };
   }
 
@@ -419,7 +437,7 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
   }).select("id").single();
 
   if (error || !invoice) {
-    logFailure(requestId, "invoice.create", error);
+    logFailure(requestId, "invoice.create", error, context.organizationId);
     if ((error as { code?: string })?.code === "23505") {
       return {
         ...fail("เลขที่ใบแจ้งหนี้นี้มีอยู่ในระบบแล้ว (หากเป็นการออกบิลใหม่แทนฉบับที่ยกเลิก กรุณาต่อท้าย เช่น -R1)"),
@@ -440,12 +458,12 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     metadata: { ...item.metadata, period_month: monthDate, rate_snapshot: item.unitPrice },
   })));
   if (itemError) {
-    logFailure(requestId, "invoice.create_item", itemError);
+    logFailure(requestId, "invoice.create_item", itemError, context.organizationId);
     await context.supabase.from("rent_invoices").delete().eq("id", invoice.id).eq("organization_id", context.organizationId);
     return { ...fail("สร้างรายการในใบแจ้งหนี้ไม่สำเร็จ"), requestId };
   }
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "invoice.created", entity_type: "rent_invoice", entity_id: invoice.id });
-  return success("ออกใบแจ้งหนี้เรียบร้อยแล้ว");
+  return success("ออกใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function saveMeterReadingAction(formData: FormData): Promise<DashboardActionResult> {
@@ -472,7 +490,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     .eq("meter_type", meterType)
     .single();
   if (meterError || !meter) {
-    logFailure(requestId, "meter.find", meterError);
+    logFailure(requestId, "meter.find", meterError, context.organizationId);
     return { ...fail("ไม่พบมิเตอร์ของห้องนี้"), requestId };
   }
 
@@ -483,7 +501,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     .select("id")
     .single();
   if (cycleError || !cycle) {
-    logFailure(requestId, "meter.billing_cycle", cycleError);
+    logFailure(requestId, "meter.billing_cycle", cycleError, context.organizationId);
     return { ...fail("สร้างรอบบิลไม่สำเร็จ"), requestId };
   }
 
@@ -527,7 +545,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     .eq("billing_cycle_id", cycle.id)
     .maybeSingle();
   if (existingError) {
-    logFailure(requestId, "meter.existing_reading", existingError);
+    logFailure(requestId, "meter.existing_reading", existingError, context.organizationId);
     return { ...fail("ตรวจสอบเลขมิเตอร์เดิมไม่สำเร็จ"), requestId };
   }
 
@@ -540,7 +558,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
       .eq("meter_id", meter.id)
       .lt("billing_cycles.period_month", monthDate);
     if (priorError) {
-      logFailure(requestId, "meter.previous_reading", priorError);
+      logFailure(requestId, "meter.previous_reading", priorError, context.organizationId);
       return { ...fail("ค้นหาเลขมิเตอร์รอบก่อนไม่สำเร็จ"), requestId };
     }
     const latestReading = (priorReadings ?? []).sort((left, right) =>
@@ -580,7 +598,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     read_at: new Date().toISOString(),
   }, { onConflict: "meter_id,billing_cycle_id" });
   if (error) {
-    logFailure(requestId, "meter.reading_upsert", error);
+    logFailure(requestId, "meter.reading_upsert", error, context.organizationId);
     return { ...fail("บันทึกเลขมิเตอร์ไม่สำเร็จ"), requestId };
   }
 
@@ -598,7 +616,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     }
   }
 
-  return success("บันทึกเลขมิเตอร์เรียบร้อยแล้ว");
+  return success("บันทึกเลขมิเตอร์เรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function recordPaymentAction(formData: FormData): Promise<DashboardActionResult> {
@@ -641,7 +659,7 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
     reference: text(formData, "reference") || null,
   }).select("id").single();
   if (error || !payment) {
-    logFailure(requestId, "payment.create", error);
+    logFailure(requestId, "payment.create", error, context.organizationId);
     return { ...fail("บันทึกรับชำระไม่สำเร็จ เลขที่ใบเสร็จอาจซ้ำ"), requestId };
   }
 
@@ -652,7 +670,7 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
     amount,
   });
   if (allocationError) {
-    logFailure(requestId, "payment.allocate", allocationError);
+    logFailure(requestId, "payment.allocate", allocationError, context.organizationId);
     await context.supabase.from("rent_payments").delete().eq("id", payment.id).eq("organization_id", context.organizationId);
     return { ...fail("จัดสรรยอดชำระไม่สำเร็จ"), requestId };
   }
@@ -663,7 +681,7 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
     status: nextBalance === 0 ? "paid" : "partial",
   }).eq("id", invoice.id).eq("organization_id", context.organizationId);
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "payment.recorded", entity_type: "rent_payment", entity_id: payment.id });
-  return success("บันทึกรับชำระเรียบร้อยแล้ว");
+  return success("บันทึกรับชำระเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function updatePropertySettingsAction(formData: FormData): Promise<DashboardActionResult> {
@@ -748,10 +766,10 @@ export async function updatePropertySettingsAction(formData: FormData): Promise<
   }
 
   if (error) {
-    logFailure(requestId, "settings.update", error);
+    logFailure(requestId, "settings.update", error, context.organizationId);
     return { ...fail("บันทึกการตั้งค่าไม่สำเร็จ"), requestId };
   }
-  return success("บันทึกการตั้งค่าเรียบร้อยแล้ว");
+  return success("บันทึกการตั้งค่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function createTenantPortalAccountAction(formData: FormData): Promise<DashboardActionResult> {
@@ -782,14 +800,14 @@ export async function createTenantPortalAccountAction(formData: FormData): Promi
   ]);
   const setupError = results.find((result) => result.error)?.error;
   if (setupError) {
-    logFailure(requestId, "tenant.portal_account_create", setupError);
+    logFailure(requestId, "tenant.portal_account_create", setupError, context.organizationId);
     await admin.auth.admin.deleteUser(authUserId);
     return { ...fail("เปิดบัญชีผู้เช่าไม่สำเร็จ กรุณาลองใหม่"), requestId };
   }
   revalidatePath("/tenants");
   revalidatePath("/guestrooms");
   revalidatePath("/leases");
-  return success("เปิดบัญชี Tenant Portal แล้ว กรุณาส่งชื่อผู้ใช้และรหัสผ่านชั่วคราวให้ผู้เช่า");
+  return success("เปิดบัญชี Tenant Portal แล้ว กรุณาส่งชื่อผู้ใช้และรหัสผ่านชั่วคราวให้ผู้เช่า", context.organizationId);
 }
 
 export async function updateTenantPortalAccountAction(formData: FormData): Promise<DashboardActionResult> {
@@ -832,7 +850,7 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
   if (newPassword) {
     const { error: passwordError } = await admin.auth.admin.updateUserById(account.auth_user_id, { password: newPassword });
     if (passwordError) {
-      logFailure(requestId, "tenant.portal_account_password_update", passwordError);
+      logFailure(requestId, "tenant.portal_account_password_update", passwordError, context.organizationId);
       return { ...fail("ตั้งรหัสผ่านใหม่ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
     }
   }
@@ -842,7 +860,7 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
     .update({ username })
     .eq("auth_user_id", account.auth_user_id);
   if (usernameError) {
-    logFailure(requestId, "tenant.portal_account_username_update", usernameError);
+    logFailure(requestId, "tenant.portal_account_username_update", usernameError, context.organizationId);
     return { ...fail(newPassword ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองแก้ชื่อผู้ใช้อีกครั้ง" : "เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
 
@@ -851,14 +869,14 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
   const { error: profileError } = await admin.from("profiles").update(profilePatch).eq("id", account.auth_user_id);
   if (profileError) {
     await admin.from("auth_login_aliases").update({ username: currentAlias.username }).eq("auth_user_id", account.auth_user_id);
-    logFailure(requestId, "tenant.portal_account_profile_update", profileError);
+    logFailure(requestId, "tenant.portal_account_profile_update", profileError, context.organizationId);
     return { ...fail(newPassword ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่บันทึกชื่อผู้ใช้ไม่ครบ กรุณาลองอีกครั้ง" : "บันทึกชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
 
   revalidatePath("/tenants");
   revalidatePath("/guestrooms");
   revalidatePath("/leases");
-  return success(newPassword ? "แก้ไขชื่อผู้ใช้และตั้งรหัสผ่านใหม่แล้ว" : "แก้ไขชื่อผู้ใช้แล้ว");
+  return success(newPassword ? "แก้ไขชื่อผู้ใช้และตั้งรหัสผ่านใหม่แล้ว" : "แก้ไขชื่อผู้ใช้แล้ว", context.organizationId);
 }
 
 export async function reviewPaymentSubmissionAction(formData: FormData): Promise<DashboardActionResult> {
@@ -867,9 +885,11 @@ export async function reviewPaymentSubmissionAction(formData: FormData): Promise
   if (!context.ok) return context.error;
   const submissionId = text(formData, "submissionId"), decision = text(formData, "decision");
   if (!UUID_PATTERN.test(submissionId) || !["approve", "reject"].includes(decision)) return fail("ไม่พบรายการหลักฐานที่ต้องการตรวจสอบ");
+  const { data: submission } = await context.supabase.from("payment_submissions").select("id").eq("id", submissionId).eq("organization_id", context.organizationId).eq("status", "pending").maybeSingle();
+  if (!submission) return fail("ไม่พบรายการหลักฐานที่รอตรวจสอบในกิจการนี้");
   if (decision === "approve") {
     const { error } = await context.supabase.rpc("approve_payment_submission", { target_submission_id: submissionId });
-    if (error) { logFailure(requestId, "payment_submission.approve", error); return { ...fail("ยืนยันยอดไม่สำเร็จ ยอดคงเหลืออาจมีการเปลี่ยนแปลง"), requestId }; }
+    if (error) { logFailure(requestId, "payment_submission.approve", error, context.organizationId); return { ...fail("ยืนยันยอดไม่สำเร็จ ยอดคงเหลืออาจมีการเปลี่ยนแปลง"), requestId }; }
   } else {
     const reason = text(formData, "rejectionReason");
     if (reason.length < 3) return fail("กรุณาระบุเหตุผลที่ไม่อนุมัติ");
@@ -877,7 +897,7 @@ export async function reviewPaymentSubmissionAction(formData: FormData): Promise
     if (error || !data) return fail("รายการนี้อาจถูกตรวจสอบไปแล้ว กรุณาโหลดหน้าใหม่");
   }
   revalidatePath("/payments"); revalidatePath("/tenant"); revalidatePath("/tenant/bills"); revalidatePath("/invoices"); revalidatePath("/receivables");
-  return success(decision === "approve" ? "ยืนยันยอดและตัดใบแจ้งหนี้แล้ว" : "ส่งรายการกลับให้ผู้เช่าแก้ไขแล้ว");
+  return success(decision === "approve" ? "ยืนยันยอดและตัดใบแจ้งหนี้แล้ว" : "ส่งรายการกลับให้ผู้เช่าแก้ไขแล้ว", context.organizationId);
 }
 
 export async function updatePropertyAction(formData: FormData): Promise<DashboardActionResult> {
@@ -893,10 +913,10 @@ export async function updatePropertyAction(formData: FormData): Promise<Dashboar
     name, address: text(formData, "address"), phone: text(formData, "phone") || null, status,
   }).eq("id", propertyId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error || !data) {
-    logFailure(requestId, "property.update", error);
+    logFailure(requestId, "property.update", error, context.organizationId);
     return { ...fail("แก้ไขหอพักไม่สำเร็จ ชื่อหอพักอาจซ้ำ"), requestId };
   }
-  return success("แก้ไขข้อมูลหอพักเรียบร้อยแล้ว");
+  return success("แก้ไขข้อมูลหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function updateRoomAction(formData: FormData): Promise<DashboardActionResult> {
@@ -927,10 +947,10 @@ export async function updateRoomAction(formData: FormData): Promise<DashboardAct
     property_id: propertyId, room_number: roomNumber, floor: floor || null, base_rent: baseRent, status,
   }).eq("id", roomId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error || !data) {
-    logFailure(requestId, "room.update", error);
+    logFailure(requestId, "room.update", error, context.organizationId);
     return { ...fail("แก้ไขห้องไม่สำเร็จ หมายเลขห้องอาจซ้ำ"), requestId };
   }
-  return success("แก้ไขข้อมูลห้องพักเรียบร้อยแล้ว");
+  return success("แก้ไขข้อมูลห้องพักเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function deletePropertyAction(formData: FormData): Promise<DashboardActionResult> {
@@ -943,13 +963,13 @@ export async function deletePropertyAction(formData: FormData): Promise<Dashboar
   const { data, error } = await context.supabase.from("properties").delete()
     .eq("id", propertyId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error) {
-    logFailure(requestId, "property.delete", error);
+    logFailure(requestId, "property.delete", error, context.organizationId);
     if (error.code === "23503") return fail("ลบหอพักไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ การรับชำระ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน");
     return { ...fail("ลบหอพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบหอพัก หรือคุณไม่มีสิทธิ์ลบหอพักนี้");
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "property.deleted", entity_type: "property", entity_id: propertyId });
-  return success("ลบหอพักเรียบร้อยแล้ว");
+  return success("ลบหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function deleteRoomAction(formData: FormData): Promise<DashboardActionResult> {
@@ -962,13 +982,13 @@ export async function deleteRoomAction(formData: FormData): Promise<DashboardAct
   const { data, error } = await context.supabase.from("rooms").delete()
     .eq("id", roomId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error) {
-    logFailure(requestId, "room.delete", error);
+    logFailure(requestId, "room.delete", error, context.organizationId);
     if (error.code === "23503") return fail("ลบห้องไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน");
     return { ...fail("ลบห้องพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบห้องพัก หรือคุณไม่มีสิทธิ์ลบห้องนี้");
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "room.deleted", entity_type: "room", entity_id: roomId });
-  return success("ลบห้องพักเรียบร้อยแล้ว");
+  return success("ลบห้องพักเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function updateTenantAction(formData: FormData): Promise<DashboardActionResult> {
@@ -986,10 +1006,10 @@ export async function updateTenantAction(formData: FormData): Promise<DashboardA
     id_card_last4: idCardLast4 || null, address: text(formData, "address") || null, status,
   }).eq("id", tenantId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error || !data) {
-    logFailure(requestId, "tenant.update", error);
+    logFailure(requestId, "tenant.update", error, context.organizationId);
     return { ...fail("แก้ไขข้อมูลผู้เช่าไม่สำเร็จ"), requestId };
   }
-  return success("แก้ไขข้อมูลผู้เช่าเรียบร้อยแล้ว");
+  return success("แก้ไขข้อมูลผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function deleteTenantAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1002,7 +1022,7 @@ export async function deleteTenantAction(formData: FormData): Promise<DashboardA
   // Check if tenant has tenant_accounts
   const admin = createAdminClient();
   if (admin) {
-    const { data: acc } = await admin.from("tenant_accounts").select("auth_user_id").eq("tenant_id", tenantId).maybeSingle();
+    const { data: acc } = await admin.from("tenant_accounts").select("auth_user_id").eq("tenant_id", tenantId).eq("organization_id", context.organizationId).maybeSingle();
     if (acc?.auth_user_id) {
       await admin.auth.admin.deleteUser(acc.auth_user_id);
     }
@@ -1011,13 +1031,13 @@ export async function deleteTenantAction(formData: FormData): Promise<DashboardA
   const { data, error } = await context.supabase.from("tenants").delete()
     .eq("id", tenantId).eq("organization_id", context.organizationId).select("id").maybeSingle();
   if (error) {
-    logFailure(requestId, "tenant.delete", error);
+    logFailure(requestId, "tenant.delete", error, context.organizationId);
     if (error.code === "23503") return fail("ลบผู้เช่าไม่ได้ เนื่องจากมีสัญญาเช่า ใบแจ้งหนี้ หรือประวัติการชำระเงินผูกอยู่ กรุณาเปลี่ยนสถานะเป็น 'ผู้เช่าเดิม' หรือ 'ระงับ' แทน");
     return { ...fail("ลบผู้เช่าไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบผู้เช่า หรือคุณไม่มีสิทธิ์ลบผู้เช่านี้");
   await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "tenant.deleted", entity_type: "tenant", entity_id: tenantId });
-  return success("ลบข้อมูลผู้เช่าเรียบร้อยแล้ว");
+  return success("ลบข้อมูลผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function updateLeaseAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1052,7 +1072,7 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
     occupant_count: occupantCount,
   }).eq("id", leaseId).eq("organization_id", context.organizationId).select("id, room_id").maybeSingle();
   if (error || !data) {
-    logFailure(requestId, "lease.update", error);
+    logFailure(requestId, "lease.update", error, context.organizationId);
     return { ...fail("แก้ไขสัญญาไม่สำเร็จ เลขที่สัญญาอาจซ้ำ"), requestId };
   }
   if (data.room_id) {
@@ -1072,7 +1092,7 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
       }
     }
   }
-  return success("แก้ไขสัญญาเช่าเรียบร้อยแล้ว");
+  return success("แก้ไขสัญญาเช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function updateInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1086,10 +1106,10 @@ export async function updateInvoiceAction(formData: FormData): Promise<Dashboard
     invoice_number: invoiceNumber, due_at: dueAt, note: text(formData, "note") || null,
   }).eq("id", invoiceId).eq("organization_id", context.organizationId).in("status", ["draft", "issued", "partial"]).select("id").maybeSingle();
   if (error || !data) {
-    logFailure(requestId, "invoice.update", error);
+    logFailure(requestId, "invoice.update", error, context.organizationId);
     return { ...fail("แก้ไขใบแจ้งหนี้ไม่สำเร็จ เอกสารอาจชำระแล้วหรือเลขที่ซ้ำ"), requestId };
   }
-  return success("แก้ไขใบแจ้งหนี้เรียบร้อยแล้ว");
+  return success("แก้ไขใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function cancelInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1134,7 +1154,7 @@ export async function cancelInvoiceAction(formData: FormData): Promise<Dashboard
     .eq("organization_id", context.organizationId);
 
   if (error) {
-    logFailure(requestId, "invoice.cancel", error);
+    logFailure(requestId, "invoice.cancel", error, context.organizationId);
     return { ...fail("ยกเลิกใบแจ้งหนี้ไม่สำเร็จ"), requestId };
   }
 
@@ -1148,7 +1168,7 @@ export async function cancelInvoiceAction(formData: FormData): Promise<Dashboard
     metadata: { reason },
   });
 
-  return success("ยกเลิกใบแจ้งหนี้เรียบร้อยแล้ว");
+  return success("ยกเลิกใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function createOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1217,7 +1237,7 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
     });
 
     if (createError || !created.user) {
-      logFailure(requestId, "user.create", createError);
+      logFailure(requestId, "user.create", createError, context.organizationId);
       return fail(createError?.message || "ไม่สามารถสร้างบัญชีผู้ใช้งานได้");
     }
 
@@ -1247,12 +1267,12 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
   });
 
   if (memberError) {
-    logFailure(requestId, "organization_members.insert", memberError);
+    logFailure(requestId, "organization_members.insert", memberError, context.organizationId);
     return fail("เพิ่มผู้ใช้เข้าสู่กิจการไม่สำเร็จ");
   }
 
   revalidatePath("/users");
-  return success(`เพิ่มผู้ใช้งาน "${fullName}" เรียบร้อยแล้ว`);
+  return success(`เพิ่มผู้ใช้งาน "${fullName}" เรียบร้อยแล้ว`, context.organizationId);
 }
 
 export async function updateOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1289,7 +1309,7 @@ export async function updateOrganizationMemberAction(formData: FormData): Promis
   }
 
   revalidatePath("/users");
-  return success("อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว");
+  return success("อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว", context.organizationId);
 }
 
 export async function deleteOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
@@ -1318,11 +1338,11 @@ export async function deleteOrganizationMemberAction(formData: FormData): Promis
     .eq("organization_id", context.organizationId);
 
   if (error) {
-    logFailure(requestId, "organization_members.delete", error);
+    logFailure(requestId, "organization_members.delete", error, context.organizationId);
     return fail("ลบผู้ใช้งานไม่สำเร็จ");
   }
 
   revalidatePath("/users");
-  return success("ลบผู้ใช้งานออกจากกิจการเรียบร้อยแล้ว");
+  return success("ลบผู้ใช้งานออกจากกิจการเรียบร้อยแล้ว", context.organizationId);
 }
 

@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { isSystemAdmin } from "@/lib/auth/system-admin";
+import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { getOrganizationAccess } from "@/lib/auth/organization-access";
 import { readPrivateSlip } from "@/lib/storage/private-r2";
 
@@ -42,7 +45,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .eq("status", "active")
     .maybeSingle();
 
-  if (!account) {
+  const managingOrganization = await isSystemAdmin(userId)
+    && (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value === submission.organization_id;
+  if (!account && !managingOrganization) {
     const access = await getOrganizationAccess(userId, submission.organization_id);
     const allowed = access?.granularReady
       ? access.permissions.has("customer_payments:view")
@@ -89,4 +94,3 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return denied();
   }
 }
-

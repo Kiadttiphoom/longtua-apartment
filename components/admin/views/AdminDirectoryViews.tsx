@@ -2,6 +2,7 @@ import { impersonateOrganizationAction, resetUserPasswordAction, updateOrganizat
 import { AdminTable, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Eye } from "lucide-react";
+import Link from "next/link";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
 
 const organizationStatuses = ["active", "suspended", "closed"];
@@ -23,6 +24,7 @@ export function AdminOrganizationsView({ organizations, profileMap, memberCountB
           thaiDate(item.created_at),
           <form action={updateOrganizationAction} className="inline-flex items-center gap-2" key="f">
             <input name="organizationId" type="hidden" value={item.id} />
+            <input name="name" aria-label={`ชื่อกิจการ ${item.name}`} defaultValue={item.name} required minLength={2} maxLength={160} className="h-8 w-40 rounded-lg border border-slate-200 px-2.5 text-xs" />
             <select
               aria-label={`สถานะ ${item.name}`}
               className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -57,16 +59,17 @@ export function AdminOrganizationsView({ organizations, profileMap, memberCountB
   );
 }
 
-export function AdminUsersView({ profiles, systemAdminIds, organizationCountByUser }: Pick<AdminViewContentProps, "profiles" | "systemAdminIds" | "organizationCountByUser">) {
+export function AdminUsersView({ profiles, systemAdminIds, organizationCountByUser, memberships, organizationMap }: Pick<AdminViewContentProps, "profiles" | "systemAdminIds" | "organizationCountByUser" | "memberships" | "organizationMap">) {
   return (
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div>
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อผู้ใช้</span>
         <h2 className="text-lg font-bold text-slate-800 tracking-tight">ผู้ใช้งานทั้งหมด</h2>
+        <p className="mt-1 text-xs text-slate-500">ปรับสิทธิ์ผู้ใช้แยกตามกิจการ เลือกกิจการเพื่อกำหนดบทบาทและสิทธิ์การใช้งาน</p>
       </div>
 
       <AdminTable
-        headers={["บัญชี", "ประเภท", "กิจการ", "สถานะ", "ตั้งรหัสผ่านชั่วคราว"]}
+        headers={["บัญชี", "ประเภท", "กิจการ", "สิทธิ์การใช้งาน", "สถานะ", "ตั้งรหัสผ่านชั่วคราว"]}
         rows={profiles.map((item) => [
           <div key="u">
             <strong className="text-xs font-bold text-slate-800 block">{item.username}</strong>
@@ -80,6 +83,22 @@ export function AdminUsersView({ profiles, systemAdminIds, organizationCountByUs
             "ผู้ใช้กิจการ"
           ),
           organizationCountByUser.get(item.id) ?? 0,
+          <div key="permissions" className="space-y-2 min-w-[160px]">
+            {systemAdminIds.has(item.id) ? (
+              <span className="text-xs text-slate-500">สิทธิ์ผู้ดูแลระบบสูงสุด</span>
+            ) : memberships.some((membership) => membership.user_id === item.id && membership.status === "active") ? (
+              memberships.filter((membership) => membership.user_id === item.id && membership.status === "active").map((membership) => (
+                <Link
+                  key={membership.organization_id}
+                  href={{ pathname: "/admin/permissions", query: { mode: "user", organization: membership.organization_id, user: item.id } }}
+                  className="block rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 hover:bg-blue-100"
+                >
+                  <span className="block font-semibold">ปรับสิทธิ์ · {organizationMap.get(membership.organization_id) ?? "กิจการ"}</span>
+                  <span className="block mt-1">บทบาท: {membership.role_code}</span>
+                </Link>
+              ))
+            ) : <span className="text-xs text-slate-500">ยังไม่มีสมาชิกกิจการที่ใช้งาน</span>}
+          </div>,
           systemAdminIds.has(item.id) ? (
             <StatusBadge compact key="s" label="ป้องกันการระงับ" status="active" />
           ) : (
