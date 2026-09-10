@@ -420,6 +420,12 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
 
   if (error || !invoice) {
     logFailure(requestId, "invoice.create", error);
+    if ((error as { code?: string })?.code === "23505") {
+      return {
+        ...fail("เลขที่ใบแจ้งหนี้นี้มีอยู่ในระบบแล้ว (หากเป็นการออกบิลใหม่แทนฉบับที่ยกเลิก กรุณาต่อท้าย เช่น -R1)"),
+        requestId,
+      };
+    }
     return { ...fail("ออกใบแจ้งหนี้ไม่สำเร็จ เลขที่เอกสารอาจซ้ำ"), requestId };
   }
 
@@ -544,6 +550,27 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
   }
   if (currentValue < previousValue) return fail(`เลขครั้งนี้ต้องไม่น้อยกว่าเลขครั้งก่อน (${previousValue.toLocaleString("th-TH")})`);
 
+  // ตรวจสอบความต่อเนื่องกับรอบเดือนถัดไป (กรณีมีข้อมูลล่วงหน้า)
+  const { data: subsequentReadings, error: subsequentError } = await context.supabase
+    .from("meter_readings")
+    .select("id, current_value, previous_value, billing_cycles!inner(period_month)")
+    .eq("organization_id", context.organizationId)
+    .eq("meter_id", meter.id)
+    .gt("billing_cycles.period_month", monthDate);
+
+  if (!subsequentError && subsequentReadings && subsequentReadings.length > 0) {
+    const sortedSubsequent = (subsequentReadings as Array<{ id: string; current_value: number; previous_value: number; billing_cycles: unknown }>).sort((left, right) =>
+      getRelatedPeriodMonth(left.billing_cycles).localeCompare(getRelatedPeriodMonth(right.billing_cycles))
+    );
+    const immediateNext = sortedSubsequent[0];
+    if (immediateNext && currentValue > Number(immediateNext.current_value)) {
+      const nextMonth = getRelatedPeriodMonth(immediateNext.billing_cycles);
+      return fail(
+        `เลขมิเตอร์ครั้งนี้ (${currentValue.toLocaleString("th-TH")}) ต้องไม่มากกว่าเลขมิเตอร์ของรอบถัดไป (${nextMonth}: ${Number(immediateNext.current_value).toLocaleString("th-TH")})`
+      );
+    }
+  }
+
   const { error } = await context.supabase.from("meter_readings").upsert({
     organization_id: context.organizationId,
     meter_id: meter.id,
@@ -556,6 +583,21 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     logFailure(requestId, "meter.reading_upsert", error);
     return { ...fail("บันทึกเลขมิเตอร์ไม่สำเร็จ"), requestId };
   }
+
+  if (!subsequentError && subsequentReadings && subsequentReadings.length > 0) {
+    const sortedSubsequent = (subsequentReadings as Array<{ id: string; current_value: number; previous_value: number; billing_cycles: unknown }>).sort((left, right) =>
+      getRelatedPeriodMonth(left.billing_cycles).localeCompare(getRelatedPeriodMonth(right.billing_cycles))
+    );
+    const immediateNext = sortedSubsequent[0];
+    if (immediateNext && Number(immediateNext.previous_value) !== currentValue) {
+      await context.supabase
+        .from("meter_readings")
+        .update({ previous_value: currentValue })
+        .eq("id", immediateNext.id)
+        .eq("organization_id", context.organizationId);
+    }
+  }
+
   return success("บันทึกเลขมิเตอร์เรียบร้อยแล้ว");
 }
 
@@ -1096,11 +1138,14 @@ export async function cancelInvoiceAction(formData: FormData): Promise<Dashboard
     return { ...fail("ยกเลิกใบแจ้งหนี้ไม่สำเร็จ"), requestId };
   }
 
+  const reason = text(formData, "reason") || "ยกเลิกโดยผู้ดูแลระบบ";
+
   await context.supabase.from("audit_logs").insert({
     organization_id: context.organizationId,
     action: "invoice.cancelled",
     entity_type: "rent_invoice",
     entity_id: invoiceId,
+    metadata: { reason },
   });
 
   return success("ยกเลิกใบแจ้งหนี้เรียบร้อยแล้ว");

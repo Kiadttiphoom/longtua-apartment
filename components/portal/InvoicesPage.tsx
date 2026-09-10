@@ -151,6 +151,7 @@ export function InvoicesPage({
   const [status, setStatus] = useState("all");
   const [dateFilterMode, setDateFilterMode] = useState<"date" | "month" | "year">("month");
   const [dateFilterValue, setDateFilterValue] = useState("");
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState("");
 
   const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
     ? activePropertyId
@@ -168,7 +169,26 @@ export function InvoicesPage({
   );
 
   const selectedLease = leases.find((l) => l.id === leaseId);
+  const selectedRoom = selectedLease ? roomMap.get(selectedLease.room_id) : undefined;
   const selectedSettings = selectedLease ? settings.find((s) => s.property_id === selectedLease.property_id) : undefined;
+
+  const voidedInvoicesForLeaseAndPeriod = useMemo(() => {
+    if (!leaseId || !periodMonth) return [];
+    return invoices.filter((inv) => {
+      if (inv.lease_id !== leaseId || inv.status !== "void") return false;
+      const invMonth = inv.issued_at ? inv.issued_at.slice(0, 7) : "";
+      return invMonth === periodMonth;
+    });
+  }, [invoices, leaseId, periodMonth]);
+
+  const defaultInvoiceNumber = useMemo(() => {
+    if (!selectedRoom || !periodMonth) return "";
+    const base = `INV-${periodMonth.replace("-", "")}-${selectedRoom.room_number}`;
+    if (voidedInvoicesForLeaseAndPeriod.length > 0) {
+      return `${base}-R${voidedInvoicesForLeaseAndPeriod.length}`;
+    }
+    return base;
+  }, [selectedRoom, periodMonth, voidedInvoicesForLeaseAndPeriod]);
 
   const preview = useMemo(() => {
     if (!selectedLease || !selectedSettings) return null;
@@ -795,11 +815,33 @@ export function InvoicesPage({
       {cancellingInvoice ? (
         <Modal title="ยืนยันยกเลิกใบแจ้งหนี้" onClose={() => setCancellingInvoice(null)}>
           <PortalForm action={cancelInvoiceAction} organizationId={organizationId} validate={() => ({})} submitLabel="ยืนยันยกเลิกใบแจ้งหนี้" onCancel={() => setCancellingInvoice(null)} onSuccess={() => setCancellingInvoice(null)}>
-            {() => <>
-              <input name="invoiceId" type="hidden" value={cancellingInvoice.id} />
-              <strong>{cancellingInvoice.invoice_number}</strong>
-              <p className="text-sm text-slate-600">ใบแจ้งหนี้จะเปลี่ยนเป็นสถานะยกเลิกและไม่นับเป็นยอดค้างชำระ โดยยังเก็บประวัติไว้ ไม่สามารถยกเลิกรายการที่รับชำระแล้วได้</p>
-            </>}
+            {() => (
+              <div className="space-y-3.5 text-xs">
+                <input name="invoiceId" type="hidden" value={cancellingInvoice.id} />
+                <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4 text-rose-900">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600 font-medium">เลขที่ใบแจ้งหนี้:</span>
+                    <strong className="font-mono font-bold text-sm text-rose-700">{cancellingInvoice.invoice_number}</strong>
+                  </div>
+                  <p className="mt-2 text-[11px] text-rose-700/90 leading-relaxed">
+                    ใบแจ้งหนี้จะเปลี่ยนเป็นสถานะยกเลิก (Void) และไม่นับเป็นยอดค้างชำระ โดยยังคงเก็บประวัติไว้ในระบบ ไม่สามารถยกเลิกรายการที่รับชำระแล้วได้
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    เหตุผลในการยกเลิกเอกสาร <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium transition-all"
+                    defaultValue="จดเลขมิเตอร์ผิดพลาด / ออกบิลใหม่แทน"
+                    name="reason"
+                    placeholder="เช่น จดเลขมิเตอร์ผิดพลาด, มีการตกลงส่วนลดพิเศษ, ผู้เช่าย้ายออก"
+                    required
+                  />
+                  <p className="mt-1 text-[11px] text-slate-400">ข้อมูลนี้จะถูกบันทึกใน Audit Log เพื่อการตรวจสอบย้อนหลัง</p>
+                </div>
+              </div>
+            )}
           </PortalForm>
         </Modal>
       ) : null}
@@ -883,7 +925,40 @@ export function InvoicesPage({
                   <>
                     <input name="leaseId" type="hidden" value={leaseId} />
                     <input name="itemsJson" type="hidden" value={JSON.stringify(preview?.items ?? [])} />
-                    <p className="text-xs text-slate-500">ระบบจะออกเลขที่ใบแจ้งหนี้อัตโนมัติเมื่อบันทึก</p>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <ReceiptText size={14} className="text-slate-500" />
+                          <span>เลขที่ใบแจ้งหนี้ <span className="text-rose-500">*</span></span>
+                        </span>
+                        {voidedInvoicesForLeaseAndPeriod.length > 0 ? (
+                          <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 border border-amber-300 px-2 py-0.5 rounded-lg">
+                            ฉบับออกใหม่แทนบิลที่ยกเลิก (-R{voidedInvoicesForLeaseAndPeriod.length})
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-normal">กำหนดเองหรือใช้ตามระบบ</span>
+                        )}
+                      </label>
+                      <input
+                        aria-invalid={Boolean(errors.invoiceNumber)}
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                        name="invoiceNumber"
+                        onChange={(e) => {
+                          setCustomInvoiceNumber(e.target.value);
+                          clear("invoiceNumber");
+                        }}
+                        placeholder="เช่น INV-202609-101"
+                        value={customInvoiceNumber || defaultInvoiceNumber}
+                      />
+                      {errors.invoiceNumber ? (
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.invoiceNumber}</p>
+                      ) : null}
+                      {voidedInvoicesForLeaseAndPeriod.length > 0 ? (
+                        <p className="mt-1 text-[11px] text-amber-700 font-medium">
+                          ⚠️ สัญญานี้เคยยกเลิกบิลรอบนี้ ({voidedInvoicesForLeaseAndPeriod[0].invoice_number}) ระบบจึงแนะนำเลขที่ต่อท้ายด้วย -R{voidedInvoicesForLeaseAndPeriod.length} เพื่อป้องกันเลขที่ซ้ำ
+                        </p>
+                      ) : null}
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                       <div>
@@ -899,6 +974,7 @@ export function InvoicesPage({
                           onValueChange={(val) => {
                             setLeaseId(val);
                             clear("leaseId");
+                            setCustomInvoiceNumber("");
                           }}
                           options={activeLeases.map((l) => {
                             const room = roomMap.get(l.room_id);
@@ -932,6 +1008,7 @@ export function InvoicesPage({
                           onValueChange={(val) => {
                             setPeriodMonth(val);
                             clear("periodMonth");
+                            setCustomInvoiceNumber("");
                           }}
                           placeholder="เลือกรอบเดือน"
                         />
