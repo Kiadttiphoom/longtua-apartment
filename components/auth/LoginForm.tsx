@@ -22,7 +22,9 @@ export function LoginForm({ supportUrl = "https://longtua.com/contact" }: { supp
       <section className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-14 bg-white overflow-y-auto">
         <div className="w-full max-w-sm space-y-6">
           <div className="md:hidden flex justify-center pb-2">
-            <BrandLogo className="max-h-11 w-auto object-contain" />
+            <div className="flex h-20 w-52 items-center justify-center overflow-hidden rounded-2xl bg-[#020c23] px-5 py-3 shadow-sm ring-1 ring-slate-900/10">
+              <BrandLogo className="max-h-14 max-w-full w-auto object-contain" />
+            </div>
           </div>
 
           <div className="space-y-2">
