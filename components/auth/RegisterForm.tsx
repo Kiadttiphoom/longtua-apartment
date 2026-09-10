@@ -13,7 +13,6 @@ const inputs = [
   { name: "propertyName", label: "ชื่อหอพัก", type: "text", autoComplete: "organization", maxLength: 160 },
   { name: "contactEmail", label: "อีเมลติดต่อ", type: "email", autoComplete: "email", maxLength: 254 },
   { name: "phone", label: "เบอร์โทรศัพท์", type: "tel", autoComplete: "tel", maxLength: 20 },
-  { name: "requestedRoomCount", label: "จำนวนห้อง (1–100 ห้อง)", type: "number", autoComplete: "off" },
   { name: "username", label: "ชื่อผู้ใช้", type: "text", autoComplete: "username", maxLength: 30 },
   { name: "password", label: "รหัสผ่าน", type: "password", autoComplete: "new-password" },
   { name: "confirmPassword", label: "ยืนยันรหัสผ่าน", type: "password", autoComplete: "new-password" },
@@ -39,13 +38,12 @@ export function RegisterForm({ enabled, full = false }: { enabled: boolean; full
             <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{full ? "ขณะนี้ครบจำนวน 20 กิจการแล้ว จึงปิดรับสมัครใหม่ชั่วคราว" : "ขณะนี้ระบบปิดรับคำขอทดลองใช้ กรุณากลับมาใหม่ภายหลัง"}</p>
           ) : (
             <form action={action} className="space-y-4" noValidate>
+              <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">แพ็กเกจทดลองใช้ฟรี 30 วัน สำหรับ 1 หอพัก สูงสุด 10 ห้อง เริ่มนับเมื่อผู้ดูแลอนุมัติ</p>
               <fieldset disabled={pending} className="space-y-4 disabled:opacity-70">
                 {inputs.map(({ label, ...input }) => (
                   <div key={input.name} className="space-y-1.5">
                     <label htmlFor={input.name} className="text-xs font-semibold text-slate-700">{label} *</label>
                     <input {...input} id={input.name} required
-                      min={input.type === "number" ? 1 : undefined} max={input.type === "number" ? 100 : undefined}
-                      step={input.type === "number" ? 1 : undefined}
                       defaultValue={input.type === "password" ? undefined : state.values?.[input.name]}
                       aria-invalid={Boolean(fields[input.name])}
                       aria-describedby={fields[input.name] ? `${input.name}-error` : input.name === "username" || input.name === "password" ? `${input.name}-hint` : undefined}

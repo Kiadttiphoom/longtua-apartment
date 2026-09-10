@@ -11,7 +11,7 @@ export type RegisterState = {
 
 export async function registerAction(_previous: RegisterState, formData: FormData): Promise<RegisterState> {
   const values: Record<string, string> = {};
-  for (const key of ["username", "operatorName", "propertyName", "contactEmail", "phone", "requestedRoomCount"]) {
+  for (const key of ["username", "operatorName", "propertyName", "contactEmail", "phone"]) {
     const value = formData.get(key);
     values[key] = typeof value === "string" ? value : "";
   }
