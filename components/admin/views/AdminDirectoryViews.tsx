@@ -124,10 +124,10 @@ export function AdminUsersView({ profiles, systemAdminIds, organizationCountByUs
             <input
               autoComplete="new-password"
               className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs placeholder:text-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[180px]"
-              minLength={12}
+              minLength={8}
               name="temporaryPassword"
-              pattern="(?=.*[A-Za-z])(?=.*\d).{12,}"
-              placeholder="อย่างน้อย 12 ตัว (อักษร+เลข)"
+              pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+              placeholder="อย่างน้อย 8 ตัว (อักษร+เลข)"
               required
               type="password"
             />

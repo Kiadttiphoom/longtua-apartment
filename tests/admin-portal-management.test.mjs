@@ -46,6 +46,7 @@ function harness({ admin = true, selected = organizationId, signedIn = true, mem
     "@/lib/supabase/server": { createClient: async () => client },
     "@/lib/supabase/admin": { createAdminClient: () => { throw new Error("Must retain authenticated client"); } },
     "@/lib/auth/organization-access": { hasOrganizationPermission: async () => allowed },
+    "@/lib/portal/validation.mjs": { validateFloor: () => "", validateTenant: () => ({}) },
   };
   vm.runInNewContext(compiled, { exports, require: (name) => modules[name] ?? {}, console, crypto, Date });
   const form = new FormData();

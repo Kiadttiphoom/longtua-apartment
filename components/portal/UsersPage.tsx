@@ -1,4 +1,5 @@
 "use client";
+import { alertSuccess, alertError } from "@/lib/sweetalert";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -81,7 +82,6 @@ export function UsersPage({
   const [inviteRole, setInviteRole] = useState("staff");
   const [inviteScope, setInviteScope] = useState("all");
   const [showPassword, setShowPassword] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
 
   // Edit / Password reset state
   const [resetPassword, setResetPassword] = useState("");
@@ -90,10 +90,6 @@ export function UsersPage({
     setMembers(initialMembers);
   }, [initialMembers]);
 
-  function showToast(msg: string) {
-    setToastMessage(msg);
-    window.setTimeout(() => setToastMessage(""), 2800);
-  }
 
   const propertyOptions = useMemo(() => {
     const list = [{ value: "all", label: "ทุกหอพักของกิจการ (ดูแลทั้งหมด)" }];
@@ -130,20 +126,22 @@ export function UsersPage({
   ], []);
 
   const editRoleOptions = useMemo(() => [
-    { value: "owner", label: "เจ้าของกิจการ (Owner)", description: "สิทธิ์สูงสุดดูแลทุกส่วน" },
     { value: "manager", label: "ผู้จัดการ (Manager)", description: "ดูแลสัญญาและห้องพัก" },
     { value: "accounting", label: "ฝ่ายการเงิน (Accounting)", description: "ออกบิลและรับชำระ" },
     { value: "staff", label: "เจ้าหน้าที่ (Staff)", description: "จดมิเตอร์และดูสถานะ" },
   ], []);
 
+  const [inviteError, setInviteError] = useState("");
+  const [editError, setEditError] = useState("");
   function handleSendInvite() {
+    setInviteError("");
     if (!inviteName.trim() || !inviteEmail.trim()) {
-      showToast("กรุณากรอกชื่อและชื่อผู้ใช้/อีเมล");
+      setInviteError("กรุณากรอกชื่อและชื่อผู้ใช้/อีเมล");
       return;
     }
 
-    if (!invitePassword || invitePassword.length < 6) {
-      showToast("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร");
+    if (!invitePassword || invitePassword.length < 8) {
+      setInviteError("รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร");
       return;
     }
 
@@ -163,24 +161,22 @@ export function UsersPage({
         setInvitePassword("");
         setInviteRole("staff");
         setInviteScope("all");
-        showToast(res.message);
+        void alertSuccess(res.message);
         router.refresh();
       } else {
-        showToast(res.message);
+        setInviteError(res.message);
       }
     });
   }
 
   function handleSaveEdit() {
     if (!editingMember) return;
+    setEditError("");
 
     const updatedMember = {
       ...editingMember,
       scope: editingMember.scope === "all" ? "ทุกหอพัก" : editingMember.scope,
     };
-    setMembers((prev) =>
-      prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-    );
 
     const formData = new FormData();
     formData.set("organizationId", organizationId);
@@ -193,12 +189,13 @@ export function UsersPage({
     startTransition(async () => {
       const res = await updateOrganizationMemberAction(formData);
       if (res.ok) {
+        setMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
         setEditingMember(null);
         setResetPassword("");
-        showToast(res.message);
+        void alertSuccess(res.message);
         router.refresh();
       } else {
-        showToast(res.message);
+        setEditError(res.message);
       }
     });
   }
@@ -214,29 +211,22 @@ export function UsersPage({
       const res = await deleteOrganizationMemberAction(formData);
       if (res.ok) {
         setDeletingMember(null);
-        showToast(res.message);
+        void alertSuccess(res.message);
         router.refresh();
       } else {
-        showToast(res.message);
+        void alertError(res.message);
       }
     });
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Toast Notification */}
-      {toastMessage ? (
-        <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-slate-900 text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-top-2">
-          <CheckCircle2 size={16} className="text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      ) : null}
 
       {/* Page Header */}
       <PageHeader
         actionLabel={canCreate ? "เพิ่มผู้ใช้ใหม่" : undefined}
         description="กำหนดระดับสิทธิ์ รหัสผ่านเข้าใช้งาน ขอบเขตสาขา/หอพัก และสถานะ"
-        onAction={() => setShowInviteModal(true)}
+        onAction={() => { setInviteError(""); setShowInviteModal(true); }}
         title="ผู้ใช้งาน"
       />
 
@@ -381,7 +371,7 @@ export function UsersPage({
                   <div className="inline-flex items-center gap-2 justify-end" key="actions">
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                      onClick={() => setEditingMember(row)}
+                      onClick={() => { setEditError(""); setEditingMember(row); }}
                       title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
                       type="button"
                     >
@@ -456,7 +446,7 @@ export function UsersPage({
                   <footer className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
                     <button
                       className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-2xs cursor-pointer"
-                      onClick={() => setEditingMember(m)}
+                      onClick={() => { setEditError(""); setEditingMember(m); }}
                       title="แก้ไข / เปลี่ยนรหัสผ่าน"
                       type="button"
                     >
@@ -501,6 +491,7 @@ export function UsersPage({
           title="เพิ่มผู้ใช้งานใหม่"
         >
           <div className="p-6 space-y-4 text-xs">
+            {inviteError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{inviteError}</p>}
             {/* Value / Security Banner */}
             <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
@@ -557,7 +548,7 @@ export function UsersPage({
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span>รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 6 ตัวอักษร</span>
+                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 8 ตัวอักษร</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -628,7 +619,7 @@ export function UsersPage({
               </button>
               <button
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
-                disabled={isPending || !inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 6}
+                disabled={isPending || !inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 8}
                 onClick={handleSendInvite}
                 type="button"
               >
@@ -651,6 +642,7 @@ export function UsersPage({
           title={`แก้ไขผู้ใช้งาน: ${editingMember.name}`}
         >
           <div className="p-6 space-y-4">
+            {editError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{editError}</p>}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อ-นามสกุล</label>
               <input
@@ -758,6 +750,7 @@ export function UsersPage({
           title="ยืนยันการลบผู้ใช้งาน"
         >
           <div className="p-6 space-y-4">
+
             <p className="text-xs text-slate-600 leading-relaxed">
               ผู้ใช้รายนี้จะไม่สามารถเข้าสู่ระบบและจัดการข้อมูลของกิจการได้อีกต่อไป การดำเนินการนี้ไม่สามารถเรียกคืนได้
             </p>

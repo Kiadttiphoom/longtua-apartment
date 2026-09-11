@@ -1,4 +1,5 @@
 "use client";
+import { Swal } from "@/lib/sweetalert";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -129,15 +130,11 @@ export function ApartmentDemo({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [toast, setToast] = useState("");
   const [hasRestoredDemo, setHasRestoredDemo] = useState(!showDemoControls);
 
-  function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2400);
-  }
+  function showNotice(message: string) { void Swal.fire({ icon: "info", title: "โหมดตัวอย่าง", text: message, confirmButtonText: "ตกลง", confirmButtonColor: "#2563eb" }); }
 
-  const companyCollection = useDemoCollection(companies, showToast);
+  const companyCollection = useDemoCollection(companies, showNotice);
 
   // ── Multi-property state ──
   const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
@@ -254,7 +251,7 @@ export function ApartmentDemo({
 
   function deleteContract(id: string) {
     updateActiveProperty((p) => ({ ...p, contracts: p.contracts.filter((c) => c.id !== id) }));
-    showToast("ลบสัญญาเช่าเรียบร้อยแล้ว");
+    showNotice("ลบสัญญาเช่าเรียบร้อยแล้ว");
   }
 
   function updateSettings(s: AppSettings) {
@@ -266,12 +263,12 @@ export function ApartmentDemo({
     setActivePropertyId(prop.id);
     setShowAddPropertyWizard(false);
     navigate("dashboard");
-    showToast(`เพิ่มหอพัก "${prop.name}" เรียบร้อยแล้ว`);
+    showNotice(`เพิ่มหอพัก "${prop.name}" เรียบร้อยแล้ว`);
   }
 
   function addRoom(room: RoomRecord) {
     updateActiveProperty((property) => ({ ...property, rooms: [...property.rooms, room] }));
-    showToast(`เพิ่มห้อง ${room.number} เรียบร้อยแล้ว`);
+    showNotice(`เพิ่มห้อง ${room.number} เรียบร้อยแล้ว`);
   }
 
   function resetDemo() {
@@ -282,7 +279,7 @@ export function ApartmentDemo({
     setActivePage("dashboard");
     setProperties(INITIAL_PROPERTIES);
     setActivePropertyId(INITIAL_PROPERTIES[0].id);
-    showToast("รีเซ็ตข้อมูล Demo กลับค่าเริ่มต้นแล้ว");
+    showNotice("รีเซ็ตข้อมูล Demo กลับค่าเริ่มต้นแล้ว");
   }
 
   return (
@@ -396,7 +393,7 @@ export function ApartmentDemo({
                     key={r}
                     onClick={() => {
                       setRole(r);
-                      showToast(`สลับเป็นระดับ ${roleInfo[r].label}`);
+                      showNotice(`สลับเป็นระดับ ${roleInfo[r].label}`);
                     }}
                     className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                       role === r ? "bg-white text-blue-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
@@ -539,7 +536,7 @@ export function ApartmentDemo({
             onLineChange={setLineEnabled}
             onOpenPanel={() => setIsPanelOpen(true)}
             onNavigate={navigate}
-            onToast={showToast}
+            onToast={showNotice}
             companies={companyCollection.items}
             onDeleteCompany={companyCollection.removeItem}
             appSettings={appSettings}
@@ -556,7 +553,7 @@ export function ApartmentDemo({
             properties={properties}
             onSwitchProperty={(id) => {
               setActivePropertyId(id);
-              showToast("สลับหอพักเรียบร้อยแล้ว");
+              showNotice("สลับหอพักเรียบร้อยแล้ว");
             }}
             onAddProperty={() => setShowAddPropertyWizard(true)}
             onAddRoom={addRoom}
@@ -570,7 +567,7 @@ export function ApartmentDemo({
           onSave={(company) => {
             companyCollection.addItem(company);
             setIsPanelOpen(false);
-            showToast("เพิ่มกิจการตัวอย่างเรียบร้อยแล้ว");
+            showNotice("เพิ่มกิจการตัวอย่างเรียบร้อยแล้ว");
           }}
         />
       ) : null}
@@ -582,13 +579,13 @@ export function ApartmentDemo({
           onSave={(saved) => {
             saveContract(saved);
             setEditingContract(null);
-            showToast("บันทึกสัญญาเช่าเรียบร้อยแล้ว");
+            showNotice("บันทึกสัญญาเช่าเรียบร้อยแล้ว");
           }}
           onSaveAndView={(saved) => {
             saveContract(saved);
             setEditingContract(null);
             setViewingContract(saved);
-            showToast("บันทึกและเปิดตัวอย่างสัญญา");
+            showNotice("บันทึกและเปิดตัวอย่างสัญญา");
           }}
         />
       ) : null}
@@ -624,12 +621,6 @@ export function ApartmentDemo({
         />
       ) : null}
 
-      {toast ? (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-900 text-white text-xs font-semibold shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
-          <ShieldCheck size={18} className="text-emerald-400" />
-          <span>{toast}</span>
-        </div>
-      ) : null}
     </div>
   );
 }

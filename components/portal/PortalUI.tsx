@@ -120,7 +120,7 @@ export function Modal({
         aria-describedby={description ? "portal-modal-description" : undefined}
         aria-modal="true"
         aria-labelledby="portal-modal-title"
-        className={`w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col border border-slate-100 print:static print:block print:w-full print:max-w-none print:max-h-none print:shadow-none print:border-none print:p-0 print:overflow-visible ${className ?? ""}`}
+        className={`portal-modal w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col border border-slate-100 print:static print:block print:w-full print:max-w-none print:max-h-none print:shadow-none print:border-none print:p-0 print:overflow-visible ${className ?? ""}`}
         ref={dialogRef}
         role="dialog"
         style={maxWidth ? { maxWidth } : undefined}
@@ -168,6 +168,7 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [result, setResult] = useState<DashboardActionResult | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const clear = (name: string) => setErrors((current) => current[name] ? Object.fromEntries(Object.entries(current).filter(([key]) => key !== name)) : current);
 
   return (
@@ -192,11 +193,14 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
               router.refresh();
               await alertSuccess("บันทึกข้อมูลสำเร็จ", nextResult.message || "ระบบบันทึกข้อมูลเรียบร้อยแล้ว");
             } else {
-              await alertError("บันทึกไม่สำเร็จ", nextResult.message || "กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง");
+              requestAnimationFrame(() => {
+                resultRef.current?.scrollIntoView({ block: "nearest" });
+                resultRef.current?.focus({ preventScroll: true });
+              });
             }
           } catch {
             const errMsg = "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง";
-            setResult({ ok: false, message: errMsg });
+            setResult(null);
             await alertError("เกิดข้อผิดพลาด", errMsg);
           }
         });
@@ -204,7 +208,7 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
     >
       <div className="p-6 flex flex-col gap-4 text-left">
         {result && !result.ok ? (
-          <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold" role="alert">
+          <div ref={resultRef} tabIndex={-1} className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium focus:outline-none" role="alert">
             <AlertCircle size={17} />
             <span>{result.message}</span>
           </div>

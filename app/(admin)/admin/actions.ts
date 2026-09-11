@@ -197,7 +197,7 @@ export async function resetUserPasswordAction(formData: FormData) {
   const context = await adminContext();
   const id = text(formData, "userId");
   const password = text(formData, "temporaryPassword");
-  if (!UUID_PATTERN.test(id) || password.length < 12 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) failed("users", context.requestId, "user.password_validation", new Error("Temporary password is invalid"));
+  if (!UUID_PATTERN.test(id) || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) failed("users", context.requestId, "user.password_validation", new Error("Temporary password is invalid"));
   const { error } = await context.admin.auth.admin.updateUserById(id, { password });
   if (error) failed("users", context.requestId, "user.password_reset", error);
   const { error: profileError } = await context.admin.from("profiles").update({ must_change_password: true }).eq("id", id);

@@ -20,7 +20,7 @@ import {
   requestPaymentSlipUploadPresignedUrl,
   confirmPaymentSubmissionWithR2,
 } from "@/app/(tenant)/tenant/actions";
-import { alertSuccess, alertError, alertWarning } from "@/lib/sweetalert";
+import { alertSuccess, alertError } from "@/lib/sweetalert";
 
 function getNowLocalIso(): string {
   const now = new Date();
@@ -123,21 +123,18 @@ export function TenantPaymentForm({
     if (!paidAt || !Number.isFinite(new Date(paidAt).getTime())) {
       setDateInvalid(true);
       setMessage({ ok: false, text: "กรุณาเลือกวันที่และเวลาโอน" });
-      await alertWarning("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกวันที่และเวลาโอน");
       return;
     }
 
     const fileToUpload = prepared;
     if (!fileToUpload) {
       setMessage({ ok: false, text: "กรุณาแนบสลิปหรือหลักฐานการชำระ" });
-      await alertWarning("ข้อมูลไม่ครบถ้วน", "กรุณาแนบสลิปหรือหลักฐานการชำระ");
       return;
     }
 
     const paymentInfo = parsePaymentSettings(setting);
     if (!paymentInfo.hasAny) {
       setMessage({ ok: false, text: "ไม่พบบัญชีของเจ้าของ ไม่สามารถส่งข้อมูลการชำระได้" });
-      await alertError("ไม่พบข้อมูลบัญชี", "ไม่พบบัญชีของเจ้าของ ไม่สามารถส่งข้อมูลการชำระได้");
       return;
     }
 
@@ -159,7 +156,6 @@ export function TenantPaymentForm({
         if (presigned.message.includes("ยกเลิก")) {
           setMessage({ ok: false, text: presigned.message });
           router.refresh();
-          await alertWarning("ใบแจ้งหนี้ถูกยกเลิกแล้ว", presigned.message);
           return;
         }
         throw new Error(presigned.message);
@@ -196,7 +192,6 @@ export function TenantPaymentForm({
         if (confirmRes.message.includes("ยกเลิก")) {
           setMessage({ ok: false, text: confirmRes.message });
           router.refresh();
-          await alertWarning("ใบแจ้งหนี้ถูกยกเลิกแล้ว", confirmRes.message);
           return;
         }
         throw new Error(confirmRes.message);
@@ -213,14 +208,11 @@ export function TenantPaymentForm({
       const errorMsg = error instanceof Error ? error.message : "ส่งหลักฐานไม่สำเร็จ กรุณาลองอีกครั้ง";
       if (errorMsg.includes("ยกเลิก")) {
         router.refresh();
-        await alertWarning("ใบแจ้งหนี้ถูกยกเลิกแล้ว", errorMsg);
+        setMessage({ ok: false, text: errorMsg });
       } else {
+        setMessage(null);
         await alertError("ส่งหลักฐานไม่สำเร็จ", errorMsg);
       }
-      setMessage({
-        ok: false,
-        text: errorMsg,
-      });
     } finally {
       setPending(false);
     }

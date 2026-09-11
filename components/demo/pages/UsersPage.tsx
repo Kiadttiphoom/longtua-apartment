@@ -97,8 +97,8 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
       onToast("กรุณากรอกชื่อและชื่อผู้ใช้/อีเมล");
       return;
     }
-    if (invitePassword && invitePassword.length < 6) {
-      onToast("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร");
+    if (invitePassword && invitePassword.length < 8) {
+      onToast("รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร");
       return;
     }
     const assignedScope = inviteRole === "เจ้าของกิจการ" ? "ทุกหอพัก" : inviteScope;
@@ -448,7 +448,7 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span>รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 6 ตัวอักษร</span>
+                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 8 ตัวอักษร</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -519,7 +519,7 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               </button>
               <button
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
-                disabled={!inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 6}
+                disabled={!inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 8}
                 onClick={handleInviteUser}
                 type="button"
               >

@@ -835,10 +835,11 @@ export function GuestroomsPage({
                       />
                       <Field
                         clear={clear}
-                        defaultValue={editing.floor}
+                        defaultValue={editing.floor || "1"}
                         error={errors.floor}
                         label="ชั้น"
                         name="floor"
+                        required
                       />
                     </div>
 
@@ -1009,15 +1010,23 @@ export function GuestroomsPage({
                         <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <Layers size={14} className="text-slate-500" />
-                            <span>ชั้นที่ระบุ</span>
+                            <span>ชั้นที่ระบุ <span className="text-rose-500">*</span></span>
                           </span>
-                          <span className="text-[11px] text-slate-400 font-normal">เช่น 1</span>
+                          <span className="text-[11px] text-slate-500 font-normal">เช่น 1, G, B1</span>
                         </label>
                         <input
                           className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
                           name="floor"
-                          placeholder="เช่น 1 (เว้นว่างได้)"
+                          defaultValue="1"
+                          required
+                          maxLength={40}
+                          aria-invalid={Boolean(errors.floor)}
+                          aria-describedby={errors.floor ? "room-floor-error" : "room-floor-hint"}
+                          onChange={() => clear("floor")}
+                          placeholder="เช่น 1, G หรือ B1"
                         />
+                        <p id="room-floor-hint" className="mt-1 text-xs text-slate-500">ทุกห้องในชุดนี้ใช้ชั้นเดียวกัน รองรับ B1/2, 1 ครึ่ง และชั้นลอย</p>
+                        {errors.floor && <p id="room-floor-error" className="mt-1 text-xs text-rose-700">{errors.floor}</p>}
                       </div>
 
                       <div>

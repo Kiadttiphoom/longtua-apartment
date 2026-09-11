@@ -20,10 +20,13 @@ export default async function Page() {
       .eq("organization_id", context.organization.id),
     supabase
       .from("organization_members")
-      .select("id", { count: "exact", head: true })
+      .select("user_id", { count: "exact", head: true })
       .eq("organization_id", context.organization.id)
       .eq("status", "active"),
   ]);
+  if (propRes.error || roomRes.error || userRes.error || propRes.count === null || roomRes.count === null || userRes.count === null) {
+    throw new Error("ไม่สามารถตรวจสอบการใช้งานแพ็กเกจได้ กรุณาลองอีกครั้ง");
+  }
 
   return (
     <SubscriptionPage

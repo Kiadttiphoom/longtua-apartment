@@ -184,7 +184,11 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
     const handleScroll = (event: Event) => {
       const target = event.target as Node | null;
       // Scrolling inside the panel (e.g. year select list or clock time list) should not close the panel
-      if (panelRef.current && target && panelRef.current.contains(target)) {
+      if (
+        target &&
+        (panelRef.current?.contains(target) ||
+          (target instanceof Element && target.closest?.('[role="listbox"], [role="option"]')))
+      ) {
         return;
       }
       // Scrolling the page closes the popover to prevent detachment
@@ -332,11 +336,12 @@ export function DateTimeControl({ name, mode, type, defaultValue, placeholder, i
           <div className="grid grid-cols-3 gap-2 py-3">
             {monthNames.map((monthName, index) => (
               <button
-                className={`py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                className={`py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
                   value === `${viewYear}-${pad(index + 1)}`
                     ? "bg-blue-600 text-white shadow-xs"
                     : "text-slate-700 hover:bg-slate-100"
                 }`}
+                disabled={isDisabledDate(`${viewYear}-${pad(index + 1)}`)}
                 key={monthName}
                 onClick={() => commit(`${viewYear}-${pad(index + 1)}`)}
                 type="button"

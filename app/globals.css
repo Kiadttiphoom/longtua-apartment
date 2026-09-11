@@ -2,12 +2,48 @@
 @import "sweetalert2/dist/sweetalert2.min.css";
 
 /* Match alert corners to the app's rounded dialogs and controls. */
+.swal2-popup .swal2-title {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.swal2-popup .swal2-html-container {
+  font-size: 1rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.swal2-popup .swal2-styled {
+  font-size: 0.875rem;
+}
+
 .swal2-popup {
+  --swal2-width: 26rem;
+  --swal2-padding: 0 0 1rem;
+  --swal2-title-padding: 0.5rem 1.25rem 0;
+  --swal2-html-container-padding: 0.75rem 1.25rem 0;
   --swal2-border-radius: 1rem;
   --swal2-input-border-radius: 0.75rem;
   --swal2-confirm-button-border-radius: 0.75rem;
   --swal2-deny-button-border-radius: 0.75rem;
   --swal2-cancel-button-border-radius: 0.75rem;
+}
+
+.swal2-popup .swal2-icon {
+  font-size: 0.75rem;
+  margin: 1.25rem auto 0.5rem;
+}
+
+.swal2-popup .swal2-actions {
+  margin: 1rem auto 0;
+  gap: 0.5rem;
+}
+
+.swal2-popup .swal2-styled {
+  min-height: 2.75rem;
+  margin: 0;
 }
 
 @layer base {
@@ -112,6 +148,21 @@
   .invoice-parties, .invoice-summary { grid-template-columns: 1fr; gap: 24px; }
   .invoice-lines th, .invoice-lines td { padding-left: 6px; padding-right: 6px; }
   .invoice-footer { flex-direction: column; }
+}
+
+.portal-modal,
+.portal-modal button,
+.portal-modal input,
+.portal-modal select,
+.portal-modal textarea {
+  font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, Arial, sans-serif;
+}
+
+.portal-modal .font-mono,
+.portal-modal input,
+.portal-modal button,
+.portal-modal [role="button"] {
+  font-family: inherit;
 }
 
 @media print {

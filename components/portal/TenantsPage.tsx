@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Building2,
+  CalendarDays,
   CreditCard,
   Hash,
   KeyRound,
@@ -11,6 +12,7 @@ import {
   ListFilter,
   Mail,
   MapPin,
+  MessageCircle,
   Pencil,
   Phone,
   RotateCcw,
@@ -35,10 +37,13 @@ import {
   StatusBadge,
 } from "@/components/portal/PortalUI";
 import { SelectControl } from "@/components/ui/SelectControl";
+import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { TenantPortalAccountModal } from "@/components/portal/TenantPortalAccountModal";
 import type { Lease, Property, Room, Tenant } from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
 import { validateTenant } from "@/lib/portal/validation.mjs";
+
+const phoneDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "").slice(0, 15);
 
 export function TenantsPage({
   organizationId,
@@ -133,7 +138,7 @@ export function TenantsPage({
       const matchesStatus = status === "all" || item.status === status;
       const matchesSearch =
         !keyword ||
-        [item.full_name, item.phone, item.email, item.address, leaseInfo?.room?.room_number].some((value) =>
+        [item.full_name, item.phone, item.email, item.address, item.line_id, item.vehicle_plate, item.emergency_contact_name, leaseInfo?.room?.room_number].some((value) =>
           value?.toLocaleLowerCase("th").includes(keyword)
         );
       return matchesFloor && matchesStatus && matchesSearch;
@@ -708,10 +713,17 @@ export function TenantsPage({
                       </span>
                       <input
                         className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold font-mono transition-all placeholder:text-slate-400"
-                        defaultValue={editing?.phone ?? ""}
+                        defaultValue={phoneDigits(editing?.phone)}
+                        inputMode="numeric"
+                        maxLength={15}
                         name="phone"
-                        onChange={() => clear("phone")}
-                        placeholder="08x-xxx-xxxx"
+                        onChange={(event) => {
+                          event.currentTarget.value = phoneDigits(event.currentTarget.value);
+                          clear("phone");
+                        }}
+                        pattern="[0-9]{9,15}"
+                        placeholder="0812345678"
+                        type="tel"
                       />
                     </div>
                     {errors.phone ? (
@@ -734,6 +746,7 @@ export function TenantsPage({
                       <input
                         className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium transition-all placeholder:text-slate-400"
                         defaultValue={editing?.email ?? ""}
+                        maxLength={254}
                         name="email"
                         onChange={() => clear("email")}
                         placeholder="example@email.com"
@@ -761,12 +774,19 @@ export function TenantsPage({
                         <CreditCard size={16} strokeWidth={2.2} />
                       </span>
                       <input
+                        autoComplete="off"
                         className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold font-mono transition-all placeholder:text-slate-400"
                         defaultValue={editing?.id_card_last4 ?? ""}
+                        inputMode="numeric"
                         maxLength={4}
                         name="idCardLast4"
-                        onChange={() => clear("idCardLast4")}
+                        onChange={(event) => {
+                          event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "").slice(0, 4);
+                          clear("idCardLast4");
+                        }}
+                        pattern="[0-9]{4}"
                         placeholder="ระบุ 4 ตัวท้าย"
+                        type="text"
                       />
                     </div>
                     {errors.idCardLast4 ? (
@@ -795,6 +815,50 @@ export function TenantsPage({
                   ) : null}
                 </div>
 
+                {/* Birth date & vehicle */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays size={14} className="text-slate-500" />
+                        <span>วันเกิด</span>
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-normal">ใช้ยืนยันตัวตน</span>
+                    </label>
+                    <DateTimeControl
+                      ariaLabel="วันเกิดผู้เช่า"
+                      defaultValue={editing?.birth_date ?? ""}
+                      invalid={Boolean(errors.birthDate)}
+                      max={new Date().toISOString().slice(0, 10)}
+                      min="1900-01-01"
+                      name="birthDate"
+                      onValueChange={() => clear("birthDate")}
+                      placeholder="เลือกวันเกิด"
+                    />
+                    {errors.birthDate ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.birthDate}</p> : null}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Hash size={14} className="text-slate-500" />
+                        <span>ทะเบียนรถ</span>
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-normal">สำหรับลานจอดรถ</span>
+                    </label>
+                    <input
+                      aria-invalid={Boolean(errors.vehiclePlate)}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
+                      defaultValue={editing?.vehicle_plate ?? ""}
+                      maxLength={40}
+                      name="vehiclePlate"
+                      onChange={() => clear("vehiclePlate")}
+                      placeholder="เช่น กข 1234 กรุงเทพมหานคร"
+                    />
+                    {errors.vehiclePlate ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.vehiclePlate}</p> : null}
+                  </div>
+                </div>
+
                 {/* Address */}
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
@@ -811,6 +875,7 @@ export function TenantsPage({
                     <input
                       className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
                       defaultValue={editing?.address ?? ""}
+                      maxLength={500}
                       name="address"
                       onChange={() => clear("address")}
                       placeholder="บ้านเลขที่ ซอย ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์"
@@ -819,6 +884,94 @@ export function TenantsPage({
                   {errors.address ? (
                     <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.address}</p>
                   ) : null}
+                </div>
+
+                {/* Emergency contact */}
+                <fieldset className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5">
+                  <legend className="px-1.5 text-xs font-bold text-slate-800">ผู้ติดต่อฉุกเฉิน</legend>
+                  <p className="mb-3 text-[11px] text-slate-500">หากเริ่มกรอก กรุณากรอกชื่อ ความสัมพันธ์ และเบอร์โทรให้ครบ</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">ชื่อผู้ติดต่อ</label>
+                      <input
+                        aria-invalid={Boolean(errors.emergencyContactName)}
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
+                        defaultValue={editing?.emergency_contact_name ?? ""}
+                        maxLength={160}
+                        name="emergencyContactName"
+                        onChange={() => clear("emergencyContactName")}
+                        placeholder="ชื่อ-นามสกุล"
+                      />
+                      {errors.emergencyContactName ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactName}</p> : null}
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">ความสัมพันธ์</label>
+                      <input
+                        aria-invalid={Boolean(errors.emergencyContactRelationship)}
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
+                        defaultValue={editing?.emergency_contact_relationship ?? ""}
+                        maxLength={80}
+                        name="emergencyContactRelationship"
+                        onChange={() => clear("emergencyContactRelationship")}
+                        placeholder="เช่น มารดา พี่น้อง"
+                      />
+                      {errors.emergencyContactRelationship ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactRelationship}</p> : null}
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">เบอร์โทร</label>
+                      <input
+                        aria-invalid={Boolean(errors.emergencyContactPhone)}
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
+                        defaultValue={phoneDigits(editing?.emergency_contact_phone)}
+                        inputMode="numeric"
+                        maxLength={15}
+                        name="emergencyContactPhone"
+                        onChange={(event) => {
+                          event.currentTarget.value = phoneDigits(event.currentTarget.value);
+                          clear("emergencyContactPhone");
+                        }}
+                        pattern="[0-9]{9,15}"
+                        placeholder="0812345678"
+                        type="tel"
+                      />
+                      {errors.emergencyContactPhone ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactPhone}</p> : null}
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><MessageCircle size={14} className="text-slate-500" /> LINE ID</span>
+                      <span className="text-[11px] text-slate-400 font-normal">สำหรับแจ้งบิล</span>
+                    </label>
+                    <input
+                      aria-invalid={Boolean(errors.lineId)}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
+                      defaultValue={editing?.line_id ?? ""}
+                      maxLength={100}
+                      name="lineId"
+                      onChange={() => clear("lineId")}
+                      placeholder="เช่น somchai123"
+                    />
+                    {errors.lineId ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.lineId}</p> : null}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Pencil size={14} className="text-slate-500" /> หมายเหตุ</span>
+                      <span className="text-[11px] text-slate-400 font-normal">สัตว์เลี้ยงหรือข้อจำกัดเฉพาะ</span>
+                    </label>
+                    <textarea
+                      aria-invalid={Boolean(errors.notes)}
+                      className="w-full min-h-20 px-3.5 py-3 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none resize-y text-slate-900 text-xs font-medium placeholder:text-slate-400"
+                      defaultValue={editing?.notes ?? ""}
+                      maxLength={2000}
+                      name="notes"
+                      onChange={() => clear("notes")}
+                      placeholder="ระบุข้อมูลที่ควรรู้เพิ่มเติม"
+                    />
+                    {errors.notes ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.notes}</p> : null}
+                  </div>
                 </div>
               </div>
             )}

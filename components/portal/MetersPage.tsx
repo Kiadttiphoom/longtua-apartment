@@ -18,10 +18,12 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { saveMeterReadingAction } from "@/app/(portal)/resource-actions";
+import { deleteMeterReadingAction, saveMeterReadingAction } from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
+  DeleteButton,
+  DeleteConfirmation,
   EmptyState,
   Modal,
   PageHeader,
@@ -32,7 +34,7 @@ import { DateFilterControl, type DateFilterMode } from "@/components/portal/Date
 import { SelectControl } from "@/components/ui/SelectControl";
 import type { Invoice, Meter, MeterReading, Property, Room } from "@/components/portal/types";
 import { thaiDate } from "@/lib/format";
-import { formatThaiBillingMonth, getMeterReadingDefaults, getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
+import { formatThaiBillingMonth, getBangkokPeriodMonth, getBangkokToday, getMeterReadingDefaults, getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
 import { validateMeter } from "@/lib/portal/validation.mjs";
 
 type MetersPageProps = {
@@ -44,6 +46,7 @@ type MetersPageProps = {
   invoices?: Invoice[];
   submissions?: { id: string; invoice_id: string; status: string }[];
   canCreate: boolean;
+  canDelete: boolean;
 };
 
 export function MetersPage({
@@ -55,15 +58,17 @@ export function MetersPage({
   invoices = [],
   submissions = [],
   canCreate,
+  canDelete,
 }: MetersPageProps) {
   const [open, setOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<MeterReading | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
   const [floor, setFloor] = useState("all");
   const [modalPropertyId, setModalPropertyId] = useState("");
   const [modalRoomId, setModalRoomId] = useState("");
   const [meterType, setMeterType] = useState("electric");
-  const [periodMonth, setPeriodMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [periodMonth, setPeriodMonth] = useState(() => getBangkokPeriodMonth());
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("month");
@@ -252,6 +257,21 @@ export function MetersPage({
       >
         <Pencil size={14} strokeWidth={2.2} /> <span>แก้ไขมิเตอร์</span>
       </button>
+    );
+  };
+
+  const deleteButton = (reading: MeterReading) => {
+    const meter = meterMap.get(reading.meter_id);
+    if (!canDelete || !meter) return null;
+    const roomNumber = roomMap.get(meter.room_id)?.room_number ?? "";
+    const lock = getLockStatusForReading(reading);
+    return (
+      <DeleteButton
+        disabled={lock.isLocked}
+        label={`รายการมิเตอร์ห้อง ${roomNumber} ${formatThaiBillingMonth(reading.period_month)}`}
+        onClick={() => setDeleteTarget(reading)}
+        title={lock.isLocked ? lock.message : "ลบรายการมิเตอร์"}
+      />
     );
   };
 
@@ -602,7 +622,7 @@ export function MetersPage({
                 "เลขอ่านครั้งนี้",
                 "หน่วยที่ใช้",
                 "วันที่จดจริง",
-                ...(canCreate ? ["จัดการ"] : []),
+                ...(canCreate || canDelete ? ["จัดการ"] : []),
               ]}
               rows={filtered.map((item) => {
                 const meter = meterMap.get(item.meter_id);
@@ -667,7 +687,12 @@ export function MetersPage({
                   <span className="text-xs text-slate-400" key="date">
                     {thaiDate(item.read_at)}
                   </span>,
-                  ...(canCreate ? [<span key="edit">{editButton(item)}</span>] : []),
+                  ...(canCreate || canDelete ? [
+                    <div className="flex items-center justify-end gap-2" key="actions">
+                      {editButton(item)}
+                      {deleteButton(item)}
+                    </div>,
+                  ] : []),
                 ];
               })}
             />
@@ -778,7 +803,12 @@ export function MetersPage({
                           </span>
                           <span>จดเมื่อ {thaiDate(item.read_at)}</span>
                         </footer>
-                        {canCreate ? <div className="flex justify-end mt-2">{editButton(item)}</div> : null}
+                        {canCreate || canDelete ? (
+                          <div className="flex items-center justify-end gap-2 mt-2">
+                            {editButton(item)}
+                            {deleteButton(item)}
+                          </div>
+                        ) : null}
                       </article>
                     );
                   })}
@@ -961,6 +991,7 @@ export function MetersPage({
                       ariaLabel="รอบเดือนที่จด"
                       defaultValue={periodMonth}
                       invalid={Boolean(errors.periodMonth)}
+                      max={getBangkokPeriodMonth()}
                       mode="month"
                       type="month"
                       name="periodMonth"
@@ -985,8 +1016,9 @@ export function MetersPage({
                     </label>
                     <DateTimeControl
                       ariaLabel="วันที่จดจริง"
-                      defaultValue={new Date().toISOString().slice(0, 10)}
+                      defaultValue={draft.recordedAt || getBangkokToday()}
                       invalid={Boolean(errors.recordedAt)}
+                      max={getBangkokToday()}
                       mode="date"
                       name="recordedAt"
                       onValueChange={() => clear("recordedAt")}
@@ -1060,6 +1092,24 @@ export function MetersPage({
           </PortalForm>
         </Modal>
       ) : null}
+
+      {deleteTarget ? (() => {
+        const meter = meterMap.get(deleteTarget.meter_id);
+        const roomNumber = roomMap.get(meter?.room_id ?? "")?.room_number ?? "—";
+        return (
+          <DeleteConfirmation
+            action={deleteMeterReadingAction}
+            detail="หากรอบนี้มีใบแจ้งหนี้ที่ยังใช้งานอยู่ ระบบจะไม่อนุญาตให้ลบ กรุณายกเลิกใบแจ้งหนี้ก่อน"
+            entityField="readingId"
+            entityId={deleteTarget.id}
+            onClose={() => setDeleteTarget(null)}
+            organizationId={organizationId}
+            subject={`กำลังจะลบเลขมิเตอร์ห้อง ${roomNumber} รอบ ${formatThaiBillingMonth(deleteTarget.period_month)}`}
+            submitLabel="ยืนยันลบรายการ"
+            title="ลบรายการมิเตอร์?"
+          />
+        );
+      })() : null}
     </div>
   );
 }

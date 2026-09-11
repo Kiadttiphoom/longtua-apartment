@@ -882,7 +882,7 @@ export function LeasesPage({
                         <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <FileText size={14} className="text-slate-500" />
-                            <span>เลขที่สัญญา <span className="text-rose-500">*</span></span>
+                            <span>เลขที่สัญญา</span>
                           </span>
                         </label>
                         <div className="relative">
@@ -890,11 +890,11 @@ export function LeasesPage({
                             <FileText size={16} strokeWidth={2.2} />
                           </span>
                           <input
-                            className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                            aria-readonly="true"
+                            className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold cursor-default"
                             defaultValue={editing.lease_number}
                             name="leaseNumber"
-                            onChange={() => clear("leaseNumber")}
-                            placeholder="กรอกเลขที่สัญญา"
+                            readOnly
                           />
                         </div>
                         {errors.leaseNumber ? (
@@ -1015,20 +1015,20 @@ export function LeasesPage({
                       <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
                           <FileText size={14} className="text-slate-500" />
-                          <span>เลขที่สัญญา <span className="text-rose-500">*</span></span>
+                          <span>เลขที่สัญญา</span>
                         </span>
-                        <span className="text-[11px] text-slate-400 font-normal">สร้างอัตโนมัติ</span>
+                        <span className="text-[11px] text-slate-500 font-normal">ระบบกำหนด เปลี่ยนไม่ได้</span>
                       </label>
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                           <FileText size={16} strokeWidth={2.2} />
                         </span>
                         <input
-                          className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all placeholder:text-slate-400"
+                          aria-readonly="true"
+                          className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold cursor-default"
                           defaultValue={`CONT-${new Date().toISOString().slice(0, 4)}-${String(leases.length + 1).padStart(3, "0")}`}
                           name="leaseNumber"
-                          onChange={() => clear("leaseNumber")}
-                          placeholder="ระบุเลขที่สัญญา"
+                          readOnly
                         />
                       </div>
                       {errors.leaseNumber ? (
@@ -1116,7 +1116,7 @@ export function LeasesPage({
                       </span>
                     </label>
                     <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-sm font-semibold tabular-nums transition-all"
                       defaultValue={editing?.rent_amount}
                       min={0}
                       name="rentAmount"
@@ -1138,7 +1138,7 @@ export function LeasesPage({
                       </span>
                     </label>
                     <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-sm font-semibold tabular-nums transition-all"
                       defaultValue={editing?.deposit_amount ?? 0}
                       min={0}
                       name="depositAmount"
@@ -1160,7 +1160,7 @@ export function LeasesPage({
                       </span>
                     </label>
                     <input
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-sm font-semibold tabular-nums transition-all"
                       defaultValue={editing?.advance_amount ?? 0}
                       min={0}
                       name="advanceAmount"

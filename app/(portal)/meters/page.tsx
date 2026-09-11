@@ -22,6 +22,7 @@ export default async function Page() {
       invoices={data.invoices}
       submissions={submissions ?? []}
       canCreate={can(context, "customer_meters", "create")}
+      canDelete={can(context, "customer_meters", "delete")}
     />
   );
 }

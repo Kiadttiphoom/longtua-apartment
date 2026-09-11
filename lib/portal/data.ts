@@ -33,7 +33,7 @@ export const loadPortalData = cache(async (): Promise<PortalData> => {
     supabase.from("properties").select("id, name, address, phone, status").eq("organization_id", organizationId).order("created_at"),
     Promise.resolve(settingsQuery),
     supabase.from("rooms").select("id, property_id, room_number, floor, base_rent, status").eq("organization_id", organizationId).order("room_number"),
-    supabase.from("tenants").select("id, full_name, phone, email, id_card_last4, address, status").eq("organization_id", organizationId).order("full_name"),
+    supabase.from("tenants").select("id, full_name, phone, email, id_card_last4, address, birth_date, emergency_contact_name, emergency_contact_relationship, emergency_contact_phone, vehicle_plate, line_id, notes, status").eq("organization_id", organizationId).order("full_name"),
     supabase.from("leases").select("id, property_id, room_id, primary_tenant_id, lease_number, start_date, end_date, rent_amount, deposit_amount, advance_amount, occupant_count, terms, status").eq("organization_id", organizationId).order("created_at", { ascending: false }),
     supabase.from("meters").select("id, property_id, room_id, meter_type, serial_number, status").eq("organization_id", organizationId),
     supabase.from("meter_readings").select("id, meter_id, billing_cycle_id, previous_value, current_value, usage_value, read_at, billing_cycles(period_month)").eq("organization_id", organizationId).order("read_at", { ascending: false }).limit(500),

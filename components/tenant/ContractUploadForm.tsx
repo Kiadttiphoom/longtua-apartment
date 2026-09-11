@@ -8,7 +8,7 @@ import {
 } from "@/app/(tenant)/tenant/lease/upload-action";
 import { prepareSlipImage } from "@/lib/tenant/prepare-slip-image";
 import { SelectControl } from "@/components/ui/SelectControl";
-import { alertSuccess, alertError, alertWarning } from "@/lib/sweetalert";
+import { alertSuccess, alertError } from "@/lib/sweetalert";
 import {
   UploadCloud,
   X,
@@ -180,7 +180,6 @@ export function ContractUploadForm({
     e.preventDefault();
     if (items.length === 0) {
       setMessage({ ok: false, text: "กรุณาเลือกภาพสัญญาอย่างน้อย 1 ภาพ" });
-      await alertWarning("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกภาพสัญญาอย่างน้อย 1 ภาพ");
       return;
     }
     if (existingCount + items.length > MAX_IMAGES) {
@@ -189,12 +188,10 @@ export function ContractUploadForm({
         ok: false,
         text: warnMsg,
       });
-      await alertWarning("เกินจำนวนที่กำหนด", warnMsg);
       return;
     }
     if (!selectedLeaseId) {
       setMessage({ ok: false, text: "กรุณาเลือกสัญญา" });
-      await alertWarning("ข้อมูลไม่ครบถ้วน", "กรุณาเลือกสัญญา");
       return;
     }
 
@@ -267,10 +264,7 @@ export function ContractUploadForm({
       await alertSuccess("แนบภาพสัญญาสำเร็จ", `แนบภาพสัญญาสำเร็จเรียบร้อยทั้งหมด ${successCount} ภาพ`);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการอัปโหลด";
-      setMessage({
-        ok: false,
-        text: errMsg,
-      });
+      setMessage(null);
       await alertError("อัปโหลดไม่สำเร็จ", errMsg);
     } finally {
       setPending(false);

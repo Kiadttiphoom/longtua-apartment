@@ -23,7 +23,8 @@ test("trialRegistration_rendersLocalFormWithRegistrationSwitch", () => {
   assert.match(page, /await isRegistrationEnabled/);
   assert.match(page, /enabled=\{registration.configured && registration.enabled && capacity !== null && !capacity.full\}/);
   assert.doesNotMatch(page, /permanentRedirect/);
-  assert.match(form, /useActionState\(registerAction/);
+  assert.match(form, /useActionState\(/);
+  assert.match(form, /await registerAction\(previous, formData\)/);
   assert.match(form, /!enabled/);
   assert.match(form, /state.status === "success"/);
   assert.match(action, /await createTrialRequest/);

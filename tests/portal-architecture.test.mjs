@@ -114,8 +114,28 @@ test("customDateTime_customerFormsUseThaiCalendarForDateMonthTimeAndDateTimeValu
   assert.match(control, /"date" \| "month" \| "time" \| "datetime-local"/);
   assert.match(control, /new Intl\.DateTimeFormat\("th-TH"/);
   assert.match(control, /<input name=\{name\} readOnly type="hidden" value=\{value\}/);
+  assert.equal(
+    control.match(/closest\?\.\('\[role="listbox"\], \[role="option"\]'\)/g)?.length,
+    2,
+    "pointer and scroll events from a nested year or month list must keep the date picker open",
+  );
   assert.match(control, /`\$\{selectedDate\}T\$\{pad\(hour\)\}:\$\{pad\(minute\)\}`/);
   assert.match(ui, /\["date", "month", "time", "datetime-local"\]\.includes\(type\)/);
   assert.match(read("components/portal/LeasesPage.tsx"), /type="date"/);
   assert.match(read("components/portal/MetersPage.tsx"), /type="month"/);
+});
+
+test("tenantIdCardLast4_usesNumericKeyboardAndKeepsLeadingZeroes", () => {
+  const tenants = read("components/portal/TenantsPage.tsx");
+  assert.match(tenants, /inputMode="numeric"/);
+  assert.match(tenants, /pattern="\[0-9\]\{4\}"/);
+  assert.match(tenants, /replace\(\/\\D\/g, ""\)\.slice\(0, 4\)/);
+  assert.match(tenants, /type="text"/);
+});
+
+test("tenantPhoneFields_useNumericKeyboardAndStripFormatting", () => {
+  const tenants = read("components/portal/TenantsPage.tsx");
+  assert.match(tenants, /const phoneDigits = .*replace\(\/\\D\/g, ""\)\.slice\(0, 15\)/);
+  assert.equal(tenants.match(/pattern="\[0-9\]\{9,15\}"/g)?.length, 2);
+  assert.equal(tenants.match(/inputMode="numeric"/g)?.length, 3);
 });

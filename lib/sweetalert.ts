@@ -2,11 +2,16 @@
 
 import Swal from "sweetalert2";
 
+function alertCopy(title: string, text: string | undefined, fallback: string) {
+  return !text && title.length > 60
+    ? { titleText: fallback, text: title }
+    : { titleText: title, text };
+}
+
 export const alertSuccess = (title: string, text?: string) => {
   return Swal.fire({
     icon: "success",
-    title,
-    text,
+    ...alertCopy(title, text, "ดำเนินการสำเร็จ"),
     confirmButtonText: "ตกลง",
     confirmButtonColor: "#059669", // emerald-600
     timer: 2500,
@@ -17,8 +22,7 @@ export const alertSuccess = (title: string, text?: string) => {
 export const alertError = (title: string, text?: string) => {
   return Swal.fire({
     icon: "error",
-    title,
-    text,
+    ...alertCopy(title, text, "ไม่สามารถดำเนินการได้"),
     confirmButtonText: "ตกลง",
     confirmButtonColor: "#e11d48", // rose-600
   });
@@ -26,8 +30,7 @@ export const alertError = (title: string, text?: string) => {
 export const alertWarning = (title: string, text?: string) => {
   return Swal.fire({
     icon: "warning",
-    title,
-    text,
+    ...alertCopy(title, text, "กรุณาตรวจสอบข้อมูล"),
     confirmButtonText: "ตกลง",
     confirmButtonColor: "#d97706", // amber-600
   });
@@ -41,8 +44,7 @@ export const alertConfirm = async (options: {
   confirmColor?: string;
 }) => {
   return Swal.fire({
-    title: options.title,
-    text: options.text,
+    ...alertCopy(options.title, options.text, "ยืนยันการดำเนินการ"),
     icon: options.icon ?? "question",
     showCancelButton: true,
     confirmButtonColor: options.confirmColor ?? "#059669",

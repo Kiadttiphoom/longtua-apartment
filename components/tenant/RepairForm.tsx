@@ -18,6 +18,7 @@ export function RepairForm({ leases }: { leases: Array<{ id: string; label: stri
   const [pending, start] = useTransition();
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
+  const [formError, setFormError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const inputStyle =
@@ -33,6 +34,7 @@ export function RepairForm({ leases }: { leases: Array<{ id: string; label: stri
       className="space-y-4 rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs"
       onSubmit={(e) => {
         e.preventDefault();
+        setFormError("");
         const form = e.currentTarget;
         const data = new FormData(form);
         start(async () => {
@@ -48,7 +50,7 @@ export function RepairForm({ leases }: { leases: Array<{ id: string; label: stri
                 result.message || "เจ้าหน้าที่ได้รับคำขอแจ้งซ่อมเรียบร้อยแล้ว"
               );
             } else {
-              await alertError("ส่งคำขอไม่สำเร็จ", result.message || "กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง");
+              setFormError(result.message || "กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง");
             }
           } catch {
             const errMsg = "เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
@@ -66,6 +68,7 @@ export function RepairForm({ leases }: { leases: Array<{ id: string; label: stri
         </strong>
       </div>
 
+      {formError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{formError}</p>}
       {/* Select Lease/Room if multiple */}
       {leases.length > 1 ? (
         <label className="block space-y-1.5 text-xs font-semibold text-slate-700">

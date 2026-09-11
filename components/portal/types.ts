@@ -16,7 +16,22 @@ export type PropertySettings = {
 };
 
 export type Room = { id: string; property_id: string; room_number: string; floor: string | null; base_rent: number; status: string };
-export type Tenant = { id: string; full_name: string; phone: string | null; email: string | null; id_card_last4: string | null; address: string | null; status: string };
+export type Tenant = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  id_card_last4: string | null;
+  address: string | null;
+  birth_date: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_relationship: string | null;
+  emergency_contact_phone: string | null;
+  vehicle_plate: string | null;
+  line_id: string | null;
+  notes: string | null;
+  status: string;
+};
 export type Lease = { id: string; property_id: string; room_id: string; primary_tenant_id: string; lease_number: string; start_date: string; end_date: string | null; rent_amount: number; deposit_amount: number; advance_amount: number; occupant_count: number; terms: string | null; status: string };
 export type Meter = { id: string; property_id: string; room_id: string; meter_type: string; serial_number: string | null; status: string };
 export type MeterReading = { id: string; meter_id: string; billing_cycle_id: string; period_month: string; previous_value: number; current_value: number; usage_value: number; read_at: string };
