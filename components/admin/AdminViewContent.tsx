@@ -51,16 +51,16 @@ export function AdminViewContent({ view, title, description, params, catalogRead
 
       {view === "overview" ? <AdminOverviewView organizationCount={organizationCount} profileCount={profileCount} subscriptions={subscriptions} organizations={organizations} memberCountByOrganization={memberCountByOrganization} /> : null}
       {view === "trial-requests" ? <AdminTrialRequestsView trialRequests={trialRequests} /> : null}
-      {view === "organizations" ? <AdminOrganizationsView organizations={organizations} profileMap={profileMap} memberCountByOrganization={memberCountByOrganization} /> : null}
-      {view === "properties" ? <AdminPropertiesView properties={properties} rooms={rooms} organizationMap={organizationMap} propertiesReady={propertiesReady} /> : null}
-      {view === "users" ? <AdminUsersView memberships={memberships} organizationMap={organizationMap} profiles={profiles} systemAdminIds={systemAdminIds} organizationCountByUser={organizationCountByUser} /> : null}
-      {view === "rooms" ? <AdminRoomsView rooms={rooms} organizationMap={organizationMap} propertyMap={propertyMap} roomsReady={roomsReady} /> : null}
-      {view === "tenants" ? <AdminTenantViews tenants={tenants} organizationMap={organizationMap} tenantsReady={tenantsReady} /> : null}
-      {view === "leases" ? <AdminLeasesView leases={leases} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} tenantMap={tenantMap} leasesReady={leasesReady} /> : null}
-      {view === "meters" ? <AdminMetersView meters={meters} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} latestReadingByMeter={latestReadingByMeter} metersReady={metersReady} /> : null}
-      {view === "invoices" ? <AdminInvoicesView invoices={invoices} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} invoicesReady={invoicesReady} /> : null}
-      {view === "payments" ? <AdminPaymentsView payments={payments} organizationMap={organizationMap} propertyMap={propertyMap} paymentsReady={paymentsReady} /> : null}
-      {view === "receivables" ? <AdminReceivablesView invoices={invoices} organizationMap={organizationMap} roomMap={roomMap} /> : null}
+      {view === "organizations" ? <AdminOrganizationsView organizations={organizations} profileMap={profileMap} profiles={profiles} memberCountByOrganization={memberCountByOrganization} /> : null}
+      {view === "properties" ? <AdminPropertiesView properties={properties} rooms={rooms} organizations={organizations} organizationMap={organizationMap} propertiesReady={propertiesReady} /> : null}
+      {view === "users" ? <AdminUsersView memberships={memberships} organizationMap={organizationMap} profiles={profiles} organizations={organizations} roles={roles} systemAdminIds={systemAdminIds} organizationCountByUser={organizationCountByUser} /> : null}
+      {view === "rooms" ? <AdminRoomsView rooms={rooms} properties={properties} organizations={organizations} organizationMap={organizationMap} propertyMap={propertyMap} roomsReady={roomsReady} /> : null}
+      {view === "tenants" ? <AdminTenantViews tenants={tenants} organizations={organizations} organizationMap={organizationMap} tenantsReady={tenantsReady} /> : null}
+      {view === "leases" ? <AdminLeasesView leases={leases} rooms={rooms} tenants={tenants} properties={properties} organizations={organizations} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} tenantMap={tenantMap} leasesReady={leasesReady} /> : null}
+      {view === "meters" ? <AdminMetersView meters={meters} rooms={rooms} properties={properties} organizations={organizations} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} latestReadingByMeter={latestReadingByMeter} metersReady={metersReady} /> : null}
+      {view === "invoices" ? <AdminInvoicesView invoices={invoices} rooms={rooms} properties={properties} organizations={organizations} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} invoicesReady={invoicesReady} /> : null}
+      {view === "payments" ? <AdminPaymentsView payments={payments} invoices={invoices} properties={properties} organizations={organizations} organizationMap={organizationMap} propertyMap={propertyMap} paymentsReady={paymentsReady} /> : null}
+      {view === "receivables" ? <AdminReceivablesView invoices={invoices} organizationMap={organizationMap} propertyMap={propertyMap} roomMap={roomMap} /> : null}
       {view === "reports" ? <AdminReportsView properties={properties} rooms={rooms} organizations={organizations} invoices={invoices} payments={payments} totalCollected={totalCollected} totalOutstanding={totalOutstanding} totalBilled={totalBilled} occupiedRooms={occupiedRooms} /> : null}
       {view === "line" ? <AdminLineView /> : null}
       {view === "subscriptions" ? <AdminSubscriptionsView subscriptions={subscriptions} subscriptionPlans={subscriptionPlans} organizationMap={organizationMap} /> : null}

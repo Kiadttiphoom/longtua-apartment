@@ -436,3 +436,986 @@ export async function saveUserMenuActionsAction(formData: FormData) {
   await audit(context, "user.menu_actions_updated", "organization_member", `${organizationId}:${userId}`, null, { values });
   done("permissions", "บันทึก Override รายบุคคลแล้ว");
 }
+
+// ==================== ORGANIZATIONS ====================
+export async function createOrganizationAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const name = text(formData, "name");
+  let slug = text(formData, "slug").toLowerCase();
+  const ownerUserId = text(formData, "ownerUserId") || context.userId;
+  const status = text(formData, "status") || "active";
+  const planCode = text(formData, "planCode") || "starter";
+
+  if (name.length < 2 || name.length > 160) {
+    failed("organizations", context.requestId, "organization.name_validation", new Error("ชื่อกิจการต้องมีความยาว 2-160 ตัวอักษร"));
+  }
+
+  if (!slug) {
+    const base = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "org";
+    slug = `${base.slice(0, 20)}-${crypto.randomUUID().slice(0, 8)}`;
+  } else if (!/^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/.test(slug)) {
+    failed("organizations", context.requestId, "organization.slug_validation", new Error("Slug ต้องเป็นภาษาอังกฤษ ตัวเลข และขีดกลาง ความยาว 4-64 ตัวอักษร"));
+  }
+
+  const { data: createdOrg, error: orgError } = await context.admin
+    .from("organizations")
+    .insert({
+      name,
+      slug,
+      owner_user_id: ownerUserId,
+      status: ["active", "suspended", "closed"].includes(status) ? status : "active",
+    })
+    .select("id, name, slug, status")
+    .single();
+
+  if (orgError) {
+    failed("organizations", context.requestId, "organization.create", orgError);
+  }
+
+  await context.admin.from("organization_members").upsert({
+    organization_id: createdOrg.id,
+    user_id: ownerUserId,
+    role_code: "owner",
+    status: "active",
+  });
+
+  await context.admin.from("subscriptions").insert({
+    organization_id: createdOrg.id,
+    status: "active",
+    max_properties: 10,
+    max_rooms: 100,
+    plan_code: planCode,
+  });
+
+  await audit(context, "organization.created", "organization", createdOrg.id, null, createdOrg);
+  done("organizations", `สร้างกิจการ "${name}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteOrganizationAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "organizationId");
+  if (!UUID_PATTERN.test(id)) failed("organizations", context.requestId, "organization.delete_validation", new Error("Invalid organization id"));
+
+  const { data: before } = await context.admin.from("organizations").select("id, name").eq("id", id).maybeSingle();
+  if (!before) failed("organizations", context.requestId, "organization.not_found", new Error("Organization not found"));
+
+  const { error } = await context.admin.from("organizations").delete().eq("id", id);
+  if (error) failed("organizations", context.requestId, "organization.delete", error);
+
+  await audit(context, "organization.deleted", "organization", id, before, null);
+  done("organizations", `ลบกิจการ "${before.name}" เรียบร้อยแล้ว`);
+}
+
+// ==================== PROPERTIES ====================
+export async function createPropertyAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const name = text(formData, "name");
+  const address = text(formData, "address");
+  const phone = text(formData, "phone");
+  const electricRate = Number(text(formData, "electricRate")) || 8;
+  const waterRate = Number(text(formData, "waterRate")) || 100;
+
+  if (!UUID_PATTERN.test(organizationId)) failed("properties", context.requestId, "property.org_validation", new Error("กรุณาเลือกกิจการ"));
+  if (name.length < 1 || name.length > 160) failed("properties", context.requestId, "property.name_validation", new Error("กรุณากรอกชื่อหอพัก"));
+
+  const { data: created, error } = await context.admin
+    .from("properties")
+    .insert({
+      organization_id: organizationId,
+      name,
+      address: address || "",
+      phone: phone || null,
+      status: "active",
+      created_by: context.userId,
+    })
+    .select("id, name, organization_id")
+    .single();
+
+  if (error) failed("properties", context.requestId, "property.create", error);
+
+  await context.admin.from("property_settings").upsert({
+    property_id: created.id,
+    organization_id: organizationId,
+    electric_rate: electricRate,
+    water_rate: waterRate,
+  });
+
+  await audit(context, "property.created", "property", created.id, null, created);
+  done("properties", `เพิ่มหอพัก "${name}" เรียบร้อยแล้ว`);
+}
+
+export async function updatePropertyAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "propertyId");
+  const name = text(formData, "name");
+  const address = text(formData, "address");
+  const phone = text(formData, "phone");
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(id)) failed("properties", context.requestId, "property.update_validation", new Error("Invalid property id"));
+  if (name.length < 1 || name.length > 160) failed("properties", context.requestId, "property.name_validation", new Error("กรุณากรอกชื่อหอพัก"));
+
+  const { data: before } = await context.admin.from("properties").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("properties")
+    .update({
+      name,
+      address: address || "",
+      phone: phone || null,
+      status: ["active", "inactive"].includes(status) ? status : "active",
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("properties", context.requestId, "property.update", error);
+  await audit(context, "property.updated", "property", id, before, after);
+  done("properties", `อัปเดตข้อมูลหอพัก "${name}" เรียบร้อยแล้ว`);
+}
+
+export async function deletePropertyAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "propertyId");
+  if (!UUID_PATTERN.test(id)) failed("properties", context.requestId, "property.delete_validation", new Error("Invalid property id"));
+
+  const { data: before } = await context.admin.from("properties").select("id, name").eq("id", id).maybeSingle();
+  const { error } = await context.admin.from("properties").delete().eq("id", id);
+  if (error) failed("properties", context.requestId, "property.delete", error);
+
+  await audit(context, "property.deleted", "property", id, before, null);
+  done("properties", `ลบหอพัก "${before?.name ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== USERS ====================
+export async function createUserAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const username = text(formData, "username").toLowerCase().replace(/[^a-z0-9_.-]/g, "");
+  const displayName = text(formData, "displayName") || username;
+  const phone = text(formData, "phone");
+  const password = text(formData, "password");
+  const organizationId = text(formData, "organizationId");
+  const roleCode = text(formData, "roleCode") || "staff";
+  const isSysAdmin = text(formData, "isSystemAdmin") === "true";
+
+  if (username.length < 3) failed("users", context.requestId, "user.username_validation", new Error("ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร"));
+  if (password.length < 8) failed("users", context.requestId, "user.password_validation", new Error("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"));
+
+  const isEmail = username.includes("@");
+  const emailToUse = isEmail ? username : `${crypto.randomUUID()}@longtua.internal`;
+
+  const { data: created, error: createError } = await context.admin.auth.admin.createUser({
+    email: emailToUse,
+    password,
+    email_confirm: true,
+    user_metadata: { username, display_name: displayName },
+  });
+
+  if (createError || !created.user) {
+    failed("users", context.requestId, "user.create", createError ?? new Error("Failed to create auth user"));
+  }
+
+  const authUserId = created.user.id;
+  await context.admin.from("profiles").upsert({
+    id: authUserId,
+    username,
+    display_name: displayName,
+    phone: phone || null,
+    status: "active",
+  });
+
+  if (!isEmail) {
+    await context.admin.from("auth_login_aliases").upsert({
+      username,
+      auth_user_id: authUserId,
+    });
+  }
+
+  if (isSysAdmin) {
+    await context.admin.from("system_admins").upsert({
+      user_id: authUserId,
+      status: "active",
+    });
+  }
+
+  if (organizationId && UUID_PATTERN.test(organizationId)) {
+    await context.admin.from("organization_members").upsert({
+      organization_id: organizationId,
+      user_id: authUserId,
+      role_code: roleCode,
+      status: "active",
+    });
+  }
+
+  await audit(context, "user.created", "user", authUserId, null, { username, displayName, isSysAdmin, organizationId });
+  done("users", `สร้างผู้ใช้งาน "${displayName}" (@${username}) เรียบร้อยแล้ว`);
+}
+
+export async function updateUserAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "userId");
+  const displayName = text(formData, "displayName");
+  const phone = text(formData, "phone");
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(id)) failed("users", context.requestId, "user.update_validation", new Error("Invalid user id"));
+
+  const { data: before } = await context.admin.from("profiles").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("profiles")
+    .update({
+      display_name: displayName || before?.display_name,
+      phone: phone || null,
+      status: ["active", "suspended"].includes(status) ? status : "active",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("users", context.requestId, "user.update", error);
+  await audit(context, "user.updated", "user", id, before, after);
+  done("users", `อัปเดตข้อมูลผู้ใช้งาน "${displayName}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteUserAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "userId");
+  if (!UUID_PATTERN.test(id)) failed("users", context.requestId, "user.delete_validation", new Error("Invalid user id"));
+  if (id === context.userId) failed("users", context.requestId, "user.self_delete", new Error("ไม่สามารถลบบัญชี Super Admin ของตนเองได้"));
+
+  const { data: sysAdmin } = await context.admin.from("system_admins").select("user_id").eq("user_id", id).eq("status", "active").maybeSingle();
+  if (sysAdmin) failed("users", context.requestId, "user.system_admin_delete", new Error("ไม่สามารถลบ Super Admin ได้"));
+
+  const { data: before } = await context.admin.from("profiles").select("*").eq("id", id).maybeSingle();
+  const { error } = await context.admin.auth.admin.deleteUser(id);
+  if (error) failed("users", context.requestId, "user.delete", error);
+
+  await audit(context, "user.deleted", "user", id, before, null);
+  done("users", `ลบผู้ใช้งาน "${before?.display_name ?? before?.username ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== ROOMS ====================
+export async function createRoomAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const propertyId = text(formData, "propertyId");
+  const roomNumber = text(formData, "roomNumber");
+  const floor = text(formData, "floor");
+  const baseRent = Number(text(formData, "baseRent")) || 0;
+  const status = text(formData, "status") || "vacant";
+
+  if (!UUID_PATTERN.test(organizationId) || !UUID_PATTERN.test(propertyId)) {
+    failed("rooms", context.requestId, "room.validation", new Error("กรุณาเลือกกิจการและหอพัก"));
+  }
+  if (!roomNumber) failed("rooms", context.requestId, "room.number_validation", new Error("กรุณาระบุเลขห้อง"));
+
+  const { data: created, error } = await context.admin
+    .from("rooms")
+    .insert({
+      organization_id: organizationId,
+      property_id: propertyId,
+      room_number: roomNumber,
+      floor: floor || null,
+      base_rent: baseRent,
+      status: ["vacant", "occupied", "maintenance", "inactive"].includes(status) ? status : "vacant",
+      created_by: context.userId,
+    })
+    .select("*")
+    .single();
+
+  if (error) failed("rooms", context.requestId, "room.create", error);
+
+  await context.admin.from("meters").insert([
+    { organization_id: organizationId, property_id: propertyId, room_id: created.id, meter_type: "electric", status: "active", created_by: context.userId },
+    { organization_id: organizationId, property_id: propertyId, room_id: created.id, meter_type: "water", status: "active", created_by: context.userId },
+  ]);
+
+  await audit(context, "room.created", "room", created.id, null, created);
+  done("rooms", `เพิ่มห้องพัก "${roomNumber}" เรียบร้อยแล้ว`);
+}
+
+export async function updateRoomAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "roomId");
+  const roomNumber = text(formData, "roomNumber");
+  const floor = text(formData, "floor");
+  const baseRent = Number(text(formData, "baseRent")) || 0;
+  const status = text(formData, "status") || "vacant";
+
+  if (!UUID_PATTERN.test(id)) failed("rooms", context.requestId, "room.update_validation", new Error("Invalid room id"));
+
+  const { data: before } = await context.admin.from("rooms").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("rooms")
+    .update({
+      room_number: roomNumber || before?.room_number,
+      floor: floor || null,
+      base_rent: baseRent,
+      status: ["vacant", "occupied", "maintenance", "inactive"].includes(status) ? status : "vacant",
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("rooms", context.requestId, "room.update", error);
+  await audit(context, "room.updated", "room", id, before, after);
+  done("rooms", `อัปเดตห้องพัก "${roomNumber}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteRoomAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "roomId");
+  if (!UUID_PATTERN.test(id)) failed("rooms", context.requestId, "room.delete_validation", new Error("Invalid room id"));
+
+  const { data: before } = await context.admin.from("rooms").select("id, room_number").eq("id", id).maybeSingle();
+  const { error } = await context.admin.from("rooms").delete().eq("id", id);
+  if (error) failed("rooms", context.requestId, "room.delete", error);
+
+  await audit(context, "room.deleted", "room", id, before, null);
+  done("rooms", `ลบห้องพัก "${before?.room_number ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== TENANTS ====================
+export async function createTenantAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const fullName = text(formData, "fullName");
+  const phone = text(formData, "phone");
+  const email = text(formData, "email");
+  const idCardLast4 = text(formData, "idCardLast4");
+  const address = text(formData, "address");
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(organizationId)) failed("tenants", context.requestId, "tenant.org_validation", new Error("กรุณาเลือกกิจการ"));
+  if (fullName.length < 2) failed("tenants", context.requestId, "tenant.name_validation", new Error("กรุณากรอกชื่อผู้เช่า"));
+
+  const { data: created, error } = await context.admin
+    .from("tenants")
+    .insert({
+      organization_id: organizationId,
+      full_name: fullName,
+      phone: phone || null,
+      email: email || null,
+      id_card_last4: idCardLast4 && idCardLast4.length === 4 ? idCardLast4 : null,
+      address: address || null,
+      status: ["active", "former", "blocked"].includes(status) ? status : "active",
+      created_by: context.userId,
+    })
+    .select("*")
+    .single();
+
+  if (error) failed("tenants", context.requestId, "tenant.create", error);
+  await audit(context, "tenant.created", "tenant", created.id, null, created);
+  done("tenants", `เพิ่มผู้เช่า "${fullName}" เรียบร้อยแล้ว`);
+}
+
+export async function updateTenantAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "tenantId");
+  const fullName = text(formData, "fullName");
+  const phone = text(formData, "phone");
+  const email = text(formData, "email");
+  const idCardLast4 = text(formData, "idCardLast4");
+  const address = text(formData, "address");
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(id)) failed("tenants", context.requestId, "tenant.update_validation", new Error("Invalid tenant id"));
+
+  const { data: before } = await context.admin.from("tenants").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("tenants")
+    .update({
+      full_name: fullName || before?.full_name,
+      phone: phone || null,
+      email: email || null,
+      id_card_last4: idCardLast4 && idCardLast4.length === 4 ? idCardLast4 : null,
+      address: address || null,
+      status: ["active", "former", "blocked"].includes(status) ? status : "active",
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("tenants", context.requestId, "tenant.update", error);
+  await audit(context, "tenant.updated", "tenant", id, before, after);
+  done("tenants", `อัปเดตข้อมูลผู้เช่า "${fullName}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteTenantAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "tenantId");
+  if (!UUID_PATTERN.test(id)) failed("tenants", context.requestId, "tenant.delete_validation", new Error("Invalid tenant id"));
+
+  const { data: before } = await context.admin.from("tenants").select("id, full_name").eq("id", id).maybeSingle();
+  const { error } = await context.admin.from("tenants").delete().eq("id", id);
+  if (error) failed("tenants", context.requestId, "tenant.delete", error);
+
+  await audit(context, "tenant.deleted", "tenant", id, before, null);
+  done("tenants", `ลบข้อมูลผู้เช่า "${before?.full_name ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== LEASES ====================
+export async function createLeaseAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const propertyId = text(formData, "propertyId");
+  const roomId = text(formData, "roomId");
+  const primaryTenantId = text(formData, "primaryTenantId");
+  const leaseNumber = text(formData, "leaseNumber") || `L-${Date.now().toString().slice(-6)}`;
+  const startDate = text(formData, "startDate");
+  const endDate = text(formData, "endDate") || null;
+  const rentAmount = Number(text(formData, "rentAmount")) || 0;
+  const depositAmount = Number(text(formData, "depositAmount")) || 0;
+  const advanceAmount = Number(text(formData, "advanceAmount")) || 0;
+  const status = text(formData, "status") || "active";
+
+  if (![organizationId, propertyId, roomId, primaryTenantId].every((id) => UUID_PATTERN.test(id))) {
+    failed("leases", context.requestId, "lease.validation", new Error("กรุณากรอกข้อมูลสัญญาให้ครบถ้วน"));
+  }
+  if (!startDate) failed("leases", context.requestId, "lease.date_validation", new Error("กรุณาระบุวันเริ่มสัญญา"));
+
+  const { data: created, error } = await context.admin
+    .from("leases")
+    .insert({
+      organization_id: organizationId,
+      property_id: propertyId,
+      room_id: roomId,
+      primary_tenant_id: primaryTenantId,
+      lease_number: leaseNumber,
+      start_date: startDate,
+      end_date: endDate,
+      rent_amount: rentAmount,
+      deposit_amount: depositAmount,
+      advance_amount: advanceAmount,
+      status: ["draft", "active", "ended", "cancelled"].includes(status) ? status : "active",
+      created_by: context.userId,
+    })
+    .select("*")
+    .single();
+
+  if (error) failed("leases", context.requestId, "lease.create", error);
+
+  if (status === "active") {
+    await context.admin.from("rooms").update({ status: "occupied" }).eq("id", roomId);
+  }
+
+  await audit(context, "lease.created", "lease", created.id, null, created);
+  done("leases", `สร้างสัญญาเช่า "${leaseNumber}" เรียบร้อยแล้ว`);
+}
+
+export async function updateLeaseAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "leaseId");
+  const leaseNumber = text(formData, "leaseNumber");
+  const startDate = text(formData, "startDate");
+  const endDate = text(formData, "endDate") || null;
+  const rentAmount = Number(text(formData, "rentAmount")) || 0;
+  const depositAmount = Number(text(formData, "depositAmount")) || 0;
+  const advanceAmount = Number(text(formData, "advanceAmount")) || 0;
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(id)) failed("leases", context.requestId, "lease.update_validation", new Error("Invalid lease id"));
+
+  const { data: before } = await context.admin.from("leases").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("leases")
+    .update({
+      lease_number: leaseNumber || before?.lease_number,
+      start_date: startDate || before?.start_date,
+      end_date: endDate,
+      rent_amount: rentAmount,
+      deposit_amount: depositAmount,
+      advance_amount: advanceAmount,
+      status: ["draft", "active", "ended", "cancelled"].includes(status) ? status : "active",
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("leases", context.requestId, "lease.update", error);
+
+  if (before?.room_id) {
+    if (status === "active") {
+      await context.admin.from("rooms").update({ status: "occupied" }).eq("id", before.room_id);
+    } else if (["ended", "cancelled"].includes(status)) {
+      await context.admin.from("rooms").update({ status: "vacant" }).eq("id", before.room_id);
+    }
+  }
+
+  await audit(context, "lease.updated", "lease", id, before, after);
+  done("leases", `อัปเดตสัญญาเช่า "${after.lease_number}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteLeaseAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "leaseId");
+  if (!UUID_PATTERN.test(id)) failed("leases", context.requestId, "lease.delete_validation", new Error("Invalid lease id"));
+
+  const { data: before } = await context.admin.from("leases").select("id, room_id, lease_number").eq("id", id).maybeSingle();
+  const { error } = await context.admin.from("leases").delete().eq("id", id);
+  if (error) failed("leases", context.requestId, "lease.delete", error);
+
+  if (before?.room_id) {
+    await context.admin.from("rooms").update({ status: "vacant" }).eq("id", before.room_id);
+  }
+
+  await audit(context, "lease.deleted", "lease", id, before, null);
+  done("leases", `ลบสัญญาเช่า "${before?.lease_number ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== METERS ====================
+export async function createMeterAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const propertyId = text(formData, "propertyId");
+  const roomId = text(formData, "roomId");
+  const meterType = text(formData, "meterType") || "electric";
+  const serialNumber = text(formData, "serialNumber");
+  const initialValue = Number(text(formData, "initialValue")) || 0;
+
+  if (![organizationId, propertyId, roomId].every((id) => UUID_PATTERN.test(id))) {
+    failed("meters", context.requestId, "meter.validation", new Error("กรุณาเลือกกิจการ หอพัก และห้องพัก"));
+  }
+
+  const { data: created, error } = await context.admin
+    .from("meters")
+    .upsert(
+      {
+        organization_id: organizationId,
+        property_id: propertyId,
+        room_id: roomId,
+        meter_type: ["electric", "water"].includes(meterType) ? meterType : "electric",
+        serial_number: serialNumber || null,
+        status: "active",
+        created_by: context.userId,
+      },
+      { onConflict: "room_id,meter_type" }
+    )
+    .select("*")
+    .single();
+
+  if (error) failed("meters", context.requestId, "meter.create", error);
+
+  if (initialValue > 0) {
+    const periodMonth = new Date().toISOString().slice(0, 7) + "-01";
+    let { data: cycle } = await context.admin
+      .from("billing_cycles")
+      .select("id")
+      .eq("property_id", propertyId)
+      .eq("period_month", periodMonth)
+      .maybeSingle();
+
+    if (!cycle) {
+      const { data: newCycle } = await context.admin
+        .from("billing_cycles")
+        .insert({ organization_id: organizationId, property_id: propertyId, period_month: periodMonth })
+        .select("id")
+        .single();
+      cycle = newCycle;
+    }
+
+    if (cycle) {
+      await context.admin.from("meter_readings").upsert(
+        {
+          organization_id: organizationId,
+          meter_id: created.id,
+          billing_cycle_id: cycle.id,
+          previous_value: initialValue,
+          current_value: initialValue,
+          read_by: context.userId,
+        },
+        { onConflict: "meter_id,billing_cycle_id" }
+      );
+    }
+  }
+
+  await audit(context, "meter.created", "meter", created.id, null, created);
+  done("meters", `เพิ่มมิเตอร์เรียบร้อยแล้ว`);
+}
+
+export async function recordMeterReadingAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const meterId = text(formData, "meterId");
+  const currentValue = Number(text(formData, "currentValue"));
+
+  if (!UUID_PATTERN.test(meterId) || isNaN(currentValue)) {
+    failed("meters", context.requestId, "meter_reading.validation", new Error("ข้อมูลการจดมิเตอร์ไม่ถูกต้อง"));
+  }
+
+  const { data: meter } = await context.admin.from("meters").select("*").eq("id", meterId).maybeSingle();
+  if (!meter) failed("meters", context.requestId, "meter.not_found", new Error("ไม่พบมิเตอร์"));
+
+  const periodMonth = new Date().toISOString().slice(0, 7) + "-01";
+  let { data: cycle } = await context.admin
+    .from("billing_cycles")
+    .select("id")
+    .eq("property_id", meter.property_id)
+    .eq("period_month", periodMonth)
+    .maybeSingle();
+
+  if (!cycle) {
+    const { data: newCycle, error: cycleError } = await context.admin
+      .from("billing_cycles")
+      .insert({ organization_id: meter.organization_id, property_id: meter.property_id, period_month: periodMonth })
+      .select("id")
+      .single();
+    if (cycleError) failed("meters", context.requestId, "meter_reading.cycle", cycleError);
+    cycle = newCycle;
+  }
+
+  const { data: latestReading } = await context.admin
+    .from("meter_readings")
+    .select("current_value")
+    .eq("meter_id", meterId)
+    .order("read_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const prev = latestReading?.current_value ? Number(latestReading.current_value) : 0;
+  if (currentValue < prev) {
+    failed("meters", context.requestId, "meter_reading.value", new Error(`เลขมิเตอร์ใหม่ (${currentValue}) ต้องไม่น้อยกว่าเลขเดิม (${prev})`));
+  }
+
+  const { data: reading, error } = await context.admin
+    .from("meter_readings")
+    .upsert(
+      {
+        organization_id: meter.organization_id,
+        meter_id: meterId,
+        billing_cycle_id: cycle.id,
+        previous_value: prev,
+        current_value: currentValue,
+        read_by: context.userId,
+        read_at: new Date().toISOString(),
+      },
+      { onConflict: "meter_id,billing_cycle_id" }
+    )
+    .select("*")
+    .single();
+
+  if (error) failed("meters", context.requestId, "meter_reading.save", error);
+  await audit(context, "meter_reading.recorded", "meter_reading", reading.id, null, reading);
+  done("meters", `บันทึกค่ามิเตอร์ ${currentValue} เรียบร้อยแล้ว`);
+}
+
+export async function updateMeterAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "meterId");
+  const serialNumber = text(formData, "serialNumber");
+  const status = text(formData, "status") || "active";
+
+  if (!UUID_PATTERN.test(id)) failed("meters", context.requestId, "meter.update_validation", new Error("Invalid meter id"));
+
+  const { data: before } = await context.admin.from("meters").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("meters")
+    .update({
+      serial_number: serialNumber || null,
+      status: ["active", "inactive", "replaced"].includes(status) ? status : "active",
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("meters", context.requestId, "meter.update", error);
+  await audit(context, "meter.updated", "meter", id, before, after);
+  done("meters", `อัปเดตมิเตอร์เรียบร้อยแล้ว`);
+}
+
+export async function deleteMeterAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "meterId");
+  if (!UUID_PATTERN.test(id)) failed("meters", context.requestId, "meter.delete_validation", new Error("Invalid meter id"));
+
+  const { data: before } = await context.admin.from("meters").select("*").eq("id", id).maybeSingle();
+  await context.admin.from("meter_readings").delete().eq("meter_id", id);
+  const { error } = await context.admin.from("meters").delete().eq("id", id);
+  if (error) failed("meters", context.requestId, "meter.delete", error);
+
+  await audit(context, "meter.deleted", "meter", id, before, null);
+  done("meters", `ลบมิเตอร์เรียบร้อยแล้ว`);
+}
+
+// ==================== INVOICES ====================
+export async function createInvoiceAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const propertyId = text(formData, "propertyId");
+  const roomId = text(formData, "roomId");
+  const leaseId = text(formData, "leaseId") || null;
+  const invoiceNumber = text(formData, "invoiceNumber") || `INV-${Date.now().toString().slice(-6)}`;
+  const issuedAt = text(formData, "issuedAt") || new Date().toISOString().slice(0, 10);
+  const dueAt = text(formData, "dueAt");
+  const rentAmount = Number(text(formData, "rentAmount")) || 0;
+  const electricAmount = Number(text(formData, "electricAmount")) || 0;
+  const waterAmount = Number(text(formData, "waterAmount")) || 0;
+  const otherAmount = Number(text(formData, "otherAmount")) || 0;
+  const note = text(formData, "note");
+
+  if (![organizationId, propertyId, roomId].every((id) => UUID_PATTERN.test(id))) {
+    failed("invoices", context.requestId, "invoice.validation", new Error("กรุณากรอกข้อมูลใบแจ้งหนี้ให้ครบ"));
+  }
+  if (!dueAt) failed("invoices", context.requestId, "invoice.due_validation", new Error("กรุณาระบุวันครบกำหนดชำระ"));
+
+  const total = rentAmount + electricAmount + waterAmount + otherAmount;
+  const balanceDue = total;
+
+  const { data: created, error } = await context.admin
+    .from("rent_invoices")
+    .insert({
+      organization_id: organizationId,
+      property_id: propertyId,
+      room_id: roomId,
+      lease_id: leaseId && UUID_PATTERN.test(leaseId) ? leaseId : null,
+      invoice_number: invoiceNumber,
+      issued_at: issuedAt,
+      due_at: dueAt,
+      subtotal: total,
+      total,
+      balance_due: balanceDue,
+      status: "issued",
+      note: note || null,
+      created_by: context.userId,
+    })
+    .select("*")
+    .single();
+
+  if (error) failed("invoices", context.requestId, "invoice.create", error);
+
+  const items = [];
+  if (rentAmount > 0) items.push({ organization_id: organizationId, rent_invoice_id: created.id, item_type: "rent", description: "ค่าเช่าห้องพัก", unit_price: rentAmount, amount: rentAmount, created_by: context.userId });
+  if (electricAmount > 0) items.push({ organization_id: organizationId, rent_invoice_id: created.id, item_type: "electric", description: "ค่าไฟฟ้า", unit_price: electricAmount, amount: electricAmount, created_by: context.userId });
+  if (waterAmount > 0) items.push({ organization_id: organizationId, rent_invoice_id: created.id, item_type: "water", description: "ค่าน้ำประปา", unit_price: waterAmount, amount: waterAmount, created_by: context.userId });
+  if (otherAmount > 0) items.push({ organization_id: organizationId, rent_invoice_id: created.id, item_type: "other", description: "ค่าบริการอื่นๆ", unit_price: otherAmount, amount: otherAmount, created_by: context.userId });
+
+  if (items.length > 0) {
+    await context.admin.from("rent_invoice_items").insert(items);
+  }
+
+  await audit(context, "invoice.created", "rent_invoice", created.id, null, created);
+  done("invoices", `ออกใบแจ้งหนี้ "${invoiceNumber}" ยอดรวม ฿${total.toLocaleString()} เรียบร้อยแล้ว`);
+}
+
+export async function updateInvoiceAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "invoiceId");
+  const dueAt = text(formData, "dueAt");
+  const total = Number(text(formData, "total"));
+  const balanceDue = Number(text(formData, "balanceDue"));
+  const status = text(formData, "status");
+  const note = text(formData, "note");
+
+  if (!UUID_PATTERN.test(id)) failed("invoices", context.requestId, "invoice.update_validation", new Error("Invalid invoice id"));
+
+  const { data: before } = await context.admin.from("rent_invoices").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("rent_invoices")
+    .update({
+      due_at: dueAt || before?.due_at,
+      total: !isNaN(total) && total >= 0 ? total : before?.total,
+      balance_due: !isNaN(balanceDue) && balanceDue >= 0 ? balanceDue : before?.balance_due,
+      status: ["draft", "issued", "partial", "paid", "overdue", "void"].includes(status) ? status : before?.status,
+      note: note ?? before?.note,
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("invoices", context.requestId, "invoice.update", error);
+  await audit(context, "invoice.updated", "rent_invoice", id, before, after);
+  done("invoices", `อัปเดตใบแจ้งหนี้ "${after.invoice_number}" เรียบร้อยแล้ว`);
+}
+
+export async function deleteInvoiceAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "invoiceId");
+  const actionType = text(formData, "actionType") || "void";
+
+  if (!UUID_PATTERN.test(id)) failed("invoices", context.requestId, "invoice.delete_validation", new Error("Invalid invoice id"));
+
+  const { data: before } = await context.admin.from("rent_invoices").select("*").eq("id", id).maybeSingle();
+
+  if (actionType === "delete") {
+    await context.admin.from("rent_invoice_items").delete().eq("rent_invoice_id", id);
+    const { error } = await context.admin.from("rent_invoices").delete().eq("id", id);
+    if (error) failed("invoices", context.requestId, "invoice.delete", error);
+    await audit(context, "invoice.deleted", "rent_invoice", id, before, null);
+    done("invoices", `ลบใบแจ้งหนี้ "${before?.invoice_number ?? id}" เรียบร้อยแล้ว`);
+  } else {
+    const { error } = await context.admin.from("rent_invoices").update({ status: "void", balance_due: 0 }).eq("id", id);
+    if (error) failed("invoices", context.requestId, "invoice.void", error);
+    await audit(context, "invoice.voided", "rent_invoice", id, before, { status: "void", balance_due: 0 });
+    done("invoices", `ยกเลิกใบแจ้งหนี้ "${before?.invoice_number ?? id}" เรียบร้อยแล้ว`);
+  }
+}
+
+// ==================== PAYMENTS ====================
+export async function recordPaymentAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const organizationId = text(formData, "organizationId");
+  const propertyId = text(formData, "propertyId");
+  const receiptNumber = text(formData, "receiptNumber") || `REC-${Date.now().toString().slice(-6)}`;
+  const amount = Number(text(formData, "amount"));
+  const method = text(formData, "method") || "transfer";
+  const reference = text(formData, "reference");
+  const paidAt = text(formData, "paidAt") || new Date().toISOString();
+  const invoiceId = text(formData, "invoiceId");
+  const returnView = text(formData, "returnView") || "payments";
+
+  if (![organizationId, propertyId].every((id) => UUID_PATTERN.test(id)) || isNaN(amount) || amount <= 0) {
+    failed(returnView, context.requestId, "payment.validation", new Error("กรุณาระบุข้อมูลการรับชำระให้ถูกต้องและยอดเงินมากกว่า 0"));
+  }
+
+  const { data: created, error } = await context.admin
+    .from("rent_payments")
+    .insert({
+      organization_id: organizationId,
+      property_id: propertyId,
+      receipt_number: receiptNumber,
+      amount,
+      method: ["cash", "transfer", "promptpay", "card", "other"].includes(method) ? method : "transfer",
+      reference: reference || null,
+      paid_at: paidAt,
+      status: "confirmed",
+      created_by: context.userId,
+    })
+    .select("*")
+    .single();
+
+  if (error) failed(returnView, context.requestId, "payment.record", error);
+
+  if (invoiceId && UUID_PATTERN.test(invoiceId)) {
+    const { data: invoice } = await context.admin.from("rent_invoices").select("balance_due, status").eq("id", invoiceId).maybeSingle();
+    if (invoice) {
+      const currentDue = Number(invoice.balance_due);
+      const newDue = Math.max(0, currentDue - amount);
+      const newStatus = newDue <= 0 ? "paid" : "partial";
+      await context.admin.from("rent_invoices").update({
+        balance_due: newDue,
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      }).eq("id", invoiceId);
+    }
+  }
+
+  await audit(context, "payment.recorded", "rent_payment", created.id, null, created);
+  done(returnView, `บันทึกรับชำระเงิน "${receiptNumber}" จำนวน ฿${amount.toLocaleString()} เรียบร้อยแล้ว`);
+}
+
+export async function updatePaymentAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "paymentId");
+  const amount = Number(text(formData, "amount"));
+  const method = text(formData, "method");
+  const reference = text(formData, "reference");
+  const status = text(formData, "status") || "confirmed";
+
+  if (!UUID_PATTERN.test(id)) failed("payments", context.requestId, "payment.update_validation", new Error("Invalid payment id"));
+
+  const { data: before } = await context.admin.from("rent_payments").select("*").eq("id", id).maybeSingle();
+  const { data: after, error } = await context.admin
+    .from("rent_payments")
+    .update({
+      amount: !isNaN(amount) && amount > 0 ? amount : before?.amount,
+      method: ["cash", "transfer", "promptpay", "card", "other"].includes(method) ? method : before?.method,
+      reference: reference ?? before?.reference,
+      status: ["pending", "confirmed", "void"].includes(status) ? status : "confirmed",
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) failed("payments", context.requestId, "payment.update", error);
+  await audit(context, "payment.updated", "rent_payment", id, before, after);
+  done("payments", `อัปเดตรายการรับชำระ "${after.receipt_number}" เรียบร้อยแล้ว`);
+}
+
+export async function deletePaymentAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "paymentId");
+  if (!UUID_PATTERN.test(id)) failed("payments", context.requestId, "payment.delete_validation", new Error("Invalid payment id"));
+
+  const { data: before } = await context.admin.from("rent_payments").select("*").eq("id", id).maybeSingle();
+  const { error } = await context.admin.from("rent_payments").delete().eq("id", id);
+  if (error) failed("payments", context.requestId, "payment.delete", error);
+
+  await audit(context, "payment.deleted", "rent_payment", id, before, null);
+  done("payments", `ลบรายการรับชำระ "${before?.receipt_number ?? id}" เรียบร้อยแล้ว`);
+}
+
+// ==================== RECEIVABLES ====================
+export async function settleReceivableAdminAction(formData: FormData) {
+  const context = await adminContext();
+  const invoiceId = text(formData, "invoiceId");
+  const actionType = text(formData, "actionType") || "pay";
+  const amount = Number(text(formData, "amount"));
+  const method = text(formData, "method") || "transfer";
+  const reference = text(formData, "reference");
+
+  if (!UUID_PATTERN.test(invoiceId)) failed("receivables", context.requestId, "receivable.validation", new Error("Invalid invoice id"));
+
+  const { data: invoice } = await context.admin.from("rent_invoices").select("*").eq("id", invoiceId).maybeSingle();
+  if (!invoice) failed("receivables", context.requestId, "receivable.not_found", new Error("Invoice not found"));
+
+  if (actionType === "void") {
+    await context.admin.from("rent_invoices").update({ status: "void", balance_due: 0 }).eq("id", invoiceId);
+    await audit(context, "receivable.voided", "rent_invoice", invoiceId, invoice, { status: "void", balance_due: 0 });
+    done("receivables", `ยกเลิกหนี้ใบแจ้งหนี้ "${invoice.invoice_number}" เรียบร้อยแล้ว`);
+  } else {
+    const payAmount = isNaN(amount) || amount <= 0 ? Number(invoice.balance_due) : amount;
+    const receiptNumber = `REC-${Date.now().toString().slice(-6)}`;
+
+    await context.admin.from("rent_payments").insert({
+      organization_id: invoice.organization_id,
+      property_id: invoice.property_id,
+      receipt_number: receiptNumber,
+      amount: payAmount,
+      method: ["cash", "transfer", "promptpay", "card", "other"].includes(method) ? method : "transfer",
+      reference: reference || `รับชำระยอดค้าง ${invoice.invoice_number}`,
+      status: "confirmed",
+      created_by: context.userId,
+    });
+
+    const newDue = Math.max(0, Number(invoice.balance_due) - payAmount);
+    await context.admin.from("rent_invoices").update({
+      balance_due: newDue,
+      status: newDue <= 0 ? "paid" : "partial",
+      updated_at: new Date().toISOString(),
+    }).eq("id", invoiceId);
+
+    await audit(context, "receivable.settled", "rent_invoice", invoiceId, invoice, { balance_due: newDue, paid_amount: payAmount });
+    done("receivables", `รับชำระยอดค้าง ${invoice.invoice_number} จำนวน ฿${payAmount.toLocaleString()} แล้ว`);
+  }
+}
+
+// ==================== ROLES ====================
+export async function deleteRoleAction(formData: FormData) {
+  const context = await adminContext();
+  const id = text(formData, "roleId");
+  if (!UUID_PATTERN.test(id)) failed("roles", context.requestId, "role.delete_validation", new Error("Invalid role id"));
+
+  const { data: before } = await context.admin.from("platform_roles").select("*").eq("id", id).maybeSingle();
+  if (!before) failed("roles", context.requestId, "role.not_found", new Error("Role not found"));
+  if (before.is_system || before.code === "super_admin") {
+    failed("roles", context.requestId, "role.protected", new Error("ไม่สามารถลบบทบาทของระบบ (System Role) ได้"));
+  }
+
+  const { error } = await context.admin.from("platform_roles").delete().eq("id", id);
+  if (error) failed("roles", context.requestId, "role.delete", error);
+
+  await audit(context, "role.deleted", "platform_role", id, before, null);
+  done("roles", `ลบบทบาท "${before.name}" เรียบร้อยแล้ว`);
+}

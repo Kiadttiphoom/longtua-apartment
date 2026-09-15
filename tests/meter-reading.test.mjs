@@ -95,7 +95,7 @@ test("meterReading_deleteRequiresPermissionAndBlocksAnActiveInvoice", () => {
   assert.match(action, /neq\("status", "void"\)/);
   assert.match(action, /from\("meter_readings"\)[\s\S]*\.delete\(\)/);
 
-  const migration = read("supabase/migrations/20260911052000_allow_safe_meter_reading_delete.sql");
+  const migration = read("supabase/migrations/20260911040255_allow_safe_meter_reading_delete.sql");
   assert.match(migration, /customer_meters/);
   assert.match(migration, /prevent_invoiced_meter_reading_delete/);
   assert.match(migration, /invoice\.status <> 'void'/);

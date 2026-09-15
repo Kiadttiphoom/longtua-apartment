@@ -23,12 +23,12 @@ export async function AdminSectionPage({ section, searchParams }: { section: Adm
   const admin = createAdminClient();
   const isSection = (...sections: AdminSection[]) => sections.includes(section);
   const skipQuery = () => Promise.resolve({ data: [] as never[], error: null, count: 0 });
-  const needsProperties = isSection("properties", "rooms", "leases", "meters", "invoices", "payments", "reports");
+  const needsProperties = isSection("properties", "rooms", "tenants", "leases", "meters", "invoices", "payments", "receivables", "reports");
   const needsRooms = isSection("properties", "rooms", "leases", "meters", "invoices", "receivables", "reports");
-  const needsTenants = isSection("tenants", "leases");
-  const needsLeases = isSection("leases");
+  const needsTenants = isSection("tenants", "leases", "invoices");
+  const needsLeases = isSection("leases", "invoices");
   const needsMeters = isSection("meters");
-  const needsInvoices = isSection("invoices", "receivables", "reports");
+  const needsInvoices = isSection("invoices", "payments", "receivables", "reports");
   const needsPayments = isSection("payments", "reports");
   const operationsPromise = Promise.all([
     needsProperties ? admin.from("properties").select("id, organization_id, name, address, phone, status, created_at").order("created_at", { ascending: false }).limit(1000) : skipQuery(),
@@ -40,11 +40,11 @@ export async function AdminSectionPage({ section, searchParams }: { section: Adm
     needsInvoices ? admin.from("rent_invoices").select("id, organization_id, property_id, room_id, invoice_number, issued_at, due_at, total, balance_due, status").order("issued_at", { ascending: false }).limit(3000) : skipQuery(),
     needsPayments ? admin.from("rent_payments").select("id, organization_id, property_id, receipt_number, paid_at, amount, method, reference, status").order("paid_at", { ascending: false }).limit(3000) : skipQuery(),
   ]);
-  const needsOrganizations = !isSection("trial-requests", "line", "roles", "menus", "audit", "settings");
+  const needsOrganizations = !isSection("trial-requests", "line", "audit", "settings");
   const needsProfiles = isSection("organizations", "users", "permissions", "audit");
   const needsMemberships = isSection("overview", "organizations", "users", "permissions");
   const needsSubscriptions = isSection("overview", "subscriptions");
-  const needsRoles = isSection("roles", "permissions");
+  const needsRoles = isSection("roles", "permissions", "users");
   const needsPermissions = isSection("menus");
   const needsMenus = isSection("permissions", "menus");
   const [organizationsResult, organizationCountResult, profileCountResult, profilesResult, membershipsResult, subscriptionsResult, subscriptionPlansResult, adminsResult, rolesResult, permissionsResult, menusResult, auditsResult, trialRequestsResult, permissionActionsResult, menuActionsResult, granularRolePermissionsResult, userOverridesResult, registration] = await Promise.all([

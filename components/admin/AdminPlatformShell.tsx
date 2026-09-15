@@ -1,7 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Activity, BookOpenCheck, Building2, CalendarRange, CircleDollarSign, ClipboardCheck, FileText, Gauge, Hotel, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, ReceiptText, Settings, ShieldCheck, UserCog, Users, WalletCards } from "lucide-react";
+import {
+  Activity, BookOpenCheck, Building2, CalendarRange, CircleDollarSign,
+  ClipboardCheck, FileText, Gauge, Hotel, KeyRound, LayoutDashboard,
+  LogOut, Menu, MessageCircle, ReceiptText, Settings, ShieldCheck,
+  UserCog, Users, WalletCards, X,
+} from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { logoutAction } from "@/app/auth/actions";
 import { AppNavLink } from "@/components/ui/AppNavLink";
@@ -21,11 +27,25 @@ const adminCategories = [
 
 export function AdminPlatformShell({ profileName, children }: { profileName: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <main className="min-h-screen grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] bg-[#f4f6fa] text-slate-800">
-      <aside className="sticky top-0 h-screen flex flex-col bg-[#050f24] text-white shadow-xl">
-        <div className="h-[76px] px-5 flex items-center border-b border-white/10 bg-[#030917]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] bg-[#f4f6fa] text-slate-800">
+      <aside
+        className={`fixed top-0 left-0 z-50 w-[260px] h-dvh flex flex-col bg-[#050f24] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="h-[76px] min-h-[76px] px-5 flex items-center justify-between border-b border-white/10 bg-[#030917]">
           <BrandLogo className="max-w-[150px]" variant="inverse" />
+          <button
+            className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg bg-white/5 cursor-pointer"
+            onClick={() => setMobileOpen(false)}
+            aria-label="ปิดเมนู"
+            type="button"
+          >
+            <X size={20} />
+          </button>
         </div>
         <div className="mx-3 my-3 p-3 flex items-center gap-3 rounded-xl bg-blue-600/15 border border-blue-500/25">
           <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
@@ -39,7 +59,7 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
         <div className="px-3 mb-2">
           <AdminGlobalSearch />
         </div>
-        <nav aria-label="เมนูระบบ" className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        <nav aria-label="เมนูระบบ" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 space-y-4">
           {adminCategories.map((group) => {
             const items = group.keys
               .map((k) => navigation.find(([itemKey]) => itemKey === k))
@@ -63,6 +83,7 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
                       }`}
                       href={href}
                       key={key}
+                      onClick={() => setMobileOpen(false)}
                     >
                       <Icon size={16} />
                       <span className="truncate">{label}</span>
@@ -73,7 +94,7 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
             );
           })}
         </nav>
-        <form action={logoutAction} className="mt-auto p-3 border-t border-white/10">
+        <form action={logoutAction} className="mt-auto shrink-0 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10">
           <button
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-300 text-xs font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
             type="submit"
@@ -83,7 +104,48 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
           </button>
         </form>
       </aside>
-      <section className="p-6 lg:p-8 max-w-[1440px] mx-auto w-full">{children}</section>
-    </main>
+
+      {mobileOpen ? (
+        <button
+          aria-label="ปิดเมนู"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden cursor-pointer"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        />
+      ) : null}
+
+      <div className="min-w-0 flex flex-col">
+        <header className="sticky top-0 z-30 min-h-[64px] px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <button
+              className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs"
+              onClick={() => setMobileOpen(true)}
+              aria-label="เปิดเมนู"
+              type="button"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
+                Super Admin
+              </span>
+            </div>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <span className="relative w-9 h-9 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm ring-1 ring-blue-500/20">
+              {profileName.trim().slice(0, 1)}
+              <i aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </span>
+            <div className="flex flex-col text-right sm:text-left">
+              <strong className="text-xs font-semibold text-slate-800 leading-tight">{profileName}</strong>
+              <small className="text-[10px] text-slate-500">Super Admin</small>
+            </div>
+          </div>
+        </header>
+
+        <main className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full flex-1">{children}</main>
+      </div>
+    </div>
   );
 }

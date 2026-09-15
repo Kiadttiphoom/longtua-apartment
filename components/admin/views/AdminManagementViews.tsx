@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, MessageCircle, Package, Pencil, Save, XCircle } from "lucide-react";
-import { approveTrialRequestAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, setRegistrationEnabledAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
+import { AlertTriangle, CheckCircle2, MessageCircle, Package, Pencil, Save, Trash2, XCircle } from "lucide-react";
+import { approveTrialRequestAction, deleteRoleAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, setRegistrationEnabledAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
 import { AdminTable, dateInput, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
 import { RolePermissionMatrix, UserPermissionMatrix } from "@/components/admin/PermissionMatrix";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -536,7 +536,7 @@ export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) 
         </div>
 
         <AdminTable
-          headers={["Code", "แก้ไข Role", "ประเภท"]}
+          headers={["Code", "แก้ไข Role", "ประเภท", "จัดการ"]}
           rows={roles.map((role) => [
             <code className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md" key="c">
               {role.code}
@@ -580,6 +580,28 @@ export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) 
               </button>
             </form>,
             role.is_system ? "System" : "กำหนดเอง",
+            !role.is_system && role.code !== "super_admin" ? (
+              <form
+                key="del"
+                action={deleteRoleAction}
+                onSubmit={(e) => {
+                  if (!confirm(`ยืนยันการลบ Role "${role.name}" หรือไม่?`)) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="roleId" value={role.id} />
+                <button
+                  type="submit"
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="ลบ Role"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </form>
+            ) : (
+              <span key="del" className="text-slate-400 text-xs">—</span>
+            ),
           ])}
         />
       </section>
