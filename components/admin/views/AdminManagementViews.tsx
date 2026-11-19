@@ -894,7 +894,7 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
                 <Bot size={14} /> การแจ้งเตือน · TELEGRAM BOT
               </span>
             </div>
@@ -934,7 +934,7 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                 defaultChecked={telegram.enabled}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -949,12 +949,12 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                 type="text"
                 defaultValue={telegram.botToken}
                 placeholder="เช่น 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
                 <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
                 <span>
-                  สร้างบอทผ่าน <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-sky-600 underline font-medium hover:text-sky-700">@BotFather</a> ใน Telegram แล้วคัดลอก HTTP API Token มาใส่
+                  สร้างบอทผ่าน <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium hover:text-blue-700">@BotFather</a> ใน Telegram แล้วคัดลอก HTTP API Token มาใส่
                 </span>
               </p>
             </div>
@@ -968,12 +968,12 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                 type="text"
                 defaultValue={telegram.chatId}
                 placeholder="เช่น 987654321 หรือ -100123456789"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
                 <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
                 <span>
-                  ตรวจสอบ Chat ID ของคุณได้จาก <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-sky-600 underline font-medium hover:text-sky-700">@userinfobot</a> (หากใช้กลุ่ม ให้นำ Bot เข้ากลุ่มแล้วใช้ ID ที่ขึ้นต้นด้วย <code>-100...</code>)
+                  ตรวจสอบ Chat ID ของคุณได้จาก <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium hover:text-blue-700">@userinfobot</a> (หากใช้กลุ่ม ให้นำ Bot เข้ากลุ่มแล้วใช้ ID ที่ขึ้นต้นด้วย <code>-100...</code>)
                 </span>
               </p>
             </div>
@@ -991,7 +991,7 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   type="checkbox"
                   value="true"
                   defaultChecked={telegram.notifyTrialRequests}
-                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
                   <span className="font-semibold text-slate-800 block">คำขอทดลองใช้ใหม่</span>
@@ -1005,7 +1005,7 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   type="checkbox"
                   value="true"
                   defaultChecked={telegram.notifyPaymentSubmissions}
-                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
                   <span className="font-semibold text-slate-800 block">แจ้งชำระเงิน / ส่งสลิป</span>
@@ -1019,7 +1019,7 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   type="checkbox"
                   value="true"
                   defaultChecked={telegram.notifyRepairRequests}
-                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
                   <span className="font-semibold text-slate-800 block">แจ้งซ่อมห้องพัก</span>
@@ -1036,13 +1036,13 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
               formAction={testTelegramSettingsAction}
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 cursor-pointer shadow-xs transition-colors"
             >
-              <Send size={14} className="text-sky-600" />
+              <Send size={14} className="text-blue-600" />
               ทดสอบส่งข้อความไปยัง Telegram
             </button>
 
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 h-9 px-5 rounded-xl text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 cursor-pointer shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 h-9 px-5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer shadow-xs transition-colors"
             >
               <Save size={14} />
               บันทึกการตั้งค่า Telegram
