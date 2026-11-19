@@ -366,15 +366,34 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
           rowPlaceholders.push(`(${ph.join(", ")})`);
         }
 
-        const conflictCol = this.upsertConflict ? sanitizeIdentifier(this.upsertConflict) : "id";
+        const TABLE_PRIMARY_KEYS: Record<string, string> = {
+          system_settings: "key",
+          system_admins: "user_id",
+          property_settings: "property_id",
+          platform_permissions: "code",
+          platform_role_permissions: "role_id,permission_code",
+          platform_role_menu_actions: "role_id,menu_id,action_code",
+          platform_user_menu_actions: "organization_id,user_id,menu_id,action_code",
+          auth_login_aliases: "username",
+          meter_readings: "meter_id,read_at",
+          billing_cycles: "property_id,period_month",
+        };
+
+        const rawConflict = this.upsertConflict || TABLE_PRIMARY_KEYS[this.tableName] || "id";
+        const conflictClause = rawConflict
+          .split(",")
+          .map((col) => sanitizeIdentifier(col.trim()))
+          .join(", ");
+        const conflictCols = new Set(rawConflict.split(",").map((c) => c.trim()));
+
         const updateSet = keys
-          .filter((k) => k !== conflictCol)
+          .filter((k) => !conflictCols.has(k))
           .map((k) => `${sanitizeIdentifier(k)} = EXCLUDED.${sanitizeIdentifier(k)}`)
           .join(", ");
 
         const onConflictClause = updateSet
-          ? `ON CONFLICT (${conflictCol}) DO UPDATE SET ${updateSet}`
-          : `ON CONFLICT (${conflictCol}) DO NOTHING`;
+          ? `ON CONFLICT (${conflictClause}) DO UPDATE SET ${updateSet}`
+          : `ON CONFLICT (${conflictClause}) DO NOTHING`;
 
         sql = `INSERT INTO ${sanitizeIdentifier(this.tableName)} (${cols}) VALUES ${rowPlaceholders.join(", ")} ${onConflictClause} RETURNING *`;
       } else if (this.action === "delete") {

@@ -60,7 +60,7 @@ export async function setRegistrationEnabledAction(formData: FormData) {
   const context = await adminContext();
   const enabled = text(formData, "enabled") === "true";
   const { data: before } = await context.admin.from("system_settings").select("value").eq("key", "registration_enabled").maybeSingle();
-  const { error } = await context.admin.from("system_settings").upsert({ key: "registration_enabled", value: enabled, description: "Controls trial requests submitted by the public marketing website", updated_by: context.userId });
+  const { error } = await context.admin.from("system_settings").upsert({ key: "registration_enabled", value: enabled, description: "Controls trial requests submitted by the public marketing website", updated_by: context.userId }, { onConflict: "key" });
   if (error) failed("settings", context.requestId, "registration_setting.update", error);
   await audit(context, "system.registration.updated", "system_setting", "registration_enabled", before, { value: enabled });
   revalidatePath("/register");
@@ -96,7 +96,7 @@ export async function saveTelegramSettingsAction(formData: FormData) {
     value: telegramSettings,
     description: "Telegram notification configuration for platform alerts",
     updated_by: context.userId,
-  });
+  }, { onConflict: "key" });
 
   if (error) failed("settings", context.requestId, "telegram_setting.update", error);
   await audit(context, "system.telegram.updated", "system_setting", "telegram_settings", before, telegramSettings);
