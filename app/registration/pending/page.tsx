@@ -54,7 +54,7 @@ export default async function RegistrationPendingPage() {
             LINE Official Account
           </span>
           <p className="text-sm font-semibold text-slate-800">
-            เดี๋ยวจะมีทีมงานติดต่อกลับ หรือแอด LINE เพื่อแจ้งเปิดใช้งานด่วน
+            เจ้าหน้าที่จะติดต่อกลับเพื่อเปิดใช้งานระบบ หรือติดต่อผ่าน LINE เพื่อแจ้งเปิดใช้งานทันที
           </p>
         </div>
         <div className="py-1">

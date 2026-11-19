@@ -54,7 +54,7 @@ export function RegisterForm({ enabled, full = false }: { enabled: boolean; full
               <div className="space-y-1.5">
                 <h2 className="text-xl font-bold text-slate-900">ส่งคำขอทดลองใช้สำเร็จเรียบร้อย!</h2>
                 <p role="status" className="text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                  ระบบได้บันทึกข้อมูลของคุณแล้ว <strong className="text-slate-800 font-semibold">เดี๋ยวจะมีทีมงานติดต่อกลับเพื่อยืนยันและเปิดใช้งานระบบให้โดยเร็วที่สุด</strong>
+                  ระบบได้รับข้อมูลการลงทะเบียนเรียบร้อยแล้ว <strong className="text-slate-800 font-semibold">เจ้าหน้าที่จะดำเนินการตรวจสอบและติดต่อกลับเพื่อเปิดใช้งานระบบให้ท่านโดยเร็วที่สุด</strong>
                 </p>
               </div>
 
@@ -65,7 +65,7 @@ export function RegisterForm({ enabled, full = false }: { enabled: boolean; full
                     LINE Official Account
                   </span>
                   <p className="text-xs font-semibold text-slate-800">
-                    หรือแอด LINE เพื่อแจ้งเปิดใช้งานด่วน / สอบถามข้อมูล
+                    หรือติดต่อเจ้าหน้าที่ผ่าน LINE Official เพื่อแจ้งเปิดใช้งานทันที / สอบถามข้อมูลเพิ่มเติม
                   </p>
                 </div>
                 <div className="py-1">
@@ -76,7 +76,7 @@ export function RegisterForm({ enabled, full = false }: { enabled: boolean; full
                     className="w-36 h-36 object-contain mx-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xs"
                   />
                   <p className="mt-1.5 text-[11px] text-slate-500">
-                    สแกน QR Code หรือบันทึกรูปเพื่อแอดไลน์ติดต่อทีมงานได้ทันที
+                    สแกน QR Code หรือเพิ่มเพื่อนใน LINE เพื่อติดต่อเจ้าหน้าที่
                   </p>
                 </div>
               </div>
