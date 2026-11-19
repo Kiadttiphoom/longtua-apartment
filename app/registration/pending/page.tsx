@@ -53,8 +53,8 @@ export default async function RegistrationPendingPage() {
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#06C755]/10 text-[#06C755]">
             LINE Official Account
           </span>
-          <p className="text-sm font-semibold text-slate-800">
-            เจ้าหน้าที่จะติดต่อกลับเพื่อเปิดใช้งานระบบ หรือติดต่อผ่าน LINE เพื่อแจ้งเปิดใช้งานทันที
+          <p className="text-sm font-semibold text-slate-800 leading-relaxed">
+            เจ้าหน้าที่จะติดต่อกลับเพื่อเปิดใช้งานระบบ<br className="hidden sm:inline" /> หรือติดต่อผ่าน LINE เพื่อแจ้งเปิดใช้งานได้ทันที
           </p>
         </div>
         <div className="py-1">
