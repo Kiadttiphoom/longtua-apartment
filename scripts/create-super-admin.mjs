@@ -51,6 +51,10 @@ try {
   if (userId) {
     // Update existing user password
     await client.query(
+      "UPDATE public.auth_login_aliases SET encrypted_password = $1 WHERE auth_user_id = $2",
+      [hashedPassword, userId],
+    );
+    await client.query(
       "UPDATE auth.users SET encrypted_password = $1, updated_at = now() WHERE id = $2",
       [hashedPassword, userId],
     );
@@ -68,9 +72,9 @@ try {
     );
 
     await client.query(
-      `INSERT INTO public.auth_login_aliases (username, auth_user_id, internal_email)
-       VALUES ($1, $2, $3)`,
-      [username, userId, internalEmail],
+      `INSERT INTO public.auth_login_aliases (username, auth_user_id, internal_email, encrypted_password)
+       VALUES ($1, $2, $3, $4)`,
+      [username, userId, internalEmail, hashedPassword],
     );
     console.log(`สร้างบัญชี super admin '${username}' (${userId}) เรียบร้อยแล้ว`);
   }

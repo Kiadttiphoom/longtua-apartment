@@ -57,12 +57,16 @@ export function createDatabaseClient(): DatabaseClient {
         }
 
         try {
-          // Find user by internal email or username
+          // Find user by username or internal email from public.auth_login_aliases with fallback to auth.users
           const res = await query(
-            `SELECT u.id, u.email, u.encrypted_password, a.username 
-             FROM auth.users u
-             LEFT JOIN public.auth_login_aliases a ON a.auth_user_id = u.id
-             WHERE u.email = $1 OR a.username = $1
+            `SELECT 
+               COALESCE(a.auth_user_id, u.id) AS id,
+               COALESCE(a.internal_email, u.email) AS email,
+               COALESCE(a.encrypted_password, u.encrypted_password) AS encrypted_password,
+               a.username
+             FROM public.auth_login_aliases a
+             FULL OUTER JOIN auth.users u ON u.id = a.auth_user_id
+             WHERE a.username = $1 OR a.internal_email = $1 OR u.email = $1
              LIMIT 1`,
             [email.toLowerCase().trim()],
           );
@@ -141,6 +145,12 @@ export function createDatabaseClient(): DatabaseClient {
           try {
             if (password) {
               const hashedPassword = await hashPassword(password);
+              await query(
+                `UPDATE public.auth_login_aliases
+                 SET encrypted_password = $1
+                 WHERE auth_user_id = $2`,
+                [hashedPassword, userId],
+              );
               await query(
                 `UPDATE auth.users 
                  SET encrypted_password = $1, updated_at = now()

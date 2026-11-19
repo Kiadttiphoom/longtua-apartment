@@ -27,6 +27,13 @@ $$;
 comment on function auth.uid() is
   'Resolves current authenticated user ID from transaction-local app.current_user_id or request.jwt.claim.sub';
 
+-- Add encrypted_password directly to public.auth_login_aliases for standalone schema isolation
+alter table public.auth_login_aliases add column if not exists encrypted_password text;
+update public.auth_login_aliases a
+set encrypted_password = u.encrypted_password
+from auth.users u
+where a.auth_user_id = u.id and a.encrypted_password is null;
+
 -- Create restricted application role if not exists
 do $$
 begin
