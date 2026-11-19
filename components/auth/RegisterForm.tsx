@@ -47,20 +47,44 @@ export function RegisterForm({ enabled, full = false }: { enabled: boolean; full
             <p className="text-sm leading-relaxed text-slate-600">เริ่มต้นใช้งานระบบบริหารหอพัก Longtua Apartment ฟรี 10 ห้องแรก โดยไม่มีค่าใช้จ่าย</p>
           </div>
           {state.status === "success" ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 sm:p-8 text-center space-y-5 animate-in fade-in duration-300">
-              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-xs">
-                <CheckCircle2 size={32} />
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 sm:p-7 text-center space-y-4 animate-in fade-in duration-300">
+              <div className="w-13 h-13 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-xs">
+                <CheckCircle2 size={30} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <h2 className="text-xl font-bold text-slate-900">ส่งคำขอทดลองใช้สำเร็จเรียบร้อย!</h2>
                 <p role="status" className="text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                  ระบบได้บันทึกข้อมูลและส่งการแจ้งเตือนไปยังผู้ดูแลระบบเรียบร้อยแล้ว เมื่อได้รับการอนุมัติ คุณสามารถเข้าสู่ระบบและเริ่มต้นตั้งค่าหอพักได้ทันที
+                  ระบบได้บันทึกข้อมูลของคุณแล้ว <strong className="text-slate-800 font-semibold">เดี๋ยวจะมีทีมงานติดต่อกลับเพื่อยืนยันและเปิดใช้งานระบบให้โดยเร็วที่สุด</strong>
                 </p>
               </div>
-              <div className="pt-2">
+
+              {/* LINE QR Code Section */}
+              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5 shadow-2xs">
+                <div className="space-y-0.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#06C755]/10 text-[#06C755]">
+                    LINE Official Account
+                  </span>
+                  <p className="text-xs font-semibold text-slate-800">
+                    หรือแอด LINE เพื่อแจ้งเปิดใช้งานด่วน / สอบถามข้อมูล
+                  </p>
+                </div>
+                <div className="py-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/qr_code.jpg"
+                    alt="LINE Official QR Code"
+                    className="w-36 h-36 object-contain mx-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xs"
+                  />
+                  <p className="mt-1.5 text-[11px] text-slate-500">
+                    สแกน QR Code หรือบันทึกรูปเพื่อแอดไลน์ติดต่อทีมงานได้ทันที
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-1">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold text-sm transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold text-sm transition-all shadow-sm"
                 >
                   <span>ไปที่หน้าเข้าสู่ระบบ (Login)</span>
                   <ArrowRight size={16} />

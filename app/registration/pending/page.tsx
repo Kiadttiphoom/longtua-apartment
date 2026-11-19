@@ -46,7 +46,31 @@ export default async function RegistrationPendingPage() {
         <span><CheckCircle2 size={16} />{rejected ? "ติดต่อผู้ดูแลพร้อมแจ้งชื่อผู้ใช้ของคุณ" : "ระบบจะสร้างกิจการและหอพัก 1 แห่งให้โดยอัตโนมัติ"}</span>
         {!rejected ? <span><CheckCircle2 size={16} />รองรับสูงสุด 10 ห้อง และเริ่มทดลองใช้ฟรี 30 วันในวันอนุมัติ</span> : null}
       </div>
-      <a className="mt-8 flex min-h-13 w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-base font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" href={supportContactUrl()}>ติดต่อผู้ดูแลระบบ</a>
+
+      {/* LINE QR Code Card */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-center space-y-3">
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#06C755]/10 text-[#06C755]">
+            LINE Official Account
+          </span>
+          <p className="text-sm font-semibold text-slate-800">
+            เดี๋ยวจะมีทีมงานติดต่อกลับ หรือแอด LINE เพื่อแจ้งเปิดใช้งานด่วน
+          </p>
+        </div>
+        <div className="py-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/qr_code.jpg"
+            alt="LINE Official QR Code"
+            className="w-36 h-36 object-contain mx-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xs"
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            สแกน QR Code หรือบันทึกรูปภาพเพื่อเพิ่มเพื่อนใน LINE
+          </p>
+        </div>
+      </div>
+
+      <a className="mt-6 flex min-h-13 w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-base font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" href={supportContactUrl()}>ติดต่อผู้ดูแลระบบ</a>
     </section>
   </main>;
 }
