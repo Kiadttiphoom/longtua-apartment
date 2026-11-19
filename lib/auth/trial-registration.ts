@@ -2,7 +2,8 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type TrialRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
+export type TrialRequestStatus =
+  "pending" | "approved" | "rejected" | "cancelled";
 
 export type ApplicantTrialRequest = {
   id: string;
@@ -18,25 +19,34 @@ export type ApplicantTrialRequest = {
 };
 
 export function marketingRegistrationUrl() {
-  return process.env.MARKETING_REGISTRATION_URL?.trim()
-    || "https://longtua.com/apartment/register";
+  return (
+    process.env.MARKETING_REGISTRATION_URL?.trim() ||
+    "https://longtua.com/apartment/register"
+  );
 }
 
 export function supportContactUrl() {
-  return process.env.LONGTUA_SUPPORT_URL?.trim()
-    || "https://longtua.com/contact";
+  return (
+    process.env.LONGTUA_SUPPORT_URL?.trim() || "https://longtua.com/contact"
+  );
 }
 
-export async function getApplicantTrialRequest(userId: string): Promise<ApplicantTrialRequest | null> {
+export async function getApplicantTrialRequest(
+  userId: string,
+): Promise<ApplicantTrialRequest | null> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("trial_requests")
-    .select("id, operator_name, property_name, contact_email, phone, requested_room_count, status, submitted_at, reviewed_at, rejection_reason")
+    .select(
+      "id, operator_name, property_name, contact_email, phone, requested_room_count, status, submitted_at, reviewed_at, rejection_reason",
+    )
     .eq("auth_user_id", userId)
     .maybeSingle();
 
   if (error) {
-    console.error(`[trial] ${JSON.stringify({ stage: "applicant_request.read", userId, code: error.code, message: error.message })}`);
+    console.error(
+      `[trial] ${JSON.stringify({ stage: "applicant_request.read", userId, code: error.code, message: error.message })}`,
+    );
     return null;
   }
   return data as ApplicantTrialRequest | null;

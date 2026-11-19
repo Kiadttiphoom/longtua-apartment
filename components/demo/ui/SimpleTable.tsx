@@ -27,10 +27,19 @@ export function SimpleTable({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((row, index) => (
-              <tr key={`${row[0]}-${index}`} className="hover:bg-slate-50/60 transition-colors">
+              <tr
+                key={`${row[0]}-${index}`}
+                className="hover:bg-slate-50/60 transition-colors"
+              >
                 {row.map((cell, cellIndex) => (
                   <td className="px-5 py-4" key={`${cell}-${cellIndex}`}>
-                    {cellIndex === 0 ? <strong className="text-slate-800 font-bold">{cell}</strong> : cell}
+                    {cellIndex === 0 ? (
+                      <strong className="text-slate-800 font-bold">
+                        {cell}
+                      </strong>
+                    ) : (
+                      cell
+                    )}
                   </td>
                 ))}
                 <td className="px-5 py-4 text-right">

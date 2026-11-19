@@ -37,6 +37,7 @@ Super Admin มีโค้ดรองรับภายใน แต่ตั�
 ## สถาปัตยกรรม Database และ Authentication (Decoupled PostgreSQL)
 
 ระบบเชื่อมต่อฐานข้อมูลตรงผ่าน **PostgreSQL (`DATABASE_URL`) ฝั่งเซิร์ฟเวอร์** โดยถอดการพึ่งพา Supabase SDK, Auth API และ Storage ออกจากตัวแอปพลิเคชันอย่างสมบูรณ์:
+
 - **Database Connection:** ใช้ `pg.Pool` ทำ parameterized queries 100% ปลอดภัยจาก SQL Injection รองรับทั้ง Direct Connection (พอร์ต 5432) และ Supabase Transaction Pooler / PgBouncer (พอร์ต 6543) ด้วยโหมด unnamed prepared statements
 - **Authentication:** รองรับการล็อกอินด้วย `username + password` ผ่าน HTTP-Only Cookie Session ที่เข้ารหัสลายเซ็นแบบ HMAC-SHA256 รหัสผ่านถูกเข้ารหัสด้วย bcrypt ซึ่งเข้ากันได้ 100% กับ hash เดิมของ Supabase GoTrue ทำให้ผู้ใช้เดิมเข้าสู่ระบบได้ทันทีโดยไม่ต้องรีเซ็ตรหัสผ่าน
 - **File Storage:** ใช้ **Cloudflare R2** (S3 Protocol) เก็บสลิปโอนเงิน สัญญาเช่า และเอกสารทั้งหมด ปลอดภัยด้วย Signed URLs และ Private API Routes

@@ -15,7 +15,10 @@ import {
   Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parsePaymentSettings, type PaymentSettingsInput } from "@/lib/constants/banks";
+import {
+  parsePaymentSettings,
+  type PaymentSettingsInput,
+} from "@/lib/constants/banks";
 import {
   requestPaymentSlipUploadPresignedUrl,
   confirmPaymentSubmissionWithR2,
@@ -47,7 +50,9 @@ export function TenantPaymentForm({
   const [preparing, setPreparing] = useState(false);
   const [viewingModal, setViewingModal] = useState(false);
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
 
   const selection = useRef(0);
 
@@ -80,10 +85,15 @@ export function TenantPaymentForm({
       return;
     }
 
-    const isHeic = /\.(heic|heif)$/i.test(file.name) || ["image/heic", "image/heif"].includes(file.type);
+    const isHeic =
+      /\.(heic|heif)$/i.test(file.name) ||
+      ["image/heic", "image/heif"].includes(file.type);
     const isImage = isHeic || file.type.startsWith("image/");
     if (!isImage) {
-      setMessage({ ok: false, text: "รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG หรือภาพ iPhone) เท่านั้น" });
+      setMessage({
+        ok: false,
+        text: "รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG หรือภาพ iPhone) เท่านั้น",
+      });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -97,7 +107,10 @@ export function TenantPaymentForm({
       setPreviewUrl(URL.createObjectURL(processed));
     } catch (error) {
       if (token === selection.current) {
-        setMessage({ ok: false, text: error instanceof Error ? error.message : "ประมวลผลภาพไม่สำเร็จ" });
+        setMessage({
+          ok: false,
+          text: error instanceof Error ? error.message : "ประมวลผลภาพไม่สำเร็จ",
+        });
         setRawFile(null);
       }
     } finally {
@@ -134,12 +147,17 @@ export function TenantPaymentForm({
 
     const paymentInfo = parsePaymentSettings(setting);
     if (!paymentInfo.hasAny) {
-      setMessage({ ok: false, text: "ไม่พบบัญชีของเจ้าของ ไม่สามารถส่งข้อมูลการชำระได้" });
+      setMessage({
+        ok: false,
+        text: "ไม่พบบัญชีของเจ้าของ ไม่สามารถส่งข้อมูลการชำระได้",
+      });
       return;
     }
 
     const amount = Number(data.get("amount"));
-    const method = String(data.get("method") || (paymentInfo.hasBank ? "transfer" : "promptpay"));
+    const method = String(
+      data.get("method") || (paymentInfo.hasBank ? "transfer" : "promptpay"),
+    );
     const reference = String(data.get("reference") ?? "");
     const note = String(data.get("note") ?? "");
 
@@ -175,7 +193,9 @@ export function TenantPaymentForm({
       }
 
       if (!uploadRes.ok) {
-        throw new Error(`อัปโหลดสลิปไม่สำเร็จ (${uploadRes.status}) กรุณาลองใหม่อีกครั้ง`);
+        throw new Error(
+          `อัปโหลดสลิปไม่สำเร็จ (${uploadRes.status}) กรุณาลองใหม่อีกครั้ง`,
+        );
       }
 
       const confirmRes = await confirmPaymentSubmissionWithR2({
@@ -203,9 +223,13 @@ export function TenantPaymentForm({
       setControlVersion((v) => v + 1);
       setDateInvalid(false);
       router.refresh();
-      await alertSuccess("ส่งหลักฐานสำเร็จ", confirmRes.message || "ระบบบันทึกหลักฐานการชำระเงินเรียบร้อยแล้ว");
+      await alertSuccess(
+        "ส่งหลักฐานสำเร็จ",
+        confirmRes.message || "ระบบบันทึกหลักฐานการชำระเงินเรียบร้อยแล้ว",
+      );
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "ส่งหลักฐานไม่สำเร็จ กรุณาลองอีกครั้ง";
+      const errorMsg =
+        error instanceof Error ? error.message : "ส่งหลักฐานไม่สำเร็จ กรุณาลองอีกครั้ง";
       if (errorMsg.includes("ยกเลิก")) {
         router.refresh();
         setMessage({ ok: false, text: errorMsg });
@@ -219,12 +243,21 @@ export function TenantPaymentForm({
   }
 
   return (
-    <form className="mt-5 space-y-4 border-t border-slate-200 pt-5" onSubmit={handleSubmit}>
+    <form
+      className="mt-5 space-y-4 border-t border-slate-200 pt-5"
+      onSubmit={handleSubmit}
+    >
       <header>
         <div>
-          <strong className="block text-sm font-bold text-slate-800">แจ้งชำระ {invoice.invoice_number}</strong>
+          <strong className="block text-sm font-bold text-slate-800">
+            แจ้งชำระ {invoice.invoice_number}
+          </strong>
           <span className="text-xs text-slate-500">
-            ยอดคงเหลือ {Number(invoice.balance_due).toLocaleString("th-TH", { style: "currency", currency: "THB" })}
+            ยอดคงเหลือ{" "}
+            {Number(invoice.balance_due).toLocaleString("th-TH", {
+              style: "currency",
+              currency: "THB",
+            })}
           </span>
         </div>
       </header>
@@ -268,7 +301,11 @@ export function TenantPaymentForm({
               if (val) setDateInvalid(false);
             }}
           />
-          {dateInvalid && <p role="alert" className="text-rose-600 text-xs">กรุณาเลือกวันที่และเวลาโอน</p>}
+          {dateInvalid && (
+            <p role="alert" className="text-rose-600 text-xs">
+              กรุณาเลือกวันที่และเวลาโอน
+            </p>
+          )}
         </div>
       </div>
 
@@ -279,7 +316,9 @@ export function TenantPaymentForm({
         if (paymentInfo.hasBank) {
           methodOptions.push({
             value: "transfer",
-            label: paymentInfo.bank?.shortName ? `โอนธนาคาร (${paymentInfo.bank.shortName})` : "โอนธนาคาร",
+            label: paymentInfo.bank?.shortName
+              ? `โอนธนาคาร (${paymentInfo.bank.shortName})`
+              : "โอนธนาคาร",
           });
         }
         if (paymentInfo.hasPromptpay) {
@@ -328,7 +367,9 @@ export function TenantPaymentForm({
 
       {/* Slip Upload & Drop Area */}
       <div className="space-y-2">
-        <label className="block text-xs font-semibold text-slate-700">แนบภาพสลิป *</label>
+        <label className="block text-xs font-semibold text-slate-700">
+          แนบภาพสลิป *
+        </label>
 
         {!previewUrl ? (
           <div
@@ -341,18 +382,28 @@ export function TenantPaymentForm({
             }`}
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              {preparing ? <Loader2 size={24} className="animate-spin" /> : <UploadCloud size={24} />}
+              {preparing ? (
+                <Loader2 size={24} className="animate-spin" />
+              ) : (
+                <UploadCloud size={24} />
+              )}
             </div>
             <div className="text-xs text-slate-600">
               {preparing ? (
-                <span className="font-semibold text-blue-700">กำลังเตรียมรูปภาพ...</span>
+                <span className="font-semibold text-blue-700">
+                  กำลังเตรียมรูปภาพ...
+                </span>
               ) : (
                 <>
-                  <span className="font-semibold text-blue-700">คลิกเพื่อเลือกภาพสลิป</span> หรือลากไฟล์มาวางที่นี่
+                  <span className="font-semibold text-blue-700">
+                    คลิกเพื่อเลือกภาพสลิป
+                  </span>{" "}
+                  หรือลากไฟล์มาวางที่นี่
                 </>
               )}
               <p className="mt-1 text-[11px] text-slate-400">
-                รองรับไฟล์ภาพ JPG, PNG หรือภาพถ่ายจาก iPhone (HEIC) ระบบจะย่อขนาดให้อัตโนมัติ
+                รองรับไฟล์ภาพ JPG, PNG หรือภาพถ่ายจาก iPhone (HEIC)
+                ระบบจะย่อขนาดให้อัตโนมัติ
               </p>
             </div>
             <input
@@ -368,7 +419,9 @@ export function TenantPaymentForm({
           /* Preview Selected Slip Card */
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-700">ตรวจสอบภาพสลิปก่อนส่ง</span>
+              <span className="text-xs font-bold text-slate-700">
+                ตรวจสอบภาพสลิปก่อนส่ง
+              </span>
               {!pending && (
                 <button
                   type="button"
@@ -404,12 +457,16 @@ export function TenantPaymentForm({
 
               {/* Details & Actions */}
               <div className="flex flex-1 flex-col justify-center text-xs text-slate-600 w-full">
-                <p className="font-semibold text-slate-800 truncate" title={rawFile?.name}>
+                <p
+                  className="font-semibold text-slate-800 truncate"
+                  title={rawFile?.name}
+                >
                   {rawFile?.name}
                 </p>
                 <p className="mt-1 text-slate-400">
                   {prepared?.type === "image/png" ? "PNG" : "JPG"} ·{" "}
-                  {prepared ? (prepared.size / (1024 * 1024)).toFixed(2) : "0"} MB (พร้อมส่ง)
+                  {prepared ? (prepared.size / (1024 * 1024)).toFixed(2) : "0"}{" "}
+                  MB (พร้อมส่ง)
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <button
@@ -463,8 +520,8 @@ export function TenantPaymentForm({
             message.ok
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : message.text.includes("ยกเลิก")
-              ? "border-amber-300 bg-amber-50 text-amber-900"
-              : "border-rose-200 bg-rose-50 text-rose-800"
+                ? "border-amber-300 bg-amber-50 text-amber-900"
+                : "border-rose-200 bg-rose-50 text-rose-800"
           }`}
         >
           {message.ok ? (
@@ -481,7 +538,8 @@ export function TenantPaymentForm({
       {/* Submit button */}
       {(() => {
         const paymentInfo = parsePaymentSettings(setting);
-        const canSubmit = paymentInfo.hasAny && !pending && !preparing && Boolean(prepared);
+        const canSubmit =
+          paymentInfo.hasAny && !pending && !preparing && Boolean(prepared);
 
         return (
           <button
@@ -518,10 +576,15 @@ export function TenantPaymentForm({
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
               <div className="min-w-0 pr-3">
-                <p className="truncate text-sm font-bold text-slate-800" title={rawFile?.name}>
+                <p
+                  className="truncate text-sm font-bold text-slate-800"
+                  title={rawFile?.name}
+                >
                   {rawFile?.name}
                 </p>
-                <p className="text-xs text-slate-500">ตัวอย่างภาพสลิปที่จะส่ง · กด ESC เพื่อปิด</p>
+                <p className="text-xs text-slate-500">
+                  ตัวอย่างภาพสลิปที่จะส่ง · กด ESC เพื่อปิด
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <a

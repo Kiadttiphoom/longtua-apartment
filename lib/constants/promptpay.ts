@@ -58,7 +58,10 @@ export function formatPromptPayDisplay(target: string): string {
  * @param target Phone number (08xxxxxxxx) or 13-digit National ID / Tax ID
  * @param amount Optional payment amount (e.g. 14900.00)
  */
-export function generatePromptPayPayload(target: string, amount?: number | null): string {
+export function generatePromptPayPayload(
+  target: string,
+  amount?: number | null,
+): string {
   const formattedTarget = formatPromptPayTarget(target);
   const isPhone = formattedTarget.startsWith("0066");
 
@@ -73,7 +76,7 @@ export function generatePromptPayPayload(target: string, amount?: number | null)
     f("01", amount && amount > 0 ? "12" : "11"), // 11 = Static QR (any amount), 12 = Dynamic QR (specific amount)
     tag29,
     f("53", "764"), // Transaction Currency: THB (764)
-    f("58", "TH"),  // Country Code: TH
+    f("58", "TH"), // Country Code: TH
   ].join("");
 
   if (amount !== undefined && amount !== null && amount > 0) {

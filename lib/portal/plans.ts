@@ -1,4 +1,5 @@
-export type SubscriptionPlanCode = "trial" | "starter" | "growth" | "pro" | "business";
+export type SubscriptionPlanCode =
+  "trial" | "starter" | "growth" | "pro" | "business";
 
 export type SubscriptionPlan = {
   code: SubscriptionPlanCode;
@@ -13,7 +14,10 @@ export type SubscriptionPlan = {
   popular?: boolean;
 };
 
-export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> = {
+export const SUBSCRIPTION_PLANS: Record<
+  SubscriptionPlanCode,
+  SubscriptionPlan
+> = {
   trial: {
     code: "trial",
     name: "ทดลองใช้ฟรี",
@@ -72,7 +76,10 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
   },
 };
 
-export function getPlanByQuota(maxProperties: number | null | undefined, maxRooms: number | null | undefined): SubscriptionPlan {
+export function getPlanByQuota(
+  maxProperties: number | null | undefined,
+  maxRooms: number | null | undefined,
+): SubscriptionPlan {
   const rooms = maxRooms ?? 10;
   if (rooms <= 10) return SUBSCRIPTION_PLANS.trial;
   if (rooms <= 20) return SUBSCRIPTION_PLANS.starter;

@@ -2,17 +2,25 @@
 
 import { useState } from "react";
 
-const publicAssetsBaseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
+const publicAssetsBaseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL?.replace(
+  /\/$/,
+  "",
+);
 
 type BrandLogoProps = {
   className?: string;
   variant?: "default" | "inverse";
 };
 
-export function BrandLogo({ className = "", variant = "default" }: BrandLogoProps) {
+export function BrandLogo({
+  className = "",
+  variant = "default",
+}: BrandLogoProps) {
   const [hasError, setHasError] = useState(false);
   const logoFile = variant === "inverse" ? "logo-inverse.png" : "logo.png";
-  const logoUrl = publicAssetsBaseUrl ? `${publicAssetsBaseUrl}/brand/${logoFile}` : null;
+  const logoUrl = publicAssetsBaseUrl
+    ? `${publicAssetsBaseUrl}/brand/${logoFile}`
+    : null;
 
   if (!logoUrl || hasError) {
     return (

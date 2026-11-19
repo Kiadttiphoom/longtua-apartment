@@ -24,7 +24,15 @@ export function RolesPage({ isLocked, onToast }: PageContentProps) {
 
       <div className="w-full">
         <DataTable
-          headers={["ชื่อ Role", "รหัส (Code)", "ขอบเขตข้อมูล", "ผู้ใช้งาน", "จำนวนสิทธิ์", "ประเภท", "การจัดการ"]}
+          headers={[
+            "ชื่อ Role",
+            "รหัส (Code)",
+            "ขอบเขตข้อมูล",
+            "ผู้ใช้งาน",
+            "จำนวนสิทธิ์",
+            "ประเภท",
+            "การจัดการ",
+          ]}
           rows={collection.items.map((role) => [
             <strong key="name" className="text-slate-800 font-bold text-xs">
               {role.name}
@@ -38,7 +46,10 @@ export function RolesPage({ isLocked, onToast }: PageContentProps) {
             <span key="users" className="text-slate-700 text-xs">
               {role.users} คน
             </span>,
-            <span key="perms" className="inline-flex items-center gap-1 font-semibold text-blue-600 text-xs">
+            <span
+              key="perms"
+              className="inline-flex items-center gap-1 font-semibold text-blue-600 text-xs"
+            >
               <ShieldCheck size={14} />
               {role.permissions} สิทธิ์
             </span>,
@@ -52,7 +63,11 @@ export function RolesPage({ isLocked, onToast }: PageContentProps) {
             >
               {role.system ? "ระบบหลัก" : "กำหนดเอง"}
             </span>,
-            <EditButton key="action" label={role.name} onClick={() => onToast("เปิดแก้ไข Role")} />,
+            <EditButton
+              key="action"
+              label={role.name}
+              onClick={() => onToast("เปิดแก้ไข Role")}
+            />,
           ])}
         />
       </div>

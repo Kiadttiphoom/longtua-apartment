@@ -73,7 +73,9 @@ export function UsersPage({
   const [roleFilter, setRoleFilter] = useState("all");
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingMember, setEditingMember] = useState<PortalMember | null>(null);
-  const [deletingMember, setDeletingMember] = useState<PortalMember | null>(null);
+  const [deletingMember, setDeletingMember] = useState<PortalMember | null>(
+    null,
+  );
 
   // Invite modal form states
   const [inviteName, setInviteName] = useState("");
@@ -90,7 +92,6 @@ export function UsersPage({
     setMembers(initialMembers);
   }, [initialMembers]);
 
-
   const propertyOptions = useMemo(() => {
     const list = [{ value: "all", label: "ทุกหอพักของกิจการ (ดูแลทั้งหมด)" }];
     properties.forEach((p) => {
@@ -105,31 +106,84 @@ export function UsersPage({
       const matchesSearch =
         !keyword ||
         [m.name, m.username, m.roleName, m.scope].some((v) =>
-          v?.toLowerCase().includes(keyword)
+          v?.toLowerCase().includes(keyword),
         );
       const matchesRole = roleFilter === "all" || m.roleCode === roleFilter;
       return matchesSearch && matchesRole;
     });
   }, [members, query, roleFilter]);
 
-  const roleColors: Record<string, { bg: string; text: string; border: string; badgeBg: string }> = {
-    owner: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", badgeBg: "bg-purple-600 text-white shadow-sm" },
-    manager: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", badgeBg: "bg-blue-600 text-white shadow-sm" },
-    accounting: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badgeBg: "bg-emerald-600 text-white shadow-sm" },
-    staff: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", badgeBg: "bg-amber-600 text-white shadow-sm" },
+  const roleColors: Record<
+    string,
+    { bg: string; text: string; border: string; badgeBg: string }
+  > = {
+    owner: {
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+      border: "border-purple-200",
+      badgeBg: "bg-purple-600 text-white shadow-sm",
+    },
+    manager: {
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+      badgeBg: "bg-blue-600 text-white shadow-sm",
+    },
+    accounting: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      badgeBg: "bg-emerald-600 text-white shadow-sm",
+    },
+    staff: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      badgeBg: "bg-amber-600 text-white shadow-sm",
+    },
   };
 
-  const inviteRoleOptions = useMemo(() => [
-    { value: "manager", label: "ผู้จัดการ (Manager)", description: "ดูแลสัญญาและห้องพัก" },
-    { value: "accounting", label: "ฝ่ายการเงิน (Accounting)", description: "ออกบิลและรับชำระ" },
-    { value: "staff", label: "เจ้าหน้าที่ (Staff)", description: "จดมิเตอร์และดูสถานะ" },
-  ], []);
+  const inviteRoleOptions = useMemo(
+    () => [
+      {
+        value: "manager",
+        label: "ผู้จัดการ (Manager)",
+        description: "ดูแลสัญญาและห้องพัก",
+      },
+      {
+        value: "accounting",
+        label: "ฝ่ายการเงิน (Accounting)",
+        description: "ออกบิลและรับชำระ",
+      },
+      {
+        value: "staff",
+        label: "เจ้าหน้าที่ (Staff)",
+        description: "จดมิเตอร์และดูสถานะ",
+      },
+    ],
+    [],
+  );
 
-  const editRoleOptions = useMemo(() => [
-    { value: "manager", label: "ผู้จัดการ (Manager)", description: "ดูแลสัญญาและห้องพัก" },
-    { value: "accounting", label: "ฝ่ายการเงิน (Accounting)", description: "ออกบิลและรับชำระ" },
-    { value: "staff", label: "เจ้าหน้าที่ (Staff)", description: "จดมิเตอร์และดูสถานะ" },
-  ], []);
+  const editRoleOptions = useMemo(
+    () => [
+      {
+        value: "manager",
+        label: "ผู้จัดการ (Manager)",
+        description: "ดูแลสัญญาและห้องพัก",
+      },
+      {
+        value: "accounting",
+        label: "ฝ่ายการเงิน (Accounting)",
+        description: "ออกบิลและรับชำระ",
+      },
+      {
+        value: "staff",
+        label: "เจ้าหน้าที่ (Staff)",
+        description: "จดมิเตอร์และดูสถานะ",
+      },
+    ],
+    [],
+  );
 
   const [inviteError, setInviteError] = useState("");
   const [editError, setEditError] = useState("");
@@ -189,7 +243,9 @@ export function UsersPage({
     startTransition(async () => {
       const res = await updateOrganizationMemberAction(formData);
       if (res.ok) {
-        setMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+        setMembers((prev) =>
+          prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)),
+        );
         setEditingMember(null);
         setResetPassword("");
         void alertSuccess(res.message);
@@ -221,24 +277,28 @@ export function UsersPage({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-
       {/* Page Header */}
       <PageHeader
         actionLabel={canCreate ? "เพิ่มผู้ใช้ใหม่" : undefined}
         description="กำหนดระดับสิทธิ์ รหัสผ่านเข้าใช้งาน ขอบเขตสาขา/หอพัก และสถานะ"
-        onAction={() => { setInviteError(""); setShowInviteModal(true); }}
+        onAction={() => {
+          setInviteError("");
+          setShowInviteModal(true);
+        }}
         title="ผู้ใช้งาน"
       />
 
       {/* 4-Metric Hero Stat Cards */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ผู้ใช้งานทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ผู้ใช้งานทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {members.length.toLocaleString("th-TH")} คน
               </strong>
@@ -247,42 +307,57 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เปิดใช้งานอยู่</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เปิดใช้งานอยู่
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
-                {members.filter((m) => m.status === "active").length.toLocaleString("th-TH")} คน
+                {members
+                  .filter((m) => m.status === "active")
+                  .length.toLocaleString("th-TH")}{" "}
+                คน
               </strong>
             </div>
           </div>
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เจ้าของกิจการ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เจ้าของกิจการ
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
-                {members.filter((m) => m.roleCode === "owner").length.toLocaleString("th-TH")} คน
+                {members
+                  .filter((m) => m.roleCode === "owner")
+                  .length.toLocaleString("th-TH")}{" "}
+                คน
               </strong>
             </div>
           </div>
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ทีมงาน & เจ้าหน้าที่</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ทีมงาน & เจ้าหน้าที่
+              </span>
               <strong className="text-2xl font-black text-amber-900 tracking-tight tabular-nums mt-0.5 block">
-                {members.filter((m) => m.roleCode !== "owner").length.toLocaleString("th-TH")} คน
+                {members
+                  .filter((m) => m.roleCode !== "owner")
+                  .length.toLocaleString("th-TH")}{" "}
+                คน
               </strong>
             </div>
           </div>
@@ -296,7 +371,9 @@ export function UsersPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -307,7 +384,9 @@ export function UsersPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -340,34 +419,66 @@ export function UsersPage({
         viewMode === "table" ? (
           <div className="w-full">
             <DataTable
-              headers={["ผู้ใช้งาน", "ชื่อผู้ใช้ / อีเมล", "ระดับสิทธิ์", "หอพักที่ดูแล", "สถานะ", "การจัดการ"]}
+              headers={[
+                "ผู้ใช้งาน",
+                "ชื่อผู้ใช้ / อีเมล",
+                "ระดับสิทธิ์",
+                "หอพักที่ดูแล",
+                "สถานะ",
+                "การจัดการ",
+              ]}
               rows={filtered.map((row) => {
-                const color = roleColors[row.roleCode] ?? { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" };
+                const color = roleColors[row.roleCode] ?? {
+                  bg: "bg-slate-50",
+                  text: "text-slate-700",
+                  border: "border-slate-200",
+                };
                 return [
                   <div className="flex items-center gap-3.5" key="user">
-                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${color.bg} ${color.text} ${color.border} shadow-2xs`}>
+                    <span
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${color.bg} ${color.text} ${color.border} shadow-2xs`}
+                    >
                       {row.name.slice(0, 1)}
                     </span>
                     <div>
-                      <strong className="text-slate-900 font-bold text-sm block">{row.name}</strong>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">เข้าร่วมเมื่อ: {row.joinedAt || "—"}</span>
+                      <strong className="text-slate-900 font-bold text-sm block">
+                        {row.name}
+                      </strong>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                        เข้าร่วมเมื่อ: {row.joinedAt || "—"}
+                      </span>
                     </div>
                   </div>,
-                  <span key="username" className="text-slate-700 font-mono text-xs font-semibold bg-slate-100/80 px-2 py-1 rounded-md border border-slate-200/60">
+                  <span
+                    key="username"
+                    className="text-slate-700 font-mono text-xs font-semibold bg-slate-100/80 px-2 py-1 rounded-md border border-slate-200/60"
+                  >
                     {row.username}
                   </span>,
-                  <span key="role" className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${color.bg} ${color.text} ${color.border}`}>
+                  <span
+                    key="role"
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${color.bg} ${color.text} ${color.border}`}
+                  >
                     {row.roleName}
                   </span>,
-                  <div key="scope" className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                  <div
+                    key="scope"
+                    className="flex items-center gap-1.5 text-xs text-slate-700 font-medium"
+                  >
                     <Building2 size={13} className="text-slate-400 shrink-0" />
                     <span>{row.scope || "ทุกหอพัก"}</span>
                   </div>,
                   <StatusBadge key="status" status={row.status} />,
-                  <div className="inline-flex items-center gap-2 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-2 justify-end"
+                    key="actions"
+                  >
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
-                      onClick={() => { setEditError(""); setEditingMember(row); }}
+                      onClick={() => {
+                        setEditError("");
+                        setEditingMember(row);
+                      }}
                       title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
                       type="button"
                     >
@@ -392,18 +503,24 @@ export function UsersPage({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((m) => {
-              const color = roleColors[m.roleCode] ?? { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200", badgeBg: "bg-slate-600 text-white" };
+              const color = roleColors[m.roleCode] ?? {
+                bg: "bg-slate-50",
+                text: "text-slate-700",
+                border: "border-slate-200",
+                badgeBg: "bg-slate-600 text-white",
+              };
               return (
                 <article
                   className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
                   key={m.id}
                 >
-                  
                   <div>
                     {/* Header */}
                     <header className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0 ${color.badgeBg} group-hover:scale-105 transition-transform`}>
+                        <span
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0 ${color.badgeBg} group-hover:scale-105 transition-transform`}
+                        >
                           {m.name.slice(0, 1)}
                         </span>
                         <div className="min-w-0">
@@ -421,14 +538,20 @@ export function UsersPage({
                     {/* Role & Scope Badges */}
                     <div className="space-y-2.5 my-4">
                       <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <span className="text-slate-400 font-medium">ระดับสิทธิ์</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border ${color.bg} ${color.text} ${color.border}`}>
+                        <span className="text-slate-400 font-medium">
+                          ระดับสิทธิ์
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border ${color.bg} ${color.text} ${color.border}`}
+                        >
                           {m.roleName}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <span className="text-slate-400 font-medium">หอพักที่ดูแล</span>
+                        <span className="text-slate-400 font-medium">
+                          หอพักที่ดูแล
+                        </span>
                         <span className="font-bold text-slate-800 flex items-center gap-1">
                           <Building2 size={13} className="text-slate-400" />
                           {m.scope || "ทุกหอพัก"}
@@ -441,7 +564,10 @@ export function UsersPage({
                   <footer className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
                     <button
                       className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-2xs cursor-pointer"
-                      onClick={() => { setEditError(""); setEditingMember(m); }}
+                      onClick={() => {
+                        setEditError("");
+                        setEditingMember(m);
+                      }}
                       title="แก้ไข / เปลี่ยนรหัสผ่าน"
                       type="button"
                     >
@@ -486,23 +612,38 @@ export function UsersPage({
           title="เพิ่มผู้ใช้งานใหม่"
         >
           <div className="p-6 space-y-4 text-xs">
-            {inviteError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{inviteError}</p>}
+            {inviteError && (
+              <p
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+              >
+                {inviteError}
+              </p>
+            )}
             {/* Value / Security Banner */}
             <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="leading-relaxed">
-                <strong className="font-bold block text-blue-950">กำหนดสิทธิ์ตามบทบาทงาน</strong>
-                <span className="text-[11px] text-blue-800/80">ระบบจะจำกัดการเข้าถึงข้อมูลตามระดับสิทธิ์และหอพักที่มอบหมายอย่างปลอดภัย</span>
+                <strong className="font-bold block text-blue-950">
+                  กำหนดสิทธิ์ตามบทบาทงาน
+                </strong>
+                <span className="text-[11px] text-blue-800/80">
+                  ระบบจะจำกัดการเข้าถึงข้อมูลตามระดับสิทธิ์และหอพักที่มอบหมายอย่างปลอดภัย
+                </span>
               </div>
             </div>
 
             {/* Name Field */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>ชื่อ-นามสกุล <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">เช่น นายสมศักดิ์ จัดการดี</span>
+                <span>
+                  ชื่อ-นามสกุล <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เช่น นายสมศักดิ์ จัดการดี
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -522,8 +663,13 @@ export function UsersPage({
             {/* Username / Email */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>ชื่อผู้ใช้ / อีเมล (Login Username) <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">ใช้สำหรับเข้าสู่ระบบ</span>
+                <span>
+                  ชื่อผู้ใช้ / อีเมล (Login Username){" "}
+                  <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  ใช้สำหรับเข้าสู่ระบบ
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -542,8 +688,12 @@ export function UsersPage({
             {/* Password */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 8 ตัวอักษร</span>
+                <span>
+                  รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  อย่างน้อย 8 ตัวอักษร
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -562,7 +712,11 @@ export function UsersPage({
                   tabIndex={-1}
                   type="button"
                 >
-                  {showPassword ? <EyeOff size={16} strokeWidth={2.2} /> : <Eye size={16} strokeWidth={2.2} />}
+                  {showPassword ? (
+                    <EyeOff size={16} strokeWidth={2.2} />
+                  ) : (
+                    <Eye size={16} strokeWidth={2.2} />
+                  )}
                 </button>
               </div>
             </div>
@@ -574,7 +728,9 @@ export function UsersPage({
                   <Shield size={14} className="text-slate-500" />
                   <span>ระดับสิทธิ์การใช้งาน</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">กำหนดขอบเขตอำนาจ</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  กำหนดขอบเขตอำนาจ
+                </span>
               </label>
               <SelectControl
                 ariaLabel="ระดับสิทธิ์การใช้งาน"
@@ -592,7 +748,9 @@ export function UsersPage({
                   <Building2 size={14} className="text-slate-500" />
                   <span>หอพักที่มอบหมายให้ดูแล</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">ขอบเขตสาขา</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  ขอบเขตสาขา
+                </span>
               </label>
               <SelectControl
                 ariaLabel="หอพักที่มอบหมายให้ดูแล"
@@ -614,7 +772,12 @@ export function UsersPage({
               </button>
               <button
                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-                disabled={isPending || !inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 8}
+                disabled={
+                  isPending ||
+                  !inviteName.trim() ||
+                  !inviteEmail.trim() ||
+                  invitePassword.length < 8
+                }
                 onClick={handleSendInvite}
                 type="button"
               >
@@ -637,9 +800,18 @@ export function UsersPage({
           title={`แก้ไขผู้ใช้งาน: ${editingMember.name}`}
         >
           <div className="p-6 space-y-4">
-            {editError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{editError}</p>}
+            {editError && (
+              <p
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+              >
+                {editError}
+              </p>
+            )}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อ-นามสกุล</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                ชื่อ-นามสกุล
+              </label>
               <input
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 cursor-not-allowed"
                 disabled
@@ -649,7 +821,9 @@ export function UsersPage({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อผู้ใช้ / อีเมล</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                ชื่อผู้ใช้ / อีเมล
+              </label>
               <input
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono text-slate-600 cursor-not-allowed"
                 disabled
@@ -673,7 +847,14 @@ export function UsersPage({
                     setEditingMember({
                       ...editingMember,
                       roleCode: val,
-                      roleName: val === "owner" ? "เจ้าของกิจการ" : val === "manager" ? "ผู้จัดการ" : val === "accounting" ? "ฝ่ายการเงิน" : "เจ้าหน้าที่",
+                      roleName:
+                        val === "owner"
+                          ? "เจ้าของกิจการ"
+                          : val === "manager"
+                            ? "ผู้จัดการ"
+                            : val === "accounting"
+                              ? "ฝ่ายการเงิน"
+                              : "เจ้าหน้าที่",
                     })
                   }
                   placeholder="เลือกระดับสิทธิ์"
@@ -681,12 +862,18 @@ export function UsersPage({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">หอพักที่ดูแล</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  หอพักที่ดูแล
+                </label>
                 <SelectControl
                   ariaLabel="หอพักที่ดูแล"
                   disabled={editingMember.roleCode === "owner"}
                   options={propertyOptions}
-                  value={editingMember.scope === "ทุกหอพัก" ? "all" : editingMember.scope || "all"}
+                  value={
+                    editingMember.scope === "ทุกหอพัก"
+                      ? "all"
+                      : editingMember.scope || "all"
+                  }
                   onValueChange={(val) =>
                     setEditingMember({
                       ...editingMember,
@@ -710,7 +897,9 @@ export function UsersPage({
                 type="text"
                 value={resetPassword}
               />
-              <p className="text-[11px] text-amber-700/80">กรอกรหัสผ่านใหม่ที่นี่เพื่อตั้งรหัสผ่านให้ผู้ใช้รายนี้ทันที</p>
+              <p className="text-[11px] text-amber-700/80">
+                กรอกรหัสผ่านใหม่ที่นี่เพื่อตั้งรหัสผ่านให้ผู้ใช้รายนี้ทันที
+              </p>
             </div>
 
             <div className="mt-6 flex justify-end gap-2.5 pt-4 border-t border-slate-100">
@@ -745,9 +934,9 @@ export function UsersPage({
           title="ยืนยันการลบผู้ใช้งาน"
         >
           <div className="p-6 space-y-4">
-
             <p className="text-xs text-slate-600 leading-relaxed">
-              ผู้ใช้รายนี้จะไม่สามารถเข้าสู่ระบบและจัดการข้อมูลของกิจการได้อีกต่อไป การดำเนินการนี้ไม่สามารถเรียกคืนได้
+              ผู้ใช้รายนี้จะไม่สามารถเข้าสู่ระบบและจัดการข้อมูลของกิจการได้อีกต่อไป
+              การดำเนินการนี้ไม่สามารถเรียกคืนได้
             </p>
             <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100">
               <button

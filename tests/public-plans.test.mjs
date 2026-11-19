@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 function source(relativePath) {
-  return readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
+  return readFileSync(
+    fileURLToPath(new URL(relativePath, import.meta.url)),
+    "utf8",
+  );
 }
 
 test("publicPlansApi_requiresApiKeyAndValidatesSecurely", () => {
@@ -21,14 +24,31 @@ test("publicPlansApi_requiresApiKeyAndValidatesSecurely", () => {
 });
 
 test("subscriptionPlansMigration_definesPlansAndUsageTables", () => {
-  const migration = source("../supabase/migrations/20260904170000_subscription_plans_and_usage.sql");
+  const migration = source(
+    "../supabase/migrations/20260904170000_subscription_plans_and_usage.sql",
+  );
 
-  assert.match(migration, /create table if not exists public\.subscription_plans/);
-  assert.match(migration, /create table if not exists public\.subscription_usage/);
-  assert.match(migration, /alter table public\.subscriptions[\s\S]*?add column if not exists plan_code/);
-  assert.match(migration, /alter table public\.subscriptions[\s\S]*?add column if not exists max_slip_verifications/);
+  assert.match(
+    migration,
+    /create table if not exists public\.subscription_plans/,
+  );
+  assert.match(
+    migration,
+    /create table if not exists public\.subscription_usage/,
+  );
+  assert.match(
+    migration,
+    /alter table public\.subscriptions[\s\S]*?add column if not exists plan_code/,
+  );
+  assert.match(
+    migration,
+    /alter table public\.subscriptions[\s\S]*?add column if not exists max_slip_verifications/,
+  );
   assert.match(migration, /insert into public\.subscription_plans/);
-  assert.match(migration, /'trial'[\s\S]*?'Starter'[\s\S]*?'Growth'[\s\S]*?'Pro'[\s\S]*?'Business'/);
+  assert.match(
+    migration,
+    /'trial'[\s\S]*?'Starter'[\s\S]*?'Growth'[\s\S]*?'Pro'[\s\S]*?'Business'/,
+  );
   assert.match(migration, /15[\s\S]*?45[\s\S]*?150[\s\S]*?450[\s\S]*?1000/);
 });
 
@@ -50,7 +70,10 @@ test("marketingWebsite_hasConfiguredPublicPlansIntegration", () => {
   const marketingEnv = source("../../longtua/.env.example");
 
   assert.match(marketingPlansFetcher, /process\.env\.LONGTUA_PUBLIC_API_KEY/);
-  assert.match(marketingPlansFetcher, /process\.env\.LONGTUA_APARTMENT_API_URL/);
+  assert.match(
+    marketingPlansFetcher,
+    /process\.env\.LONGTUA_APARTMENT_API_URL/,
+  );
   assert.match(marketingPlansFetcher, /x-api-key/);
   assert.match(marketingPlansFetcher, /next:\s*\{\s*revalidate:\s*300\s*\}/);
   assert.match(marketingEnv, /LONGTUA_PUBLIC_API_KEY=/);
@@ -79,4 +102,3 @@ test("adminSubscriptions_hasPlanCatalogueAndEditForm", () => {
   assert.match(adminTypes, /export type SubscriptionPlan =/);
   assert.match(adminTypes, /subscriptionPlans:\s*SubscriptionPlan\[\]/);
 });
-

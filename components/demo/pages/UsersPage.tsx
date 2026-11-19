@@ -35,19 +35,45 @@ import {
 import type { PageContentProps } from "../types";
 import { useDemoCollection } from "../utils";
 
-export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }: PageContentProps) {
+export function UsersPage({
+  isLocked,
+  onToast,
+  activeProperty,
+  properties = [],
+}: PageContentProps) {
   const initialRows = [
     ["สมชาย ใจดี", "somchai@somchai-apt.com", "เจ้าของกิจการ", "ทุกหอพัก", "active"],
-    ["วิภา แสงจันทร์", "wipa@somchai-apt.com", "ผู้จัดการ", "ลงตัว เรสซิเดน 2", "active"],
-    ["สุภาวดี พรชัย", "supawadee@somchai-apt.com", "ฝ่ายการเงิน", "ลงตัว เรสซิเดน 2", "active"],
-    ["อนันต์ ดีพร้อม", "anant@somchai-apt.com", "เจ้าหน้าที่", "ลงตัว เรสซิเดน 2", "active"],
+    [
+      "วิภา แสงจันทร์",
+      "wipa@somchai-apt.com",
+      "ผู้จัดการ",
+      "ลงตัว เรสซิเดน 2",
+      "active",
+    ],
+    [
+      "สุภาวดี พรชัย",
+      "supawadee@somchai-apt.com",
+      "ฝ่ายการเงิน",
+      "ลงตัว เรสซิเดน 2",
+      "active",
+    ],
+    [
+      "อนันต์ ดีพร้อม",
+      "anant@somchai-apt.com",
+      "เจ้าหน้าที่",
+      "ลงตัว เรสซิเดน 2",
+      "active",
+    ],
   ];
   const collection = useDemoCollection(initialRows, onToast);
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [editingRow, setEditingRow] = useState<{ index: number; data: string[] } | null>(null);
+  const [editingRow, setEditingRow] = useState<{
+    index: number;
+    data: string[];
+  } | null>(null);
 
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -57,18 +83,52 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
   const [showPassword, setShowPassword] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
 
-  const inviteRoleOptions = useMemo(() => [
-    { value: "ผู้จัดการ", label: "ผู้จัดการ (Manager)", description: "ดูแลสัญญาและห้องพัก" },
-    { value: "ฝ่ายการเงิน", label: "ฝ่ายการเงิน (Accounting)", description: "ออกบิลและรับชำระ" },
-    { value: "เจ้าหน้าที่", label: "เจ้าหน้าที่ (Staff)", description: "จดมิเตอร์และดูสถานะ" },
-  ], []);
+  const inviteRoleOptions = useMemo(
+    () => [
+      {
+        value: "ผู้จัดการ",
+        label: "ผู้จัดการ (Manager)",
+        description: "ดูแลสัญญาและห้องพัก",
+      },
+      {
+        value: "ฝ่ายการเงิน",
+        label: "ฝ่ายการเงิน (Accounting)",
+        description: "ออกบิลและรับชำระ",
+      },
+      {
+        value: "เจ้าหน้าที่",
+        label: "เจ้าหน้าที่ (Staff)",
+        description: "จดมิเตอร์และดูสถานะ",
+      },
+    ],
+    [],
+  );
 
-  const editRoleOptions = useMemo(() => [
-    { value: "เจ้าของกิจการ", label: "เจ้าของกิจการ (Owner)", description: "สิทธิ์สูงสุดดูแลทุกส่วน" },
-    { value: "ผู้จัดการ", label: "ผู้จัดการ (Manager)", description: "ดูแลสัญญาและห้องพัก" },
-    { value: "ฝ่ายการเงิน", label: "ฝ่ายการเงิน (Accounting)", description: "ออกบิลและรับชำระ" },
-    { value: "เจ้าหน้าที่", label: "เจ้าหน้าที่ (Staff)", description: "จดมิเตอร์และดูสถานะ" },
-  ], []);
+  const editRoleOptions = useMemo(
+    () => [
+      {
+        value: "เจ้าของกิจการ",
+        label: "เจ้าของกิจการ (Owner)",
+        description: "สิทธิ์สูงสุดดูแลทุกส่วน",
+      },
+      {
+        value: "ผู้จัดการ",
+        label: "ผู้จัดการ (Manager)",
+        description: "ดูแลสัญญาและห้องพัก",
+      },
+      {
+        value: "ฝ่ายการเงิน",
+        label: "ฝ่ายการเงิน (Accounting)",
+        description: "ออกบิลและรับชำระ",
+      },
+      {
+        value: "เจ้าหน้าที่",
+        label: "เจ้าหน้าที่ (Staff)",
+        description: "จดมิเตอร์และดูสถานะ",
+      },
+    ],
+    [],
+  );
 
   const propertyOptions = useMemo(() => {
     const list = [{ value: "ทุกหอพัก", label: "ทุกหอพักของกิจการ (ดูแลทั้งหมด)" }];
@@ -102,7 +162,13 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
       return;
     }
     const assignedScope = inviteRole === "เจ้าของกิจการ" ? "ทุกหอพัก" : inviteScope;
-    collection.addItem([inviteName.trim(), inviteEmail.trim(), inviteRole, assignedScope, "active"]);
+    collection.addItem([
+      inviteName.trim(),
+      inviteEmail.trim(),
+      inviteRole,
+      assignedScope,
+      "active",
+    ]);
     setShowInviteModal(false);
     setInviteName("");
     setInviteEmail("");
@@ -120,15 +186,42 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
     onToast(`อัปเดตข้อมูลผู้ใช้งาน "${editingRow.data[0]}" เรียบร้อยแล้ว`);
   }
 
-  const roleColors: Record<string, { bg: string; text: string; border: string; badgeBg: string }> = {
-    เจ้าของกิจการ: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", badgeBg: "bg-purple-600 text-white shadow-purple-500/25" },
-    ผู้จัดการ: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", badgeBg: "bg-blue-600 text-white shadow-blue-500/25" },
-    ฝ่ายการเงิน: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badgeBg: "bg-emerald-600 text-white shadow-emerald-500/25" },
-    เจ้าหน้าที่: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", badgeBg: "bg-amber-600 text-white shadow-amber-500/25" },
+  const roleColors: Record<
+    string,
+    { bg: string; text: string; border: string; badgeBg: string }
+  > = {
+    เจ้าของกิจการ: {
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+      border: "border-purple-200",
+      badgeBg: "bg-purple-600 text-white shadow-purple-500/25",
+    },
+    ผู้จัดการ: {
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+      badgeBg: "bg-blue-600 text-white shadow-blue-500/25",
+    },
+    ฝ่ายการเงิน: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      badgeBg: "bg-emerald-600 text-white shadow-emerald-500/25",
+    },
+    เจ้าหน้าที่: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      badgeBg: "bg-amber-600 text-white shadow-amber-500/25",
+    },
   };
 
-  const activeCount = collection.items.filter((item) => item[4] === "active").length;
-  const ownerCount = collection.items.filter((item) => item[2] === "เจ้าของกิจการ").length;
+  const activeCount = collection.items.filter(
+    (item) => item[4] === "active",
+  ).length;
+  const ownerCount = collection.items.filter(
+    (item) => item[2] === "เจ้าของกิจการ",
+  ).length;
   const staffCount = collection.items.length - ownerCount;
 
   return (
@@ -149,7 +242,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ผู้ใช้งานทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ผู้ใช้งานทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {collection.items.length.toLocaleString("th-TH")} คน
               </strong>
@@ -164,7 +259,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เปิดใช้งานอยู่</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เปิดใช้งานอยู่
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {activeCount.toLocaleString("th-TH")} คน
               </strong>
@@ -179,7 +276,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เจ้าของกิจการ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เจ้าของกิจการ
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
                 {ownerCount.toLocaleString("th-TH")} คน
               </strong>
@@ -194,7 +293,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ทีมงาน & เจ้าหน้าที่</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ทีมงาน & เจ้าหน้าที่
+              </span>
               <strong className="text-2xl font-black text-amber-900 tracking-tight tabular-nums mt-0.5 block">
                 {staffCount.toLocaleString("th-TH")} คน
               </strong>
@@ -210,7 +311,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -221,7 +324,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -254,30 +359,57 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
         viewMode === "table" ? (
           <div className="w-full">
             <DataTable
-              headers={["ผู้ใช้งาน", "ชื่อผู้ใช้ / อีเมล", "ระดับสิทธิ์", "หอพักที่ดูแล", "สถานะ", "การจัดการ"]}
+              headers={[
+                "ผู้ใช้งาน",
+                "ชื่อผู้ใช้ / อีเมล",
+                "ระดับสิทธิ์",
+                "หอพักที่ดูแล",
+                "สถานะ",
+                "การจัดการ",
+              ]}
               rows={visibleRows.map((row, index) => {
-                const color = roleColors[row[2]] ?? { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" };
+                const color = roleColors[row[2]] ?? {
+                  bg: "bg-slate-50",
+                  text: "text-slate-700",
+                  border: "border-slate-200",
+                };
                 return [
                   <div className="flex items-center gap-3.5" key="user">
-                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${color.bg} ${color.text} ${color.border} shadow-2xs`}>
+                    <span
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${color.bg} ${color.text} ${color.border} shadow-2xs`}
+                    >
                       {row[0].slice(0, 1)}
                     </span>
                     <div>
-                      <strong className="text-slate-900 font-bold text-sm block">{row[0]}</strong>
+                      <strong className="text-slate-900 font-bold text-sm block">
+                        {row[0]}
+                      </strong>
                     </div>
                   </div>,
-                  <span key="username" className="text-slate-700 font-mono text-xs font-semibold bg-slate-100/80 px-2 py-1 rounded-md border border-slate-200/60">
+                  <span
+                    key="username"
+                    className="text-slate-700 font-mono text-xs font-semibold bg-slate-100/80 px-2 py-1 rounded-md border border-slate-200/60"
+                  >
                     {row[1]}
                   </span>,
-                  <span key="role" className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${color.bg} ${color.text} ${color.border}`}>
+                  <span
+                    key="role"
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${color.bg} ${color.text} ${color.border}`}
+                  >
                     {row[2]}
                   </span>,
-                  <div key="scope" className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                  <div
+                    key="scope"
+                    className="flex items-center gap-1.5 text-xs text-slate-700 font-medium"
+                  >
                     <Building2 size={13} className="text-slate-400 shrink-0" />
                     <span>{row[3]}</span>
                   </div>,
                   <StatusBadge key="status" status={row[4] as "active"} />,
-                  <div className="inline-flex items-center gap-2 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-2 justify-end"
+                    key="actions"
+                  >
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
                       onClick={() => setEditingRow({ index, data: [...row] })}
@@ -290,7 +422,12 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                     {row[2] !== "เจ้าของกิจการ" ? (
                       <button
                         className="h-8.5 w-8.5 rounded-xl flex items-center justify-center text-xs font-bold bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer"
-                        onClick={() => collection.removeItem(index, `ลบผู้ใช้งาน "${row[0]}" เรียบร้อยแล้ว`)}
+                        onClick={() =>
+                          collection.removeItem(
+                            index,
+                            `ลบผู้ใช้งาน "${row[0]}" เรียบร้อยแล้ว`,
+                          )
+                        }
                         title="ลบผู้ใช้งาน"
                         type="button"
                       >
@@ -305,7 +442,12 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleRows.map((m, index) => {
-              const color = roleColors[m[2]] ?? { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200", badgeBg: "bg-slate-600 text-white" };
+              const color = roleColors[m[2]] ?? {
+                bg: "bg-slate-50",
+                text: "text-slate-700",
+                border: "border-slate-200",
+                badgeBg: "bg-slate-600 text-white",
+              };
               return (
                 <article
                   className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
@@ -316,7 +458,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                   <div>
                     <header className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0 ${color.badgeBg} group-hover:scale-105 transition-transform`}>
+                        <span
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0 ${color.badgeBg} group-hover:scale-105 transition-transform`}
+                        >
                           {m[0].slice(0, 1)}
                         </span>
                         <div className="min-w-0">
@@ -333,14 +477,20 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
 
                     <div className="space-y-2.5 my-4">
                       <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <span className="text-slate-400 font-medium">ระดับสิทธิ์</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border ${color.bg} ${color.text} ${color.border}`}>
+                        <span className="text-slate-400 font-medium">
+                          ระดับสิทธิ์
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border ${color.bg} ${color.text} ${color.border}`}
+                        >
                           {m[2]}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                        <span className="text-slate-400 font-medium">หอพักที่ดูแล</span>
+                        <span className="text-slate-400 font-medium">
+                          หอพักที่ดูแล
+                        </span>
                         <span className="font-bold text-slate-800 flex items-center gap-1">
                           <Building2 size={13} className="text-slate-400" />
                           {m[3]}
@@ -363,7 +513,12 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                       <button
                         aria-label={`ลบผู้ใช้ ${m[0]}`}
                         className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
-                        onClick={() => collection.removeItem(index, `ลบผู้ใช้งาน "${m[0]}" เรียบร้อยแล้ว`)}
+                        onClick={() =>
+                          collection.removeItem(
+                            index,
+                            `ลบผู้ใช้งาน "${m[0]}" เรียบร้อยแล้ว`,
+                          )
+                        }
                         title="ลบผู้ใช้"
                         type="button"
                       >
@@ -398,16 +553,24 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="leading-relaxed">
-                <strong className="font-bold block text-blue-950">กำหนดสิทธิ์ตามบทบาทงาน</strong>
-                <span className="text-[11px] text-blue-800/80">ระบบจะจำกัดการเข้าถึงข้อมูลตามระดับสิทธิ์และหอพักที่มอบหมายอย่างปลอดภัย</span>
+                <strong className="font-bold block text-blue-950">
+                  กำหนดสิทธิ์ตามบทบาทงาน
+                </strong>
+                <span className="text-[11px] text-blue-800/80">
+                  ระบบจะจำกัดการเข้าถึงข้อมูลตามระดับสิทธิ์และหอพักที่มอบหมายอย่างปลอดภัย
+                </span>
               </div>
             </div>
 
             {/* Name Field */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>ชื่อ-นามสกุล <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">เช่น นายสมศักดิ์ จัดการดี</span>
+                <span>
+                  ชื่อ-นามสกุล <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เช่น นายสมศักดิ์ จัดการดี
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -427,8 +590,13 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             {/* Username / Email */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>ชื่อผู้ใช้ / อีเมล (Login Username) <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">ใช้สำหรับเข้าสู่ระบบ</span>
+                <span>
+                  ชื่อผู้ใช้ / อีเมล (Login Username){" "}
+                  <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  ใช้สำหรับเข้าสู่ระบบ
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -447,8 +615,12 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             {/* Password */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 8 ตัวอักษร</span>
+                <span>
+                  รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  อย่างน้อย 8 ตัวอักษร
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -467,7 +639,11 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                   tabIndex={-1}
                   type="button"
                 >
-                  {showPassword ? <EyeOff size={16} strokeWidth={2.2} /> : <Eye size={16} strokeWidth={2.2} />}
+                  {showPassword ? (
+                    <EyeOff size={16} strokeWidth={2.2} />
+                  ) : (
+                    <Eye size={16} strokeWidth={2.2} />
+                  )}
                 </button>
               </div>
             </div>
@@ -479,7 +655,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                   <Shield size={14} className="text-slate-500" />
                   <span>ระดับสิทธิ์การใช้งาน</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">กำหนดขอบเขตอำนาจ</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  กำหนดขอบเขตอำนาจ
+                </span>
               </label>
               <SelectControl
                 ariaLabel="ระดับสิทธิ์การใช้งาน"
@@ -497,7 +675,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                   <Building2 size={14} className="text-slate-500" />
                   <span>หอพักที่มอบหมายให้ดูแล</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">ขอบเขตสาขา</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  ขอบเขตสาขา
+                </span>
               </label>
               <SelectControl
                 ariaLabel="หอพักที่มอบหมายให้ดูแล"
@@ -519,7 +699,11 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               </button>
               <button
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
-                disabled={!inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 8}
+                disabled={
+                  !inviteName.trim() ||
+                  !inviteEmail.trim() ||
+                  invitePassword.length < 8
+                }
                 onClick={handleInviteUser}
                 type="button"
               >
@@ -543,7 +727,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
         >
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อ-นามสกุล</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                ชื่อ-นามสกุล
+              </label>
               <input
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 cursor-not-allowed"
                 disabled
@@ -553,7 +739,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อผู้ใช้ / อีเมล</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                ชื่อผู้ใช้ / อีเมล
+              </label>
               <input
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono text-slate-600 cursor-not-allowed"
                 disabled
@@ -583,7 +771,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">หอพักที่ดูแล</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  หอพักที่ดูแล
+                </label>
                 <SelectControl
                   ariaLabel="หอพักที่ดูแล"
                   disabled={editingRow.data[2] === "เจ้าของกิจการ"}
@@ -611,7 +801,9 @@ export function UsersPage({ isLocked, onToast, activeProperty, properties = [] }
                 type="text"
                 value={resetPassword}
               />
-              <p className="text-[11px] text-amber-700/80">กรอกรหัสผ่านใหม่ที่นี่เพื่อตั้งรหัสผ่านให้ผู้ใช้รายนี้ทันที</p>
+              <p className="text-[11px] text-amber-700/80">
+                กรอกรหัสผ่านใหม่ที่นี่เพื่อตั้งรหัสผ่านให้ผู้ใช้รายนี้ทันที
+              </p>
             </div>
 
             <div className="mt-6 flex justify-end gap-2.5 pt-4 border-t border-slate-100">

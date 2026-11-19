@@ -13,8 +13,8 @@ export function StatusBar({
     color === "emerald" || color === "green"
       ? "bg-emerald-500"
       : color === "rose" || color === "red"
-      ? "bg-rose-500"
-      : "bg-blue-500";
+        ? "bg-rose-500"
+        : "bg-blue-500";
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
@@ -26,7 +26,10 @@ export function StatusBar({
         </small>
       </div>
       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-        <div className={`h-full rounded-full ${barBg}`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full rounded-full ${barBg}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );

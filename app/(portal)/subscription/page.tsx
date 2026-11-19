@@ -24,7 +24,14 @@ export default async function Page() {
       .eq("organization_id", context.organization.id)
       .eq("status", "active"),
   ]);
-  if (propRes.error || roomRes.error || userRes.error || propRes.count === null || roomRes.count === null || userRes.count === null) {
+  if (
+    propRes.error ||
+    roomRes.error ||
+    userRes.error ||
+    propRes.count === null ||
+    roomRes.count === null ||
+    userRes.count === null
+  ) {
     throw new Error("ไม่สามารถตรวจสอบการใช้งานแพ็กเกจได้ กรุณาลองอีกครั้ง");
   }
 
@@ -39,4 +46,3 @@ export default async function Page() {
     />
   );
 }
-

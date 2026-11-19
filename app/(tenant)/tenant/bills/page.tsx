@@ -19,7 +19,8 @@ import { loadTenantPortalData } from "@/lib/tenant/data";
 export default async function TenantBillsPage() {
   const data = await loadTenantPortalData();
   const payable = data.invoices.filter(
-    (item) => Number(item.balance_due) > 0 && !["paid", "void"].includes(item.status)
+    (item) =>
+      Number(item.balance_due) > 0 && !["paid", "void"].includes(item.status),
   );
 
   return (
@@ -44,11 +45,15 @@ export default async function TenantBillsPage() {
 
       {/* Payable Invoices List */}
       {payable.map((invoice) => {
-        const items = data.invoiceItems.filter((item) => item.rent_invoice_id === invoice.id);
-        const pending = data.submissions.find(
-          (item) => item.invoice_id === invoice.id && item.status === "pending"
+        const items = data.invoiceItems.filter(
+          (item) => item.rent_invoice_id === invoice.id,
         );
-        const setting = data.settings.find((item) => item.property_id === invoice.property_id);
+        const pending = data.submissions.find(
+          (item) => item.invoice_id === invoice.id && item.status === "pending",
+        );
+        const setting = data.settings.find(
+          (item) => item.property_id === invoice.property_id,
+        );
 
         return (
           <article
@@ -72,7 +77,9 @@ export default async function TenantBillsPage() {
                   <Calendar size={13} className="text-slate-400" />
                   <span>
                     ออกเมื่อ {thaiDate(invoice.issued_at)} · ครบกำหนด{" "}
-                    <strong className="text-slate-700">{thaiDate(invoice.due_at)}</strong>
+                    <strong className="text-slate-700">
+                      {thaiDate(invoice.due_at)}
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -87,19 +94,30 @@ export default async function TenantBillsPage() {
                   const isElectric = item.item_type === "electric";
                   const isWater = item.item_type === "water";
 
-                  const Icon = isRent ? Home : isElectric ? Zap : isWater ? Droplets : Layers;
+                  const Icon = isRent
+                    ? Home
+                    : isElectric
+                      ? Zap
+                      : isWater
+                        ? Droplets
+                        : Layers;
                   const iconColor = isRent
                     ? "bg-blue-100 text-blue-700"
                     : isElectric
-                    ? "bg-amber-100 text-amber-700"
-                    : isWater
-                    ? "bg-cyan-100 text-cyan-700"
-                    : "bg-slate-200 text-slate-700";
+                      ? "bg-amber-100 text-amber-700"
+                      : isWater
+                        ? "bg-cyan-100 text-cyan-700"
+                        : "bg-slate-200 text-slate-700";
 
                   return (
-                    <div key={item.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconColor}`}>
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconColor}`}
+                        >
                           <Icon size={17} strokeWidth={2.2} />
                         </span>
                         <div className="min-w-0">
@@ -107,10 +125,10 @@ export default async function TenantBillsPage() {
                             {isRent
                               ? "ค่าเช่าห้องพัก"
                               : isElectric
-                              ? "ค่าไฟฟ้า"
-                              : isWater
-                              ? "ค่าน้ำประปา"
-                              : item.description}
+                                ? "ค่าไฟฟ้า"
+                                : isWater
+                                  ? "ค่าน้ำประปา"
+                                  : item.description}
                           </strong>
                           <span className="block text-[11px] text-slate-500 truncate">
                             {item.quantity && Number(item.quantity) > 1
@@ -130,8 +148,12 @@ export default async function TenantBillsPage() {
               {/* Total Balance Due Banner */}
               <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-blue-50 via-blue-50/80 to-indigo-50 p-4 border border-blue-100">
                 <div>
-                  <span className="text-xs font-bold text-blue-700 block">ยอดค้างชำระสุทธิ</span>
-                  <span className="text-[11px] text-blue-600">กรุณาชำระเต็มจำนวน</span>
+                  <span className="text-xs font-bold text-blue-700 block">
+                    ยอดค้างชำระสุทธิ
+                  </span>
+                  <span className="text-[11px] text-blue-600">
+                    กรุณาชำระเต็มจำนวน
+                  </span>
                 </div>
                 <strong className="text-2xl sm:text-3xl font-black text-blue-700 tabular-nums">
                   {money(Number(invoice.balance_due))}
@@ -174,7 +196,9 @@ export default async function TenantBillsPage() {
             <FileCheck2 size={28} strokeWidth={2.2} />
           </span>
           <div className="space-y-1">
-            <strong className="text-lg sm:text-xl font-bold block">ไม่มีบิลที่ต้องชำระในขณะนี้</strong>
+            <strong className="text-lg sm:text-xl font-bold block">
+              ไม่มีบิลที่ต้องชำระในขณะนี้
+            </strong>
             <p className="text-xs sm:text-sm text-emerald-700 max-w-md mx-auto">
               คุณชำระค่าใช้จ่ายครบถ้วนแล้ว เมื่อมีบิลรอบใหม่ระบบจะแสดงที่นี่โดยอัตโนมัติ
             </p>
@@ -183,15 +207,15 @@ export default async function TenantBillsPage() {
       ) : null}
 
       {/* Bill History Accordion/List */}
-        <TenantBillHistory
-          data={{
-            invoices: data.invoices,
-            allocations: data.allocations,
-            payments: data.payments,
-            submissions: data.submissions,
-            invoiceItems: data.invoiceItems,
-          }}
-        />
+      <TenantBillHistory
+        data={{
+          invoices: data.invoices,
+          allocations: data.allocations,
+          payments: data.payments,
+          submissions: data.submissions,
+          invoiceItems: data.invoiceItems,
+        }}
+      />
     </div>
   );
 }

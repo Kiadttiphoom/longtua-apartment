@@ -9,16 +9,30 @@ import {
   validateTrialRequestInput,
 } from "../lib/auth/validation.mjs";
 
-const authActionsSource = readFileSync(fileURLToPath(new URL("../app/auth/actions.ts", import.meta.url)), "utf8");
-const loginFormSource = readFileSync(fileURLToPath(new URL("../components/auth/LoginForm.tsx", import.meta.url)), "utf8");
-const trialRequestRouteSource = readFileSync(fileURLToPath(new URL("../lib/auth/create-trial-request.ts", import.meta.url)), "utf8");
+const authActionsSource = readFileSync(
+  fileURLToPath(new URL("../app/auth/actions.ts", import.meta.url)),
+  "utf8",
+);
+const loginFormSource = readFileSync(
+  fileURLToPath(new URL("../components/auth/LoginForm.tsx", import.meta.url)),
+  "utf8",
+);
+const trialRequestRouteSource = readFileSync(
+  fileURLToPath(
+    new URL("../lib/auth/create-trial-request.ts", import.meta.url),
+  ),
+  "utf8",
+);
 
 test("normalizeUsername_mixedCaseAndWhitespace_returnsCanonicalLoginKey", () => {
   assert.equal(normalizeUsername("  Somchai.Owner  "), "somchai.owner");
 });
 
 test("validateLoginInput_usernameWithoutEmail_acceptsValidUsernameAndPassword", () => {
-  assert.deepEqual(validateLoginInput({ username: "owner_01", password: "Longtua123" }), {});
+  assert.deepEqual(
+    validateLoginInput({ username: "owner_01", password: "Longtua123" }),
+    {},
+  );
 });
 
 test("validateLoginInput_invalidUsernameAndShortPassword_returnsFieldErrors", () => {
@@ -29,34 +43,40 @@ test("validateLoginInput_invalidUsernameAndShortPassword_returnsFieldErrors", ()
 });
 
 test("validateTrialRequestInput_weakPasswordAndMissingConsent_blocksRequest", () => {
-  assert.deepEqual(validateTrialRequestInput({
-    username: "owner_01",
-    operatorName: "สมชาย ใจดี",
-    propertyName: "หอพักสมชาย",
-    contactEmail: "owner@example.com",
-    phone: "081-234-5678",
-    requestedRoomCount: 30,
-    password: "abcdefgh",
-    confirmPassword: "abcdefgh",
-    accepted: false,
-  }), {
-    password: "รหัสผ่านต้องมีทั้งตัวอักษรภาษาอังกฤษและตัวเลข",
-    accepted: "กรุณายอมรับเงื่อนไขการใช้งาน",
-  });
+  assert.deepEqual(
+    validateTrialRequestInput({
+      username: "owner_01",
+      operatorName: "สมชาย ใจดี",
+      propertyName: "หอพักสมชาย",
+      contactEmail: "owner@example.com",
+      phone: "081-234-5678",
+      requestedRoomCount: 30,
+      password: "abcdefgh",
+      confirmPassword: "abcdefgh",
+      accepted: false,
+    }),
+    {
+      password: "รหัสผ่านต้องมีทั้งตัวอักษรภาษาอังกฤษและตัวเลข",
+      accepted: "กรุณายอมรับเงื่อนไขการใช้งาน",
+    },
+  );
 });
 
 test("validateTrialRequestInput_completeApplication_allowsPendingRequest", () => {
-  assert.deepEqual(validateTrialRequestInput({
-    username: "owner_01",
-    operatorName: "สมชาย ใจดี",
-    propertyName: "หอพักสมชาย",
-    contactEmail: "owner@example.com",
-    phone: "081-234-5678",
-    requestedRoomCount: 30,
-    password: "Longtua123",
-    confirmPassword: "Longtua123",
-    accepted: true,
-  }), {});
+  assert.deepEqual(
+    validateTrialRequestInput({
+      username: "owner_01",
+      operatorName: "สมชาย ใจดี",
+      propertyName: "หอพักสมชาย",
+      contactEmail: "owner@example.com",
+      phone: "081-234-5678",
+      requestedRoomCount: 30,
+      password: "Longtua123",
+      confirmPassword: "Longtua123",
+      accepted: true,
+    }),
+    {},
+  );
 });
 
 test("trialRequestEndpoint_keepsOperatorAndPropertyNamesDistinct", () => {
@@ -73,10 +93,21 @@ test("normalizePhone_formattedThaiNumber_returnsDigitsOnly", () => {
 
 test("loginErrors_doNotExposeReferenceIdAndInvalidCredentialsAreNotLoggedAsServerErrors", () => {
   assert.doesNotMatch(loginFormSource, /รหัสอ้างอิง|error\.requestId/);
-  assert.match(authActionsSource, /if \(!isInvalidCredentialsError\(error\)\) logAuthFailure/);
+  assert.match(
+    authActionsSource,
+    /if \(!isInvalidCredentialsError\(error\)\) logAuthFailure/,
+  );
   assert.match(authActionsSource, /ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง/);
-  const loginStart = authActionsSource.indexOf("export async function loginAction");
-  const logoutStart = authActionsSource.indexOf("export async function logoutAction", loginStart);
-  const loginSection = authActionsSource.slice(loginStart, logoutStart === -1 ? undefined : logoutStart);
+  const loginStart = authActionsSource.indexOf(
+    "export async function loginAction",
+  );
+  const logoutStart = authActionsSource.indexOf(
+    "export async function logoutAction",
+    loginStart,
+  );
+  const loginSection = authActionsSource.slice(
+    loginStart,
+    logoutStart === -1 ? undefined : logoutStart,
+  );
   assert.doesNotMatch(loginSection, /ระบบเข้าสู่ระบบไม่พร้อมใช้งานชั่วคราว/);
 });

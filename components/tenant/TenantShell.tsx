@@ -65,7 +65,10 @@ export function TenantShell({
       >
         <div className="grid grid-cols-5 items-center gap-1">
           {nav.map(([href, label, Icon]) => {
-            const active = href === "/tenant" ? pathname === href : pathname.startsWith(href);
+            const active =
+              href === "/tenant"
+                ? pathname === href
+                : pathname.startsWith(href);
             return (
               <AppNavLink
                 active={active}

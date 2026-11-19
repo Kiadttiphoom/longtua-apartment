@@ -3,13 +3,30 @@
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  Building2, CalendarRange, CircleDollarSign, FileText, Gauge, Home, KeyRound,
-  LayoutDashboard, LogOut, Menu, ReceiptText, Settings, Users, WalletCards, X,
-  AlertTriangle, ArrowLeft,
+  Building2,
+  CalendarRange,
+  CircleDollarSign,
+  FileText,
+  Gauge,
+  Home,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ReceiptText,
+  Settings,
+  Users,
+  WalletCards,
+  X,
+  AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { logoutAction } from "@/app/auth/actions";
-import { switchOrganizationAction, stopImpersonatingAction } from "@/app/(portal)/actions";
+import {
+  switchOrganizationAction,
+  stopImpersonatingAction,
+} from "@/app/(portal)/actions";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { AppNavLink } from "@/components/ui/AppNavLink";
 
@@ -27,17 +44,40 @@ type ShellProps = {
 };
 
 const icons: Record<string, typeof Home> = {
-  customer_overview: LayoutDashboard, customer_properties: Building2, customer_users: Users,
-  customer_rooms: KeyRound, customer_tenants: Users, customer_leases: CalendarRange,
-  customer_meters: Gauge, customer_invoices: FileText, customer_payments: WalletCards,
-  customer_receivables: ReceiptText, customer_reports: CircleDollarSign,
-  customer_settings: Settings, customer_subscription: CircleDollarSign,
+  customer_overview: LayoutDashboard,
+  customer_properties: Building2,
+  customer_users: Users,
+  customer_rooms: KeyRound,
+  customer_tenants: Users,
+  customer_leases: CalendarRange,
+  customer_meters: Gauge,
+  customer_invoices: FileText,
+  customer_payments: WalletCards,
+  customer_receivables: ReceiptText,
+  customer_reports: CircleDollarSign,
+  customer_settings: Settings,
+  customer_subscription: CircleDollarSign,
 };
 
 const menuCategoryOrder = [
-  { label: "ภาพรวม", codes: ["customer_overview", "customer_properties", "customer_users"] },
-  { label: "จัดการหอพัก", codes: ["customer_rooms", "customer_tenants", "customer_leases"] },
-  { label: "การเงิน", codes: ["customer_meters", "customer_invoices", "customer_payments", "customer_receivables", "customer_reports"] },
+  {
+    label: "ภาพรวม",
+    codes: ["customer_overview", "customer_properties", "customer_users"],
+  },
+  {
+    label: "จัดการหอพัก",
+    codes: ["customer_rooms", "customer_tenants", "customer_leases"],
+  },
+  {
+    label: "การเงิน",
+    codes: [
+      "customer_meters",
+      "customer_invoices",
+      "customer_payments",
+      "customer_receivables",
+      "customer_reports",
+    ],
+  },
   { label: "บริการเสริม", codes: ["customer_line"] },
   { label: "ระบบ", codes: ["customer_subscription", "customer_settings"] },
 ];
@@ -45,7 +85,10 @@ const menuCategoryOrder = [
 export function PortalShell({ children, context }: ShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const totalBadgeCount = Object.values(context.menuBadges ?? {}).reduce((sum, val) => sum + val, 0);
+  const totalBadgeCount = Object.values(context.menuBadges ?? {}).reduce(
+    (sum, val) => sum + val,
+    0,
+  );
 
   // Group context.menus by category
   const knownCodes = new Set(menuCategoryOrder.flatMap((g) => g.codes));
@@ -65,9 +108,14 @@ export function PortalShell({ children, context }: ShellProps) {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)] bg-[#f5f7fb] text-[#15233b]">
-      <aside className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-[#091830] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside
+        className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-[#091830] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
         <div className="h-[96px] min-h-[96px] p-4 flex items-center justify-center border-b border-white/10 bg-[#06152d]">
-          <BrandLogo className="w-full max-h-[70px] object-contain" variant="inverse" />
+          <BrandLogo
+            className="w-full max-h-[70px] object-contain"
+            variant="inverse"
+          />
         </div>
         <button
           className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg bg-white/5"
@@ -77,7 +125,10 @@ export function PortalShell({ children, context }: ShellProps) {
         >
           <X size={20} />
         </button>
-        <nav aria-label="เมนูหลัก" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4">
+        <nav
+          aria-label="เมนูหลัก"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4"
+        >
           {groupedMenus.map((group) => (
             <section className="space-y-1" key={group.label}>
               <p className="px-3 py-1 text-[11px] font-medium text-slate-400">
@@ -115,7 +166,10 @@ export function PortalShell({ children, context }: ShellProps) {
             </section>
           ))}
         </nav>
-        <form action={logoutAction} className="mt-auto shrink-0 p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10">
+        <form
+          action={logoutAction}
+          className="mt-auto shrink-0 p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10"
+        >
           <button
             className="w-full min-h-11 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-slate-300 text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
             type="submit"
@@ -138,7 +192,12 @@ export function PortalShell({ children, context }: ShellProps) {
           <div className="bg-amber-500 text-slate-950 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-sm border-b border-amber-600/30">
             <div className="flex items-center gap-2 text-xs font-bold tracking-wide">
               <AlertTriangle size={16} className="text-slate-950 shrink-0" />
-              <span>Super Admin กำลังจัดการข้อมูล — กิจการ: <strong className="underline font-extrabold">{context.organization.name}</strong></span>
+              <span>
+                Super Admin กำลังจัดการข้อมูล — กิจการ:{" "}
+                <strong className="underline font-extrabold">
+                  {context.organization.name}
+                </strong>
+              </span>
             </div>
             <form action={stopImpersonatingAction}>
               <button
@@ -164,13 +223,19 @@ export function PortalShell({ children, context }: ShellProps) {
             )}
           </button>
           {context.organizations.length > 1 ? (
-            <form action={switchOrganizationAction} className="flex items-center gap-2">
+            <form
+              action={switchOrganizationAction}
+              className="flex items-center gap-2"
+            >
               <input name="returnPath" type="hidden" value={pathname} />
               <SelectControl
                 ariaLabel="เลือกกิจการ"
                 name="organizationId"
                 onValueChange={(_, form) => form?.requestSubmit()}
-                options={context.organizations.map((item) => ({ value: item.id, label: item.name }))}
+                options={context.organizations.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                }))}
                 value={context.organization.id}
               />
             </form>
@@ -178,11 +243,18 @@ export function PortalShell({ children, context }: ShellProps) {
           <div className="ml-auto flex items-center gap-3">
             <span className="relative w-10 h-10 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm">
               {context.userName.trim().slice(0, 1)}
-              <i aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <i
+                aria-hidden="true"
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
+              />
             </span>
             <div className="flex flex-col">
-              <strong className="text-sm font-semibold text-slate-800 leading-tight">{context.userName}</strong>
-              <small className="text-xs text-slate-500">{context.roleLabel}</small>
+              <strong className="text-sm font-semibold text-slate-800 leading-tight">
+                {context.userName}
+              </strong>
+              <small className="text-xs text-slate-500">
+                {context.roleLabel}
+              </small>
             </div>
           </div>
         </header>

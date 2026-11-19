@@ -26,7 +26,10 @@ export function PermissionsPage({ isLocked, onToast }: PageContentProps) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {permissionRows.map((row, rowIdx) => (
-                <tr key={row} className="hover:bg-slate-50/60 transition-colors">
+                <tr
+                  key={row}
+                  className="hover:bg-slate-50/60 transition-colors"
+                >
                   <td className="px-5 py-4 font-bold text-slate-800">{row}</td>
                   {permissionColumns.map((col, colIdx) => {
                     const isChecked = !(rowIdx === 7 && colIdx > 2);

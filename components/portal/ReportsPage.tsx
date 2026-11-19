@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import type { PortalData } from "@/components/portal/types";
 import { EmptyState, PageHeader } from "@/components/portal/PortalUI";
-import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
+import {
+  DateFilterControl,
+  type DateFilterMode,
+} from "@/components/portal/DateFilterControl";
 import { money } from "@/lib/format";
 
 export function ReportsPage({ data }: { data: PortalData }) {
@@ -34,9 +37,12 @@ export function ReportsPage({ data }: { data: PortalData }) {
     if (!dateFilterValue) return data.payments;
     return data.payments.filter((item) => {
       const paidAt = item.paid_at || "";
-      if (dateFilterMode === "date") return paidAt.slice(0, 10) === dateFilterValue;
-      if (dateFilterMode === "month") return paidAt.slice(0, 7) === dateFilterValue;
-      if (dateFilterMode === "year") return paidAt.slice(0, 4) === dateFilterValue;
+      if (dateFilterMode === "date")
+        return paidAt.slice(0, 10) === dateFilterValue;
+      if (dateFilterMode === "month")
+        return paidAt.slice(0, 7) === dateFilterValue;
+      if (dateFilterMode === "year")
+        return paidAt.slice(0, 4) === dateFilterValue;
       return true;
     });
   }, [data.payments, dateFilterValue, dateFilterMode]);
@@ -46,9 +52,21 @@ export function ReportsPage({ data }: { data: PortalData }) {
     return data.invoices.filter((item) => {
       const issued = item.issued_at || "";
       const due = item.due_at || "";
-      if (dateFilterMode === "date") return issued.slice(0, 10) === dateFilterValue || due.slice(0, 10) === dateFilterValue;
-      if (dateFilterMode === "month") return issued.slice(0, 7) === dateFilterValue || due.slice(0, 7) === dateFilterValue;
-      if (dateFilterMode === "year") return issued.slice(0, 4) === dateFilterValue || due.slice(0, 4) === dateFilterValue;
+      if (dateFilterMode === "date")
+        return (
+          issued.slice(0, 10) === dateFilterValue ||
+          due.slice(0, 10) === dateFilterValue
+        );
+      if (dateFilterMode === "month")
+        return (
+          issued.slice(0, 7) === dateFilterValue ||
+          due.slice(0, 7) === dateFilterValue
+        );
+      if (dateFilterMode === "year")
+        return (
+          issued.slice(0, 4) === dateFilterValue ||
+          due.slice(0, 4) === dateFilterValue
+        );
       return true;
     });
   }, [data.invoices, dateFilterValue, dateFilterMode]);
@@ -58,7 +76,7 @@ export function ReportsPage({ data }: { data: PortalData }) {
       filteredPayments
         .filter((item) => item.status === "confirmed")
         .reduce((sum, item) => sum + Number(item.amount), 0),
-    [filteredPayments]
+    [filteredPayments],
   );
 
   const outstanding = useMemo(
@@ -66,30 +84,45 @@ export function ReportsPage({ data }: { data: PortalData }) {
       filteredInvoices
         .filter((item) => item.status !== "void")
         .reduce((sum, item) => sum + Number(item.balance_due), 0),
-    [filteredInvoices]
+    [filteredInvoices],
   );
 
   const totalRoomsCount = data.rooms.length;
-  const occupiedRoomsCount = data.rooms.filter((item) => item.status === "occupied").length;
-  const occupancy = totalRoomsCount ? Math.round((occupiedRoomsCount / totalRoomsCount) * 100) : 0;
-  const activeLeasesCount = data.leases.filter((item) => item.status === "active").length;
+  const occupiedRoomsCount = data.rooms.filter(
+    (item) => item.status === "occupied",
+  ).length;
+  const occupancy = totalRoomsCount
+    ? Math.round((occupiedRoomsCount / totalRoomsCount) * 100)
+    : 0;
+  const activeLeasesCount = data.leases.filter(
+    (item) => item.status === "active",
+  ).length;
 
   const propertyReports = useMemo(() => {
     return data.properties.map((property) => {
-      const rooms = data.rooms.filter((room) => room.property_id === property.id);
+      const rooms = data.rooms.filter(
+        (room) => room.property_id === property.id,
+      );
       const payments = filteredPayments.filter(
-        (payment) => payment.property_id === property.id && payment.status === "confirmed"
+        (payment) =>
+          payment.property_id === property.id && payment.status === "confirmed",
       );
       const invoices = filteredInvoices.filter(
-        (invoice) => invoice.property_id === property.id && invoice.status !== "void"
+        (invoice) =>
+          invoice.property_id === property.id && invoice.status !== "void",
       );
-      const occupied = rooms.filter((room) => room.status === "occupied").length;
+      const occupied = rooms.filter(
+        (room) => room.status === "occupied",
+      ).length;
       return {
         property,
         rooms: rooms.length,
         occupied,
         revenue: payments.reduce((sum, item) => sum + Number(item.amount), 0),
-        outstanding: invoices.reduce((sum, item) => sum + Number(item.balance_due), 0),
+        outstanding: invoices.reduce(
+          (sum, item) => sum + Number(item.balance_due),
+          0,
+        ),
       };
     });
   }, [filteredInvoices, filteredPayments, data.properties, data.rooms]);
@@ -104,7 +137,9 @@ export function ReportsPage({ data }: { data: PortalData }) {
       {/* Date Filter Toolbar */}
       <section className="p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div className="flex flex-col min-w-[200px] mr-auto">
-          <strong className="text-slate-800 text-[15px] font-bold">ช่วงเวลาสรุปรายงาน</strong>
+          <strong className="text-slate-800 text-[15px] font-bold">
+            ช่วงเวลาสรุปรายงาน
+          </strong>
           <span className="text-slate-500 text-xs mt-0.5">
             {dateFilterValue
               ? `กรองสถิติตาม${dateFilterMode === "date" ? "วันที่" : dateFilterMode === "month" ? "รอบเดือน" : "ปี"} ${dateFilterValue}`
@@ -123,15 +158,20 @@ export function ReportsPage({ data }: { data: PortalData }) {
       </section>
 
       {/* 4-Metric Hero Stat Cards */}
-      <section aria-label="ภาพรวมสถิติ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมสถิติ"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Card 1: Total Confirmed Revenue */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-emerald-200 hover:shadow-md">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <TrendingUp size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">รายรับสะสมที่ยืนยัน</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                รายรับสะสมที่ยืนยัน
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {money(revenue)}
               </strong>
@@ -141,12 +181,14 @@ export function ReportsPage({ data }: { data: PortalData }) {
 
         {/* Card 2: Outstanding Balance */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-rose-200 hover:shadow-md">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
               <CalendarClock size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ยอดค้างชำระปัจจุบัน</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ยอดค้างชำระปัจจุบัน
+              </span>
               <strong className="text-2xl font-black text-rose-800 tracking-tight tabular-nums mt-0.5 block">
                 {money(outstanding)}
               </strong>
@@ -156,12 +198,14 @@ export function ReportsPage({ data }: { data: PortalData }) {
 
         {/* Card 3: Occupancy Rate */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-blue-200 hover:shadow-md">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <DoorOpen size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">อัตราเข้าพักเฉลี่ย</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                อัตราเข้าพักเฉลี่ย
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {occupancy}%
               </strong>
@@ -171,12 +215,14 @@ export function ReportsPage({ data }: { data: PortalData }) {
 
         {/* Card 4: Active Leases */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-indigo-200 hover:shadow-md">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">สัญญาเช่าที่ใช้งาน</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                สัญญาเช่าที่ใช้งาน
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {activeLeasesCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -195,72 +241,96 @@ export function ReportsPage({ data }: { data: PortalData }) {
         </div>
 
         {propertyReports.length ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {propertyReports.map(({ property, rooms, occupied, revenue: propRevenue, outstanding: propOutstanding }) => {
-            const propOcc = rooms ? Math.round((occupied / rooms) * 100) : 0;
-            return (
-              <article
-                className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
-                key={property.id}
-              >
-                {/* Ambient Glow */}
-                
-                <div>
-                  {/* Header */}
-                  <header className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-12 h-12 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0">
-                        <Building2 size={20} strokeWidth={2.2} />
-                      </span>
-                      <div className="min-w-0">
-                        <h3 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-                          {property.name}
-                        </h3>
-                        <span className="text-xs text-slate-400 block truncate mt-0.5">{property.address}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {propertyReports.map(
+              ({
+                property,
+                rooms,
+                occupied,
+                revenue: propRevenue,
+                outstanding: propOutstanding,
+              }) => {
+                const propOcc = rooms
+                  ? Math.round((occupied / rooms) * 100)
+                  : 0;
+                return (
+                  <article
+                    className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
+                    key={property.id}
+                  >
+                    {/* Ambient Glow */}
+
+                    <div>
+                      {/* Header */}
+                      <header className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="w-12 h-12 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                            <Building2 size={20} strokeWidth={2.2} />
+                          </span>
+                          <div className="min-w-0">
+                            <h3 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                              {property.name}
+                            </h3>
+                            <span className="text-xs text-slate-400 block truncate mt-0.5">
+                              {property.address}
+                            </span>
+                          </div>
+                        </div>
+                      </header>
+
+                      {/* Occupancy Progress Bar */}
+                      <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 mb-4 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="text-slate-600">อัตราการเข้าพัก</span>
+                          <span className="text-emerald-600 font-mono font-black">
+                            {propOcc}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-slate-200/80 overflow-hidden">
+                          <div
+                            className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(100, Math.max(0, propOcc))}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>มีผู้พัก {occupied} ห้อง</span>
+                          <span>ทั้งหมด {rooms} ห้อง</span>
+                        </div>
                       </div>
-                    </div>
-                  </header>
 
-                  {/* Occupancy Progress Bar */}
-                  <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 mb-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-600">อัตราการเข้าพัก</span>
-                      <span className="text-emerald-600 font-mono font-black">{propOcc}%</span>
+                      {/* Financial Stats Grid */}
+                      <dl className="grid grid-cols-2 gap-2.5 mb-2 text-xs">
+                        <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                          <dt className="text-[10px] font-bold text-slate-400 font-medium">
+                            รายรับสะสม
+                          </dt>
+                          <dd className="text-sm font-mono font-bold text-slate-900 mt-1">
+                            {money(propRevenue)}
+                          </dd>
+                        </div>
+                        <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
+                          <dt className="text-[10px] font-bold text-slate-400 font-medium">
+                            ยอดคงค้าง
+                          </dt>
+                          <dd
+                            className={`text-sm font-mono font-bold mt-1 ${
+                              propOutstanding > 0
+                                ? "text-rose-600"
+                                : "text-emerald-600"
+                            }`}
+                          >
+                            {money(propOutstanding)}
+                          </dd>
+                        </div>
+                      </dl>
                     </div>
-                    <div className="w-full h-2.5 rounded-full bg-slate-200/80 overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, Math.max(0, propOcc))}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <span>มีผู้พัก {occupied} ห้อง</span>
-                      <span>ทั้งหมด {rooms} ห้อง</span>
-                    </div>
-                  </div>
-
-                  {/* Financial Stats Grid */}
-                  <dl className="grid grid-cols-2 gap-2.5 mb-2 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <dt className="text-[10px] font-bold text-slate-400 font-medium">รายรับสะสม</dt>
-                      <dd className="text-sm font-mono font-bold text-slate-900 mt-1">{money(propRevenue)}</dd>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <dt className="text-[10px] font-bold text-slate-400 font-medium">ยอดคงค้าง</dt>
-                      <dd
-                        className={`text-sm font-mono font-bold mt-1 ${
-                          propOutstanding > 0 ? "text-rose-600" : "text-emerald-600"
-                        }`}
-                      >
-                        {money(propOutstanding)}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                  </article>
+                );
+              },
+            )}
+          </div>
         ) : (
           <EmptyState
             description="เพิ่มหอพักและห้องพักก่อน ระบบจึงจะสรุปอัตราการเข้าพักและผลการดำเนินงานรายอาคารได้"

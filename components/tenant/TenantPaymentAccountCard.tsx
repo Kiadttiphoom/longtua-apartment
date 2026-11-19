@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { parsePaymentSettings, type PaymentSettingsInput } from "@/lib/constants/banks";
+import {
+  parsePaymentSettings,
+  type PaymentSettingsInput,
+} from "@/lib/constants/banks";
 import { AlertCircle, Check, Copy, CreditCard, Landmark } from "lucide-react";
 import { PromptPayQRCode } from "@/components/tenant/PromptPayQRCode";
 import { formatPromptPayDisplay } from "@/lib/constants/promptpay";
@@ -35,7 +38,9 @@ export function TenantPaymentAccountCard({
           <AlertCircle size={20} />
         </div>
         <div>
-          <strong className="block text-xs font-bold text-amber-950">-- ไม่พบบัญชีของเจ้าของ --</strong>
+          <strong className="block text-xs font-bold text-amber-950">
+            -- ไม่พบบัญชีของเจ้าของ --
+          </strong>
           <p className="mt-0.5 text-xs text-amber-800/90">
             เจ้าของหอยังไม่ได้กำหนดบัญชีธนาคารหรือพร้อมเพย์ กรุณาติดต่อเจ้าของหอพักโดยตรง
           </p>
@@ -52,7 +57,9 @@ export function TenantPaymentAccountCard({
             <Landmark size={18} />
           </div>
           <div>
-            <strong className="block text-xs font-bold text-blue-950">ช่องทางชำระเงิน</strong>
+            <strong className="block text-xs font-bold text-blue-950">
+              ช่องทางชำระเงิน
+            </strong>
             <span className="text-[11px] text-blue-800/80">
               โอนชำระยอดตามบัญชีด้านล่าง แล้วแนบสลิปในแบบฟอร์ม
             </span>
@@ -64,7 +71,9 @@ export function TenantPaymentAccountCard({
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs border border-blue-100">
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: paymentInfo.bank?.color || "#2563eb" }}
+                style={{
+                  backgroundColor: paymentInfo.bank?.color || "#2563eb",
+                }}
               />
               {paymentInfo.bank?.shortName || "โอนธนาคาร"}
             </span>
@@ -78,7 +87,9 @@ export function TenantPaymentAccountCard({
         </div>
       </div>
 
-      <div className={`mt-3.5 grid gap-4 ${paymentInfo.hasBank && paymentInfo.hasPromptpay ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+      <div
+        className={`mt-3.5 grid gap-4 ${paymentInfo.hasBank && paymentInfo.hasPromptpay ? "sm:grid-cols-2" : "grid-cols-1"}`}
+      >
         {/* Bank Account Card */}
         {paymentInfo.hasBank && (
           <div className="flex items-start gap-3.5 rounded-xl border border-blue-100/80 bg-white/80 p-3.5 shadow-2xs">
@@ -129,10 +140,14 @@ export function TenantPaymentAccountCard({
               {paymentInfo.bankAccountName ? (
                 <p className="mt-1 text-xs text-slate-600 truncate">
                   <span className="text-slate-400">ชื่อบัญชี:</span>{" "}
-                  <span className="font-semibold text-slate-800">{paymentInfo.bankAccountName}</span>
+                  <span className="font-semibold text-slate-800">
+                    {paymentInfo.bankAccountName}
+                  </span>
                 </p>
               ) : (
-                <p className="mt-1 text-[11px] text-slate-400">กรุณาตรวจสอบชื่อบัญชีก่อนโอน</p>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  กรุณาตรวจสอบชื่อบัญชีก่อนโอน
+                </p>
               )}
             </div>
           </div>
@@ -161,7 +176,9 @@ export function TenantPaymentAccountCard({
                   </strong>
                   <button
                     type="button"
-                    onClick={() => handleCopy(paymentInfo.promptpayId, "promptpay")}
+                    onClick={() =>
+                      handleCopy(paymentInfo.promptpayId, "promptpay")
+                    }
                     className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-semibold transition cursor-pointer ${
                       copiedKey === "promptpay"
                         ? "border-emerald-300 bg-emerald-50 text-emerald-700"
@@ -185,10 +202,14 @@ export function TenantPaymentAccountCard({
                 {paymentInfo.promptpayName ? (
                   <p className="mt-1 text-xs text-slate-600 truncate">
                     <span className="text-slate-400">ชื่อบัญชี:</span>{" "}
-                    <span className="font-semibold text-slate-800">{paymentInfo.promptpayName}</span>
+                    <span className="font-semibold text-slate-800">
+                      {paymentInfo.promptpayName}
+                    </span>
                   </p>
                 ) : (
-                  <p className="mt-1 text-[11px] text-slate-400">กรุณาตรวจสอบชื่อบัญชีก่อนโอน</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    กรุณาตรวจสอบชื่อบัญชีก่อนโอน
+                  </p>
                 )}
               </div>
             </div>

@@ -31,7 +31,9 @@ export function AddPropertyWizard({
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [copySettings, setCopySettings] = useState(true);
-  const [electricRate, setElectricRate] = useState(existingSettings.electricRate);
+  const [electricRate, setElectricRate] = useState(
+    existingSettings.electricRate,
+  );
   const [waterRate, setWaterRate] = useState(existingSettings.waterRate);
   const [promptpay, setPromptpay] = useState(existingSettings.promptpay);
   const [accountName, setAccountName] = useState(existingSettings.accountName);
@@ -40,7 +42,14 @@ export function AddPropertyWizard({
     if (!name.trim()) return;
     const settings: AppSettings = copySettings
       ? { ...existingSettings, invoiceHeader: `ใบแจ้งหนี้ค่าเช่า ${name}` }
-      : { ...existingSettings, electricRate, waterRate, promptpay, accountName, invoiceHeader: `ใบแจ้งหนี้ค่าเช่า ${name}` };
+      : {
+          ...existingSettings,
+          electricRate,
+          waterRate,
+          promptpay,
+          accountName,
+          invoiceHeader: `ใบแจ้งหนี้ค่าเช่า ${name}`,
+        };
     onSave({
       id: `prop-${Date.now()}`,
       name: name.trim(),
@@ -71,8 +80,12 @@ export function AddPropertyWizard({
               <Building2 size={22} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">เพิ่มหอพักใหม่</h2>
-              <p className="text-xs text-slate-500 mt-0.5">ระบบจะตั้งค่าอัตโนมัติและสร้างโครงสร้างห้องพักให้ทันที</p>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                เพิ่มหอพักใหม่
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ระบบจะตั้งค่าอัตโนมัติและสร้างโครงสร้างห้องพักให้ทันที
+              </p>
             </div>
           </div>
           <button
@@ -96,9 +109,13 @@ export function AddPropertyWizard({
                   : "bg-slate-50/60 border-slate-200/70 text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                step === 1 ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"
-              }`}>
+              <span
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                  step === 1
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-200 text-slate-600"
+                }`}
+              >
                 1
               </span>
               <span className="truncate">1. ข้อมูลหอพัก</span>
@@ -114,9 +131,13 @@ export function AddPropertyWizard({
                   : "bg-slate-50/60 border-slate-200/70 text-slate-400 disabled:opacity-60 cursor-pointer"
               }`}
             >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                step === 2 ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"
-              }`}>
+              <span
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                  step === 2
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-200 text-slate-500"
+                }`}
+              >
                 2
               </span>
               <span className="truncate">2. ค่าน้ำ-ไฟ & ชำระเงิน</span>
@@ -129,8 +150,12 @@ export function AddPropertyWizard({
           <div className="p-6 space-y-4 text-xs animate-in fade-in duration-200">
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>ชื่อหอพัก / อาคาร <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-400 font-normal">เช่น ลองตัว แมนชั่น 2</span>
+                <span>
+                  ชื่อหอพัก / อาคาร <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เช่น ลองตัว แมนชั่น 2
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -149,7 +174,9 @@ export function AddPropertyWizard({
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span>ที่ตั้ง / ที่อยู่หอพัก</span>
-                <span className="text-[11px] text-slate-400 font-normal">สำหรับพิมพ์ลงใบแจ้งหนี้</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  สำหรับพิมพ์ลงใบแจ้งหนี้
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-3 text-slate-400 pointer-events-none">
@@ -167,7 +194,9 @@ export function AddPropertyWizard({
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span>เบอร์โทรศัพท์ติดต่อ</span>
-                <span className="text-[11px] text-slate-400 font-normal">เบอร์ติดต่อผู้จัดการหรือออฟฟิศ</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เบอร์ติดต่อผู้จัดการหรือออฟฟิศ
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -188,8 +217,12 @@ export function AddPropertyWizard({
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="text-xs text-blue-900 leading-relaxed">
-                <strong className="font-bold block text-blue-950">สร้างเสร็จพร้อมเริ่มใช้งานได้ทันที</strong>
-                <span className="text-[11px] text-blue-800/80">คุณสามารถเพิ่มห้องพัก สัญญาผู้เช่า และพิมพ์ใบเสร็จของหอพักนี้ได้ทันทีหลังจากบันทึก</span>
+                <strong className="font-bold block text-blue-950">
+                  สร้างเสร็จพร้อมเริ่มใช้งานได้ทันที
+                </strong>
+                <span className="text-[11px] text-blue-800/80">
+                  คุณสามารถเพิ่มห้องพัก สัญญาผู้เช่า และพิมพ์ใบเสร็จของหอพักนี้ได้ทันทีหลังจากบันทึก
+                </span>
               </div>
             </div>
 
@@ -225,15 +258,22 @@ export function AddPropertyWizard({
                   : "bg-slate-50 border-slate-200"
               }`}
             >
-              <div className={`w-5 h-5 rounded-lg flex items-center justify-center mt-0.5 shrink-0 transition-colors ${
-                copySettings ? "bg-blue-600 text-white shadow-2xs" : "border border-slate-300 bg-white"
-              }`}>
+              <div
+                className={`w-5 h-5 rounded-lg flex items-center justify-center mt-0.5 shrink-0 transition-colors ${
+                  copySettings
+                    ? "bg-blue-600 text-white shadow-2xs"
+                    : "border border-slate-300 bg-white"
+                }`}
+              >
                 {copySettings ? <Check size={13} strokeWidth={3} /> : null}
               </div>
               <div className="text-xs">
-                <strong className="text-slate-900 font-bold block text-sm">คัดลอกการตั้งค่าจากหอพักปัจจุบัน (แนะนำ)</strong>
+                <strong className="text-slate-900 font-bold block text-sm">
+                  คัดลอกการตั้งค่าจากหอพักปัจจุบัน (แนะนำ)
+                </strong>
                 <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">
-                  นำอัตราค่าไฟ ค่าน้ำ และข้อมูลบัญชี PromptPay มาใช้กับหอพักนี้ทันที (ปรับเปลี่ยนได้ตลอดเวลา)
+                  นำอัตราค่าไฟ ค่าน้ำ และข้อมูลบัญชี PromptPay มาใช้กับหอพักนี้ทันที
+                  (ปรับเปลี่ยนได้ตลอดเวลา)
                 </p>
               </div>
             </div>
@@ -251,26 +291,32 @@ export function AddPropertyWizard({
                       step="0.01"
                       min="0"
                       value={electricRate}
-                      onChange={(e) => setElectricRate(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setElectricRate(parseFloat(e.target.value) || 0)
+                      }
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                      <Droplets size={13} className="text-sky-500" /> ค่าน้ำ (฿/เดือน)
+                      <Droplets size={13} className="text-sky-500" /> ค่าน้ำ
+                      (฿/เดือน)
                     </label>
                     <input
                       className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-black tabular-nums"
                       type="number"
                       min="0"
                       value={waterRate}
-                      onChange={(e) => setWaterRate(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setWaterRate(parseFloat(e.target.value) || 0)
+                      }
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                    <QrCode size={13} className="text-indigo-500" /> เลขพร้อมเพย์ (PromptPay)
+                    <QrCode size={13} className="text-indigo-500" /> เลขพร้อมเพย์
+                    (PromptPay)
                   </label>
                   <input
                     className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold"
@@ -282,7 +328,8 @@ export function AddPropertyWizard({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                    <CreditCard size={13} className="text-emerald-500" /> ชื่อบัญชีรับเงิน
+                    <CreditCard size={13} className="text-emerald-500" />{" "}
+                    ชื่อบัญชีรับเงิน
                   </label>
                   <input
                     className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold"

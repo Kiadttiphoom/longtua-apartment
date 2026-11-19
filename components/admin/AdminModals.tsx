@@ -32,7 +32,10 @@ export function AdminConfirmDeleteModal({
         <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800">
           <AlertTriangle className="shrink-0 text-rose-600 mt-0.5" size={20} />
           <div className="text-xs space-y-1">
-            <p className="font-semibold">{message ?? "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"}</p>
+            <p className="font-semibold">
+              {message ??
+                "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"}
+            </p>
             <p className="font-bold text-rose-900 bg-rose-100/70 px-2 py-1 rounded">
               {itemName}
             </p>

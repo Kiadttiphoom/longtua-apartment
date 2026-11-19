@@ -22,7 +22,11 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { createPropertyAction, deletePropertyAction, updatePropertyAction } from "@/app/(portal)/resource-actions";
+import {
+  createPropertyAction,
+  deletePropertyAction,
+  updatePropertyAction,
+} from "@/app/(portal)/resource-actions";
 import {
   DataTable,
   DeleteConfirmation,
@@ -72,13 +76,15 @@ export function DormitoriesPage({
         (!needle ||
           `${item.name} ${item.address} ${item.phone ?? ""}`
             .toLocaleLowerCase("th-TH")
-            .includes(needle))
+            .includes(needle)),
     );
   }, [items, query, status]);
 
   const totalOccupied = rooms.filter((r) => r.status === "occupied").length;
   const totalVacant = rooms.filter((r) => r.status === "vacant").length;
-  const overallOccupancy = rooms.length ? Math.round((totalOccupied / rooms.length) * 100) : 0;
+  const overallOccupancy = rooms.length
+    ? Math.round((totalOccupied / rooms.length) * 100)
+    : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -93,12 +99,14 @@ export function DormitoriesPage({
       {/* Hero Stat Matrix */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Building2 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">หอพักทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                หอพักทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {items.length.toLocaleString("th-TH")} แห่ง
               </strong>
@@ -107,26 +115,33 @@ export function DormitoriesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <CheckCircle2 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เปิดใช้งานอยู่</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เปิดใช้งานอยู่
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
-                {items.filter((item) => item.status === "active").length.toLocaleString("th-TH")} แห่ง
+                {items
+                  .filter((item) => item.status === "active")
+                  .length.toLocaleString("th-TH")}{" "}
+                แห่ง
               </strong>
             </div>
           </div>
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ห้องพักรวมทุกหอ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ห้องพักรวมทุกหอ
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
                 {rooms.length.toLocaleString("th-TH")} ห้อง
               </strong>
@@ -135,12 +150,14 @@ export function DormitoriesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <Activity size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">อัตราเข้าพักเฉลี่ย</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                อัตราเข้าพักเฉลี่ย
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {overallOccupancy}%
               </strong>
@@ -157,7 +174,9 @@ export function DormitoriesPage({
                 <button
                   aria-label="มุมมองตาราง"
                   className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                    viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                    viewMode === "table"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   onClick={() => setViewMode("table")}
                   type="button"
@@ -168,7 +187,9 @@ export function DormitoriesPage({
                 <button
                   aria-label="มุมมองการ์ด"
                   className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                    viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                    viewMode === "grid"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   onClick={() => setViewMode("grid")}
                   type="button"
@@ -208,10 +229,18 @@ export function DormitoriesPage({
                     "การจัดการ",
                   ]}
                   rows={visibleItems.map((item) => {
-                    const propertyRooms = rooms.filter((room) => room.property_id === item.id);
-                    const vacantRooms = propertyRooms.filter((room) => room.status === "vacant").length;
-                    const occupiedRooms = propertyRooms.filter((room) => room.status === "occupied").length;
-                    const propOccupancy = propertyRooms.length ? Math.round((occupiedRooms / propertyRooms.length) * 100) : 0;
+                    const propertyRooms = rooms.filter(
+                      (room) => room.property_id === item.id,
+                    );
+                    const vacantRooms = propertyRooms.filter(
+                      (room) => room.status === "vacant",
+                    ).length;
+                    const occupiedRooms = propertyRooms.filter(
+                      (room) => room.status === "occupied",
+                    ).length;
+                    const propOccupancy = propertyRooms.length
+                      ? Math.round((occupiedRooms / propertyRooms.length) * 100)
+                      : 0;
 
                     return [
                       <div className="flex items-center gap-3.5" key="prop">
@@ -219,31 +248,57 @@ export function DormitoriesPage({
                           <Building2 size={19} strokeWidth={2.2} />
                         </span>
                         <div>
-                          <strong className="text-slate-900 text-sm font-bold block">{item.name}</strong>
-                          <span className="text-[11px] text-slate-400 block mt-0.5">ID: {item.id.slice(0, 8)}...</span>
+                          <strong className="text-slate-900 text-sm font-bold block">
+                            {item.name}
+                          </strong>
+                          <span className="text-[11px] text-slate-400 block mt-0.5">
+                            ID: {item.id.slice(0, 8)}...
+                          </span>
                         </div>
                       </div>,
                       <div className="flex flex-col text-xs" key="contact">
-                        <span className="text-slate-700 font-medium">{item.address || "—"}</span>
-                        <small className="text-slate-400 mt-0.5">{item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}</small>
+                        <span className="text-slate-700 font-medium">
+                          {item.address || "—"}
+                        </span>
+                        <small className="text-slate-400 mt-0.5">
+                          {item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}
+                        </small>
                       </div>,
-                      <div className="flex flex-col text-xs font-medium" key="rooms">
-                        <strong className="text-slate-900 font-black tabular-nums">{propertyRooms.length} ห้อง</strong>
+                      <div
+                        className="flex flex-col text-xs font-medium"
+                        key="rooms"
+                      >
+                        <strong className="text-slate-900 font-black tabular-nums">
+                          {propertyRooms.length} ห้อง
+                        </strong>
                         <small className="text-slate-400 mt-0.5">
                           (ว่าง {vacantRooms} • มีผู้เช่า {occupiedRooms})
                         </small>
                       </div>,
-                      <div className="flex flex-col gap-1 min-w-[120px]" key="occ">
+                      <div
+                        className="flex flex-col gap-1 min-w-[120px]"
+                        key="occ"
+                      >
                         <div className="flex justify-between text-xs">
-                          <span className="font-bold text-slate-700">{propOccupancy}%</span>
-                          <span className="text-[11px] text-slate-400">{occupiedRooms}/{propertyRooms.length}</span>
+                          <span className="font-bold text-slate-700">
+                            {propOccupancy}%
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {occupiedRooms}/{propertyRooms.length}
+                          </span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/50">
-                          <div className="h-full rounded-full bg-blue-600" style={{ width: `${propOccupancy}%` }} />
+                          <div
+                            className="h-full rounded-full bg-blue-600"
+                            style={{ width: `${propOccupancy}%` }}
+                          />
                         </div>
                       </div>,
                       <StatusBadge key="status" status={item.status} />,
-                      <div className="inline-flex items-center gap-2 justify-end" key="actions">
+                      <div
+                        className="inline-flex items-center gap-2 justify-end"
+                        key="actions"
+                      >
                         <button
                           className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
                           onClick={() => router.push(`/guestrooms`)}
@@ -283,10 +338,18 @@ export function DormitoriesPage({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleItems.map((item) => {
-                  const propertyRooms = rooms.filter((room) => room.property_id === item.id);
-                  const vacantRooms = propertyRooms.filter((room) => room.status === "vacant").length;
-                  const occupiedRooms = propertyRooms.filter((room) => room.status === "occupied").length;
-                  const propOccupancy = propertyRooms.length ? Math.round((occupiedRooms / propertyRooms.length) * 100) : 0;
+                  const propertyRooms = rooms.filter(
+                    (room) => room.property_id === item.id,
+                  );
+                  const vacantRooms = propertyRooms.filter(
+                    (room) => room.status === "vacant",
+                  ).length;
+                  const occupiedRooms = propertyRooms.filter(
+                    (room) => room.status === "occupied",
+                  ).length;
+                  const propOccupancy = propertyRooms.length
+                    ? Math.round((occupiedRooms / propertyRooms.length) * 100)
+                    : 0;
 
                   return (
                     <article
@@ -294,7 +357,7 @@ export function DormitoriesPage({
                       key={item.id}
                     >
                       {/* Ambient corner glow */}
-                      
+
                       <div>
                         {/* Card Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">
@@ -319,7 +382,9 @@ export function DormitoriesPage({
 
                         {/* Address Box */}
                         <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs mb-4">
-                          <span className="text-slate-400 block text-[10px] font-bold tracking-wide uppercase">ที่ตั้ง / ที่อยู่</span>
+                          <span className="text-slate-400 block text-[10px] font-bold tracking-wide uppercase">
+                            ที่ตั้ง / ที่อยู่
+                          </span>
                           <p className="text-slate-700 font-medium mt-1 line-clamp-2 leading-relaxed">
                             {item.address || "ยังไม่ได้ระบุที่อยู่ของอาคาร"}
                           </p>
@@ -328,8 +393,12 @@ export function DormitoriesPage({
                         {/* Occupancy Progress Bar */}
                         <div className="space-y-1.5 mb-4">
                           <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-medium">อัตราการเข้าพัก</span>
-                            <strong className="text-slate-900 font-black">{propOccupancy}%</strong>
+                            <span className="text-slate-500 font-medium">
+                              อัตราการเข้าพัก
+                            </span>
+                            <strong className="text-slate-900 font-black">
+                              {propOccupancy}%
+                            </strong>
                           </div>
                           <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
                             <div
@@ -342,16 +411,28 @@ export function DormitoriesPage({
                         {/* 3 Metrics Mini Grid */}
                         <dl className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-center mb-5">
                           <div className="flex flex-col">
-                            <dt className="text-[11px] text-slate-400 font-medium">ห้องทั้งหมด</dt>
-                            <dd className="text-lg font-black text-slate-900 mt-0.5 tabular-nums">{propertyRooms.length}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              ห้องทั้งหมด
+                            </dt>
+                            <dd className="text-lg font-black text-slate-900 mt-0.5 tabular-nums">
+                              {propertyRooms.length}
+                            </dd>
                           </div>
                           <div className="flex flex-col border-x border-slate-200/60">
-                            <dt className="text-[11px] text-slate-400 font-medium">มีผู้เช่า</dt>
-                            <dd className="text-lg font-black text-emerald-600 mt-0.5 tabular-nums">{occupiedRooms}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              มีผู้เช่า
+                            </dt>
+                            <dd className="text-lg font-black text-emerald-600 mt-0.5 tabular-nums">
+                              {occupiedRooms}
+                            </dd>
                           </div>
                           <div className="flex flex-col">
-                            <dt className="text-[11px] text-slate-400 font-medium">ห้องว่าง</dt>
-                            <dd className="text-lg font-black text-blue-600 mt-0.5 tabular-nums">{vacantRooms}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              ห้องว่าง
+                            </dt>
+                            <dd className="text-lg font-black text-blue-600 mt-0.5 tabular-nums">
+                              {vacantRooms}
+                            </dd>
                           </div>
                         </dl>
                       </div>
@@ -441,16 +522,23 @@ export function DormitoriesPage({
           >
             {(errors, clear) => (
               <div className="space-y-4 text-xs">
-                {editing ? <input name="propertyId" type="hidden" value={editing.id} /> : null}
-                
+                {editing ? (
+                  <input name="propertyId" type="hidden" value={editing.id} />
+                ) : null}
+
                 {!editing ? (
                   <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
                     <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                       <Sparkles size={13} strokeWidth={2.2} />
                     </span>
                     <div className="leading-relaxed">
-                      <strong className="font-bold block text-blue-950">พร้อมใช้งานทันที</strong>
-                      <span className="text-[11px] text-blue-800/80">ระบบจะสร้างการตั้งค่าเริ่มต้น อัตราค่าน้ำค่าไฟ และพร้อมสำหรับการสร้างห้องพักทันที</span>
+                      <strong className="font-bold block text-blue-950">
+                        พร้อมใช้งานทันที
+                      </strong>
+                      <span className="text-[11px] text-blue-800/80">
+                        ระบบจะสร้างการตั้งค่าเริ่มต้น อัตราค่าน้ำค่าไฟ
+                        และพร้อมสำหรับการสร้างห้องพักทันที
+                      </span>
                     </div>
                   </div>
                 ) : null}
@@ -460,9 +548,13 @@ export function DormitoriesPage({
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Building2 size={14} className="text-slate-500" />
-                      <span>ชื่อหอพัก / อาคาร <span className="text-rose-500">*</span></span>
+                      <span>
+                        ชื่อหอพัก / อาคาร <span className="text-rose-500">*</span>
+                      </span>
                     </span>
-                    <span className="text-[11px] text-slate-400 font-normal">เช่น ลงตัว เรสซิเดนซ์ 2</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      เช่น ลงตัว เรสซิเดนซ์ 2
+                    </span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -479,7 +571,9 @@ export function DormitoriesPage({
                     />
                   </div>
                   {errors.name ? (
-                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.name}</p>
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                      {errors.name}
+                    </p>
                   ) : null}
                 </div>
 
@@ -490,7 +584,9 @@ export function DormitoriesPage({
                       <MapPin size={14} className="text-slate-500" />
                       <span>ที่ตั้ง / ที่อยู่หอพัก</span>
                     </span>
-                    <span className="text-[11px] text-slate-400 font-normal">บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด
+                    </span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -505,7 +601,9 @@ export function DormitoriesPage({
                     />
                   </div>
                   {errors.address ? (
-                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.address}</p>
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                      {errors.address}
+                    </p>
                   ) : null}
                 </div>
 
@@ -517,7 +615,9 @@ export function DormitoriesPage({
                         <Phone size={14} className="text-slate-500" />
                         <span>เบอร์โทรศัพท์ติดต่อ</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">เช่น 081-234-5678</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        เช่น 081-234-5678
+                      </span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -532,7 +632,9 @@ export function DormitoriesPage({
                       />
                     </div>
                     {errors.phone ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.phone}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.phone}
+                      </p>
                     ) : null}
                   </div>
 
@@ -540,9 +642,15 @@ export function DormitoriesPage({
                     <div>
                       <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                         <span>สถานะการใช้งาน</span>
-                        <span className="text-[11px] text-slate-400 font-normal">Status</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          Status
+                        </span>
                       </label>
-                      <input name="status" type="hidden" value={editingStatus} />
+                      <input
+                        name="status"
+                        type="hidden"
+                        value={editingStatus}
+                      />
                       <SelectControl
                         ariaLabel="สถานะการใช้งาน"
                         onValueChange={(val) => setEditingStatus(val)}

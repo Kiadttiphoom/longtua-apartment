@@ -62,12 +62,15 @@ export async function sendTelegramMessage(
   customSettings?: TelegramSettings,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const settings = customSettings ?? await getTelegramSettings();
+    const settings = customSettings ?? (await getTelegramSettings());
     if (!settings.enabled && !customSettings) {
       return { success: false, error: "การแจ้งเตือน Telegram ถูกปิดอยู่" };
     }
     if (!settings.botToken || !settings.chatId) {
-      return { success: false, error: "กรุณาระบุ Telegram Bot Token และ Chat ID ให้ครบถ้วน" };
+      return {
+        success: false,
+        error: "กรุณาระบุ Telegram Bot Token และ Chat ID ให้ครบถ้วน",
+      };
     }
 
     const endpoint = `https://api.telegram.org/bot${encodeURIComponent(settings.botToken.trim())}/sendMessage`;
@@ -130,7 +133,7 @@ export function markNotified(keys: string[]) {
 export async function testTelegramMessage(
   customSettings?: TelegramSettings,
 ): Promise<{ success: boolean; error?: string }> {
-  const settings = customSettings ?? await getTelegramSettings();
+  const settings = customSettings ?? (await getTelegramSettings());
   if (!settings.botToken || !settings.chatId) {
     return { success: false, error: "กรุณาระบุ Bot Token และ Chat ID ก่อนทดสอบ" };
   }
@@ -166,20 +169,28 @@ export async function notifyNewTrialRequest(data: {
     const dedupKeys = [
       data.requestId ? `trial_id:${data.requestId}` : "",
       data.username ? `trial_user:${data.username.toLowerCase().trim()}` : "",
-      data.contactEmail ? `trial_email:${data.contactEmail.toLowerCase().trim()}` : "",
+      data.contactEmail
+        ? `trial_email:${data.contactEmail.toLowerCase().trim()}`
+        : "",
       data.phone ? `trial_phone:${data.phone.replace(/\D/g, "")}` : "",
     ].filter(Boolean);
 
     if (isDuplicateNotification(dedupKeys)) {
-      console.log(`[telegram] Duplicate trial notification skipped for: ${dedupKeys.join(", ")}`);
+      console.log(
+        `[telegram] Duplicate trial notification skipped for: ${dedupKeys.join(", ")}`,
+      );
       return;
     }
 
     // Mark as notified before sending to prevent race conditions from concurrent calls
     markNotified(dedupKeys);
 
-    const appUrl = process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
-    const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+    const appUrl =
+      process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") ||
+      "http://localhost:3000";
+    const now = new Date().toLocaleString("th-TH", {
+      timeZone: "Asia/Bangkok",
+    });
 
     const message = [
       `🔔 <b>มีคำขอทดลองใช้ระบบใหม่ (New Trial Request)</b>`,
@@ -196,7 +207,10 @@ export async function notifyNewTrialRequest(data: {
 
     const result = await sendTelegramMessage(message, settings);
     if (!result.success) {
-      console.error("[telegram] Failed to send trial notification:", result.error);
+      console.error(
+        "[telegram] Failed to send trial notification:",
+        result.error,
+      );
     }
   } catch (err) {
     console.error("[telegram] notifyNewTrialRequest error:", err);
@@ -215,17 +229,28 @@ export async function notifyNewPaymentSubmission(data: {
     const settings = await getTelegramSettings();
     if (!settings.enabled || !settings.notifyPaymentSubmissions) return;
 
-    const appUrl = process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
-    const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+    const appUrl =
+      process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") ||
+      "http://localhost:3000";
+    const now = new Date().toLocaleString("th-TH", {
+      timeZone: "Asia/Bangkok",
+    });
 
     const lines = [
       `💸 <b>มีผู้เช่าส่งสลิปชำระเงินใหม่ (Payment Slip)</b>`,
       `━━━━━━━━━━━━━━━━━━`,
     ];
-    if (data.propertyName) lines.push(`🏢 <b>หอพัก:</b> ${escapeHtml(data.propertyName)}`);
-    if (data.roomNumber) lines.push(`🚪 <b>ห้อง:</b> ${escapeHtml(data.roomNumber)}${data.tenantName ? ` (${escapeHtml(data.tenantName)})` : ""}`);
-    lines.push(`💰 <b>ยอดเงิน:</b> ฿${Number(data.amount || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}`);
-    if (data.invoiceNumber) lines.push(`🧾 <b>เลขที่ใบแจ้งหนี้:</b> ${escapeHtml(data.invoiceNumber)}`);
+    if (data.propertyName)
+      lines.push(`🏢 <b>หอพัก:</b> ${escapeHtml(data.propertyName)}`);
+    if (data.roomNumber)
+      lines.push(
+        `🚪 <b>ห้อง:</b> ${escapeHtml(data.roomNumber)}${data.tenantName ? ` (${escapeHtml(data.tenantName)})` : ""}`,
+      );
+    lines.push(
+      `💰 <b>ยอดเงิน:</b> ฿${Number(data.amount || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}`,
+    );
+    if (data.invoiceNumber)
+      lines.push(`🧾 <b>เลขที่ใบแจ้งหนี้:</b> ${escapeHtml(data.invoiceNumber)}`);
     lines.push(`⏰ <b>เวลา:</b> ${escapeHtml(data.paidAt || now)}`);
     lines.push(`━━━━━━━━━━━━━━━━━━`);
     lines.push(`👉 <a href="${appUrl}/payments">เปิดดูสลิปในระบบ</a>`);
@@ -247,15 +272,23 @@ export async function notifyNewRepairRequest(data: {
     const settings = await getTelegramSettings();
     if (!settings.enabled || !settings.notifyRepairRequests) return;
 
-    const appUrl = process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
-    const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+    const appUrl =
+      process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") ||
+      "http://localhost:3000";
+    const now = new Date().toLocaleString("th-TH", {
+      timeZone: "Asia/Bangkok",
+    });
 
     const lines = [
       `🔧 <b>มีผู้เช่าแจ้งซ่อมใหม่ (Repair Request)</b>`,
       `━━━━━━━━━━━━━━━━━━`,
     ];
-    if (data.propertyName) lines.push(`🏢 <b>หอพัก:</b> ${escapeHtml(data.propertyName)}`);
-    if (data.roomNumber) lines.push(`🚪 <b>ห้อง:</b> ${escapeHtml(data.roomNumber)}${data.tenantName ? ` (${escapeHtml(data.tenantName)})` : ""}`);
+    if (data.propertyName)
+      lines.push(`🏢 <b>หอพัก:</b> ${escapeHtml(data.propertyName)}`);
+    if (data.roomNumber)
+      lines.push(
+        `🚪 <b>ห้อง:</b> ${escapeHtml(data.roomNumber)}${data.tenantName ? ` (${escapeHtml(data.tenantName)})` : ""}`,
+      );
     lines.push(`📝 <b>หัวข้อ:</b> ${escapeHtml(data.title)}`);
     lines.push(`⏰ <b>เวลา:</b> ${escapeHtml(data.createdAt || now)}`);
     lines.push(`━━━━━━━━━━━━━━━━━━`);

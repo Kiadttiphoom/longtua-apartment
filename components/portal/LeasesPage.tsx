@@ -22,7 +22,10 @@ import {
   UserRoundCheck,
   UsersRound,
 } from "lucide-react";
-import { createLeaseAction, updateLeaseAction } from "@/app/(portal)/resource-actions";
+import {
+  createLeaseAction,
+  updateLeaseAction,
+} from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
@@ -37,7 +40,13 @@ import { SelectControl } from "@/components/ui/SelectControl";
 import { TenantPortalAccountModal } from "@/components/portal/TenantPortalAccountModal";
 import { LeaseDocumentWorkspace } from "@/components/contracts/LeaseDocumentWorkspace";
 import { money, thaiDate } from "@/lib/format";
-import type { Lease, Property, PropertySettings, Room, Tenant } from "@/components/portal/types";
+import type {
+  Lease,
+  Property,
+  PropertySettings,
+  Room,
+  Tenant,
+} from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
 import { validateLease } from "@/lib/portal/validation.mjs";
 
@@ -77,10 +86,16 @@ export function LeasesPage({
 }) {
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [selected, setSelected] = useState<Lease | "create" | null>(null);
-  const [viewingLease, setViewingLease] = useState<ViewingLeaseTarget | null>(null);
+  const [viewingLease, setViewingLease] = useState<ViewingLeaseTarget | null>(
+    null,
+  );
   const [documentDirty, setDocumentDirty] = useState(false);
-  const [portalTarget, setPortalTarget] = useState<LeasePortalTarget | null>(null);
-  const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
+  const [portalTarget, setPortalTarget] = useState<LeasePortalTarget | null>(
+    null,
+  );
+  const [activePropertyId, setActivePropertyId] = useState(
+    properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
   const [modalPropertyId, setModalPropertyId] = useState("");
   const [formRoomId, setFormRoomId] = useState("");
@@ -90,22 +105,43 @@ export function LeasesPage({
   const [status, setStatus] = useState("all");
 
   const editing = selected && selected !== "create" ? selected : null;
-  const propertyMap = useMemo(() => new Map(properties.map((item) => [item.id, item.name])), [properties]);
-  const propertySettingsMap = useMemo(() => new Map(settings.map((item) => [item.property_id, item])), [settings]);
-  const roomMap = useMemo(() => new Map(rooms.map((item) => [item.id, item])), [rooms]);
-  const tenantById = useMemo(() => new Map(tenants.map((item) => [item.id, item])), [tenants]);
-  const tenantMap = useMemo(() => new Map(tenants.map((item) => [item.id, item.full_name])), [tenants]);
+  const propertyMap = useMemo(
+    () => new Map(properties.map((item) => [item.id, item.name])),
+    [properties],
+  );
+  const propertySettingsMap = useMemo(
+    () => new Map(settings.map((item) => [item.property_id, item])),
+    [settings],
+  );
+  const roomMap = useMemo(
+    () => new Map(rooms.map((item) => [item.id, item])),
+    [rooms],
+  );
+  const tenantById = useMemo(
+    () => new Map(tenants.map((item) => [item.id, item])),
+    [tenants],
+  );
+  const tenantMap = useMemo(
+    () => new Map(tenants.map((item) => [item.id, item.full_name])),
+    [tenants],
+  );
   const portalAccountMap = useMemo(
     () => new Map(portalAccounts.map((account) => [account.tenantId, account])),
-    [portalAccounts]
+    [portalAccounts],
   );
 
   const availableRooms = useMemo(
-    () => rooms.filter((room) => room.status === "vacant" && (!modalPropertyId || room.property_id === modalPropertyId)),
-    [rooms, modalPropertyId]
+    () =>
+      rooms.filter(
+        (room) =>
+          room.status === "vacant" &&
+          (!modalPropertyId || room.property_id === modalPropertyId),
+      ),
+    [rooms, modalPropertyId],
   );
 
-  const activeProperty = properties.find((p) => p.id === activePropertyId) ?? properties[0];
+  const activeProperty =
+    properties.find((p) => p.id === activePropertyId) ?? properties[0];
   const resolvedPropertyId = activeProperty?.id ?? "";
 
   const floorKey = (room?: Room) => (room?.floor ? String(room.floor) : "1");
@@ -123,15 +159,34 @@ export function LeasesPage({
       const key = floorKey(room);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
-      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    return Array.from(counts, ([value, count]) => ({
+      value,
+      count,
+      label: floorLabel(value),
+    })).sort((left, right) =>
+      left.value.localeCompare(right.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
     );
   }, [propertyLeases, roomMap]);
 
   const totalCount = propertyLeases.length;
-  const activeCount = useMemo(() => propertyLeases.filter((item) => item.status === "active").length, [propertyLeases]);
-  const draftCount = useMemo(() => propertyLeases.filter((item) => item.status === "draft").length, [propertyLeases]);
-  const endedCount = useMemo(() => propertyLeases.filter((item) => item.status === "ended" || item.status === "cancelled").length, [propertyLeases]);
+  const activeCount = useMemo(
+    () => propertyLeases.filter((item) => item.status === "active").length,
+    [propertyLeases],
+  );
+  const draftCount = useMemo(
+    () => propertyLeases.filter((item) => item.status === "draft").length,
+    [propertyLeases],
+  );
+  const endedCount = useMemo(
+    () =>
+      propertyLeases.filter(
+        (item) => item.status === "ended" || item.status === "cancelled",
+      ).length,
+    [propertyLeases],
+  );
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("th-TH");
@@ -143,8 +198,8 @@ export function LeasesPage({
         status === "all"
           ? true
           : status === "ended"
-          ? item.status === "ended" || item.status === "cancelled"
-          : item.status === status;
+            ? item.status === "ended" || item.status === "cancelled"
+            : item.status === status;
 
       const matchesSearch =
         !keyword ||
@@ -159,7 +214,16 @@ export function LeasesPage({
 
       return matchesFloor && matchesStatus && matchesSearch;
     });
-  }, [propertyLeases, roomMap, floor, status, query, propertyMap, tenantMap, tenantById]);
+  }, [
+    propertyLeases,
+    roomMap,
+    floor,
+    status,
+    query,
+    propertyMap,
+    tenantMap,
+    tenantById,
+  ]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -176,7 +240,12 @@ export function LeasesPage({
       value,
       label: floorLabel(value),
       leases: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered, roomMap]);
 
   return (
@@ -194,7 +263,10 @@ export function LeasesPage({
         title="สัญญาเช่า"
       />
 
-      <section aria-label="ภาพรวมสัญญาเช่า" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมสัญญาเช่า"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         <button
           className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
             status === "all"
@@ -204,12 +276,14 @@ export function LeasesPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <FileText size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">สัญญาทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                สัญญาทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -226,12 +300,14 @@ export function LeasesPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">กำลังมีผลใช้งาน</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                กำลังมีผลใช้งาน
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {activeCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -248,12 +324,14 @@ export function LeasesPage({
           onClick={() => setStatus("draft")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <Pencil size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ร่างสัญญารอดำเนินการ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ร่างสัญญารอดำเนินการ
+              </span>
               <strong className="text-2xl font-black text-amber-800 tracking-tight tabular-nums mt-0.5 block">
                 {draftCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -270,12 +348,14 @@ export function LeasesPage({
           onClick={() => setStatus("ended")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <CalendarCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">สิ้นสุด/ยกเลิกแล้ว</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                สิ้นสุด/ยกเลิกแล้ว
+              </span>
               <strong className="text-2xl font-black text-slate-800 tracking-tight tabular-nums mt-0.5 block">
                 {endedCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -285,21 +365,34 @@ export function LeasesPage({
       </section>
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายการสัญญาเช่า</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงรายการสัญญาเช่า
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
             {properties.length} หอพัก · {leases.length} สัญญาทั้งหมดในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === resolvedPropertyId;
-            const propRooms = rooms.filter((r) => r.property_id === property.id);
-            const propLeases = leases.filter((l) => l.property_id === property.id);
+            const propRooms = rooms.filter(
+              (r) => r.property_id === property.id,
+            );
+            const propLeases = leases.filter(
+              (l) => l.property_id === property.id,
+            );
             return (
               <button
                 aria-selected={active}
@@ -317,13 +410,21 @@ export function LeasesPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {propRooms.length} ห้อง · มีสัญญา <strong className="text-blue-600 font-bold">{propLeases.length}</strong> ฉบับ
+                    {propRooms.length} ห้อง · มีสัญญา{" "}
+                    <strong className="text-blue-600 font-bold">
+                      {propLeases.length}
+                    </strong>{" "}
+                    ฉบับ
                   </span>
                 </div>
               </button>
@@ -333,35 +434,55 @@ export function LeasesPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyLeases.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyLeases.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -373,7 +494,9 @@ export function LeasesPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -384,7 +507,9 @@ export function LeasesPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -438,8 +563,12 @@ export function LeasesPage({
                       <FileText size={15} strokeWidth={2.2} />
                     </span>
                     <div>
-                      <strong className="text-slate-900 text-xs font-mono font-bold block">{item.lease_number}</strong>
-                      <span className="text-[10px] text-slate-400">เริ่ม {thaiDate(item.start_date)}</span>
+                      <strong className="text-slate-900 text-xs font-mono font-bold block">
+                        {item.lease_number}
+                      </strong>
+                      <span className="text-[10px] text-slate-400">
+                        เริ่ม {thaiDate(item.start_date)}
+                      </span>
                     </div>
                   </div>,
 
@@ -448,12 +577,16 @@ export function LeasesPage({
                       {room?.room_number ?? "—"}
                     </span>
                     <div className="flex flex-col text-xs min-w-0">
-                      <span className="text-slate-800 font-bold truncate">{propName ?? "หอพัก"}</span>
+                      <span className="text-slate-800 font-bold truncate">
+                        {propName ?? "หอพัก"}
+                      </span>
                     </div>
                   </div>,
 
                   <div className="flex items-center" key="floor">
-                    <span className="text-xs font-semibold text-slate-700">{room?.floor ? `ชั้น ${room.floor}` : "—"}</span>
+                    <span className="text-xs font-semibold text-slate-700">
+                      {room?.floor ? `ชั้น ${room.floor}` : "—"}
+                    </span>
                   </div>,
 
                   <div className="flex items-center gap-2.5" key="tenant">
@@ -461,7 +594,9 @@ export function LeasesPage({
                       {(tenant?.full_name || "ผ").slice(0, 1)}
                     </span>
                     <div className="flex flex-col text-xs min-w-0">
-                      <strong className="text-slate-900 font-bold truncate">{tenant?.full_name ?? "—"}</strong>
+                      <strong className="text-slate-900 font-bold truncate">
+                        {tenant?.full_name ?? "—"}
+                      </strong>
                       <small className="text-slate-400 flex items-center gap-1 mt-0.5">
                         <Phone size={10} /> {tenant?.phone || "ไม่มีเบอร์โทร"}
                       </small>
@@ -474,18 +609,27 @@ export function LeasesPage({
                       {thaiDate(item.start_date)}
                     </strong>
                     <small className="text-slate-400 mt-0.5">
-                      {item.end_date ? `ถึง ${thaiDate(item.end_date)}` : "ไม่ระบุสิ้นสุด"}
+                      {item.end_date
+                        ? `ถึง ${thaiDate(item.end_date)}`
+                        : "ไม่ระบุสิ้นสุด"}
                     </small>
                   </div>,
 
                   <div className="flex flex-col text-xs" key="financials">
-                    <strong className="text-slate-900 font-bold text-xs">{money(Number(item.rent_amount))}/ด.</strong>
-                    <small className="text-slate-400 mt-0.5">ประกัน {money(Number(item.deposit_amount))}</small>
+                    <strong className="text-slate-900 font-bold text-xs">
+                      {money(Number(item.rent_amount))}/ด.
+                    </strong>
+                    <small className="text-slate-400 mt-0.5">
+                      ประกัน {money(Number(item.deposit_amount))}
+                    </small>
                   </div>,
 
                   <StatusBadge key="status" status={item.status} />,
 
-                  <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-1.5 justify-end"
+                    key="actions"
+                  >
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
                       onClick={() =>
@@ -509,7 +653,9 @@ export function LeasesPage({
                           lease: item,
                           tenant,
                           room,
-                          propertyName: propName, printRequested: true, });
+                          propertyName: propName,
+                          printRequested: true,
+                        });
                       }}
                       title="พิมพ์สัญญาเช่า A4"
                       type="button"
@@ -531,11 +677,15 @@ export function LeasesPage({
                         <Pencil size={14} strokeWidth={2.2} />
                       </button>
                     ) : null}
-                    {tenant && canManageTenantPortal && ["draft", "active"].includes(item.status) ? (
+                    {tenant &&
+                    canManageTenantPortal &&
+                    ["draft", "active"].includes(item.status) ? (
                       <button
                         aria-label={`${account ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
                         className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs shrink-0"
-                        onClick={() => setPortalTarget({ lease: item, tenant, room })}
+                        onClick={() =>
+                          setPortalTarget({ lease: item, tenant, room })
+                        }
                         title={account ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
                         type="button"
                       >
@@ -553,16 +703,24 @@ export function LeasesPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.leases.length} ฉบับ)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.leases.length} ฉบับ)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.leases.map((item) => {
                     const room = roomMap.get(item.room_id);
                     const tenant = tenantById.get(item.primary_tenant_id);
-                    const account = portalAccountMap.get(item.primary_tenant_id);
+                    const account = portalAccountMap.get(
+                      item.primary_tenant_id,
+                    );
                     const propName = propertyMap.get(item.property_id);
 
                     return (
@@ -570,7 +728,6 @@ export function LeasesPage({
                         className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
                         key={item.id}
                       >
-                        
                         <div>
                           <header className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3 min-w-0">
@@ -595,35 +752,57 @@ export function LeasesPage({
                                 {(tenant?.full_name || "ผ").slice(0, 1)}
                               </span>
                               <div className="min-w-0">
-                                <strong className="text-xs font-bold text-slate-900 block truncate">{tenant?.full_name ?? "—"}</strong>
+                                <strong className="text-xs font-bold text-slate-900 block truncate">
+                                  {tenant?.full_name ?? "—"}
+                                </strong>
                                 <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                                  {tenant?.phone ? `โทร. ${tenant.phone}` : "ไม่มีเบอร์โทร"}
+                                  {tenant?.phone
+                                    ? `โทร. ${tenant.phone}`
+                                    : "ไม่มีเบอร์โทร"}
                                 </span>
                               </div>
                             </div>
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-200/80 shrink-0 shadow-2xs">
-                              <UsersRound size={12} className="text-slate-400" /> {item.occupant_count} คน
+                              <UsersRound
+                                size={12}
+                                className="text-slate-400"
+                              />{" "}
+                              {item.occupant_count} คน
                             </span>
                           </div>
 
                           <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[10px] font-bold text-slate-400 font-medium">ค่าเช่ารายเดือน</dt>
-                              <dd className="text-sm font-black text-slate-900 mt-1">{money(Number(item.rent_amount))}</dd>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">ประกัน {money(Number(item.deposit_amount))}</span>
+                              <dt className="text-[10px] font-bold text-slate-400 font-medium">
+                                ค่าเช่ารายเดือน
+                              </dt>
+                              <dd className="text-sm font-black text-slate-900 mt-1">
+                                {money(Number(item.rent_amount))}
+                              </dd>
+                              <span className="text-[10px] text-slate-400 block mt-0.5">
+                                ประกัน {money(Number(item.deposit_amount))}
+                              </span>
                             </div>
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[10px] font-bold text-slate-400 font-medium">ระยะเวลาสัญญา</dt>
-                              <dd className="text-xs font-bold text-slate-800 mt-1 truncate">{thaiDate(item.start_date)}</dd>
+                              <dt className="text-[10px] font-bold text-slate-400 font-medium">
+                                ระยะเวลาสัญญา
+                              </dt>
+                              <dd className="text-xs font-bold text-slate-800 mt-1 truncate">
+                                {thaiDate(item.start_date)}
+                              </dd>
                               <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
-                                ถึง {item.end_date ? thaiDate(item.end_date) : "ไม่ระบุ"}
+                                ถึง{" "}
+                                {item.end_date
+                                  ? thaiDate(item.end_date)
+                                  : "ไม่ระบุ"}
                               </span>
                             </div>
                           </dl>
 
                           {item.terms ? (
                             <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs text-amber-950 line-clamp-2 mb-4 leading-relaxed">
-                              <strong className="font-bold">ข้อตกลง:</strong> {item.terms}
+                              <strong className="font-bold">ข้อตกลง:</strong>{" "}
+                              {item.terms}
                             </div>
                           ) : null}
                         </div>
@@ -654,7 +833,9 @@ export function LeasesPage({
                                   lease: item,
                                   tenant,
                                   room,
-                                  propertyName: propName, printRequested: true, });
+                                  propertyName: propName,
+                                  printRequested: true,
+                                });
                               }}
                               title="พิมพ์สัญญาเช่า A4"
                               type="button"
@@ -684,11 +865,15 @@ export function LeasesPage({
                             ) : (
                               <div className="h-9 rounded-xl border border-dashed border-slate-200 bg-slate-50/40" />
                             )}
-                            {tenant && canManageTenantPortal && ["draft", "active"].includes(item.status) ? (
+                            {tenant &&
+                            canManageTenantPortal &&
+                            ["draft", "active"].includes(item.status) ? (
                               <button
                                 aria-label={`${account ? "จัดการ" : "สร้าง"}บัญชีเข้าใช้ให้ ${tenant.full_name}`}
                                 className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs"
-                                onClick={() => setPortalTarget({ lease: item, tenant, room })}
+                                onClick={() =>
+                                  setPortalTarget({ lease: item, tenant, room })
+                                }
                                 title={account ? "จัดการบัญชีผู้เช่า" : "สร้างบัญชีผู้เช่า"}
                                 type="button"
                               >
@@ -744,7 +929,10 @@ export function LeasesPage({
           }
           maxWidth={840}
           onClose={() => {
-            if (!documentDirty || window.confirm("มีข้อความที่ยังไม่ได้บันทึก ต้องการปิดสัญญาหรือไม่?")) {
+            if (
+              !documentDirty ||
+              window.confirm("มีข้อความที่ยังไม่ได้บันทึก ต้องการปิดสัญญาหรือไม่?")
+            ) {
               setDocumentDirty(false);
               setViewingLease(null);
             }
@@ -763,26 +951,58 @@ export function LeasesPage({
               contractDate={viewingLease.lease.start_date}
               customTerms={viewingLease.lease.terms}
               depositAmount={Number(viewingLease.lease.deposit_amount)}
-              dueDay={propertySettingsMap.get(viewingLease.lease.property_id)?.due_day}
-              electricRate={propertySettingsMap.get(viewingLease.lease.property_id)?.electric_rate}
+              dueDay={
+                propertySettingsMap.get(viewingLease.lease.property_id)?.due_day
+              }
+              electricRate={
+                propertySettingsMap.get(viewingLease.lease.property_id)
+                  ?.electric_rate
+              }
               endDate={viewingLease.lease.end_date}
               floor={viewingLease.room?.floor}
               landlordName={organizationName}
-              landlordRepresentative={propertySettingsMap.get(viewingLease.lease.property_id)?.account_name}
+              landlordRepresentative={
+                propertySettingsMap.get(viewingLease.lease.property_id)
+                  ?.account_name
+              }
               leaseNumber={viewingLease.lease.lease_number}
               occupantCount={viewingLease.lease.occupant_count}
-              propertyAddress={properties.find((item) => item.id === viewingLease.lease.property_id)?.address}
-              propertyName={viewingLease.propertyName || properties.find((item) => item.id === viewingLease.lease.property_id)?.name || "หอพัก"}
-              propertyPhone={properties.find((item) => item.id === viewingLease.lease.property_id)?.phone}
+              propertyAddress={
+                properties.find(
+                  (item) => item.id === viewingLease.lease.property_id,
+                )?.address
+              }
+              propertyName={
+                viewingLease.propertyName ||
+                properties.find(
+                  (item) => item.id === viewingLease.lease.property_id,
+                )?.name ||
+                "หอพัก"
+              }
+              propertyPhone={
+                properties.find(
+                  (item) => item.id === viewingLease.lease.property_id,
+                )?.phone
+              }
               rentAmount={Number(viewingLease.lease.rent_amount)}
               roomNumber={viewingLease.room?.room_number || "—"}
               startDate={viewingLease.lease.start_date}
               tenantAddress={viewingLease.tenant?.address}
-              tenantIdCard={viewingLease.tenant?.id_card_last4 ? `${"·".repeat(9)}${viewingLease.tenant.id_card_last4}` : null}
+              tenantIdCard={
+                viewingLease.tenant?.id_card_last4
+                  ? `${"·".repeat(9)}${viewingLease.tenant.id_card_last4}`
+                  : null
+              }
               tenantName={viewingLease.tenant?.full_name || ""}
               tenantPhone={viewingLease.tenant?.phone}
-              waterBillingMethod={propertySettingsMap.get(viewingLease.lease.property_id)?.water_billing_method}
-              waterRate={propertySettingsMap.get(viewingLease.lease.property_id)?.water_rate}
+              waterBillingMethod={
+                propertySettingsMap.get(viewingLease.lease.property_id)
+                  ?.water_billing_method
+              }
+              waterRate={
+                propertySettingsMap.get(viewingLease.lease.property_id)
+                  ?.water_rate
+              }
             />
           </div>
         </Modal>
@@ -821,10 +1041,15 @@ export function LeasesPage({
             organizationId={organizationId}
             submitLabel={editing ? "บันทึกการแก้ไขสัญญา" : "บันทึกและเปิดสัญญา"}
             validate={(values) => {
-              const errors = validateLease(values) as unknown as Record<string, string>;
-              if (!editing && !values.propertyId) errors.propertyId = "กรุณาเลือกหอพัก";
+              const errors = validateLease(values) as unknown as Record<
+                string,
+                string
+              >;
+              if (!editing && !values.propertyId)
+                errors.propertyId = "กรุณาเลือกหอพัก";
               if (!editing && !values.roomId) errors.roomId = "กรุณาเลือกห้องพัก";
-              if (!editing && !values.tenantId) errors.tenantId = "กรุณาเลือกผู้เช่า";
+              if (!editing && !values.tenantId)
+                errors.tenantId = "กรุณาเลือกผู้เช่า";
               return errors;
             }}
           >
@@ -836,7 +1061,9 @@ export function LeasesPage({
                   </span>
                   <div className="leading-relaxed">
                     <strong className="font-bold block text-blue-950">
-                      {editing ? "ข้อมูลข้อตกลงและสัญญาเช่า" : "สร้างข้อตกลงและเปิดสัญญาเช่า"}
+                      {editing
+                        ? "ข้อมูลข้อตกลงและสัญญาเช่า"
+                        : "สร้างข้อตกลงและเปิดสัญญาเช่า"}
                     </strong>
                     <span className="text-[11px] text-blue-800/80">
                       {editing
@@ -853,19 +1080,25 @@ export function LeasesPage({
 
                     <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">หอพัก</span>
+                        <span className="text-slate-400 block text-[11px] font-medium">
+                          หอพัก
+                        </span>
                         <strong className="text-slate-800 font-bold block mt-0.5">
                           {propertyMap.get(editing.property_id)}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">ห้องพัก</span>
+                        <span className="text-slate-400 block text-[11px] font-medium">
+                          ห้องพัก
+                        </span>
                         <strong className="text-slate-800 font-bold block mt-0.5">
                           ห้อง {roomMap.get(editing.room_id)?.room_number ?? "—"}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">ผู้เช่า</span>
+                        <span className="text-slate-400 block text-[11px] font-medium">
+                          ผู้เช่า
+                        </span>
                         <strong className="text-slate-800 font-bold block mt-0.5 truncate">
                           {tenantMap.get(editing.primary_tenant_id)}
                         </strong>
@@ -893,7 +1126,9 @@ export function LeasesPage({
                           />
                         </div>
                         {errors.leaseNumber ? (
-                          <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.leaseNumber}</p>
+                          <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                            {errors.leaseNumber}
+                          </p>
                         ) : null}
                       </div>
 
@@ -901,9 +1136,13 @@ export function LeasesPage({
                         <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <ShieldCheck size={14} className="text-slate-500" />
-                            <span>สถานะสัญญา <span className="text-rose-500">*</span></span>
+                            <span>
+                              สถานะสัญญา <span className="text-rose-500">*</span>
+                            </span>
                           </span>
-                          <span className="text-[11px] text-slate-400 font-normal">Status</span>
+                          <span className="text-[11px] text-slate-400 font-normal">
+                            Status
+                          </span>
                         </label>
                         <SelectControl
                           ariaLabel="สถานะสัญญา"
@@ -924,7 +1163,11 @@ export function LeasesPage({
                   </>
                 ) : (
                   <>
-                    <input name="propertyId" type="hidden" value={modalPropertyId} />
+                    <input
+                      name="propertyId"
+                      type="hidden"
+                      value={modalPropertyId}
+                    />
                     <input name="roomId" type="hidden" value={formRoomId} />
                     <input name="tenantId" type="hidden" value={formTenantId} />
 
@@ -932,9 +1175,14 @@ export function LeasesPage({
                       <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
                           <Building2 size={14} className="text-slate-500" />
-                          <span>เลือกหอพัก / อาคาร <span className="text-rose-500">*</span></span>
+                          <span>
+                            เลือกหอพัก / อาคาร{" "}
+                            <span className="text-rose-500">*</span>
+                          </span>
                         </span>
-                        <span className="text-[11px] text-slate-400 font-normal">สาขาที่ทำสัญญา</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          สาขาที่ทำสัญญา
+                        </span>
                       </label>
                       <SelectControl
                         ariaLabel="หอพัก"
@@ -943,12 +1191,17 @@ export function LeasesPage({
                           setFormRoomId("");
                           clear("propertyId");
                         }}
-                        options={properties.map((item) => ({ value: item.id, label: item.name }))}
+                        options={properties.map((item) => ({
+                          value: item.id,
+                          label: item.name,
+                        }))}
                         placeholder="เลือกหอพัก"
                         value={modalPropertyId}
                       />
                       {errors.propertyId ? (
-                        <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.propertyId}</p>
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                          {errors.propertyId}
+                        </p>
                       ) : null}
                     </div>
 
@@ -957,9 +1210,13 @@ export function LeasesPage({
                         <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <DoorOpen size={14} className="text-slate-500" />
-                            <span>ห้องพักที่ว่าง <span className="text-rose-500">*</span></span>
+                            <span>
+                              ห้องพักที่ว่าง <span className="text-rose-500">*</span>
+                            </span>
                           </span>
-                          <span className="text-[11px] text-slate-400 font-normal">เฉพาะห้องว่าง</span>
+                          <span className="text-[11px] text-slate-400 font-normal">
+                            เฉพาะห้องว่าง
+                          </span>
                         </label>
                         <SelectControl
                           ariaLabel="ห้องพัก"
@@ -972,11 +1229,19 @@ export function LeasesPage({
                             value: item.id,
                             label: `ห้อง ${item.room_number} (ชั้น ${item.floor})`,
                           }))}
-                          placeholder={modalPropertyId ? (availableRooms.length ? "เลือกห้องพัก" : "ไม่มีห้องว่างในหอนี้") : "กรุณาเลือกหอพักก่อน"}
+                          placeholder={
+                            modalPropertyId
+                              ? availableRooms.length
+                                ? "เลือกห้องพัก"
+                                : "ไม่มีห้องว่างในหอนี้"
+                              : "กรุณาเลือกหอพักก่อน"
+                          }
                           value={formRoomId}
                         />
                         {errors.roomId ? (
-                          <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.roomId}</p>
+                          <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                            {errors.roomId}
+                          </p>
                         ) : null}
                       </div>
 
@@ -984,9 +1249,13 @@ export function LeasesPage({
                         <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <UserRound size={14} className="text-slate-500" />
-                            <span>ผู้เช่าหลัก <span className="text-rose-500">*</span></span>
+                            <span>
+                              ผู้เช่าหลัก <span className="text-rose-500">*</span>
+                            </span>
                           </span>
-                          <span className="text-[11px] text-slate-400 font-normal">คู่สัญญา</span>
+                          <span className="text-[11px] text-slate-400 font-normal">
+                            คู่สัญญา
+                          </span>
                         </label>
                         <SelectControl
                           ariaLabel="ผู้เช่า"
@@ -996,12 +1265,17 @@ export function LeasesPage({
                           }}
                           options={tenants
                             .filter((item) => item.status === "active")
-                            .map((item) => ({ value: item.id, label: item.full_name }))}
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.full_name,
+                            }))}
                           placeholder="เลือกผู้เช่า"
                           value={formTenantId}
                         />
                         {errors.tenantId ? (
-                          <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.tenantId}</p>
+                          <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                            {errors.tenantId}
+                          </p>
                         ) : null}
                       </div>
                     </div>
@@ -1012,7 +1286,9 @@ export function LeasesPage({
                           <FileText size={14} className="text-slate-500" />
                           <span>เลขที่สัญญา</span>
                         </span>
-                        <span className="text-[11px] text-slate-500 font-normal">ระบบกำหนด เปลี่ยนไม่ได้</span>
+                        <span className="text-[11px] text-slate-500 font-normal">
+                          ระบบกำหนด เปลี่ยนไม่ได้
+                        </span>
                       </label>
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -1027,7 +1303,9 @@ export function LeasesPage({
                         />
                       </div>
                       {errors.leaseNumber ? (
-                        <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.leaseNumber}</p>
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                          {errors.leaseNumber}
+                        </p>
                       ) : null}
                     </div>
                   </>
@@ -1038,12 +1316,17 @@ export function LeasesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <CalendarRange size={13} className="text-slate-500" />
-                        <span>วันเริ่มสัญญา <span className="text-rose-500">*</span></span>
+                        <span>
+                          วันเริ่มสัญญา <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <DateTimeControl
                       ariaLabel="วันเริ่มสัญญา"
-                      defaultValue={editing?.start_date || new Date().toISOString().slice(0, 10)}
+                      defaultValue={
+                        editing?.start_date ||
+                        new Date().toISOString().slice(0, 10)
+                      }
                       invalid={Boolean(errors.startDate)}
                       mode="date"
                       type="date"
@@ -1052,7 +1335,9 @@ export function LeasesPage({
                       placeholder="เลือกวันเริ่มสัญญา"
                     />
                     {errors.startDate ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.startDate}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.startDate}
+                      </p>
                     ) : null}
                   </div>
 
@@ -1062,7 +1347,9 @@ export function LeasesPage({
                         <CalendarCheck size={13} className="text-slate-500" />
                         <span>วันสิ้นสุดสัญญา</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 font-normal">ถ้ามี</span>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        ถ้ามี
+                      </span>
                     </label>
                     <DateTimeControl
                       ariaLabel="วันสิ้นสุดสัญญา"
@@ -1074,7 +1361,9 @@ export function LeasesPage({
                       placeholder="เลือกวันสิ้นสุดสัญญา"
                     />
                     {errors.endDate ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.endDate}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.endDate}
+                      </p>
                     ) : null}
                   </div>
 
@@ -1082,7 +1371,9 @@ export function LeasesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <UsersRound size={13} className="text-slate-500" />
-                        <span>จำนวนผู้พัก (คน) <span className="text-rose-500">*</span></span>
+                        <span>
+                          จำนวนผู้พัก (คน) <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <input
@@ -1096,7 +1387,9 @@ export function LeasesPage({
                       type="number"
                     />
                     {errors.occupantCount ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.occupantCount}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.occupantCount}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -1107,7 +1400,9 @@ export function LeasesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <Banknote size={13} className="text-slate-500" />
-                        <span>ค่าเช่า/เดือน <span className="text-rose-500">*</span></span>
+                        <span>
+                          ค่าเช่า/เดือน <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <input
@@ -1121,7 +1416,9 @@ export function LeasesPage({
                       type="number"
                     />
                     {errors.rentAmount ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.rentAmount}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.rentAmount}
+                      </p>
                     ) : null}
                   </div>
 
@@ -1129,7 +1426,9 @@ export function LeasesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <ShieldCheck size={13} className="text-slate-500" />
-                        <span>เงินประกัน <span className="text-rose-500">*</span></span>
+                        <span>
+                          เงินประกัน <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <input
@@ -1143,7 +1442,9 @@ export function LeasesPage({
                       type="number"
                     />
                     {errors.depositAmount ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.depositAmount}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.depositAmount}
+                      </p>
                     ) : null}
                   </div>
 
@@ -1151,7 +1452,9 @@ export function LeasesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <Coins size={13} className="text-slate-500" />
-                        <span>ค่าเช่าล่วงหน้า <span className="text-rose-500">*</span></span>
+                        <span>
+                          ค่าเช่าล่วงหน้า <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <input
@@ -1165,7 +1468,9 @@ export function LeasesPage({
                       type="number"
                     />
                     {errors.advanceAmount ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.advanceAmount}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.advanceAmount}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -1174,7 +1479,9 @@ export function LeasesPage({
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                     <span>เงื่อนไขและข้อตกลงเพิ่มเติม</span>
-                    <span className="text-[11px] text-slate-400 font-normal">พิมพ์ลงท้ายสัญญา</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      พิมพ์ลงท้ายสัญญา
+                    </span>
                   </label>
                   <textarea
                     className="w-full p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium transition-all placeholder:text-slate-400 resize-none h-20"
@@ -1184,7 +1491,9 @@ export function LeasesPage({
                     placeholder="เช่น ห้ามเลี้ยงสัตว์ทุกชนิด, ห้ามส่งเสียงดังหลังเวลา 22:00 น."
                   />
                   {errors.terms ? (
-                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.terms}</p>
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                      {errors.terms}
+                    </p>
                   ) : null}
                 </div>
               </div>

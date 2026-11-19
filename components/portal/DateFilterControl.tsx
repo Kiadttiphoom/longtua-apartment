@@ -30,12 +30,20 @@ export function DateFilterControl({
   className = "",
 }: DateFilterControlProps) {
   const currentYear = new Date().getFullYear();
-  const years = availableYears && availableYears.length > 0
-    ? availableYears
-    : [String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
+  const years =
+    availableYears && availableYears.length > 0
+      ? availableYears
+      : [
+          String(currentYear + 1),
+          String(currentYear),
+          String(currentYear - 1),
+          String(currentYear - 2),
+        ];
 
   return (
-    <div className={`flex items-center gap-1.5 flex-wrap sm:flex-nowrap ${className}`}>
+    <div
+      className={`flex items-center gap-1.5 flex-wrap sm:flex-nowrap ${className}`}
+    >
       {allowedModes.length > 1 && (
         <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200 gap-0.5 shrink-0">
           {allowedModes.includes("date") && (

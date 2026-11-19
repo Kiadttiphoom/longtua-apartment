@@ -37,7 +37,8 @@ export function ContractModal({
               <X size={18} />
             </button>
             <span className="font-bold text-sm text-slate-800">
-              สัญญาเช่า · ห้อง {contract.roomNumber} · {contract.tenantName} ({contract.id})
+              สัญญาเช่า · ห้อง {contract.roomNumber} · {contract.tenantName} (
+              {contract.id})
             </span>
           </div>
           <div className="flex items-center gap-2">

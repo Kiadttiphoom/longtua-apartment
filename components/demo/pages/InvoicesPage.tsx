@@ -79,26 +79,92 @@ export function InvoicesPage({
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
-  const [selectedPropertyId, setSelectedPropertyId] = useState(activeProperty?.id ?? properties[0]?.id ?? "");
+  const [selectedPropertyId, setSelectedPropertyId] = useState(
+    activeProperty?.id ?? properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
 
-  const currentProperty = properties.find((p) => p.id === selectedPropertyId) ?? activeProperty ?? properties[0];
+  const currentProperty =
+    properties.find((p) => p.id === selectedPropertyId) ??
+    activeProperty ??
+    properties[0];
 
   const floorLabel = (key: string) => `ชั้น ${key}`;
 
   // Local demo invoices
   const [invoices, setInvoices] = useState<DemoInvoice[]>(() => {
     const list: DemoInvoice[] = [];
-    const propsList = properties && properties.length > 0 ? properties : [activeProperty];
+    const propsList =
+      properties && properties.length > 0 ? properties : [activeProperty];
 
     propsList.forEach((prop) => {
       const demoData = [
-        { room: "101", floor: "1", tenant: "สมมุต ศรีสระเกษ", phone: "089-123-4567", rent: 3500, elec: 80, water: 150, status: "paid" as const, due: 0 },
-        { room: "102", floor: "1", tenant: "อารยา พรดี", phone: "089-876-5432", rent: 3500, elec: 65, water: 150, status: "overdue" as const, due: 4105 },
-        { room: "201", floor: "2", tenant: "กิตติภพ ทองแท้", phone: "081-998-7766", rent: 3800, elec: 72, water: 150, status: "issued" as const, due: 4454 },
-        { room: "202", floor: "2", tenant: "ธนกฤต มั่งคั่ง", phone: "092-333-8888", rent: 3800, elec: 90, water: 150, status: "partial" as const, due: 2000 },
-        { room: "301", floor: "3", tenant: "ปรียานุช รุ่งเรือง", phone: "084-222-1111", rent: 4000, elec: 85, water: 150, status: "paid" as const, due: 0 },
-        { room: "302", floor: "3", tenant: "อภิสิทธิ์ วงศ์ไทย", phone: "085-777-9999", rent: 4000, elec: 110, water: 150, status: "issued" as const, due: 4920 },
+        {
+          room: "101",
+          floor: "1",
+          tenant: "สมมุต ศรีสระเกษ",
+          phone: "089-123-4567",
+          rent: 3500,
+          elec: 80,
+          water: 150,
+          status: "paid" as const,
+          due: 0,
+        },
+        {
+          room: "102",
+          floor: "1",
+          tenant: "อารยา พรดี",
+          phone: "089-876-5432",
+          rent: 3500,
+          elec: 65,
+          water: 150,
+          status: "overdue" as const,
+          due: 4105,
+        },
+        {
+          room: "201",
+          floor: "2",
+          tenant: "กิตติภพ ทองแท้",
+          phone: "081-998-7766",
+          rent: 3800,
+          elec: 72,
+          water: 150,
+          status: "issued" as const,
+          due: 4454,
+        },
+        {
+          room: "202",
+          floor: "2",
+          tenant: "ธนกฤต มั่งคั่ง",
+          phone: "092-333-8888",
+          rent: 3800,
+          elec: 90,
+          water: 150,
+          status: "partial" as const,
+          due: 2000,
+        },
+        {
+          room: "301",
+          floor: "3",
+          tenant: "ปรียานุช รุ่งเรือง",
+          phone: "084-222-1111",
+          rent: 4000,
+          elec: 85,
+          water: 150,
+          status: "paid" as const,
+          due: 0,
+        },
+        {
+          room: "302",
+          floor: "3",
+          tenant: "อภิสิทธิ์ วงศ์ไทย",
+          phone: "085-777-9999",
+          rent: 4000,
+          elec: 110,
+          water: 150,
+          status: "issued" as const,
+          due: 4920,
+        },
       ];
 
       demoData.forEach((d) => {
@@ -127,7 +193,10 @@ export function InvoicesPage({
           totalAmount: total,
           balanceDue: d.due === 0 ? 0 : d.due,
           status: d.status,
-          note: d.status === "paid" ? "ชำระเงินเรียบร้อยแล้ว" : "กรุณาชำระเงินภายในวันที่กำหนด",
+          note:
+            d.status === "paid"
+              ? "ชำระเงินเรียบร้อยแล้ว"
+              : "กรุณาชำระเงินภายในวันที่กำหนด",
         });
       });
     });
@@ -147,12 +216,21 @@ export function InvoicesPage({
       value,
       count,
       label: floorLabel(value),
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [propertyInvoices]);
 
   // Modal states
-  const [viewingInvoice, setViewingInvoice] = useState<DemoInvoice | null>(null);
-  const [editingInvoice, setEditingInvoice] = useState<DemoInvoice | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<DemoInvoice | null>(
+    null,
+  );
+  const [editingInvoice, setEditingInvoice] = useState<DemoInvoice | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
 
   // Form states
@@ -168,9 +246,18 @@ export function InvoicesPage({
 
   // Stats
   const totalCount = propertyInvoices.length;
-  const totalBilled = propertyInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
-  const totalPaid = propertyInvoices.reduce((sum, inv) => sum + (inv.totalAmount - inv.balanceDue), 0);
-  const totalBalanceDue = propertyInvoices.reduce((sum, inv) => sum + inv.balanceDue, 0);
+  const totalBilled = propertyInvoices.reduce(
+    (sum, inv) => sum + inv.totalAmount,
+    0,
+  );
+  const totalPaid = propertyInvoices.reduce(
+    (sum, inv) => sum + (inv.totalAmount - inv.balanceDue),
+    0,
+  );
+  const totalBalanceDue = propertyInvoices.reduce(
+    (sum, inv) => sum + inv.balanceDue,
+    0,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -185,8 +272,8 @@ export function InvoicesPage({
         status === "all"
           ? true
           : status === "issued"
-          ? item.status === "issued" || item.status === "overdue"
-          : item.status === status;
+            ? item.status === "issued" || item.status === "overdue"
+            : item.status === status;
       return matchesFloor && matchesSearch && matchesStatus;
     });
   }, [propertyInvoices, floor, query, status]);
@@ -204,13 +291,22 @@ export function InvoicesPage({
       value,
       label: floorLabel(value),
       invoices: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered]);
 
   function openCreateModal() {
     setIsCreating(true);
     setEditingInvoice(null);
-    const r = meterRooms[0] || { number: "101", tenant: "สมมุต ศรีสระเกษ", rent: 2500 };
+    const r = meterRooms[0] || {
+      number: "101",
+      tenant: "สมมุต ศรีสระเกษ",
+      rent: 2500,
+    };
     setFormRoom(r.number);
     setFormTenant(r.tenant || "ผู้เช่าใหม่");
     setFormMonth("2026-08");
@@ -260,8 +356,8 @@ export function InvoicesPage({
                 dueDate: formDueDate,
                 status: formStatus,
               }
-            : it
-        )
+            : it,
+        ),
       );
       onToast(`แก้ไขใบแจ้งหนี้ ${editingInvoice.invoiceNumber} เรียบร้อยแล้ว`);
     } else {
@@ -307,7 +403,10 @@ export function InvoicesPage({
       />
 
       {/* 4 Hero Stat Cards (Matching Portal InvoicesPage) */}
-      <section aria-label="ภาพรวมใบแจ้งหนี้" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมใบแจ้งหนี้"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Card 1: Total Invoices */}
         <button
           className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
@@ -324,7 +423,9 @@ export function InvoicesPage({
               <ReceiptText size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ใบแจ้งหนี้ทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ใบแจ้งหนี้ทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -340,7 +441,9 @@ export function InvoicesPage({
               <FileText size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ยอดเรียกเก็บรวม</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ยอดเรียกเก็บรวม
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {money(totalBilled)}
               </strong>
@@ -364,7 +467,9 @@ export function InvoicesPage({
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">รับชำระแล้ว</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                รับชำระแล้ว
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {money(totalPaid)}
               </strong>
@@ -388,7 +493,9 @@ export function InvoicesPage({
               <CalendarClock size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ยอดค้างชำระ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ยอดค้างชำระ
+              </span>
               <strong className="text-2xl font-black text-rose-800 tracking-tight tabular-nums mt-0.5 block">
                 {money(totalBalanceDue)}
               </strong>
@@ -398,20 +505,31 @@ export function InvoicesPage({
       </section>
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงใบแจ้งหนี้</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงใบแจ้งหนี้
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
             {properties.length} หอพัก · {invoices.length} ใบแจ้งหนี้ทั้งหมดในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === currentProperty.id;
-            const propInvoices = invoices.filter((inv) => inv.propertyId === property.id);
+            const propInvoices = invoices.filter(
+              (inv) => inv.propertyId === property.id,
+            );
             return (
               <button
                 aria-selected={active}
@@ -429,13 +547,21 @@ export function InvoicesPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {property.rooms.length} ห้อง · บิล <strong className="text-blue-600 font-bold">{propInvoices.length}</strong> ฉบับ
+                    {property.rooms.length} ห้อง · บิล{" "}
+                    <strong className="text-blue-600 font-bold">
+                      {propInvoices.length}
+                    </strong>{" "}
+                    ฉบับ
                   </span>
                 </div>
               </button>
@@ -445,35 +571,55 @@ export function InvoicesPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyInvoices.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyInvoices.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -486,7 +632,9 @@ export function InvoicesPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -497,7 +645,9 @@ export function InvoicesPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -550,16 +700,25 @@ export function InvoicesPage({
                     ห้อง {item.roomNumber}
                   </span>
                   <div className="flex flex-col text-xs min-w-0">
-                    <strong className="text-slate-900 font-mono font-bold">{item.invoiceNumber}</strong>
+                    <strong className="text-slate-900 font-mono font-bold">
+                      {item.invoiceNumber}
+                    </strong>
                     <small className="text-slate-400">{item.periodMonth}</small>
                   </div>
                 </div>,
-                <span className="text-xs font-semibold text-slate-700" key="floor">
+                <span
+                  className="text-xs font-semibold text-slate-700"
+                  key="floor"
+                >
                   ชั้น {item.floor}
                 </span>,
                 <div className="flex flex-col text-xs" key="tenant">
-                  <strong className="text-slate-800 font-bold">{item.tenant}</strong>
-                  <small className="text-slate-400 font-mono">{item.tenantPhone}</small>
+                  <strong className="text-slate-800 font-bold">
+                    {item.tenant}
+                  </strong>
+                  <small className="text-slate-400 font-mono">
+                    {item.tenantPhone}
+                  </small>
                 </div>,
                 <span className="text-xs font-mono text-slate-700" key="rent">
                   {money(item.rentAmount)}
@@ -570,7 +729,10 @@ export function InvoicesPage({
                 <span className="text-xs font-mono text-slate-700" key="elec">
                   {money(item.electricAmount)}
                 </span>,
-                <strong className="text-xs font-mono font-black text-slate-900" key="total">
+                <strong
+                  className="text-xs font-mono font-black text-slate-900"
+                  key="total"
+                >
                   {money(item.totalAmount)}
                 </strong>,
                 <span
@@ -585,7 +747,10 @@ export function InvoicesPage({
                   {item.dueDate}
                 </span>,
                 <StatusBadge key="status" status={item.status} />,
-                <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                <div
+                  className="inline-flex items-center gap-1.5 justify-end"
+                  key="actions"
+                >
                   <button
                     className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                     onClick={() => setViewingInvoice(item)}
@@ -614,10 +779,16 @@ export function InvoicesPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.invoices.length} ใบแจ้งหนี้)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.invoices.length} ใบแจ้งหนี้)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.invoices.map((item) => (
@@ -639,7 +810,8 @@ export function InvoicesPage({
                                 {item.invoiceNumber}
                               </strong>
                               <span className="text-[11px] text-slate-400 block truncate">
-                                {item.propertyName} · ชั้น {item.floor} · รอบ {item.periodMonth}
+                                {item.propertyName} · ชั้น {item.floor} · รอบ{" "}
+                                {item.periodMonth}
                               </span>
                             </div>
                           </div>
@@ -649,41 +821,59 @@ export function InvoicesPage({
                         {/* Tenant */}
                         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-100 mb-3 text-xs">
                           <div>
-                            <span className="text-slate-400 block text-[11px]">ผู้เช่า</span>
-                            <strong className="text-slate-800 font-bold">{item.tenant}</strong>
+                            <span className="text-slate-400 block text-[11px]">
+                              ผู้เช่า
+                            </span>
+                            <strong className="text-slate-800 font-bold">
+                              {item.tenant}
+                            </strong>
                           </div>
-                          <span className="text-slate-500 font-mono">{item.tenantPhone}</span>
+                          <span className="text-slate-500 font-mono">
+                            {item.tenantPhone}
+                          </span>
                         </div>
 
                         {/* Charges Breakdown */}
                         <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 border border-slate-100 text-xs mb-3">
                           <div className="flex items-center justify-between text-slate-600">
                             <span>ค่าเช่าห้อง</span>
-                            <span className="font-mono font-medium">{money(item.rentAmount)}</span>
+                            <span className="font-mono font-medium">
+                              {money(item.rentAmount)}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600">
                             <span>ค่าน้ำประปา</span>
-                            <span className="font-mono font-medium">{money(item.waterAmount)}</span>
+                            <span className="font-mono font-medium">
+                              {money(item.waterAmount)}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-slate-600">
                             <span>ค่าไฟฟ้า ({item.electricUnits} หน่วย)</span>
-                            <span className="font-mono font-medium">{money(item.electricAmount)}</span>
+                            <span className="font-mono font-medium">
+                              {money(item.electricAmount)}
+                            </span>
                           </div>
                           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between font-bold text-slate-900">
                             <span>ยอดรวมทั้งสิ้น</span>
-                            <span className="font-mono font-black text-sm text-blue-700">{money(item.totalAmount)}</span>
+                            <span className="font-mono font-black text-sm text-blue-700">
+                              {money(item.totalAmount)}
+                            </span>
                           </div>
                         </div>
 
                         {/* Balance Due & Due Date */}
                         <div className="flex items-center justify-between text-xs px-1">
                           <span className="text-slate-400">ครบกำหนดชำระ:</span>
-                          <strong className="text-slate-700">{item.dueDate}</strong>
+                          <strong className="text-slate-700">
+                            {item.dueDate}
+                          </strong>
                         </div>
                         {item.balanceDue > 0 ? (
                           <div className="mt-2 p-2 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-between text-xs text-rose-700 font-bold">
                             <span>ยอดค้างชำระ:</span>
-                            <span className="font-mono">{money(item.balanceDue)}</span>
+                            <span className="font-mono">
+                              {money(item.balanceDue)}
+                            </span>
                           </div>
                         ) : null}
                       </div>
@@ -736,9 +926,15 @@ export function InvoicesPage({
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">{activeProperty.name}</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{activeProperty.address}</p>
-                  <p className="text-xs text-slate-500">โทร. {activeProperty.settings.promptpay}</p>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    {activeProperty.name}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {activeProperty.address}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    โทร. {activeProperty.settings.promptpay}
+                  </p>
                 </div>
                 <div className="sm:text-right">
                   <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 mb-1">
@@ -747,8 +943,12 @@ export function InvoicesPage({
                   <strong className="block text-sm font-mono font-bold text-slate-800">
                     เลขที่: {viewingInvoice.invoiceNumber}
                   </strong>
-                  <span className="text-xs text-slate-500 block">วันที่ออก: {viewingInvoice.issueDate}</span>
-                  <span className="text-xs font-bold text-rose-600 block">ครบกำหนด: {viewingInvoice.dueDate}</span>
+                  <span className="text-xs text-slate-500 block">
+                    วันที่ออก: {viewingInvoice.issueDate}
+                  </span>
+                  <span className="text-xs font-bold text-rose-600 block">
+                    ครบกำหนด: {viewingInvoice.dueDate}
+                  </span>
                 </div>
               </div>
 
@@ -756,13 +956,21 @@ export function InvoicesPage({
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-slate-400 block">ผู้เช่าห้องพัก:</span>
-                  <strong className="text-sm font-bold text-slate-800 block">{viewingInvoice.tenant}</strong>
-                  <span className="text-slate-500 font-mono">โทร. {viewingInvoice.tenantPhone}</span>
+                  <strong className="text-sm font-bold text-slate-800 block">
+                    {viewingInvoice.tenant}
+                  </strong>
+                  <span className="text-slate-500 font-mono">
+                    โทร. {viewingInvoice.tenantPhone}
+                  </span>
                 </div>
                 <div className="sm:text-right">
                   <span className="text-slate-400 block">ห้องพัก:</span>
-                  <strong className="text-sm font-bold text-blue-700 block">ห้อง {viewingInvoice.roomNumber}</strong>
-                  <span className="text-slate-500">รอบบิล: ประจำเดือน {viewingInvoice.periodMonth}</span>
+                  <strong className="text-sm font-bold text-blue-700 block">
+                    ห้อง {viewingInvoice.roomNumber}
+                  </strong>
+                  <span className="text-slate-500">
+                    รอบบิล: ประจำเดือน {viewingInvoice.periodMonth}
+                  </span>
                 </div>
               </div>
 
@@ -783,22 +991,36 @@ export function InvoicesPage({
                       <td className="p-3">1</td>
                       <td className="p-3 font-sans">ค่าเช่าห้องพัก</td>
                       <td className="p-3 text-right">1</td>
-                      <td className="p-3 text-right">{money(viewingInvoice.rentAmount)}</td>
-                      <td className="p-3 text-right font-bold">{money(viewingInvoice.rentAmount)}</td>
+                      <td className="p-3 text-right">
+                        {money(viewingInvoice.rentAmount)}
+                      </td>
+                      <td className="p-3 text-right font-bold">
+                        {money(viewingInvoice.rentAmount)}
+                      </td>
                     </tr>
                     <tr>
                       <td className="p-3">2</td>
                       <td className="p-3 font-sans">ค่าน้ำประปา (เหมาจ่าย)</td>
                       <td className="p-3 text-right">1</td>
-                      <td className="p-3 text-right">{money(viewingInvoice.waterAmount)}</td>
-                      <td className="p-3 text-right font-bold">{money(viewingInvoice.waterAmount)}</td>
+                      <td className="p-3 text-right">
+                        {money(viewingInvoice.waterAmount)}
+                      </td>
+                      <td className="p-3 text-right font-bold">
+                        {money(viewingInvoice.waterAmount)}
+                      </td>
                     </tr>
                     <tr>
                       <td className="p-3">3</td>
                       <td className="p-3 font-sans">ค่าไฟฟ้า</td>
-                      <td className="p-3 text-right">{viewingInvoice.electricUnits}</td>
-                      <td className="p-3 text-right">฿{viewingInvoice.electricRate}.00</td>
-                      <td className="p-3 text-right font-bold">{money(viewingInvoice.electricAmount)}</td>
+                      <td className="p-3 text-right">
+                        {viewingInvoice.electricUnits}
+                      </td>
+                      <td className="p-3 text-right">
+                        ฿{viewingInvoice.electricRate}.00
+                      </td>
+                      <td className="p-3 text-right font-bold">
+                        {money(viewingInvoice.electricAmount)}
+                      </td>
                     </tr>
                   </tbody>
                   <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-slate-800">
@@ -816,7 +1038,9 @@ export function InvoicesPage({
 
               {/* Amount In Thai Text */}
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">จำนวนเงินตัวอักษร:</span>
+                <span className="text-slate-500 font-medium">
+                  จำนวนเงินตัวอักษร:
+                </span>
                 <strong className="text-slate-800 font-bold">
                   ({thaiBahtText(viewingInvoice.totalAmount)})
                 </strong>
@@ -829,13 +1053,22 @@ export function InvoicesPage({
                     <QrCode size={16} />
                     <span>ช่องทางการชำระเงิน</span>
                   </h4>
-                  <p>พร้อมเพย์ (PromptPay): <strong>{appSettings.promptpay}</strong></p>
-                  <p>ชื่อบัญชี: <strong>{appSettings.accountName}</strong></p>
-                  <p className="text-[11px] text-blue-700 pt-1">{appSettings.invoiceNote}</p>
+                  <p>
+                    พร้อมเพย์ (PromptPay):{" "}
+                    <strong>{appSettings.promptpay}</strong>
+                  </p>
+                  <p>
+                    ชื่อบัญชี: <strong>{appSettings.accountName}</strong>
+                  </p>
+                  <p className="text-[11px] text-blue-700 pt-1">
+                    {appSettings.invoiceNote}
+                  </p>
                 </div>
                 <div className="w-24 h-24 bg-white p-2 rounded-xl border border-blue-200 shadow-2xs flex flex-col items-center justify-center shrink-0">
                   <QrCode size={60} className="text-slate-800" />
-                  <span className="text-[9px] font-bold text-slate-500 mt-1">สแกนจ่าย</span>
+                  <span className="text-[9px] font-bold text-slate-500 mt-1">
+                    สแกนจ่าย
+                  </span>
                 </div>
               </div>
             </div>
@@ -903,16 +1136,28 @@ export function InvoicesPage({
                 {/* Summary Card */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>
-                    <span className="text-slate-400 block text-[11px] font-medium">เลขที่ใบแจ้งหนี้</span>
-                    <strong className="text-slate-800 font-bold block mt-0.5 font-mono">{editingInvoice.invoiceNumber}</strong>
+                    <span className="text-slate-400 block text-[11px] font-medium">
+                      เลขที่ใบแจ้งหนี้
+                    </span>
+                    <strong className="text-slate-800 font-bold block mt-0.5 font-mono">
+                      {editingInvoice.invoiceNumber}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] font-medium">ห้องพัก</span>
-                    <strong className="text-slate-800 font-bold block mt-0.5">ห้อง {editingInvoice.roomNumber}</strong>
+                    <span className="text-slate-400 block text-[11px] font-medium">
+                      ห้องพัก
+                    </span>
+                    <strong className="text-slate-800 font-bold block mt-0.5">
+                      ห้อง {editingInvoice.roomNumber}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] font-medium">ผู้เช่า</span>
-                    <strong className="text-slate-800 font-bold block mt-0.5 truncate">{editingInvoice.tenant}</strong>
+                    <span className="text-slate-400 block text-[11px] font-medium">
+                      ผู้เช่า
+                    </span>
+                    <strong className="text-slate-800 font-bold block mt-0.5 truncate">
+                      {editingInvoice.tenant}
+                    </strong>
                   </div>
                 </div>
 
@@ -940,12 +1185,16 @@ export function InvoicesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <ShieldCheck size={14} className="text-slate-500" />
-                        <span>สถานะใบแจ้งหนี้ <span className="text-rose-500">*</span></span>
+                        <span>
+                          สถานะใบแจ้งหนี้ <span className="text-rose-500">*</span>
+                        </span>
                       </span>
                     </label>
                     <SelectControl
                       ariaLabel="สถานะใบแจ้งหนี้"
-                      onValueChange={(val) => setFormStatus(val as DemoInvoice["status"])}
+                      onValueChange={(val) =>
+                        setFormStatus(val as DemoInvoice["status"])
+                      }
                       options={[
                         { value: "issued", label: "รอชำระ (Issued)" },
                         { value: "paid", label: "ชำระแล้ว (Paid)" },
@@ -963,14 +1212,22 @@ export function InvoicesPage({
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Building2 size={14} className="text-slate-500" />
-                      <span>เลือกหอพัก / อาคาร <span className="text-rose-500">*</span></span>
+                      <span>
+                        เลือกหอพัก / อาคาร{" "}
+                        <span className="text-rose-500">*</span>
+                      </span>
                     </span>
-                    <span className="text-[11px] text-slate-400 font-normal">สาขา</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      สาขา
+                    </span>
                   </label>
                   <SelectControl
                     ariaLabel="หอพัก"
                     onValueChange={() => {}}
-                    options={(properties || [activeProperty]).map((p) => ({ value: p.id, label: p.name }))}
+                    options={(properties || [activeProperty]).map((p) => ({
+                      value: p.id,
+                      label: p.name,
+                    }))}
                     value={activeProperty.id}
                   />
                 </div>
@@ -980,9 +1237,13 @@ export function InvoicesPage({
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <DoorOpen size={14} className="text-slate-500" />
-                        <span>ห้องพัก <span className="text-rose-500">*</span></span>
+                        <span>
+                          ห้องพัก <span className="text-rose-500">*</span>
+                        </span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">เลือกห้องที่ออกบิล</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        เลือกห้องที่ออกบิล
+                      </span>
                     </label>
                     <SelectControl
                       ariaLabel="ห้องพัก"
@@ -1028,7 +1289,9 @@ export function InvoicesPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-slate-500" />
-                    <span>รอบเดือน <span className="text-rose-500">*</span></span>
+                    <span>
+                      รอบเดือน <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <DateTimeControl
@@ -1045,7 +1308,9 @@ export function InvoicesPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <CalendarCheck size={14} className="text-slate-500" />
-                    <span>วันครบกำหนดชำระ <span className="text-rose-500">*</span></span>
+                    <span>
+                      วันครบกำหนดชำระ <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <DateTimeControl
@@ -1061,7 +1326,9 @@ export function InvoicesPage({
 
             {/* Line Items Breakdown */}
             <div className="flex items-center gap-3 pt-1">
-              <strong className="whitespace-nowrap text-xs font-black text-slate-900">รายการค่าใช้จ่าย</strong>
+              <strong className="whitespace-nowrap text-xs font-black text-slate-900">
+                รายการค่าใช้จ่าย
+              </strong>
               <span className="h-px flex-1 bg-slate-200" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -1129,11 +1396,20 @@ export function InvoicesPage({
             {/* Total calculation preview box */}
             <div className="p-4 rounded-xl bg-blue-50/80 border border-blue-200/80 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-blue-950 block">ยอดรวมเรียกเก็บสุทธิ</span>
-                <span className="text-[11px] text-blue-700 block">รวมค่าเช่า + ค่าน้ำ + ค่าไฟ ({formElecUnits} หน่วย × ฿{formElecRate})</span>
+                <span className="text-xs font-bold text-blue-950 block">
+                  ยอดรวมเรียกเก็บสุทธิ
+                </span>
+                <span className="text-[11px] text-blue-700 block">
+                  รวมค่าเช่า + ค่าน้ำ + ค่าไฟ ({formElecUnits} หน่วย × ฿{formElecRate}
+                  )
+                </span>
               </div>
               <strong className="text-xl font-black text-blue-700 font-mono">
-                {money(Number(formRent) + Number(formWater) + formElecUnits * formElecRate)}
+                {money(
+                  Number(formRent) +
+                    Number(formWater) +
+                    formElecUnits * formElecRate,
+                )}
               </strong>
             </div>
 

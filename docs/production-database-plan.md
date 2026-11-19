@@ -46,73 +46,73 @@ flowchart TD
 
 ### 3.1 Identity และ Multi-tenancy
 
-| ตาราง | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `auth_login_aliases` | mapping ฝั่ง server จาก username ไป synthetic email ของ Supabase Auth | `username`, `auth_user_id`, `internal_email` |
-| `profiles` | โปรไฟล์ที่ผูกกับ Supabase Auth | `id = auth.users.id`, `username`, `display_name`, `phone`, `locale` |
-| `organizations` | กิจการที่เป็นลูกค้าของระบบ | `id`, `legal_name`, `display_name`, `tax_id`, `billing_email`, `status`, `owner_user_id` |
-| `organization_members` | ผู้ใช้และ Role ภายในกิจการ | `organization_id`, `user_id`, `role_code`, `status`, `invited_at`, `joined_at` |
-| `member_property_access` | จำกัดพนักงานให้เห็นเฉพาะบางหอ | `organization_member_id`, `property_id` |
-| `roles` | Role ที่มากับระบบหรือสร้างเอง | `organization_id nullable`, `code`, `name`, `is_system` |
-| `role_permissions` | Permission matrix | `role_id`, `permission_code`, `allowed` |
-| `invitations` | คำเชิญผู้ใช้งาน | `organization_id`, `email`, `role_code`, `token_hash`, `expires_at`, `accepted_at` |
+| ตาราง                    | หน้าที่                                                                | ฟิลด์หลัก                                                                                   |
+| ------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `auth_login_aliases`     | mapping ฝั่ง server จาก username ไป synthetic email ของ Supabase Auth | `username`, `auth_user_id`, `internal_email`                                             |
+| `profiles`               | โปรไฟล์ที่ผูกกับ Supabase Auth                                           | `id = auth.users.id`, `username`, `display_name`, `phone`, `locale`                      |
+| `organizations`          | กิจการที่เป็นลูกค้าของระบบ                                                | `id`, `legal_name`, `display_name`, `tax_id`, `billing_email`, `status`, `owner_user_id` |
+| `organization_members`   | ผู้ใช้และ Role ภายในกิจการ                                              | `organization_id`, `user_id`, `role_code`, `status`, `invited_at`, `joined_at`           |
+| `member_property_access` | จำกัดพนักงานให้เห็นเฉพาะบางหอ                                           | `organization_member_id`, `property_id`                                                  |
+| `roles`                  | Role ที่มากับระบบหรือสร้างเอง                                            | `organization_id nullable`, `code`, `name`, `is_system`                                  |
+| `role_permissions`       | Permission matrix                                                   | `role_id`, `permission_code`, `allowed`                                                  |
+| `invitations`            | คำเชิญผู้ใช้งาน                                                         | `organization_id`, `email`, `role_code`, `token_hash`, `expires_at`, `accepted_at`       |
 
 Role เริ่มต้น: `owner`, `accounting`, `staff` ส่วน `super_admin` เป็นสิทธิ์ของทีม Longtua และไม่ควรอยู่ใน membership ของลูกค้า
 
 ### 3.2 หอพักและผู้เช่า
 
-| ตาราง | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `properties` | หอพักแต่ละแห่ง | `organization_id`, `name`, `address`, `phone`, `timezone`, `status` |
-| `property_settings` | ค่าไฟ ค่าน้ำ วันออกบิล และ PromptPay | `property_id`, `electric_rate`, `water_rate`, `bill_day`, `due_day`, `late_fee`, `promptpay_id`, `account_name` |
-| `rooms` | ห้องพัก | `organization_id`, `property_id`, `room_number`, `floor`, `base_rent`, `status` |
-| `tenants` | บุคคลผู้เช่า | `organization_id`, `full_name`, `id_card_ciphertext`, `phone`, `email`, `status` |
-| `leases` | สัญญาเช่า | `organization_id`, `property_id`, `room_id`, `primary_tenant_id`, `lease_number`, `start_date`, `end_date`, `rent_amount`, `deposit_amount`, `advance_amount`, `status`, `terms_snapshot` |
-| `lease_occupants` | ผู้พักร่วมในสัญญา | `lease_id`, `tenant_id`, `relationship`, `is_primary` |
-| `documents` | metadata ของไฟล์ใน R2 | `organization_id`, `entity_type`, `entity_id`, `bucket`, `object_key`, `mime_type`, `size_bytes`, `checksum` |
+| ตาราง               | หน้าที่                            | ฟิลด์หลัก                                                                                                                                                                                    |
+| ------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `properties`        | หอพักแต่ละแห่ง                     | `organization_id`, `name`, `address`, `phone`, `timezone`, `status`                                                                                                                       |
+| `property_settings` | ค่าไฟ ค่าน้ำ วันออกบิล และ PromptPay | `property_id`, `electric_rate`, `water_rate`, `bill_day`, `due_day`, `late_fee`, `promptpay_id`, `account_name`                                                                           |
+| `rooms`             | ห้องพัก                           | `organization_id`, `property_id`, `room_number`, `floor`, `base_rent`, `status`                                                                                                           |
+| `tenants`           | บุคคลผู้เช่า                        | `organization_id`, `full_name`, `id_card_ciphertext`, `phone`, `email`, `status`                                                                                                          |
+| `leases`            | สัญญาเช่า                         | `organization_id`, `property_id`, `room_id`, `primary_tenant_id`, `lease_number`, `start_date`, `end_date`, `rent_amount`, `deposit_amount`, `advance_amount`, `status`, `terms_snapshot` |
+| `lease_occupants`   | ผู้พักร่วมในสัญญา                    | `lease_id`, `tenant_id`, `relationship`, `is_primary`                                                                                                                                     |
+| `documents`         | metadata ของไฟล์ใน R2            | `organization_id`, `entity_type`, `entity_id`, `bucket`, `object_key`, `mime_type`, `size_bytes`, `checksum`                                                                              |
 
 ข้อมูลบัตรประชาชนไม่ควรเก็บเป็น plain text หากไม่จำเป็นควรเก็บเฉพาะเลขท้าย 4 หลัก; หากจำเป็นต้องใช้เอกสาร ให้เข้ารหัสและจำกัดสิทธิ์เฉพาะ Owner
 
 ### 3.3 มิเตอร์และบิลค่าเช่า
 
-| ตาราง | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `meters` | มิเตอร์ต่อห้องและประเภท | `organization_id`, `property_id`, `room_id`, `meter_type`, `serial_number`, `active_from`, `active_to` |
-| `billing_cycles` | รอบบิลของหอ | `organization_id`, `property_id`, `period_month`, `status`, `generated_at`, `closed_at` |
-| `meter_readings` | เลขมิเตอร์ในแต่ละรอบ | `organization_id`, `meter_id`, `billing_cycle_id`, `previous_value`, `current_value`, `usage`, `read_at`, `read_by` |
-| `rent_invoices` | หัวใบแจ้งหนี้ผู้เช่า | `organization_id`, `property_id`, `billing_cycle_id`, `lease_id`, `room_id`, `invoice_number`, `issued_at`, `due_at`, `subtotal`, `total`, `balance_due`, `status` |
-| `rent_invoice_items` | ค่าเช่า ค่าไฟ ค่าน้ำ ค่าปรับ | `rent_invoice_id`, `item_type`, `description`, `quantity`, `unit_price`, `amount`, `metadata` |
-| `rent_payments` | เงินที่รับจากผู้เช่า | `organization_id`, `property_id`, `receipt_number`, `paid_at`, `amount`, `method`, `reference`, `evidence_document_id`, `status` |
-| `rent_payment_allocations` | จัดสรรหนึ่ง payment ไปหลาย invoice | `rent_payment_id`, `rent_invoice_id`, `amount` |
+| ตาราง                      | หน้าที่                            | ฟิลด์หลัก                                                                                                                                                             |
+| -------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `meters`                   | มิเตอร์ต่อห้องและประเภท             | `organization_id`, `property_id`, `room_id`, `meter_type`, `serial_number`, `active_from`, `active_to`                                                             |
+| `billing_cycles`           | รอบบิลของหอ                      | `organization_id`, `property_id`, `period_month`, `status`, `generated_at`, `closed_at`                                                                            |
+| `meter_readings`           | เลขมิเตอร์ในแต่ละรอบ               | `organization_id`, `meter_id`, `billing_cycle_id`, `previous_value`, `current_value`, `usage`, `read_at`, `read_by`                                                |
+| `rent_invoices`            | หัวใบแจ้งหนี้ผู้เช่า                   | `organization_id`, `property_id`, `billing_cycle_id`, `lease_id`, `room_id`, `invoice_number`, `issued_at`, `due_at`, `subtotal`, `total`, `balance_due`, `status` |
+| `rent_invoice_items`       | ค่าเช่า ค่าไฟ ค่าน้ำ ค่าปรับ           | `rent_invoice_id`, `item_type`, `description`, `quantity`, `unit_price`, `amount`, `metadata`                                                                      |
+| `rent_payments`            | เงินที่รับจากผู้เช่า                   | `organization_id`, `property_id`, `receipt_number`, `paid_at`, `amount`, `method`, `reference`, `evidence_document_id`, `status`                                   |
+| `rent_payment_allocations` | จัดสรรหนึ่ง payment ไปหลาย invoice | `rent_payment_id`, `rent_invoice_id`, `amount`                                                                                                                     |
 
 ยอดค้างไม่ต้องมีตารางแยก ให้คำนวณจาก `rent_invoices.balance_due > 0` และสร้าง materialized view ภายหลังเมื่อข้อมูลมีขนาดใหญ่
 
 ### 3.4 LINE และระบบติดตาม
 
-| ตาราง | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `line_integrations` | การเชื่อม LINE OA ต่อกิจการ/หอ | `organization_id`, `property_id nullable`, `channel_id`, `secret_ciphertext`, `status` |
-| `notification_campaigns` | แคมเปญส่งบิล/เตือนยอด | `organization_id`, `property_id`, `campaign_type`, `scheduled_at`, `status` |
-| `notification_deliveries` | ผลส่งรายผู้เช่า | `campaign_id`, `tenant_id`, `rent_invoice_id`, `provider_message_id`, `status`, `sent_at`, `error_code` |
-| `audit_logs` | ประวัติการเปลี่ยนแปลง | `organization_id`, `actor_user_id`, `action`, `entity_type`, `entity_id`, `before_data`, `after_data`, `ip_address`, `created_at` |
+| ตาราง                     | หน้าที่                       | ฟิลด์หลัก                                                                                                                            |
+| ------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `line_integrations`       | การเชื่อม LINE OA ต่อกิจการ/หอ | `organization_id`, `property_id nullable`, `channel_id`, `secret_ciphertext`, `status`                                            |
+| `notification_campaigns`  | แคมเปญส่งบิล/เตือนยอด         | `organization_id`, `property_id`, `campaign_type`, `scheduled_at`, `status`                                                       |
+| `notification_deliveries` | ผลส่งรายผู้เช่า                | `campaign_id`, `tenant_id`, `rent_invoice_id`, `provider_message_id`, `status`, `sent_at`, `error_code`                           |
+| `audit_logs`              | ประวัติการเปลี่ยนแปลง          | `organization_id`, `actor_user_id`, `action`, `entity_type`, `entity_id`, `before_data`, `after_data`, `ip_address`, `created_at` |
 
 ## 4. ตารางแพ็กเกจและการคิดเงิน SaaS
 
-| ตาราง | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `plans` | ชื่อและสถานะแพ็กเกจ | `code`, `name`, `description`, `is_public`, `active_from`, `retired_at` |
-| `plan_prices` | ราคาแบบ versioned | `plan_id`, `currency`, `interval`, `amount`, `provider_price_id`, `active_from`, `retired_at` |
-| `plan_limits` | ขีดจำกัดแพ็กเกจ | `plan_id`, `limit_code`, `limit_value` เช่น `properties`, `rooms`, `users` |
-| `features` | รายการ feature | `code`, `name` เช่น `reports`, `line`, `audit_export` |
-| `plan_features` | feature ที่รวมใน plan | `plan_id`, `feature_id`, `enabled`, `quota` |
-| `billing_customers` | mapping กิจการกับผู้ให้บริการจ่ายเงิน | `organization_id`, `provider`, `provider_customer_id` |
-| `subscriptions` | สถานะ trial/สมาชิกปัจจุบัน | `organization_id`, `plan_price_id`, `provider`, `provider_subscription_id`, `status`, `trial_started_at`, `trial_ends_at`, `current_period_start`, `current_period_end`, `grace_ends_at`, `access_until`, `cancel_at_period_end` |
-| `subscription_addons` | Add-on เช่น LINE | `subscription_id`, `feature_id`, `provider_subscription_item_id`, `quantity`, `status` |
-| `organization_entitlements` | สิทธิ์ที่ระบบอ่านได้เร็ว | `organization_id`, `feature_code`, `enabled`, `quota`, `source`, `valid_until` |
-| `billing_invoices` | บิลค่าสมาชิก Longtua | `organization_id`, `subscription_id`, `provider_invoice_id`, `number`, `amount_due`, `amount_paid`, `currency`, `status`, `due_at`, `paid_at` |
-| `billing_payments` | ผลการจ่ายค่าสมาชิก | `billing_invoice_id`, `provider_payment_id`, `amount`, `method`, `status`, `paid_at` |
-| `billing_webhook_events` | กัน webhook ซ้ำและเก็บผลประมวลผล | `provider`, `provider_event_id`, `event_type`, `payload`, `received_at`, `processed_at`, `status`, `last_error` |
-| `trial_claims` | ป้องกันทดลองใช้ฟรีซ้ำ | `organization_id`, `owner_user_id`, `normalized_username`, `normalized_phone`, `claimed_at` |
+| ตาราง                       | หน้าที่                          | ฟิลด์หลัก                                                                                                                                                                                                                           |
+| --------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plans`                     | ชื่อและสถานะแพ็กเกจ              | `code`, `name`, `description`, `is_public`, `active_from`, `retired_at`                                                                                                                                                          |
+| `plan_prices`               | ราคาแบบ versioned             | `plan_id`, `currency`, `interval`, `amount`, `provider_price_id`, `active_from`, `retired_at`                                                                                                                                    |
+| `plan_limits`               | ขีดจำกัดแพ็กเกจ                  | `plan_id`, `limit_code`, `limit_value` เช่น `properties`, `rooms`, `users`                                                                                                                                                        |
+| `features`                  | รายการ feature                | `code`, `name` เช่น `reports`, `line`, `audit_export`                                                                                                                                                                             |
+| `plan_features`             | feature ที่รวมใน plan           | `plan_id`, `feature_id`, `enabled`, `quota`                                                                                                                                                                                      |
+| `billing_customers`         | mapping กิจการกับผู้ให้บริการจ่ายเงิน | `organization_id`, `provider`, `provider_customer_id`                                                                                                                                                                            |
+| `subscriptions`             | สถานะ trial/สมาชิกปัจจุบัน        | `organization_id`, `plan_price_id`, `provider`, `provider_subscription_id`, `status`, `trial_started_at`, `trial_ends_at`, `current_period_start`, `current_period_end`, `grace_ends_at`, `access_until`, `cancel_at_period_end` |
+| `subscription_addons`       | Add-on เช่น LINE               | `subscription_id`, `feature_id`, `provider_subscription_item_id`, `quantity`, `status`                                                                                                                                           |
+| `organization_entitlements` | สิทธิ์ที่ระบบอ่านได้เร็ว              | `organization_id`, `feature_code`, `enabled`, `quota`, `source`, `valid_until`                                                                                                                                                   |
+| `billing_invoices`          | บิลค่าสมาชิก Longtua             | `organization_id`, `subscription_id`, `provider_invoice_id`, `number`, `amount_due`, `amount_paid`, `currency`, `status`, `due_at`, `paid_at`                                                                                    |
+| `billing_payments`          | ผลการจ่ายค่าสมาชิก               | `billing_invoice_id`, `provider_payment_id`, `amount`, `method`, `status`, `paid_at`                                                                                                                                             |
+| `billing_webhook_events`    | กัน webhook ซ้ำและเก็บผลประมวลผล | `provider`, `provider_event_id`, `event_type`, `payload`, `received_at`, `processed_at`, `status`, `last_error`                                                                                                                  |
+| `trial_claims`              | ป้องกันทดลองใช้ฟรีซ้ำ              | `organization_id`, `owner_user_id`, `normalized_username`, `normalized_phone`, `claimed_at`                                                                                                                                      |
 
 `subscriptions.status` ที่ระบบรองรับ:
 
@@ -129,11 +129,11 @@ Role เริ่มต้น: `owner`, `accounting`, `staff` ส่วน `supe
 
 ราคาเป็นสมมติฐานสำหรับทดลองตลาดและต้องเก็บใน `plan_prices` ไม่ hard-code ในหน้าเว็บ
 
-| แพ็กเกจ | ราคา/เดือน | ขีดจำกัดหลัก | กลุ่มเป้าหมาย |
-|---|---:|---|---|
-| Starter | ฿490 | 1 หอ, 30 ห้อง, 3 ผู้ใช้ | เจ้าของหอขนาดเล็ก |
-| Growth | ฿990 | 3 หอ, 100 ห้อง, 10 ผู้ใช้ | ธุรกิจที่กำลังขยาย |
-| Business | ฿1,590 | 10 หอ, 300 ห้อง, ผู้ใช้ไม่จำกัด | บริษัทบริหารหลายหอ |
+| แพ็กเกจ      |        ราคา/เดือน | ขีดจำกัดหลัก                      | กลุ่มเป้าหมาย            |
+| ----------- | ---------------: | ------------------------------ | --------------------- |
+| Starter     |             ฿490 | 1 หอ, 30 ห้อง, 3 ผู้ใช้            | เจ้าของหอขนาดเล็ก       |
+| Growth      |             ฿990 | 3 หอ, 100 ห้อง, 10 ผู้ใช้          | ธุรกิจที่กำลังขยาย         |
+| Business    |           ฿1,590 | 10 หอ, 300 ห้อง, ผู้ใช้ไม่จำกัด      | บริษัทบริหารหลายหอ       |
 | LINE Add-on | +฿299/กิจการ/เดือน | กำหนด quota ส่งข้อความตามต้นทุนจริง | ลูกค้าที่ต้องการส่งบิลอัตโนมัติ |
 
 แผนรายปีให้ส่วนลดเทียบเท่า 2 เดือนเพื่อเพิ่มเงินสดล่วงหน้า ส่วน over-limit ให้บล็อกการเพิ่มรายการใหม่ แต่ไม่ซ่อนหรือลบข้อมูลเก่า

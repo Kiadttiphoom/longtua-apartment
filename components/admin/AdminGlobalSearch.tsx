@@ -3,9 +3,20 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search, Building2, Users, Hotel, KeyRound, UserCheck,
-  CalendarRange, Gauge, FileText, WalletCards, ReceiptText,
-  CircleDollarSign, ShieldCheck, X
+  Search,
+  Building2,
+  Users,
+  Hotel,
+  KeyRound,
+  UserCheck,
+  CalendarRange,
+  Gauge,
+  FileText,
+  WalletCards,
+  ReceiptText,
+  CircleDollarSign,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 
 type SearchItem = {
@@ -17,25 +28,139 @@ type SearchItem = {
 };
 
 const defaultItems: SearchItem[] = [
-  { title: "ภาพรวมระบบ", subtitle: "สถานะลูกค้า ผู้ใช้งาน และ Subscription", category: "ระบบ", href: "/admin", icon: ShieldCheck },
-  { title: "คำขอทดลองใช้", subtitle: "ตรวจสอบตัวตน และอนุมัติ Trial", category: "คำขอ", href: "/admin/trial-requests", icon: FileText },
-  { title: "กิจการทั้งหมด", subtitle: "ตรวจสอบและควบคุมสถานะกิจการลูกค้า", category: "กิจการ", href: "/admin/organizations", icon: Building2 },
-  { title: "หอพักทั้งหมด", subtitle: "หอพักจริงทั้งหมดในทุกกิจการ", category: "จัดการหอพัก", href: "/admin/properties", icon: Hotel },
-  { title: "ผู้ใช้งานทั้งหมด", subtitle: "ควบคุมบัญชีและตั้งรหัสผ่านชั่วคราว", category: "ผู้ใช้", href: "/admin/users", icon: Users },
-  { title: "ห้องพักทั้งหมด", subtitle: "สถานะห้องพักจริงจากทุกหอ", category: "จัดการหอพัก", href: "/admin/rooms", icon: KeyRound },
-  { title: "ผู้เช่าทั้งหมด", subtitle: "ทะเบียนผู้เช่ารวมทั้งแพลตฟอร์ม", category: "จัดการหอพัก", href: "/admin/tenants", icon: UserCheck },
-  { title: "สัญญาเช่าทั้งหมด", subtitle: "สัญญาเช่าจริงและสถานะปัจจุบัน", category: "จัดการหอพัก", href: "/admin/leases", icon: CalendarRange },
-  { title: "มิเตอร์น้ำ-ไฟ", subtitle: "มิเตอร์และรายการจดล่าสุดจากทุกหอพัก", category: "การเงิน", href: "/admin/meters", icon: Gauge },
-  { title: "ใบแจ้งหนี้ทั้งหมด", subtitle: "ใบแจ้งหนี้จริงทั้งหมดในระบบ", category: "การเงิน", href: "/admin/invoices", icon: FileText },
-  { title: "รายการรับชำระ", subtitle: "ประวัติการรับชำระจริงจากทุกกิจการ", category: "การเงิน", href: "/admin/payments", icon: WalletCards },
-  { title: "ลูกหนี้คงค้าง", subtitle: "ใบแจ้งหนี้ที่ยังมียอดคงเหลือ", category: "การเงิน", href: "/admin/receivables", icon: ReceiptText },
-  { title: "รายงานการเงิน", subtitle: "ภาพรวมการดำเนินงานและการเงินทั้งแพลตฟอร์ม", category: "การเงิน", href: "/admin/reports", icon: CircleDollarSign },
-  { title: "แพ็กเกจและบริการ", subtitle: "จัดการ Trial โควตาห้อง/หอ และวันหมดอายุ", category: "ระบบ", href: "/admin/subscriptions", icon: CircleDollarSign },
-  { title: "Role & สิทธิ์", subtitle: "สร้างและแก้ไขบทบาทระดับแพลตฟอร์มหรือกิจการ", category: "ความปลอดภัย", href: "/admin/roles", icon: ShieldCheck },
-  { title: "Permission Matrix", subtitle: "กำหนดสิทธิ์อย่างละเอียดในแต่ละ Role", category: "ความปลอดภัย", href: "/admin/permissions", icon: ShieldCheck },
-  { title: "Monitor", subtitle: "กิจกรรมผู้ใช้ กราฟ และข้อผิดพลาดของระบบ", category: "ระบบ", href: "/admin/monitor", icon: FileText },
-  { title: "Audit Log", subtitle: "ประวัติการดำเนินการทั้งหมดของ Super Admin", category: "ความปลอดภัย", href: "/admin/audit", icon: FileText },
-  { title: "ตั้งค่าระบบ", subtitle: "เปิด/ปิดรับคำขอทดลองใช้", category: "ระบบ", href: "/admin/settings", icon: ShieldCheck },
+  {
+    title: "ภาพรวมระบบ",
+    subtitle: "สถานะลูกค้า ผู้ใช้งาน และ Subscription",
+    category: "ระบบ",
+    href: "/admin",
+    icon: ShieldCheck,
+  },
+  {
+    title: "คำขอทดลองใช้",
+    subtitle: "ตรวจสอบตัวตน และอนุมัติ Trial",
+    category: "คำขอ",
+    href: "/admin/trial-requests",
+    icon: FileText,
+  },
+  {
+    title: "กิจการทั้งหมด",
+    subtitle: "ตรวจสอบและควบคุมสถานะกิจการลูกค้า",
+    category: "กิจการ",
+    href: "/admin/organizations",
+    icon: Building2,
+  },
+  {
+    title: "หอพักทั้งหมด",
+    subtitle: "หอพักจริงทั้งหมดในทุกกิจการ",
+    category: "จัดการหอพัก",
+    href: "/admin/properties",
+    icon: Hotel,
+  },
+  {
+    title: "ผู้ใช้งานทั้งหมด",
+    subtitle: "ควบคุมบัญชีและตั้งรหัสผ่านชั่วคราว",
+    category: "ผู้ใช้",
+    href: "/admin/users",
+    icon: Users,
+  },
+  {
+    title: "ห้องพักทั้งหมด",
+    subtitle: "สถานะห้องพักจริงจากทุกหอ",
+    category: "จัดการหอพัก",
+    href: "/admin/rooms",
+    icon: KeyRound,
+  },
+  {
+    title: "ผู้เช่าทั้งหมด",
+    subtitle: "ทะเบียนผู้เช่ารวมทั้งแพลตฟอร์ม",
+    category: "จัดการหอพัก",
+    href: "/admin/tenants",
+    icon: UserCheck,
+  },
+  {
+    title: "สัญญาเช่าทั้งหมด",
+    subtitle: "สัญญาเช่าจริงและสถานะปัจจุบัน",
+    category: "จัดการหอพัก",
+    href: "/admin/leases",
+    icon: CalendarRange,
+  },
+  {
+    title: "มิเตอร์น้ำ-ไฟ",
+    subtitle: "มิเตอร์และรายการจดล่าสุดจากทุกหอพัก",
+    category: "การเงิน",
+    href: "/admin/meters",
+    icon: Gauge,
+  },
+  {
+    title: "ใบแจ้งหนี้ทั้งหมด",
+    subtitle: "ใบแจ้งหนี้จริงทั้งหมดในระบบ",
+    category: "การเงิน",
+    href: "/admin/invoices",
+    icon: FileText,
+  },
+  {
+    title: "รายการรับชำระ",
+    subtitle: "ประวัติการรับชำระจริงจากทุกกิจการ",
+    category: "การเงิน",
+    href: "/admin/payments",
+    icon: WalletCards,
+  },
+  {
+    title: "ลูกหนี้คงค้าง",
+    subtitle: "ใบแจ้งหนี้ที่ยังมียอดคงเหลือ",
+    category: "การเงิน",
+    href: "/admin/receivables",
+    icon: ReceiptText,
+  },
+  {
+    title: "รายงานการเงิน",
+    subtitle: "ภาพรวมการดำเนินงานและการเงินทั้งแพลตฟอร์ม",
+    category: "การเงิน",
+    href: "/admin/reports",
+    icon: CircleDollarSign,
+  },
+  {
+    title: "แพ็กเกจและบริการ",
+    subtitle: "จัดการ Trial โควตาห้อง/หอ และวันหมดอายุ",
+    category: "ระบบ",
+    href: "/admin/subscriptions",
+    icon: CircleDollarSign,
+  },
+  {
+    title: "Role & สิทธิ์",
+    subtitle: "สร้างและแก้ไขบทบาทระดับแพลตฟอร์มหรือกิจการ",
+    category: "ความปลอดภัย",
+    href: "/admin/roles",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Permission Matrix",
+    subtitle: "กำหนดสิทธิ์อย่างละเอียดในแต่ละ Role",
+    category: "ความปลอดภัย",
+    href: "/admin/permissions",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Monitor",
+    subtitle: "กิจกรรมผู้ใช้ กราฟ และข้อผิดพลาดของระบบ",
+    category: "ระบบ",
+    href: "/admin/monitor",
+    icon: FileText,
+  },
+  {
+    title: "Audit Log",
+    subtitle: "ประวัติการดำเนินการทั้งหมดของ Super Admin",
+    category: "ความปลอดภัย",
+    href: "/admin/audit",
+    icon: FileText,
+  },
+  {
+    title: "ตั้งค่าระบบ",
+    subtitle: "เปิด/ปิดรับคำขอทดลองใช้",
+    category: "ระบบ",
+    href: "/admin/settings",
+    icon: ShieldCheck,
+  },
 ];
 
 export function AdminGlobalSearch() {
@@ -65,7 +190,7 @@ export function AdminGlobalSearch() {
       (item) =>
         item.title.toLowerCase().includes(q) ||
         item.subtitle.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
+        item.category.toLowerCase().includes(q),
     );
   }, [query]);
 

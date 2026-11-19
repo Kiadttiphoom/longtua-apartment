@@ -23,7 +23,13 @@ import { CompanyPanel } from "./modals/CompanyPanel";
 import { ContractFormModal } from "./modals/ContractFormModal";
 import { ContractModal } from "./modals/ContractModal";
 import { InvoiceModal } from "./modals/InvoiceModal";
-import { DEMO_STORAGE_KEY, INITIAL_PROPERTIES, companies, navGroups, roleInfo } from "./mock-data";
+import {
+  DEMO_STORAGE_KEY,
+  INITIAL_PROPERTIES,
+  companies,
+  navGroups,
+  roleInfo,
+} from "./mock-data";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { AuditPage } from "./pages/AuditPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
@@ -88,7 +94,8 @@ function PageContent(props: PageContentProps) {
   if (props.activePage === "users") return <UsersPage {...props} />;
   if (props.activePage === "roles") return <RolesPage {...props} />;
   if (props.activePage === "permissions") return <PermissionsPage {...props} />;
-  if (props.activePage === "subscriptions") return <SubscriptionsPage {...props} />;
+  if (props.activePage === "subscriptions")
+    return <SubscriptionsPage {...props} />;
   if (props.activePage === "line") return <LinePage {...props} />;
   if (props.activePage === "rooms") return <RoomsPage {...props} />;
   if (props.activePage === "audit") return <AuditPage />;
@@ -124,7 +131,8 @@ export function ApartmentDemo({
   logoutAction?: () => Promise<void>;
 }) {
   const [role, setRole] = useState<RoleKey>("owner");
-  const [subscription, setSubscription] = useState<SubscriptionState>(initialSubscription);
+  const [subscription, setSubscription] =
+    useState<SubscriptionState>(initialSubscription);
   const [lineEnabled, setLineEnabled] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -132,18 +140,32 @@ export function ApartmentDemo({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [hasRestoredDemo, setHasRestoredDemo] = useState(!showDemoControls);
 
-  function showNotice(message: string) { void Swal.fire({ icon: "info", title: "โหมดตัวอย่าง", text: message, confirmButtonText: "ตกลง", confirmButtonColor: "#2563eb" }); }
+  function showNotice(message: string) {
+    void Swal.fire({
+      icon: "info",
+      title: "โหมดตัวอย่าง",
+      text: message,
+      confirmButtonText: "ตกลง",
+      confirmButtonColor: "#2563eb",
+    });
+  }
 
   const companyCollection = useDemoCollection(companies, showNotice);
 
   // ── Multi-property state ──
   const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
-  const [activePropertyId, setActivePropertyId] = useState<string>(INITIAL_PROPERTIES[0].id);
+  const [activePropertyId, setActivePropertyId] = useState<string>(
+    INITIAL_PROPERTIES[0].id,
+  );
   const [showAddPropertyWizard, setShowAddPropertyWizard] = useState(false);
 
   // ── Modal state ──
-  const [viewingContract, setViewingContract] = useState<ContractRecord | null>(null);
-  const [editingContract, setEditingContract] = useState<ContractRecord | null>(null);
+  const [viewingContract, setViewingContract] = useState<ContractRecord | null>(
+    null,
+  );
+  const [editingContract, setEditingContract] = useState<ContractRecord | null>(
+    null,
+  );
   const [viewingInvoice, setViewingInvoice] = useState<RoomRecord | null>(null);
 
   useEffect(() => {
@@ -160,9 +182,11 @@ export function ApartmentDemo({
             role?: RoleKey;
           };
           if (saved.properties?.length) setProperties(saved.properties);
-          if (saved.activePropertyId) setActivePropertyId(saved.activePropertyId);
+          if (saved.activePropertyId)
+            setActivePropertyId(saved.activePropertyId);
           if (saved.subscription) setSubscription(saved.subscription);
-          if (typeof saved.lineEnabled === "boolean") setLineEnabled(saved.lineEnabled);
+          if (typeof saved.lineEnabled === "boolean")
+            setLineEnabled(saved.lineEnabled);
           if (saved.role) setRole(saved.role);
         }
       } catch {
@@ -184,11 +208,20 @@ export function ApartmentDemo({
         subscription,
         lineEnabled,
         role,
-      })
+      }),
     );
-  }, [activePropertyId, hasRestoredDemo, lineEnabled, properties, role, showDemoControls, subscription]);
+  }, [
+    activePropertyId,
+    hasRestoredDemo,
+    lineEnabled,
+    properties,
+    role,
+    showDemoControls,
+    subscription,
+  ]);
 
-  const activeProperty = properties.find((p) => p.id === activePropertyId) ?? properties[0];
+  const activeProperty =
+    properties.find((p) => p.id === activePropertyId) ?? properties[0];
   const appSettings = activeProperty.settings;
   const meterRooms = activeProperty.rooms;
   const contracts = activeProperty.contracts;
@@ -196,17 +229,20 @@ export function ApartmentDemo({
   const currentRole = roleInfo[role];
   const displayUserName = currentUserName ?? currentRole.name;
   const displayUserRole = currentUserRoleLabel ?? currentRole.label;
-  const displayInitials = displayUserName.trim().slice(0, 1) || currentRole.initials;
+  const displayInitials =
+    displayUserName.trim().slice(0, 1) || currentRole.initials;
 
   const visibleGroups = useMemo(
     () =>
       navGroups
         .map((group) => ({
           ...group,
-          items: group.items.filter((item) => currentRole.allowed.includes(item.code)),
+          items: group.items.filter((item) =>
+            currentRole.allowed.includes(item.code),
+          ),
         }))
         .filter((group) => group.items.length > 0),
-    [currentRole]
+    [currentRole],
   );
 
   const isLocked = subscription === "expired";
@@ -218,13 +254,17 @@ export function ApartmentDemo({
   }
 
   function updateActiveProperty(updater: (p: Property) => Property) {
-    setProperties((prev) => prev.map((p) => (p.id === activePropertyId ? updater(p) : p)));
+    setProperties((prev) =>
+      prev.map((p) => (p.id === activePropertyId ? updater(p) : p)),
+    );
   }
 
   function updateMeter(roomNumber: string, newElec: number | null) {
     updateActiveProperty((p) => ({
       ...p,
-      rooms: p.rooms.map((r) => (r.number === roomNumber ? { ...r, newElec } : r)),
+      rooms: p.rooms.map((r) =>
+        r.number === roomNumber ? { ...r, newElec } : r,
+      ),
     }));
   }
 
@@ -232,7 +272,9 @@ export function ApartmentDemo({
     updateActiveProperty((p) => {
       const idx = p.contracts.findIndex((c) => c.id === updated.id);
       const nextContracts =
-        idx >= 0 ? p.contracts.map((c, i) => (i === idx ? updated : c)) : [updated, ...p.contracts];
+        idx >= 0
+          ? p.contracts.map((c, i) => (i === idx ? updated : c))
+          : [updated, ...p.contracts];
       const nextRooms = p.rooms.map((r) =>
         r.number === updated.roomNumber
           ? {
@@ -242,15 +284,19 @@ export function ApartmentDemo({
               contractStart: updated.startDate,
               contractEnd: updated.endDate,
             }
-          : r
+          : r,
       );
       return { ...p, contracts: nextContracts, rooms: nextRooms };
     });
-    if (viewingContract && viewingContract.id === updated.id) setViewingContract(updated);
+    if (viewingContract && viewingContract.id === updated.id)
+      setViewingContract(updated);
   }
 
   function deleteContract(id: string) {
-    updateActiveProperty((p) => ({ ...p, contracts: p.contracts.filter((c) => c.id !== id) }));
+    updateActiveProperty((p) => ({
+      ...p,
+      contracts: p.contracts.filter((c) => c.id !== id),
+    }));
     showNotice("ลบสัญญาเช่าเรียบร้อยแล้ว");
   }
 
@@ -267,7 +313,10 @@ export function ApartmentDemo({
   }
 
   function addRoom(room: RoomRecord) {
-    updateActiveProperty((property) => ({ ...property, rooms: [...property.rooms, room] }));
+    updateActiveProperty((property) => ({
+      ...property,
+      rooms: [...property.rooms, room],
+    }));
     showNotice(`เพิ่มห้อง ${room.number} เรียบร้อยแล้ว`);
   }
 
@@ -295,7 +344,10 @@ export function ApartmentDemo({
             type="button"
             onClick={() => navigate("dashboard")}
           >
-            <BrandLogo className="w-full max-h-[70px] object-contain" variant="inverse" />
+            <BrandLogo
+              className="w-full max-h-[70px] object-contain"
+              variant="inverse"
+            />
           </button>
         </div>
         <button
@@ -307,10 +359,15 @@ export function ApartmentDemo({
           <X size={20} />
         </button>
 
-        <nav aria-label="เมนูหลัก" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4">
+        <nav
+          aria-label="เมนูหลัก"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4"
+        >
           {visibleGroups.map((group) => (
             <section className="space-y-1" key={group.label}>
-              <p className="px-3 py-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase">{group.label}</p>
+              <p className="px-3 py-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase">
+                {group.label}
+              </p>
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const addonLocked = item.addon && !lineEnabled;
@@ -327,8 +384,12 @@ export function ApartmentDemo({
                     type="button"
                   >
                     <Icon size={18} />
-                    <span className="flex-1 text-left truncate">{item.label}</span>
-                    {addonLocked ? <LockKeyhole className="text-slate-400" size={14} /> : null}
+                    <span className="flex-1 text-left truncate">
+                      {item.label}
+                    </span>
+                    {addonLocked ? (
+                      <LockKeyhole className="text-slate-400" size={14} />
+                    ) : null}
                   </button>
                 );
               })}
@@ -387,22 +448,34 @@ export function ApartmentDemo({
               </button>
 
               <div className="hidden sm:flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium">
-                <span className="px-2 py-0.5 text-[11px] text-slate-400 font-semibold">จำลองระดับ:</span>
-                {(["owner", "manager", "accounting", "staff"] as RoleKey[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRole(r);
-                      showNotice(`สลับเป็นระดับ ${roleInfo[r].label}`);
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                      role === r ? "bg-white text-blue-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                    }`}
-                    type="button"
-                  >
-                    {r === "owner" ? "เจ้าของ" : r === "manager" ? "ผู้จัดการ" : r === "accounting" ? "การเงิน" : "เจ้าหน้าที่"}
-                  </button>
-                ))}
+                <span className="px-2 py-0.5 text-[11px] text-slate-400 font-semibold">
+                  จำลองระดับ:
+                </span>
+                {(["owner", "manager", "accounting", "staff"] as RoleKey[]).map(
+                  (r) => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setRole(r);
+                        showNotice(`สลับเป็นระดับ ${roleInfo[r].label}`);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                        role === r
+                          ? "bg-white text-blue-700 shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                      type="button"
+                    >
+                      {r === "owner"
+                        ? "เจ้าของ"
+                        : r === "manager"
+                          ? "ผู้จัดการ"
+                          : r === "accounting"
+                            ? "การเงิน"
+                            : "เจ้าหน้าที่"}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
           ) : null}
@@ -422,10 +495,17 @@ export function ApartmentDemo({
                 />
               </span>
               <div className="hidden sm:flex flex-col">
-                <strong className="text-sm font-semibold text-slate-800 leading-tight">{displayUserName}</strong>
-                <small className="text-xs text-slate-500">{displayUserRole}</small>
+                <strong className="text-sm font-semibold text-slate-800 leading-tight">
+                  {displayUserName}
+                </strong>
+                <small className="text-xs text-slate-500">
+                  {displayUserRole}
+                </small>
               </div>
-              <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
+              <ChevronDown
+                size={14}
+                className="text-slate-400 hidden sm:block"
+              />
             </button>
 
             {/* Dropdown User Menu */}
@@ -439,8 +519,12 @@ export function ApartmentDemo({
                 />
                 <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-xl z-40 p-2 text-xs space-y-1 animate-in fade-in slide-in-from-top-2">
                   <div className="p-3 border-b border-slate-100">
-                    <strong className="text-slate-800 font-bold block text-sm">{displayUserName}</strong>
-                    <span className="text-slate-400 text-xs block mt-0.5">{displayUserRole}</span>
+                    <strong className="text-slate-800 font-bold block text-sm">
+                      {displayUserName}
+                    </strong>
+                    <span className="text-slate-400 text-xs block mt-0.5">
+                      {displayUserRole}
+                    </span>
                     <span className="inline-block mt-2 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-100">
                       ลงตัว เรสซิเดน 2
                     </span>
@@ -495,7 +579,9 @@ export function ApartmentDemo({
                       : `ทดลองใช้ฟรีเหลือ ${trialDaysRemaining} วัน`}
                   </strong>
                   <small className="text-xs text-amber-700">
-                    {trialEndsAtText ? `ใช้งานได้ถึง ${trialEndsAtText}` : "ใช้งานได้ถึง 7 กันยายน 2569"}
+                    {trialEndsAtText
+                      ? `ใช้งานได้ถึง ${trialEndsAtText}`
+                      : "ใช้งานได้ถึง 7 กันยายน 2569"}
                   </small>
                 </div>
               </div>
@@ -514,8 +600,12 @@ export function ApartmentDemo({
               <div className="flex items-center gap-3">
                 <LockKeyhole size={20} className="text-rose-600 shrink-0" />
                 <div>
-                  <strong className="text-sm font-bold block">ระยะเวลาการใช้งานสิ้นสุดแล้ว</strong>
-                  <small className="text-xs text-rose-700">ข้อมูลยังอยู่ครบ แต่ไม่สามารถเพิ่มหรือแก้ไขรายการได้</small>
+                  <strong className="text-sm font-bold block">
+                    ระยะเวลาการใช้งานสิ้นสุดแล้ว
+                  </strong>
+                  <small className="text-xs text-rose-700">
+                    ข้อมูลยังอยู่ครบ แต่ไม่สามารถเพิ่มหรือแก้ไขรายการได้
+                  </small>
                 </div>
               </div>
               <button
@@ -620,7 +710,6 @@ export function ApartmentDemo({
           onSave={addProperty}
         />
       ) : null}
-
     </div>
   );
 }

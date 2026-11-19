@@ -10,10 +10,21 @@ import {
   deleteLeaseAdminAction,
 } from "@/app/(admin)/admin/actions";
 import { AdminManageOrganizationButton } from "@/components/admin/AdminManageOrganization";
-import { AdminConfirmDeleteModal, AdminModal, AdminTable, dateInput, money, thaiDate } from "@/components/admin/AdminPrimitives";
+import {
+  AdminConfirmDeleteModal,
+  AdminModal,
+  AdminTable,
+  dateInput,
+  money,
+  thaiDate,
+} from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { FileText, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
-import type { AdminViewContentProps, Lease, Tenant } from "@/components/admin/admin-types";
+import type {
+  AdminViewContentProps,
+  Lease,
+  Tenant,
+} from "@/components/admin/admin-types";
 
 // =========================================================================
 // 1. AdminTenantViews
@@ -23,7 +34,10 @@ export function AdminTenantViews({
   organizations = [],
   organizationMap,
   tenantsReady,
-}: Pick<AdminViewContentProps, "tenants" | "organizationMap" | "tenantsReady"> & {
+}: Pick<
+  AdminViewContentProps,
+  "tenants" | "organizationMap" | "tenantsReady"
+> & {
   organizations?: AdminViewContentProps["organizations"];
 }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -34,9 +48,15 @@ export function AdminTenantViews({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อผู้เช่า</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">ผู้เช่าทั้งหมดในระบบ ({tenants.length})</h2>
-          <p className="text-xs text-slate-500 mt-0.5">เพิ่ม แก้ไข หรือลบข้อมูลผู้เช่าได้โดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายชื่อผู้เช่า
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            ผู้เช่าทั้งหมดในระบบ ({tenants.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            เพิ่ม แก้ไข หรือลบข้อมูลผู้เช่าได้โดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -49,13 +69,28 @@ export function AdminTenantViews({
       </div>
 
       <AdminTable
-        headers={["กิจการ", "ชื่อผู้เช่า", "โทรศัพท์", "อีเมล", "สถานะ", "วันที่สร้าง", "จัดการ"]}
+        headers={[
+          "กิจการ",
+          "ชื่อผู้เช่า",
+          "โทรศัพท์",
+          "อีเมล",
+          "สถานะ",
+          "วันที่สร้าง",
+          "จัดการ",
+        ]}
         rows={tenants.map((item) => [
           <div key="organization" className="space-y-1">
-            <span className="font-semibold text-slate-800 block text-xs">{organizationMap.get(item.organization_id) ?? "—"}</span>
-            <AdminManageOrganizationButton organizationId={item.organization_id} section="tenants" />
+            <span className="font-semibold text-slate-800 block text-xs">
+              {organizationMap.get(item.organization_id) ?? "—"}
+            </span>
+            <AdminManageOrganizationButton
+              organizationId={item.organization_id}
+              section="tenants"
+            />
           </div>,
-          <strong key="fn" className="text-xs font-bold text-slate-800 block">{item.full_name}</strong>,
+          <strong key="fn" className="text-xs font-bold text-slate-800 block">
+            {item.full_name}
+          </strong>,
           item.phone || "—",
           item.email || "—",
           <StatusBadge compact key="s" status={item.status} />,
@@ -84,10 +119,16 @@ export function AdminTenantViews({
 
       {/* Create Tenant Modal */}
       {createOpen && (
-        <AdminModal title="เพิ่มผู้เช่าใหม่" onClose={() => setCreateOpen(false)} maxWidth={500}>
+        <AdminModal
+          title="เพิ่มผู้เช่าใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={500}
+        >
           <form action={createTenantAdminAction} className="p-6 space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">สังกัดกิจการ *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                สังกัดกิจการ *
+              </label>
               <select
                 name="organizationId"
                 required
@@ -103,7 +144,9 @@ export function AdminTenantViews({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อ-นามสกุล *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อ-นามสกุล *
+              </label>
               <input
                 name="fullName"
                 required
@@ -114,7 +157,9 @@ export function AdminTenantViews({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   name="phone"
                   placeholder="08X-XXX-XXXX"
@@ -122,7 +167,9 @@ export function AdminTenantViews({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">อีเมล</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  อีเมล
+                </label>
                 <input
                   name="email"
                   type="email"
@@ -134,7 +181,9 @@ export function AdminTenantViews({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลข ปชช. 4 หลักท้าย</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลข ปชช. 4 หลักท้าย
+                </label>
                 <input
                   name="idCardLast4"
                   maxLength={4}
@@ -143,7 +192,9 @@ export function AdminTenantViews({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะผู้เช่า</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะผู้เช่า
+                </label>
                 <select
                   name="status"
                   defaultValue="active"
@@ -157,7 +208,9 @@ export function AdminTenantViews({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ที่อยู่ตามบัตรประชาชน / ติดต่อ</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ที่อยู่ตามบัตรประชาชน / ติดต่อ
+              </label>
               <textarea
                 name="address"
                 rows={2}
@@ -188,12 +241,18 @@ export function AdminTenantViews({
 
       {/* Edit Tenant Modal */}
       {editTarget && (
-        <AdminModal title={`แก้ไขข้อมูลผู้เช่า: ${editTarget.full_name}`} onClose={() => setEditTarget(null)} maxWidth={500}>
+        <AdminModal
+          title={`แก้ไขข้อมูลผู้เช่า: ${editTarget.full_name}`}
+          onClose={() => setEditTarget(null)}
+          maxWidth={500}
+        >
           <form action={updateTenantAdminAction} className="p-6 space-y-4">
             <input type="hidden" name="tenantId" value={editTarget.id} />
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อ-นามสกุล *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อ-นามสกุล *
+              </label>
               <input
                 name="fullName"
                 defaultValue={editTarget.full_name}
@@ -204,7 +263,9 @@ export function AdminTenantViews({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   name="phone"
                   defaultValue={editTarget.phone ?? ""}
@@ -212,7 +273,9 @@ export function AdminTenantViews({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">อีเมล</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  อีเมล
+                </label>
                 <input
                   name="email"
                   type="email"
@@ -224,7 +287,9 @@ export function AdminTenantViews({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลข ปชช. 4 หลักท้าย</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลข ปชช. 4 หลักท้าย
+                </label>
                 <input
                   name="idCardLast4"
                   maxLength={4}
@@ -234,7 +299,9 @@ export function AdminTenantViews({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะผู้เช่า</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะผู้เช่า
+                </label>
                 <select
                   name="status"
                   defaultValue={editTarget.status}
@@ -248,7 +315,9 @@ export function AdminTenantViews({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ที่อยู่</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ที่อยู่
+              </label>
               <textarea
                 name="address"
                 defaultValue=""
@@ -308,7 +377,15 @@ export function AdminLeasesView({
   roomMap,
   tenantMap,
   leasesReady,
-}: Pick<AdminViewContentProps, "leases" | "organizationMap" | "propertyMap" | "roomMap" | "tenantMap" | "leasesReady"> & {
+}: Pick<
+  AdminViewContentProps,
+  | "leases"
+  | "organizationMap"
+  | "propertyMap"
+  | "roomMap"
+  | "tenantMap"
+  | "leasesReady"
+> & {
   rooms?: AdminViewContentProps["rooms"];
   tenants?: AdminViewContentProps["tenants"];
   properties?: AdminViewContentProps["properties"];
@@ -329,8 +406,8 @@ export function AdminLeasesView({
   const filteredRooms = selectedPropId
     ? rooms.filter((r) => r.property_id === selectedPropId)
     : selectedOrgId
-    ? rooms.filter((r) => r.organization_id === selectedOrgId)
-    : rooms;
+      ? rooms.filter((r) => r.organization_id === selectedOrgId)
+      : rooms;
 
   const filteredTenants = selectedOrgId
     ? tenants.filter((t) => t.organization_id === selectedOrgId)
@@ -340,9 +417,15 @@ export function AdminLeasesView({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">สัญญาเช่า</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">สัญญาเช่าทั้งหมดในระบบ ({leases.length})</h2>
-          <p className="text-xs text-slate-500 mt-0.5">ทำสัญญาเช่าใหม่ แก้ไข หรือยกเลิกสัญญาได้โดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            สัญญาเช่า
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            สัญญาเช่าทั้งหมดในระบบ ({leases.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            ทำสัญญาเช่าใหม่ แก้ไข หรือยกเลิกสัญญาได้โดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -359,13 +442,29 @@ export function AdminLeasesView({
       </div>
 
       <AdminTable
-        headers={["กิจการ", "เลขที่สัญญา", "หอ/ห้อง", "ผู้เช่า", "ระยะเวลา", "ค่าเช่า", "สถานะ", "จัดการ"]}
+        headers={[
+          "กิจการ",
+          "เลขที่สัญญา",
+          "หอ/ห้อง",
+          "ผู้เช่า",
+          "ระยะเวลา",
+          "ค่าเช่า",
+          "สถานะ",
+          "จัดการ",
+        ]}
         rows={leases.map((item) => [
           <div key="organization" className="space-y-1">
-            <span className="font-semibold text-slate-800 block text-xs">{organizationMap.get(item.organization_id) ?? "—"}</span>
-            <AdminManageOrganizationButton organizationId={item.organization_id} section="leases" />
+            <span className="font-semibold text-slate-800 block text-xs">
+              {organizationMap.get(item.organization_id) ?? "—"}
+            </span>
+            <AdminManageOrganizationButton
+              organizationId={item.organization_id}
+              section="leases"
+            />
           </div>,
-          <strong key="ln" className="text-xs font-bold text-slate-800 block">{item.lease_number}</strong>,
+          <strong key="ln" className="text-xs font-bold text-slate-800 block">
+            {item.lease_number}
+          </strong>,
           `${propertyMap.get(item.property_id) ?? "—"} / ห้อง ${roomMap.get(item.room_id) ?? "—"}`,
           tenantMap.get(item.primary_tenant_id) ?? "—",
           `${thaiDate(item.start_date)} – ${thaiDate(item.end_date)}`,
@@ -395,10 +494,16 @@ export function AdminLeasesView({
 
       {/* Create Lease Modal */}
       {createOpen && (
-        <AdminModal title="ทำสัญญาเช่าใหม่" onClose={() => setCreateOpen(false)} maxWidth={560}>
+        <AdminModal
+          title="ทำสัญญาเช่าใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={560}
+        >
           <form action={createLeaseAdminAction} className="p-6 space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">สังกัดกิจการ *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                สังกัดกิจการ *
+              </label>
               <select
                 name="organizationId"
                 value={selectedOrgId}
@@ -420,7 +525,9 @@ export function AdminLeasesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">หอพัก *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  หอพัก *
+                </label>
                 <select
                   name="propertyId"
                   value={selectedPropId}
@@ -437,7 +544,9 @@ export function AdminLeasesView({
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ห้องพัก *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ห้องพัก *
+                </label>
                 <select
                   name="roomId"
                   required
@@ -446,7 +555,9 @@ export function AdminLeasesView({
                   <option value="">-- เลือกห้องพัก --</option>
                   {filteredRooms.map((r) => (
                     <option key={r.id} value={r.id}>
-                      ห้อง {r.room_number} {r.status === "occupied" ? "(มีผู้เช่าแล้ว)" : "(ว่าง)"} - ฿{Number(r.base_rent).toLocaleString()}
+                      ห้อง {r.room_number}{" "}
+                      {r.status === "occupied" ? "(มีผู้เช่าแล้ว)" : "(ว่าง)"} - ฿
+                      {Number(r.base_rent).toLocaleString()}
                     </option>
                   ))}
                 </select>
@@ -454,7 +565,9 @@ export function AdminLeasesView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ผู้เช่าหลัก *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ผู้เช่าหลัก *
+              </label>
               <select
                 name="primaryTenantId"
                 required
@@ -471,7 +584,9 @@ export function AdminLeasesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลขที่สัญญา (เว้นว่างเพื่อสร้างอัตโนมัติ)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลขที่สัญญา (เว้นว่างเพื่อสร้างอัตโนมัติ)
+                </label>
                 <input
                   name="leaseNumber"
                   placeholder="เช่น L-202609-001"
@@ -479,13 +594,17 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะสัญญา</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะสัญญา
+                </label>
                 <select
                   name="status"
                   defaultValue="active"
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="active">มีผลใช้งาน (Active - อัปเดตห้องเป็นมีผู้เช่า)</option>
+                  <option value="active">
+                    มีผลใช้งาน (Active - อัปเดตห้องเป็นมีผู้เช่า)
+                  </option>
                   <option value="draft">ฉบับร่าง (Draft)</option>
                   <option value="ended">สิ้นสุดสัญญา (Ended)</option>
                   <option value="cancelled">ยกเลิก (Cancelled)</option>
@@ -495,7 +614,9 @@ export function AdminLeasesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">วันเริ่มสัญญา *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  วันเริ่มสัญญา *
+                </label>
                 <input
                   name="startDate"
                   type="date"
@@ -505,7 +626,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">วันสิ้นสุดสัญญา</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  วันสิ้นสุดสัญญา
+                </label>
                 <input
                   name="endDate"
                   type="date"
@@ -516,7 +639,9 @@ export function AdminLeasesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าเช่า/เดือน (บาท) *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ค่าเช่า/เดือน (บาท) *
+                </label>
                 <input
                   name="rentAmount"
                   type="number"
@@ -527,7 +652,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เงินประกัน (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เงินประกัน (บาท)
+                </label>
                 <input
                   name="depositAmount"
                   type="number"
@@ -538,7 +665,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">จ่ายล่วงหน้า (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  จ่ายล่วงหน้า (บาท)
+                </label>
                 <input
                   name="advanceAmount"
                   type="number"
@@ -572,13 +701,19 @@ export function AdminLeasesView({
 
       {/* Edit Lease Modal */}
       {editTarget && (
-        <AdminModal title={`แก้ไขสัญญาเช่า: ${editTarget.lease_number}`} onClose={() => setEditTarget(null)} maxWidth={560}>
+        <AdminModal
+          title={`แก้ไขสัญญาเช่า: ${editTarget.lease_number}`}
+          onClose={() => setEditTarget(null)}
+          maxWidth={560}
+        >
           <form action={updateLeaseAdminAction} className="p-6 space-y-4">
             <input type="hidden" name="leaseId" value={editTarget.id} />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลขที่สัญญา *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลขที่สัญญา *
+                </label>
                 <input
                   name="leaseNumber"
                   defaultValue={editTarget.lease_number}
@@ -587,7 +722,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะสัญญา</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะสัญญา
+                </label>
                 <select
                   name="status"
                   defaultValue={editTarget.status}
@@ -595,15 +732,21 @@ export function AdminLeasesView({
                 >
                   <option value="active">มีผลใช้งาน (Active)</option>
                   <option value="draft">ฉบับร่าง (Draft)</option>
-                  <option value="ended">สิ้นสุดสัญญา (Ended - คืนสถานะห้องเป็นว่าง)</option>
-                  <option value="cancelled">ยกเลิก (Cancelled - คืนสถานะห้องเป็นว่าง)</option>
+                  <option value="ended">
+                    สิ้นสุดสัญญา (Ended - คืนสถานะห้องเป็นว่าง)
+                  </option>
+                  <option value="cancelled">
+                    ยกเลิก (Cancelled - คืนสถานะห้องเป็นว่าง)
+                  </option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">วันเริ่มสัญญา *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  วันเริ่มสัญญา *
+                </label>
                 <input
                   name="startDate"
                   type="date"
@@ -613,7 +756,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">วันสิ้นสุดสัญญา</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  วันสิ้นสุดสัญญา
+                </label>
                 <input
                   name="endDate"
                   type="date"
@@ -625,7 +770,9 @@ export function AdminLeasesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าเช่า/เดือน (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ค่าเช่า/เดือน (บาท)
+                </label>
                 <input
                   name="rentAmount"
                   type="number"
@@ -635,7 +782,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เงินประกัน (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เงินประกัน (บาท)
+                </label>
                 <input
                   name="depositAmount"
                   type="number"
@@ -645,7 +794,9 @@ export function AdminLeasesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">จ่ายล่วงหน้า (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  จ่ายล่วงหน้า (บาท)
+                </label>
                 <input
                   name="advanceAmount"
                   type="number"

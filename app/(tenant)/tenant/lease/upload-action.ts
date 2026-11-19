@@ -49,8 +49,8 @@ export async function requestContractUploadPresignedUrl({
     contentType === "image/png"
       ? "png"
       : contentType === "image/jpeg"
-      ? "jpg"
-      : null;
+        ? "jpg"
+        : null;
 
   if (!extension) {
     return { ok: false as const, message: "รองรับเฉพาะภาพ PNG และ JPG" };
@@ -58,7 +58,11 @@ export async function requestContractUploadPresignedUrl({
 
   try {
     const key = `tenant-contracts/${leaseId}/${crypto.randomUUID()}.${extension}`;
-    const { uploadUrl, fileUri } = await createPrivateUploadPresignedUrl(key, contentType, 600);
+    const { uploadUrl, fileUri } = await createPrivateUploadPresignedUrl(
+      key,
+      contentType,
+      600,
+    );
     return {
       ok: true as const,
       uploadUrl,
@@ -66,7 +70,10 @@ export async function requestContractUploadPresignedUrl({
       key,
     };
   } catch {
-    return { ok: false as const, message: "ไม่สามารถสร้าง URL สำหรับอัปโหลดได้ กรุณาลองอีกครั้ง" };
+    return {
+      ok: false as const,
+      message: "ไม่สามารถสร้าง URL สำหรับอัปโหลดได้ กรุณาลองอีกครั้ง",
+    };
   }
 }
 
@@ -118,14 +125,16 @@ export async function confirmContractUpload({
     return { ok: false, message: "สัญญานี้แนบภาพครบ 5 ภาพแล้ว กรุณาลบภาพเดิมออกก่อน" };
   }
 
-  const { error } = await context.supabase.from("tenant_contract_uploads").insert({
-    organization_id: context.organizationId,
-    tenant_id: context.tenantId,
-    lease_id: leaseId,
-    file_uri: fileUri,
-    file_name: fileName.slice(0, 200),
-    content_type: contentType,
-  });
+  const { error } = await context.supabase
+    .from("tenant_contract_uploads")
+    .insert({
+      organization_id: context.organizationId,
+      tenant_id: context.tenantId,
+      lease_id: leaseId,
+      file_uri: fileUri,
+      file_name: fileName.slice(0, 200),
+      content_type: contentType,
+    });
 
   if (error) {
     await deletePrivateSlip(fileUri);
@@ -141,18 +150,45 @@ export async function uploadTenantContract(data: FormData) {
   const file = data.get("file");
   const leaseId = String(data.get("leaseId") ?? "");
   const fail = (message: string) => ({ ok: false, message });
-  const { data: lease } = await context.supabase.from("leases").select("id").eq("id",leaseId).eq("organization_id",context.organizationId).eq("primary_tenant_id",context.tenantId).maybeSingle();
+  const { data: lease } = await context.supabase
+    .from("leases")
+    .select("id")
+    .eq("id", leaseId)
+    .eq("organization_id", context.organizationId)
+    .eq("primary_tenant_id", context.tenantId)
+    .maybeSingle();
   if (!lease) return fail("ไม่พบสัญญาของคุณ");
-  if (!(file instanceof File) || !file.size || file.size > 4_500_000) return fail("แนบภาพขนาดไม่เกิน 4.5 MB ต่อไฟล์");
+  if (!(file instanceof File) || !file.size || file.size > 4_500_000)
+    return fail("แนบภาพขนาดไม่เกิน 4.5 MB ต่อไฟล์");
   const bytes = new Uint8Array(await file.arrayBuffer());
   const format = detectSlipType(bytes);
-  if (!format || format.type !== file.type) return fail("รองรับเฉพาะภาพ PNG และ JPG");
+  if (!format || format.type !== file.type)
+    return fail("รองรับเฉพาะภาพ PNG และ JPG");
   try {
-    const uri = await storePrivateSlip(`tenant-contracts/${context.organizationId}/${context.tenantId}/${leaseId}/${crypto.randomUUID()}.${format.extension}`,bytes,format.type);
-    const { error } = await context.supabase.from("tenant_contract_uploads").insert({ organization_id:context.organizationId,tenant_id:context.tenantId,lease_id:leaseId,file_uri:uri,file_name:file.name.slice(0,200),content_type:format.type });
-    if(error) { await deletePrivateSlip(uri); return fail("บันทึกไฟล์สัญญาไม่สำเร็จ"); }
-    revalidatePath("/tenant/lease"); return { ok:true,message:"แนบภาพสัญญาแล้ว" };
-  } catch { return fail("อัปโหลดไม่สำเร็จ กรุณาติดต่อหอพักหรือลองอีกครั้ง"); }
+    const uri = await storePrivateSlip(
+      `tenant-contracts/${context.organizationId}/${context.tenantId}/${leaseId}/${crypto.randomUUID()}.${format.extension}`,
+      bytes,
+      format.type,
+    );
+    const { error } = await context.supabase
+      .from("tenant_contract_uploads")
+      .insert({
+        organization_id: context.organizationId,
+        tenant_id: context.tenantId,
+        lease_id: leaseId,
+        file_uri: uri,
+        file_name: file.name.slice(0, 200),
+        content_type: format.type,
+      });
+    if (error) {
+      await deletePrivateSlip(uri);
+      return fail("บันทึกไฟล์สัญญาไม่สำเร็จ");
+    }
+    revalidatePath("/tenant/lease");
+    return { ok: true, message: "แนบภาพสัญญาแล้ว" };
+  } catch {
+    return fail("อัปโหลดไม่สำเร็จ กรุณาติดต่อหอพักหรือลองอีกครั้ง");
+  }
 }
 
 export async function deleteTenantContract(fileId: string) {

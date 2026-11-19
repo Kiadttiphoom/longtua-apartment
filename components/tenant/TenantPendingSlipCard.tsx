@@ -81,7 +81,9 @@ export function TenantPendingSlipCard({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <strong className="text-sm font-bold text-amber-950">ส่งหลักฐานแล้ว</strong>
+                <strong className="text-sm font-bold text-amber-950">
+                  ส่งหลักฐานแล้ว
+                </strong>
                 <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                   รอตรวจสอบ
                 </span>
@@ -139,7 +141,9 @@ export function TenantPendingSlipCard({
               <div>
                 <span className="text-amber-800/80">ช่องทาง</span>
                 <p className="mt-0.5 font-semibold text-amber-950">
-                  {submission.method === "promptpay" ? "PromptPay" : "โอนธนาคาร"}
+                  {submission.method === "promptpay"
+                    ? "PromptPay"
+                    : "โอนธนาคาร"}
                 </p>
               </div>
               <div className="col-span-2 sm:col-span-1">
@@ -152,13 +156,19 @@ export function TenantPendingSlipCard({
 
             {submission.reference && (
               <p className="text-amber-900">
-                <span className="font-semibold text-amber-800/80">เลขอ้างอิง:</span> {submission.reference}
+                <span className="font-semibold text-amber-800/80">
+                  เลขอ้างอิง:
+                </span>{" "}
+                {submission.reference}
               </p>
             )}
 
             {submission.note && (
               <p className="text-amber-900">
-                <span className="font-semibold text-amber-800/80">หมายเหตุ:</span> {submission.note}
+                <span className="font-semibold text-amber-800/80">
+                  หมายเหตุ:
+                </span>{" "}
+                {submission.note}
               </p>
             )}
 
@@ -268,7 +278,9 @@ export function TenantPendingSlipCard({
                 <Trash2 size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 text-base">ยกเลิกและลบสลิปนี้?</h3>
+                <h3 className="font-bold text-slate-800 text-base">
+                  ยกเลิกและลบสลิปนี้?
+                </h3>
                 <p className="text-xs text-slate-500">
                   สลิปจะถูกลบออกจากระบบ และคุณสามารถส่งหลักฐานใหม่ได้ทันที
                 </p>
@@ -277,10 +289,14 @@ export function TenantPendingSlipCard({
 
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-700 space-y-1">
               <p>
-                <span className="font-semibold text-slate-500">ยอดแจ้งชำระ:</span> {money(Number(submission.amount))}
+                <span className="font-semibold text-slate-500">
+                  ยอดแจ้งชำระ:
+                </span>{" "}
+                {money(Number(submission.amount))}
               </p>
               <p>
-                <span className="font-semibold text-slate-500">วันที่โอน:</span> {thaiDate(submission.paid_at)}
+                <span className="font-semibold text-slate-500">วันที่โอน:</span>{" "}
+                {thaiDate(submission.paid_at)}
               </p>
             </div>
 

@@ -10,27 +10,26 @@ export default async function PortalUsersRoute() {
   const context = await requirePortalContext();
   const admin = createAdminClient();
 
-  const [membersResult, profilesResult, rolesResult, propertiesResult] = await Promise.all([
-    admin
-      .from("organization_members")
-      .select("organization_id, user_id, role_code, status, created_at")
-      .eq("organization_id", context.organization.id)
-      .order("created_at"),
-    admin
-      .from("profiles")
-      .select("id, username, display_name, status"),
-    admin
-      .from("platform_roles")
-      .select("code, name"),
-    admin
-      .from("properties")
-      .select("id, name")
-      .eq("organization_id", context.organization.id)
-      .order("name"),
-  ]);
+  const [membersResult, profilesResult, rolesResult, propertiesResult] =
+    await Promise.all([
+      admin
+        .from("organization_members")
+        .select("organization_id, user_id, role_code, status, created_at")
+        .eq("organization_id", context.organization.id)
+        .order("created_at"),
+      admin.from("profiles").select("id, username, display_name, status"),
+      admin.from("platform_roles").select("code, name"),
+      admin
+        .from("properties")
+        .select("id, name")
+        .eq("organization_id", context.organization.id)
+        .order("name"),
+    ]);
 
   const profileMap = new Map((profilesResult.data ?? []).map((p) => [p.id, p]));
-  const roleMap = new Map((rolesResult.data ?? []).map((r) => [r.code, r.name]));
+  const roleMap = new Map(
+    (rolesResult.data ?? []).map((r) => [r.code, r.name]),
+  );
   const properties = propertiesResult.data ?? [];
 
   const members: PortalMember[] = (membersResult.data ?? []).map((m) => {

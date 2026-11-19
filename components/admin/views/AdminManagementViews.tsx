@@ -1,19 +1,61 @@
 import Link from "next/link";
-import { AlertTriangle, Bot, CheckCircle2, Info, MessageCircle, Package, Pencil, Save, Send, Trash2, XCircle } from "lucide-react";
-import { approveTrialRequestAction, deleteRoleAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, saveTelegramSettingsAction, setRegistrationEnabledAction, testTelegramSettingsAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
-import { AdminTable, dateInput, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
-import { RolePermissionMatrix, UserPermissionMatrix } from "@/components/admin/PermissionMatrix";
+import {
+  AlertTriangle,
+  Bot,
+  CheckCircle2,
+  Info,
+  MessageCircle,
+  Package,
+  Pencil,
+  Save,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import {
+  approveTrialRequestAction,
+  deleteRoleAction,
+  rejectTrialRequestAction,
+  saveMenuAction,
+  saveRoleAction,
+  saveSubscriptionPlanAction,
+  saveTelegramSettingsAction,
+  setRegistrationEnabledAction,
+  testTelegramSettingsAction,
+  updateSubscriptionAction,
+} from "@/app/(admin)/admin/actions";
+import {
+  AdminTable,
+  dateInput,
+  statusLabel,
+  thaiDate,
+} from "@/components/admin/AdminPrimitives";
+import {
+  RolePermissionMatrix,
+  UserPermissionMatrix,
+} from "@/components/admin/PermissionMatrix";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AdminViewContentProps } from "@/components/admin/admin-types";
 
-const subscriptionStatuses = ["trialing", "active", "past_due", "readonly", "paused", "cancelled"];
+const subscriptionStatuses = [
+  "trialing",
+  "active",
+  "past_due",
+  "readonly",
+  "paused",
+  "cancelled",
+];
 const trialRiskLabels: Record<string, string> = {
   similar_property_name: "ชื่อคล้ายหอในระบบ",
   existing_tenant_phone: "เบอร์ตรงกับผู้เช่าเดิม",
 };
 
-export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentProps, "trialRequests">) {
-  const pendingCount = trialRequests.filter((item) => item.status === "pending").length;
+export function AdminTrialRequestsView({
+  trialRequests,
+}: Pick<AdminViewContentProps, "trialRequests">) {
+  const pendingCount = trialRequests.filter(
+    (item) => item.status === "pending",
+  ).length;
   return (
     <div className="space-y-6">
       <section className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -22,9 +64,12 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
             {pendingCount}
           </div>
           <div>
-            <strong className="text-sm font-bold text-amber-950 block">รอตรวจสอบ {pendingCount} คำขอ</strong>
+            <strong className="text-sm font-bold text-amber-950 block">
+              รอตรวจสอบ {pendingCount} คำขอ
+            </strong>
             <p className="text-xs text-amber-800 mt-0.5">
-              รับสูงสุด 20 กิจการทั้งระบบ อนุมัติเมื่อยืนยันว่าเป็นผู้ประกอบการจริงแล้วเท่านั้น ระบบจะสร้าง 1 กิจการ 1 หอ และเริ่ม Trial 30 วัน (สูงสุด 10 ห้อง)
+              รับสูงสุด 20 กิจการทั้งระบบ อนุมัติเมื่อยืนยันว่าเป็นผู้ประกอบการจริงแล้วเท่านั้น
+              ระบบจะสร้าง 1 กิจการ 1 หอ และเริ่ม Trial 30 วัน (สูงสุด 10 ห้อง)
             </p>
           </div>
         </div>
@@ -32,20 +77,35 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
 
       <section className="space-y-4">
         {trialRequests.map((item) => (
-          <article className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4" key={item.id}>
+          <article
+            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4"
+            key={item.id}
+          >
             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div>
-                <span className="text-xs font-semibold text-blue-600">{item.operator_name}</span>
-                <h2 className="text-lg font-bold text-slate-800">{item.property_name}</h2>
-                <small className="text-xs text-slate-400">@{item.username} · ส่งเมื่อ {thaiDate(item.submitted_at)}</small>
+                <span className="text-xs font-semibold text-blue-600">
+                  {item.operator_name}
+                </span>
+                <h2 className="text-lg font-bold text-slate-800">
+                  {item.property_name}
+                </h2>
+                <small className="text-xs text-slate-400">
+                  @{item.username} · ส่งเมื่อ {thaiDate(item.submitted_at)}
+                </small>
               </div>
-              <StatusBadge compact label={statusLabel(item.status)} status={item.status} />
+              <StatusBadge
+                compact
+                label={statusLabel(item.status)}
+                status={item.status}
+              />
             </header>
 
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs">
               <div>
                 <dt className="text-slate-400 font-medium mb-0.5">อีเมลติดต่อ</dt>
-                <dd className="font-semibold text-slate-700 truncate">{item.contact_email}</dd>
+                <dd className="font-semibold text-slate-700 truncate">
+                  {item.contact_email}
+                </dd>
               </div>
               <div>
                 <dt className="text-slate-400 font-medium mb-0.5">เบอร์โทร</dt>
@@ -53,11 +113,17 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
               </div>
               <div>
                 <dt className="text-slate-400 font-medium mb-0.5">จำนวนห้อง</dt>
-                <dd className="font-semibold text-slate-700">{item.requested_room_count.toLocaleString("th-TH")} ห้อง</dd>
+                <dd className="font-semibold text-slate-700">
+                  {item.requested_room_count.toLocaleString("th-TH")} ห้อง
+                </dd>
               </div>
               <div>
-                <dt className="text-slate-400 font-medium mb-0.5">Request ID</dt>
-                <dd className="font-mono text-[11px] text-slate-600 truncate">{item.id}</dd>
+                <dt className="text-slate-400 font-medium mb-0.5">
+                  Request ID
+                </dt>
+                <dd className="font-mono text-[11px] text-slate-600 truncate">
+                  {item.id}
+                </dd>
               </div>
             </dl>
 
@@ -67,7 +133,10 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
                 <div className="flex flex-wrap items-center gap-2">
                   <strong className="font-semibold">ควรตรวจสอบเพิ่มเติม:</strong>
                   {item.risk_flags.map((flag) => (
-                    <span className="px-2 py-0.5 rounded-md bg-amber-200/60 font-medium" key={flag}>
+                    <span
+                      className="px-2 py-0.5 rounded-md bg-amber-200/60 font-medium"
+                      key={flag}
+                    >
                       {trialRiskLabels[flag] ?? flag}
                     </span>
                   ))}
@@ -92,7 +161,10 @@ export function AdminTrialRequestsView({ trialRequests }: Pick<AdminViewContentP
                     <span>อนุมัติและเริ่ม Trial</span>
                   </button>
                 </form>
-                <form action={rejectTrialRequestAction} className="flex items-center gap-2">
+                <form
+                  action={rejectTrialRequestAction}
+                  className="flex items-center gap-2"
+                >
                   <input name="requestId" type="hidden" value={item.id} />
                   <input
                     aria-label="เหตุผลที่ปฏิเสธ"
@@ -138,10 +210,15 @@ export function AdminLineView() {
         <MessageCircle size={28} />
       </span>
       <div className="space-y-1 flex-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">ADD-ON</span>
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">LINE แจ้งเตือน</h2>
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+          ADD-ON
+        </span>
+        <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+          LINE แจ้งเตือน
+        </h2>
         <p className="text-xs text-slate-500 max-w-xl">
-          เมนูเตรียมไว้แล้ว แต่ระบบจริงยังไม่ได้เชื่อม LINE Messaging API จึงยังไม่มีการส่งข้อความออก เพื่อไม่ให้เกิดความสับสน
+          เมนูเตรียมไว้แล้ว แต่ระบบจริงยังไม่ได้เชื่อม LINE Messaging API
+          จึงยังไม่มีการส่งข้อความออก เพื่อไม่ให้เกิดความสับสน
         </p>
       </div>
       <StatusBadge compact label="ยังไม่เชื่อมต่อ" status="inactive" />
@@ -149,8 +226,16 @@ export function AdminLineView() {
   );
 }
 
-export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organizationMap }: Pick<AdminViewContentProps, "subscriptions" | "subscriptionPlans" | "organizationMap">) {
-  const plans = subscriptionPlans && subscriptionPlans.length > 0 ? subscriptionPlans : [];
+export function AdminSubscriptionsView({
+  subscriptions,
+  subscriptionPlans,
+  organizationMap,
+}: Pick<
+  AdminViewContentProps,
+  "subscriptions" | "subscriptionPlans" | "organizationMap"
+>) {
+  const plans =
+    subscriptionPlans && subscriptionPlans.length > 0 ? subscriptionPlans : [];
 
   return (
     <div className="space-y-8">
@@ -162,9 +247,12 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
               <Package size={13} />
               <span>SUBSCRIPTION PLANS CATALOGUE</span>
             </div>
-            <h2 className="text-lg font-bold text-slate-800 tracking-tight">แคตตาล็อกแพ็กเกจราคา</h2>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+              แคตตาล็อกแพ็กเกจราคา
+            </h2>
             <p className="text-xs text-slate-500">
-              ข้อมูลแพ็กเกจนี้ถูกบันทึกในฐานข้อมูลและส่งต่อไปยังหน้าเว็บ longtua.com ผ่าน API <code>/api/public/plans</code>
+              ข้อมูลแพ็กเกจนี้ถูกบันทึกในฐานข้อมูลและส่งต่อไปยังหน้าเว็บ longtua.com ผ่าน API{" "}
+              <code>/api/public/plans</code>
             </p>
           </div>
         </div>
@@ -177,10 +265,14 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
             >
               <summary className="p-4 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70 hover:bg-slate-50 transition-colors select-none">
                 <div className="flex items-center gap-3">
-                  <span className={`w-2.5 h-2.5 rounded-full ${plan.is_active ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-slate-300"}`} />
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${plan.is_active ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-slate-300"}`}
+                  />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-800">{plan.name}</span>
+                      <span className="font-bold text-sm text-slate-800">
+                        {plan.name}
+                      </span>
                       <code className="text-[11px] px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-mono">
                         {plan.code}
                       </code>
@@ -195,21 +287,33 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{plan.target_audience || "—"}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {plan.target_audience || "—"}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs">
                   <div className="text-right">
                     <span className="font-bold text-slate-800 text-sm">
-                      {plan.price_monthly === 0 ? "ฟรี" : `฿${plan.price_monthly.toLocaleString()}`}
+                      {plan.price_monthly === 0
+                        ? "ฟรี"
+                        : `฿${plan.price_monthly.toLocaleString()}`}
                     </span>
-                    <span className="text-slate-400 text-[11px]"> / {plan.period}</span>
+                    <span className="text-slate-400 text-[11px]">
+                      {" "}
+                      / {plan.period}
+                    </span>
                   </div>
                   <div className="hidden sm:flex flex-col text-[11px] text-slate-500 border-l border-slate-200 pl-4 space-y-0.5">
-                    <span>{plan.max_properties_label || `${plan.max_properties} หอพัก`} · {plan.max_rooms_label || `${plan.max_rooms} ห้อง`}</span>
+                    <span>
+                      {plan.max_properties_label ||
+                        `${plan.max_properties} หอพัก`}{" "}
+                      · {plan.max_rooms_label || `${plan.max_rooms} ห้อง`}
+                    </span>
                     <span className="text-emerald-700 font-medium">
-                      {plan.max_slip_verifications_label || `ตรวจสลิป ${plan.max_slip_verifications} ครั้ง`}
+                      {plan.max_slip_verifications_label ||
+                        `ตรวจสลิป ${plan.max_slip_verifications} ครั้ง`}
                     </span>
                   </div>
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 group-open:text-slate-400 ml-2">
@@ -220,12 +324,17 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                 </div>
               </summary>
 
-              <form action={saveSubscriptionPlanAction} className="p-5 border-t border-slate-200 bg-white space-y-4">
+              <form
+                action={saveSubscriptionPlanAction}
+                className="p-5 border-t border-slate-200 bg-white space-y-4"
+              >
                 <input type="hidden" name="code" value={plan.code} />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ชื่อแพ็กเกจ (Name)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      ชื่อแพ็กเกจ (Name)
+                    </label>
                     <input
                       name="name"
                       defaultValue={plan.name}
@@ -234,7 +343,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ราคาต่อเดือน (บาท)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      ราคาต่อเดือน (บาท)
+                    </label>
                     <input
                       name="priceMonthly"
                       type="number"
@@ -245,7 +356,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">ระยะเวลา (Period)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      ระยะเวลา (Period)
+                    </label>
                     <input
                       name="period"
                       defaultValue={plan.period || "เดือน"}
@@ -253,7 +366,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">Badge ป้ายกำกับ</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      Badge ป้ายกำกับ
+                    </label>
                     <input
                       name="badge"
                       defaultValue={plan.badge || ""}
@@ -265,7 +380,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาหอพัก (Max Properties)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      โควตาหอพัก (Max Properties)
+                    </label>
                     <div className="flex gap-2">
                       <input
                         name="maxProperties"
@@ -284,7 +401,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     </div>
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาห้องพัก (Max Rooms)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      โควตาห้องพัก (Max Rooms)
+                    </label>
                     <div className="flex gap-2">
                       <input
                         name="maxRooms"
@@ -303,7 +422,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     </div>
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาผู้ใช้งาน (-1 = ไม่จำกัด)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      โควตาผู้ใช้งาน (-1 = ไม่จำกัด)
+                    </label>
                     <div className="flex gap-2">
                       <input
                         name="maxUsers"
@@ -321,7 +442,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                     </div>
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">โควตาตรวจสลิป (ต่อเดือน)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      โควตาตรวจสลิป (ต่อเดือน)
+                    </label>
                     <div className="flex gap-2">
                       <input
                         name="maxSlipVerifications"
@@ -343,7 +466,9 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">กลุ่มเป้าหมาย (Target Audience)</label>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                      กลุ่มเป้าหมาย (Target Audience)
+                    </label>
                     <input
                       name="targetAudience"
                       defaultValue={plan.target_audience}
@@ -382,7 +507,11 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
                   <textarea
                     name="features"
                     rows={4}
-                    defaultValue={Array.isArray(plan.features) ? plan.features.join("\n") : ""}
+                    defaultValue={
+                      Array.isArray(plan.features)
+                        ? plan.features.join("\n")
+                        : ""
+                    }
                     className="w-full p-2.5 rounded-lg border border-slate-200 text-xs font-sans bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="ตรวจสลิปโอนเงินอัตโนมัติ&#10;บันทึกมิเตอร์น้ำ-ไฟ&#10;ใบแจ้งหนี้ & ใบเสร็จรับเงินดิจิทัล"
                   />
@@ -403,7 +532,8 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
 
           {plans.length === 0 ? (
             <div className="p-8 text-center rounded-xl bg-slate-50 border border-dashed border-slate-200 text-slate-400 text-xs">
-              ยังไม่มีข้อมูลแพ็กเกจในตาราง subscription_plans กรุณารัน migration <code>20260904170000_subscription_plans_and_usage.sql</code>
+              ยังไม่มีข้อมูลแพ็กเกจในตาราง subscription_plans กรุณารัน migration{" "}
+              <code>20260904170000_subscription_plans_and_usage.sql</code>
             </div>
           ) : null}
         </div>
@@ -412,12 +542,22 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
       {/* Section 2: Active Subscriptions List */}
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การสมัครใช้งานจริง</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">สถานะสมาชิกและโควตารายกิจการ</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            การสมัครใช้งานจริง
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            สถานะสมาชิกและโควตารายกิจการ
+          </h2>
         </div>
 
         <AdminTable
-          headers={["กิจการ", "Trial", "สิ้นสุดรอบ", "โควตาหอ/ห้อง", "จัดการสิทธิ์ใช้งาน"]}
+          headers={[
+            "กิจการ",
+            "Trial",
+            "สิ้นสุดรอบ",
+            "โควตาหอ/ห้อง",
+            "จัดการสิทธิ์ใช้งาน",
+          ]}
           rows={subscriptions.map((item) => [
             organizationMap.get(item.organization_id) ?? "—",
             thaiDate(item.trial_ends_at),
@@ -425,15 +565,25 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
             <span key="q" className="text-xs text-slate-600 font-medium">
               {item.max_properties ?? 1} หอ / {item.max_rooms ?? 100} ห้อง
             </span>,
-            <form action={updateSubscriptionAction} className="inline-flex flex-wrap items-center gap-2" key="f">
-              <input name="organizationId" type="hidden" value={item.organization_id} />
+            <form
+              action={updateSubscriptionAction}
+              className="inline-flex flex-wrap items-center gap-2"
+              key="f"
+            >
+              <input
+                name="organizationId"
+                type="hidden"
+                value={item.organization_id}
+              />
               <select
                 className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 defaultValue={item.status}
                 name="status"
               >
                 {subscriptionStatuses.map((status) => (
-                  <option key={status} value={status}>{statusLabel(status)}</option>
+                  <option key={status} value={status}>
+                    {statusLabel(status)}
+                  </option>
                 ))}
               </select>
               <input
@@ -483,16 +633,25 @@ export function AdminSubscriptionsView({ subscriptions, subscriptionPlans, organ
   );
 }
 
-export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) {
+export function AdminRolesView({
+  roles,
+}: Pick<AdminViewContentProps, "roles">) {
   return (
     <div className="space-y-6">
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">ROLE ใหม่</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">เพิ่มบทบาทใหม่</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            ROLE ใหม่
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            เพิ่มบทบาทใหม่
+          </h2>
         </div>
 
-        <form action={saveRoleAction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <form
+          action={saveRoleAction}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
+        >
           <input
             className="h-9 px-3 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             name="code"
@@ -531,17 +690,28 @@ export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) 
 
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายการบทบาท</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">บทบาททั้งหมดในระบบ</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายการบทบาท
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            บทบาททั้งหมดในระบบ
+          </h2>
         </div>
 
         <AdminTable
           headers={["Code", "แก้ไข Role", "ประเภท", "จัดการ"]}
           rows={roles.map((role) => [
-            <code className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md" key="c">
+            <code
+              className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md"
+              key="c"
+            >
               {role.code}
             </code>,
-            <form action={saveRoleAction} className="flex flex-wrap items-center gap-2" key="f">
+            <form
+              action={saveRoleAction}
+              className="flex flex-wrap items-center gap-2"
+              key="f"
+            >
               <input name="roleId" type="hidden" value={role.id} />
               <input
                 className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -600,7 +770,9 @@ export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) 
                 </button>
               </form>
             ) : (
-              <span key="del" className="text-slate-400 text-xs">—</span>
+              <span key="del" className="text-slate-400 text-xs">
+                —
+              </span>
             ),
           ])}
         />
@@ -609,25 +781,59 @@ export function AdminRolesView({ roles }: Pick<AdminViewContentProps, "roles">) 
   );
 }
 
-export function AdminPermissionsView({ granularPermissionsReady, params, organizations, roles, matrixActions, matrixMenus, matrixRoles, selectedRoleId, selectedOrganizationId, selectedOrganizationUsers, selectedUserId }: Pick<AdminViewContentProps, "granularPermissionsReady" | "params" | "organizations" | "roles" | "matrixActions" | "matrixMenus" | "matrixRoles" | "selectedRoleId" | "selectedOrganizationId" | "selectedOrganizationUsers" | "selectedUserId">) {
+export function AdminPermissionsView({
+  granularPermissionsReady,
+  params,
+  organizations,
+  roles,
+  matrixActions,
+  matrixMenus,
+  matrixRoles,
+  selectedRoleId,
+  selectedOrganizationId,
+  selectedOrganizationUsers,
+  selectedUserId,
+}: Pick<
+  AdminViewContentProps,
+  | "granularPermissionsReady"
+  | "params"
+  | "organizations"
+  | "roles"
+  | "matrixActions"
+  | "matrixMenus"
+  | "matrixRoles"
+  | "selectedRoleId"
+  | "selectedOrganizationId"
+  | "selectedOrganizationUsers"
+  | "selectedUserId"
+>) {
   return (
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div>
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">MENU × ACTION</span>
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">กำหนดสิทธิ์การใช้งาน</h2>
-        <p className="text-xs text-slate-500 mt-1">สิทธิ์รายผู้ใช้มีผลเหนือ Role และระบบจะปฏิเสธสิทธิ์ที่ไม่ได้กำหนดไว้โดยอัตโนมัติ</p>
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+          MENU × ACTION
+        </span>
+        <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+          กำหนดสิทธิ์การใช้งาน
+        </h2>
+        <p className="text-xs text-slate-500 mt-1">
+          สิทธิ์รายผู้ใช้มีผลเหนือ Role และระบบจะปฏิเสธสิทธิ์ที่ไม่ได้กำหนดไว้โดยอัตโนมัติ
+        </p>
       </div>
 
       {!granularPermissionsReady ? (
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
-          ระบบสิทธิ์แบบละเอียดยังไม่พร้อม กรุณา apply migration <code>20260828101032_granular_menu_permissions.sql</code>
+          ระบบสิทธิ์แบบละเอียดยังไม่พร้อม กรุณา apply migration{" "}
+          <code>20260828101032_granular_menu_permissions.sql</code>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
             <Link
               className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                params.mode !== "user" ? "bg-blue-50 text-blue-700 border border-blue-200" : "text-slate-600 hover:bg-slate-100"
+                params.mode !== "user"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
               href="/admin/permissions"
             >
@@ -635,7 +841,9 @@ export function AdminPermissionsView({ granularPermissionsReady, params, organiz
             </Link>
             <Link
               className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                params.mode === "user" ? "bg-blue-50 text-blue-700 border border-blue-200" : "text-slate-600 hover:bg-slate-100"
+                params.mode === "user"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
               href="/admin/permissions?mode=user"
             >
@@ -647,8 +855,17 @@ export function AdminPermissionsView({ granularPermissionsReady, params, organiz
             <UserPermissionMatrix
               actions={matrixActions}
               menus={matrixMenus}
-              organizations={organizations.map((item) => ({ id: item.id, name: item.name }))}
-              organizationRoles={roles.filter((item) => item.scope_type === "organization" && item.status === "active").map((item) => ({ code: item.code, name: item.name }))}
+              organizations={organizations.map((item) => ({
+                id: item.id,
+                name: item.name,
+              }))}
+              organizationRoles={roles
+                .filter(
+                  (item) =>
+                    item.scope_type === "organization" &&
+                    item.status === "active",
+                )
+                .map((item) => ({ code: item.code, name: item.name }))}
               selectedOrganizationId={selectedOrganizationId}
               selectedUserId={selectedUserId}
               users={selectedOrganizationUsers}
@@ -667,16 +884,26 @@ export function AdminPermissionsView({ granularPermissionsReady, params, organiz
   );
 }
 
-export function AdminMenusView({ menus, permissions }: Pick<AdminViewContentProps, "menus" | "permissions">) {
+export function AdminMenusView({
+  menus,
+  permissions,
+}: Pick<AdminViewContentProps, "menus" | "permissions">) {
   return (
     <div className="space-y-6">
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">MENU ใหม่</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">เพิ่มเมนูระบบ</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            MENU ใหม่
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            เพิ่มเมนูระบบ
+          </h2>
         </div>
 
-        <form action={saveMenuAction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <form
+          action={saveMenuAction}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+        >
           <input
             className="h-9 px-3 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             name="code"
@@ -715,7 +942,9 @@ export function AdminMenusView({ menus, permissions }: Pick<AdminViewContentProp
           >
             <option value="">ไม่กำหนด Permission</option>
             {permissions.map((permission) => (
-              <option key={permission.code} value={permission.code}>{permission.code}</option>
+              <option key={permission.code} value={permission.code}>
+                {permission.code}
+              </option>
             ))}
           </select>
           <select
@@ -738,17 +967,28 @@ export function AdminMenusView({ menus, permissions }: Pick<AdminViewContentProp
 
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายการเมนู</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">เมนูทั้งหมดในระบบ</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายการเมนู
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            เมนูทั้งหมดในระบบ
+          </h2>
         </div>
 
         <AdminTable
           headers={["Code", "แก้ไขเมนู"]}
           rows={menus.map((item) => [
-            <code className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md" key="c">
+            <code
+              className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md"
+              key="c"
+            >
               {item.code}
             </code>,
-            <form action={saveMenuAction} className="flex flex-wrap items-center gap-2" key="f">
+            <form
+              action={saveMenuAction}
+              className="flex flex-wrap items-center gap-2"
+              key="f"
+            >
               <input name="menuId" type="hidden" value={item.id} />
               <input
                 className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -780,7 +1020,9 @@ export function AdminMenusView({ menus, permissions }: Pick<AdminViewContentProp
               >
                 <option value="">ไม่กำหนด</option>
                 {permissions.map((permission) => (
-                  <option key={permission.code} value={permission.code}>{permission.code}</option>
+                  <option key={permission.code} value={permission.code}>
+                    {permission.code}
+                  </option>
                 ))}
               </select>
               <select
@@ -814,12 +1056,19 @@ export function AdminMenusView({ menus, permissions }: Pick<AdminViewContentProp
   );
 }
 
-export function AdminAuditView({ audits, profileMap }: Pick<AdminViewContentProps, "audits" | "profileMap">) {
+export function AdminAuditView({
+  audits,
+  profileMap,
+}: Pick<AdminViewContentProps, "audits" | "profileMap">) {
   return (
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div>
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">LOGS</span>
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Audit Log</h2>
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+          LOGS
+        </span>
+        <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+          Audit Log
+        </h2>
       </div>
 
       <AdminTable
@@ -832,7 +1081,11 @@ export function AdminAuditView({ audits, profileMap }: Pick<AdminViewContentProp
           <details className="cursor-pointer text-xs text-blue-600" key="d">
             <summary className="font-medium">ดูการเปลี่ยนแปลง</summary>
             <pre className="mt-2 p-3 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto max-w-lg">
-              {JSON.stringify({ before: item.before_data, after: item.after_data }, null, 2)}
+              {JSON.stringify(
+                { before: item.before_data, after: item.after_data },
+                null,
+                2,
+              )}
             </pre>
           </details>,
         ])}
@@ -842,7 +1095,10 @@ export function AdminAuditView({ audits, profileMap }: Pick<AdminViewContentProp
   );
 }
 
-export function AdminSettingsView({ registration, telegramSettings }: Pick<AdminViewContentProps, "registration" | "telegramSettings">) {
+export function AdminSettingsView({
+  registration,
+  telegramSettings,
+}: Pick<AdminViewContentProps, "registration" | "telegramSettings">) {
   const telegram = telegramSettings ?? {
     enabled: false,
     botToken: "",
@@ -857,10 +1113,16 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
       {/* 1. เปิด/ปิดคำขอทดลองใช้ */}
       <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การตั้งค่าระบบ</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">เปิด/ปิดคำขอทดลองใช้</h2>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            การตั้งค่าระบบ
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            เปิด/ปิดคำขอทดลองใช้
+          </h2>
           <p className="text-xs text-slate-500 max-w-xl">
-            ควบคุมการรับคำขอจากหน้าสมัครสมาชิกในแอปและเว็บไซต์หลัก เมื่อครบ 20 กิจการจะไม่รับสมัครหรืออนุมัติเพิ่ม แม้เปิดสวิตช์ไว้ ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ และคำขอที่ส่งแล้วไม่ถูกลบ
+            ควบคุมการรับคำขอจากหน้าสมัครสมาชิกในแอปและเว็บไซต์หลัก เมื่อครบ 20
+            กิจการจะไม่รับสมัครหรืออนุมัติเพิ่ม แม้เปิดสวิตช์ไว้ ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ
+            และคำขอที่ส่งแล้วไม่ถูกลบ
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -874,7 +1136,11 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
             {registration.enabled ? "เปิดรับคำขอ" : "ปิดรับคำขอ"}
           </span>
           <form action={setRegistrationEnabledAction}>
-            <input name="enabled" type="hidden" value={registration.enabled ? "false" : "true"} />
+            <input
+              name="enabled"
+              type="hidden"
+              value={registration.enabled ? "false" : "true"}
+            />
             <button
               className={`h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-xs ${
                 registration.enabled
@@ -898,9 +1164,13 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                 <Bot size={14} /> การแจ้งเตือน · TELEGRAM BOT
               </span>
             </div>
-            <h2 className="text-lg font-bold text-slate-800 tracking-tight">ตั้งค่าการแจ้งเตือน Telegram</h2>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+              ตั้งค่าการแจ้งเตือน Telegram
+            </h2>
             <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
-              เชื่อมต่อ Telegram Bot เพื่อรับแจ้งเตือนแบบเรียลไทม์เข้าบัญชีส่วนตัวหรือกลุ่มของคุณทันที เมื่อมีผู้ส่งคำขอทดลองใช้ใหม่ ผู้เช่าส่งสลิปชำระเงิน หรือมีรายการแจ้งซ่อมห้องพัก
+              เชื่อมต่อ Telegram Bot
+              เพื่อรับแจ้งเตือนแบบเรียลไทม์เข้าบัญชีส่วนตัวหรือกลุ่มของคุณทันที
+              เมื่อมีผู้ส่งคำขอทดลองใช้ใหม่ ผู้เช่าส่งสลิปชำระเงิน หรือมีรายการแจ้งซ่อมห้องพัก
             </p>
           </div>
           <span
@@ -910,7 +1180,9 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                 : "bg-slate-100 text-slate-600 border border-slate-200"
             }`}
           >
-            {telegram.enabled && telegram.botToken && telegram.chatId ? "เปิดใช้งานอยู่" : "ยังไม่เปิดใช้งาน"}
+            {telegram.enabled && telegram.botToken && telegram.chatId
+              ? "เปิดใช้งานอยู่"
+              : "ยังไม่เปิดใช้งาน"}
           </span>
         </div>
 
@@ -918,7 +1190,10 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
           {/* Active Switch */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
             <div className="space-y-0.5">
-              <label htmlFor="telegram-enabled" className="text-sm font-semibold text-slate-800 cursor-pointer">
+              <label
+                htmlFor="telegram-enabled"
+                className="text-sm font-semibold text-slate-800 cursor-pointer"
+              >
                 เปิดระบบแจ้งเตือนผ่าน Telegram
               </label>
               <p className="text-xs text-slate-500">
@@ -954,7 +1229,16 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
               <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
                 <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
                 <span>
-                  สร้างบอทผ่าน <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium hover:text-blue-700">@BotFather</a> ใน Telegram แล้วคัดลอก HTTP API Token มาใส่
+                  สร้างบอทผ่าน{" "}
+                  <a
+                    href="https://t.me/BotFather"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline font-medium hover:text-blue-700"
+                  >
+                    @BotFather
+                  </a>{" "}
+                  ใน Telegram แล้วคัดลอก HTTP API Token มาใส่
                 </span>
               </p>
             </div>
@@ -973,7 +1257,17 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
               <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
                 <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
                 <span>
-                  ตรวจสอบ Chat ID ของคุณได้จาก <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium hover:text-blue-700">@userinfobot</a> (หากใช้กลุ่ม ให้นำ Bot เข้ากลุ่มแล้วใช้ ID ที่ขึ้นต้นด้วย <code>-100...</code>)
+                  ตรวจสอบ Chat ID ของคุณได้จาก{" "}
+                  <a
+                    href="https://t.me/userinfobot"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline font-medium hover:text-blue-700"
+                  >
+                    @userinfobot
+                  </a>{" "}
+                  (หากใช้กลุ่ม ให้นำ Bot เข้ากลุ่มแล้วใช้ ID ที่ขึ้นต้นด้วย{" "}
+                  <code>-100...</code>)
                 </span>
               </p>
             </div>
@@ -994,8 +1288,12 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
-                  <span className="font-semibold text-slate-800 block">คำขอทดลองใช้ใหม่</span>
-                  <span className="text-slate-500 text-[11px] block">เมื่อมีผู้สมัคร Trial จากหน้าเว็บหรือฟอร์ม</span>
+                  <span className="font-semibold text-slate-800 block">
+                    คำขอทดลองใช้ใหม่
+                  </span>
+                  <span className="text-slate-500 text-[11px] block">
+                    เมื่อมีผู้สมัคร Trial จากหน้าเว็บหรือฟอร์ม
+                  </span>
                 </div>
               </label>
 
@@ -1008,8 +1306,12 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
-                  <span className="font-semibold text-slate-800 block">แจ้งชำระเงิน / ส่งสลิป</span>
-                  <span className="text-slate-500 text-[11px] block">เมื่อผู้เช่าอัปโหลดสลิปชำระเงิน</span>
+                  <span className="font-semibold text-slate-800 block">
+                    แจ้งชำระเงิน / ส่งสลิป
+                  </span>
+                  <span className="text-slate-500 text-[11px] block">
+                    เมื่อผู้เช่าอัปโหลดสลิปชำระเงิน
+                  </span>
                 </div>
               </label>
 
@@ -1022,8 +1324,12 @@ export function AdminSettingsView({ registration, telegramSettings }: Pick<Admin
                   className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div className="space-y-0.5 text-xs">
-                  <span className="font-semibold text-slate-800 block">แจ้งซ่อมห้องพัก</span>
-                  <span className="text-slate-500 text-[11px] block">เมื่อมีผู้เช่าส่งคำขอแจ้งซ่อม</span>
+                  <span className="font-semibold text-slate-800 block">
+                    แจ้งซ่อมห้องพัก
+                  </span>
+                  <span className="text-slate-500 text-[11px] block">
+                    เมื่อมีผู้เช่าส่งคำขอแจ้งซ่อม
+                  </span>
                 </div>
               </label>
             </div>

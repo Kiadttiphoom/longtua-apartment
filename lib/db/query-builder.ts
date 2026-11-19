@@ -24,9 +24,12 @@ interface OrderCondition {
   ascending: boolean;
 }
 
-export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<T[]>> {
+export class QueryBuilder<T = any> implements PromiseLike<
+  PostgrestLikeResponse<T[]>
+> {
   private tableName: string;
-  private action: "select" | "insert" | "update" | "upsert" | "delete" = "select";
+  private action: "select" | "insert" | "update" | "upsert" | "delete" =
+    "select";
   private selectedColumns: string = "*";
   private countOption: "exact" | "planned" | "estimated" | null = null;
   private isHead: boolean = false;
@@ -152,7 +155,11 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
   }
 
   then<TResult1 = PostgrestLikeResponse<T[]>, TResult2 = never>(
-    onfulfilled?: ((value: PostgrestLikeResponse<T[]>) => TResult1 | PromiseLike<TResult1>) | null,
+    onfulfilled?:
+      | ((
+          value: PostgrestLikeResponse<T[]>,
+        ) => TResult1 | PromiseLike<TResult1>)
+      | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
   ): Promise<TResult1 | TResult2> {
     return this.execute().then(onfulfilled, onrejected);
@@ -174,12 +181,17 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
         const parts = filter.rawOr.split(",");
         const subClauses: string[] = [];
         for (const part of parts) {
-          const match = part.trim().match(/^([a-zA-Z0-9_.]+)\.([a-zA-Z_]+)\.(.*)$/);
+          const match = part
+            .trim()
+            .match(/^([a-zA-Z0-9_.]+)\.([a-zA-Z_]+)\.(.*)$/);
           if (match) {
             const rawCol = match[1];
             const op = match[2];
             const val = match[3];
-            const col = formatColumnName(rawCol, hasJoin ? this.tableName : undefined);
+            const col = formatColumnName(
+              rawCol,
+              hasJoin ? this.tableName : undefined,
+            );
 
             if (op === "eq") {
               if (val === "null") {
@@ -207,7 +219,10 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
       }
 
       if (!filter.column) continue;
-      const col = formatColumnName(filter.column, hasJoin ? this.tableName : undefined);
+      const col = formatColumnName(
+        filter.column,
+        hasJoin ? this.tableName : undefined,
+      );
 
       if (filter.type === "eq") {
         if (filter.value === null) {
@@ -268,9 +283,12 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
       let totalCount: number | null = null;
 
       if (this.action === "select") {
-        const hasBillingCyclesInner = /billing_cycles!inner\(([^)]+)\)/.test(this.selectedColumns);
+        const hasBillingCyclesInner = /billing_cycles!inner\(([^)]+)\)/.test(
+          this.selectedColumns,
+        );
         const hasBillingCyclesLeft =
-          /billing_cycles\(([^)]+)\)/.test(this.selectedColumns) && !hasBillingCyclesInner;
+          /billing_cycles\(([^)]+)\)/.test(this.selectedColumns) &&
+          !hasBillingCyclesInner;
         const hasJoin = hasBillingCyclesInner || hasBillingCyclesLeft;
 
         let joinSql = "";
@@ -298,12 +316,19 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
           totalCount = parseInt(countRes.rows[0]?.count ?? "0", 10);
         }
 
-        const columns = parseSelectedColumns(this.selectedColumns, this.tableName, hasJoin);
+        const columns = parseSelectedColumns(
+          this.selectedColumns,
+          this.tableName,
+          hasJoin,
+        );
         sql = `SELECT ${columns} FROM ${sanitizeIdentifier(this.tableName)}${joinSql}${where.sql}`;
 
         if (this.orderings.length > 0) {
           const orderClauses = this.orderings.map((o) => {
-            const col = formatColumnName(o.column, hasJoin ? this.tableName : undefined);
+            const col = formatColumnName(
+              o.column,
+              hasJoin ? this.tableName : undefined,
+            );
             return `${col} ${o.ascending ? "ASC" : "DESC"}`;
           });
           sql += ` ORDER BY ${orderClauses.join(", ")}`;
@@ -373,22 +398,29 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
           platform_permissions: "code",
           platform_role_permissions: "role_id,permission_code",
           platform_role_menu_actions: "role_id,menu_id,action_code",
-          platform_user_menu_actions: "organization_id,user_id,menu_id,action_code",
+          platform_user_menu_actions:
+            "organization_id,user_id,menu_id,action_code",
           auth_login_aliases: "username",
           meter_readings: "meter_id,read_at",
           billing_cycles: "property_id,period_month",
         };
 
-        const rawConflict = this.upsertConflict || TABLE_PRIMARY_KEYS[this.tableName] || "id";
+        const rawConflict =
+          this.upsertConflict || TABLE_PRIMARY_KEYS[this.tableName] || "id";
         const conflictClause = rawConflict
           .split(",")
           .map((col) => sanitizeIdentifier(col.trim()))
           .join(", ");
-        const conflictCols = new Set(rawConflict.split(",").map((c) => c.trim()));
+        const conflictCols = new Set(
+          rawConflict.split(",").map((c) => c.trim()),
+        );
 
         const updateSet = keys
           .filter((k) => !conflictCols.has(k))
-          .map((k) => `${sanitizeIdentifier(k)} = EXCLUDED.${sanitizeIdentifier(k)}`)
+          .map(
+            (k) =>
+              `${sanitizeIdentifier(k)} = EXCLUDED.${sanitizeIdentifier(k)}`,
+          )
           .join(", ");
 
         const onConflictClause = updateSet
@@ -404,7 +436,12 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
 
       const res = await executor.query(sql, values);
       const rows = res.rows;
-      const count = totalCount !== null ? totalCount : this.countOption ? rows.length : null;
+      const count =
+        totalCount !== null
+          ? totalCount
+          : this.countOption
+            ? rows.length
+            : null;
 
       if (this.isSingle) {
         if (rows.length === 0) {
@@ -421,7 +458,11 @@ export class QueryBuilder<T = any> implements PromiseLike<PostgrestLikeResponse<
       }
 
       if (this.isMaybeSingle) {
-        return { data: rows.length > 0 ? rows[0] : null, error: null, count: rows.length };
+        return {
+          data: rows.length > 0 ? rows[0] : null,
+          error: null,
+          count: rows.length,
+        };
       }
 
       return { data: rows, error: null, count };
@@ -459,9 +500,15 @@ function formatColumnName(col: string, defaultTableName?: string): string {
   return sanitizeIdentifier(col);
 }
 
-function parseSelectedColumns(cols: string, defaultTableName?: string, hasJoin: boolean = false): string {
+function parseSelectedColumns(
+  cols: string,
+  defaultTableName?: string,
+  hasJoin: boolean = false,
+): string {
   if (!cols || cols.trim() === "*") {
-    return hasJoin && defaultTableName ? `${sanitizeIdentifier(defaultTableName)}.*` : "*";
+    return hasJoin && defaultTableName
+      ? `${sanitizeIdentifier(defaultTableName)}.*`
+      : "*";
   }
 
   // Split balanced commas
@@ -485,7 +532,10 @@ function parseSelectedColumns(cols: string, defaultTableName?: string, hasJoin: 
     // Relational select: billing_cycles!inner(period_month) or billing_cycles(period_month)
     const bcMatch = part.match(/^billing_cycles(?:!inner)?\((.*)\)$/);
     if (bcMatch) {
-      const innerCols = bcMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+      const innerCols = bcMatch[1]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       const jsonArgs = innerCols
         .map((c) => `'${c}', "billing_cycles".${sanitizeIdentifier(c)}`)
         .join(", ");
@@ -493,9 +543,14 @@ function parseSelectedColumns(cols: string, defaultTableName?: string, hasJoin: 
     }
 
     // Check for alias: "col as alias" or "col alias"
-    const aliasMatch = part.match(/^([a-zA-Z0-9_]+)\s+(?:as\s+)?([a-zA-Z0-9_]+)$/i);
+    const aliasMatch = part.match(
+      /^([a-zA-Z0-9_]+)\s+(?:as\s+)?([a-zA-Z0-9_]+)$/i,
+    );
     if (aliasMatch) {
-      const colPrefix = hasJoin && defaultTableName ? `${sanitizeIdentifier(defaultTableName)}.` : "";
+      const colPrefix =
+        hasJoin && defaultTableName
+          ? `${sanitizeIdentifier(defaultTableName)}.`
+          : "";
       return `${colPrefix}${sanitizeIdentifier(aliasMatch[1])} AS ${sanitizeIdentifier(aliasMatch[2])}`;
     }
 
@@ -503,11 +558,17 @@ function parseSelectedColumns(cols: string, defaultTableName?: string, hasJoin: 
     if (/^count\(\*\)$/i.test(part)) return "COUNT(*)";
     const countMatch = part.match(/^count\(([a-zA-Z0-9_]+)\)$/i);
     if (countMatch) {
-      const colPrefix = hasJoin && defaultTableName ? `${sanitizeIdentifier(defaultTableName)}.` : "";
+      const colPrefix =
+        hasJoin && defaultTableName
+          ? `${sanitizeIdentifier(defaultTableName)}.`
+          : "";
       return `COUNT(${colPrefix}${sanitizeIdentifier(countMatch[1])})`;
     }
 
-    const colPrefix = hasJoin && defaultTableName ? `${sanitizeIdentifier(defaultTableName)}.` : "";
+    const colPrefix =
+      hasJoin && defaultTableName
+        ? `${sanitizeIdentifier(defaultTableName)}.`
+        : "";
     return `${colPrefix}${sanitizeIdentifier(part)}`;
   });
 

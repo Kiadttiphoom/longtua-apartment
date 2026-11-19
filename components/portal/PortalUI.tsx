@@ -3,23 +3,50 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, Pencil, Plus, Trash2, TriangleAlert, X } from "lucide-react";
+import {
+  AlertCircle,
+  Pencil,
+  Plus,
+  Trash2,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 import type { DashboardActionResult } from "@/app/(portal)/resource-actions";
 import { alertSuccess, alertError } from "@/lib/sweetalert";
-import { DateTimeControl, type DateTimeMode } from "@/components/ui/DateTimeControl";
-import { SelectControl, type SelectOption } from "@/components/ui/SelectControl";
+import {
+  DateTimeControl,
+  type DateTimeMode,
+} from "@/components/ui/DateTimeControl";
+import {
+  SelectControl,
+  type SelectOption,
+} from "@/components/ui/SelectControl";
 export { DataTable } from "@/components/ui/DataTable";
 export { EmptyState } from "@/components/ui/EmptyState";
 export { StatusBadge } from "@/components/ui/StatusBadge";
 
 export type FieldErrors = Record<string, string>;
 
-export function PageHeader({ title, description, actionLabel, onAction }: { title: string; description: string; actionLabel?: string; onAction?: () => void }) {
+export function PageHeader({
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
   return (
     <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">{title}</h1>
-        <p className="text-slate-500 text-sm mt-1.5 max-w-2xl leading-relaxed">{description}</p>
+        <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          {title}
+        </h1>
+        <p className="text-slate-500 text-sm mt-1.5 max-w-2xl leading-relaxed">
+          {description}
+        </p>
       </div>
       {actionLabel && onAction ? (
         <button
@@ -65,15 +92,22 @@ export function Modal({
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     document.body.style.overflow = "hidden";
 
-    const focusableSelector = 'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+    const focusableSelector =
+      'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
     const focusFrame = requestAnimationFrame(() => {
       const bodyTarget = dialogRef.current?.querySelector<HTMLElement>(
-        'section > :not(header) input:not([disabled]):not([type="hidden"]), section > :not(header) select:not([disabled]), section > :not(header) textarea:not([disabled]), section > :not(header) button:not([disabled])'
+        'section > :not(header) input:not([disabled]):not([type="hidden"]), section > :not(header) select:not([disabled]), section > :not(header) textarea:not([disabled]), section > :not(header) button:not([disabled])',
       );
-      (bodyTarget ?? dialogRef.current?.querySelector<HTMLElement>(focusableSelector))?.focus({ preventScroll: true });
+      (
+        bodyTarget ??
+        dialogRef.current?.querySelector<HTMLElement>(focusableSelector)
+      )?.focus({ preventScroll: true });
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !pendingRef.current) {
@@ -82,7 +116,10 @@ export function Modal({
         return;
       }
       if (event.key !== "Tab") return;
-      const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []);
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ??
+          [],
+      );
       if (!focusable.length) {
         event.preventDefault();
         dialogRef.current?.focus();
@@ -128,8 +165,20 @@ export function Modal({
       >
         <header className="min-h-[64px] shrink-0 px-6 py-5 flex items-center justify-between gap-4 border-b border-slate-100 print:hidden">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold text-slate-900 leading-tight" id="portal-modal-title">{title}</h2>
-            {description ? <p className="text-xs text-slate-500 mt-1" id="portal-modal-description">{description}</p> : null}
+            <h2
+              className="text-lg font-bold text-slate-900 leading-tight"
+              id="portal-modal-title"
+            >
+              {title}
+            </h2>
+            {description ? (
+              <p
+                className="text-xs text-slate-500 mt-1"
+                id="portal-modal-description"
+              >
+                {description}
+              </p>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {headerActions}
@@ -153,13 +202,26 @@ export function Modal({
   );
 }
 
-export function PortalForm({ action, organizationId, validate, onSuccess, onCancel, children, submitLabel = "บันทึกข้อมูล", submitDisabled = false, submitDisabledReason }: {
+export function PortalForm({
+  action,
+  organizationId,
+  validate,
+  onSuccess,
+  onCancel,
+  children,
+  submitLabel = "บันทึกข้อมูล",
+  submitDisabled = false,
+  submitDisabledReason,
+}: {
   action: (formData: FormData) => Promise<DashboardActionResult>;
   organizationId: string;
   validate: (values: Record<string, FormDataEntryValue>) => object;
   onSuccess: () => void;
   onCancel?: () => void;
-  children: (errors: FieldErrors, clear: (name: string) => void) => React.ReactNode;
+  children: (
+    errors: FieldErrors,
+    clear: (name: string) => void,
+  ) => React.ReactNode;
   submitLabel?: string;
   submitDisabled?: boolean;
   submitDisabledReason?: string;
@@ -169,19 +231,33 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
   const [errors, setErrors] = useState<FieldErrors>({});
   const [result, setResult] = useState<DashboardActionResult | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
-  const clear = (name: string) => setErrors((current) => current[name] ? Object.fromEntries(Object.entries(current).filter(([key]) => key !== name)) : current);
+  const clear = (name: string) =>
+    setErrors((current) =>
+      current[name]
+        ? Object.fromEntries(
+            Object.entries(current).filter(([key]) => key !== name),
+          )
+        : current,
+    );
 
   return (
-    <form className="portal-form min-w-0 [&_.grid>*]:min-w-0" noValidate onSubmit={(event) => {
+    <form
+      className="portal-form min-w-0 [&_.grid>*]:min-w-0"
+      noValidate
+      onSubmit={(event) => {
         event.preventDefault();
         const form = event.currentTarget;
         const formData = new FormData(form);
         formData.set("organizationId", organizationId);
-        const nextErrors = validate(Object.fromEntries(formData)) as FieldErrors;
+        const nextErrors = validate(
+          Object.fromEntries(formData),
+        ) as FieldErrors;
         setErrors(nextErrors);
         setResult(null);
         if (Object.keys(nextErrors).length) {
-          requestAnimationFrame(() => form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+          requestAnimationFrame(() =>
+            form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+          );
           return;
         }
         startTransition(async () => {
@@ -191,7 +267,10 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
             if (nextResult.ok) {
               onSuccess();
               router.refresh();
-              await alertSuccess("บันทึกข้อมูลสำเร็จ", nextResult.message || "ระบบบันทึกข้อมูลเรียบร้อยแล้ว");
+              await alertSuccess(
+                "บันทึกข้อมูลสำเร็จ",
+                nextResult.message || "ระบบบันทึกข้อมูลเรียบร้อยแล้ว",
+              );
             } else {
               requestAnimationFrame(() => {
                 resultRef.current?.scrollIntoView({ block: "nearest" });
@@ -208,7 +287,12 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
     >
       <div className="p-6 flex flex-col gap-4 text-left">
         {result && !result.ok ? (
-          <div ref={resultRef} tabIndex={-1} className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium focus:outline-none" role="alert">
+          <div
+            ref={resultRef}
+            tabIndex={-1}
+            className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium focus:outline-none"
+            role="alert"
+          >
             <AlertCircle size={17} />
             <span>{result.message}</span>
           </div>
@@ -239,7 +323,17 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
   );
 }
 
-export function DeleteConfirmation({ action, organizationId, entityId, entityField, title, subject, detail, submitLabel, onClose }: {
+export function DeleteConfirmation({
+  action,
+  organizationId,
+  entityId,
+  entityField,
+  title,
+  subject,
+  detail,
+  submitLabel,
+  onClose,
+}: {
   action: (formData: FormData) => Promise<DashboardActionResult>;
   organizationId: string;
   entityId: string;
@@ -255,7 +349,12 @@ export function DeleteConfirmation({ action, organizationId, entityId, entityFie
   const [result, setResult] = useState<DashboardActionResult | null>(null);
 
   return (
-    <Modal title={title} description="ตรวจสอบให้แน่ใจก่อนลบ ข้อมูลที่ลบแล้วไม่สามารถกู้คืนจากหน้านี้ได้" onClose={onClose} pending={pending}>
+    <Modal
+      title={title}
+      description="ตรวจสอบให้แน่ใจก่อนลบ ข้อมูลที่ลบแล้วไม่สามารถกู้คืนจากหน้านี้ได้"
+      onClose={onClose}
+      pending={pending}
+    >
       <form
         className="p-6 flex flex-col gap-4 text-left"
         onSubmit={(event) => {
@@ -271,9 +370,15 @@ export function DeleteConfirmation({ action, organizationId, entityId, entityFie
               if (nextResult.ok) {
                 onClose();
                 router.refresh();
-                await alertSuccess("ลบข้อมูลสำเร็จ", nextResult.message || "รายการถูกลบเรียบร้อยแล้ว");
+                await alertSuccess(
+                  "ลบข้อมูลสำเร็จ",
+                  nextResult.message || "รายการถูกลบเรียบร้อยแล้ว",
+                );
               } else {
-                await alertError("ลบข้อมูลไม่สำเร็จ", nextResult.message || "ไม่สามารถลบรายการได้");
+                await alertError(
+                  "ลบข้อมูลไม่สำเร็จ",
+                  nextResult.message || "ไม่สามารถลบรายการได้",
+                );
               }
             } catch {
               const errMsg = "ลบข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง";
@@ -289,11 +394,16 @@ export function DeleteConfirmation({ action, organizationId, entityId, entityFie
           </span>
           <div>
             <strong className="text-sm font-bold block">{subject}</strong>
-            <p className="text-xs text-rose-700 mt-1 leading-relaxed">{detail}</p>
+            <p className="text-xs text-rose-700 mt-1 leading-relaxed">
+              {detail}
+            </p>
           </div>
         </div>
         {result && !result.ok ? (
-          <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold" role="alert">
+          <div
+            className="flex items-center gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold"
+            role="alert"
+          >
             <AlertCircle size={17} />
             <span>{result.message}</span>
           </div>
@@ -321,19 +431,71 @@ export function DeleteConfirmation({ action, organizationId, entityId, entityFie
   );
 }
 
-export function Field({ label, name, error, clear, required = false, type = "text", value, defaultValue, min, max, step, placeholder, disabled = false, readOnly = false, onChange }: { label: string; name: string; error?: string; clear: (name: string) => void; required?: boolean; type?: string; value?: string | number; defaultValue?: string | number | null; min?: number | string; max?: number | string; step?: string; placeholder?: string; disabled?: boolean; readOnly?: boolean; onChange?: (value: string) => void }) {
+export function Field({
+  label,
+  name,
+  error,
+  clear,
+  required = false,
+  type = "text",
+  value,
+  defaultValue,
+  min,
+  max,
+  step,
+  placeholder,
+  disabled = false,
+  readOnly = false,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  error?: string;
+  clear: (name: string) => void;
+  required?: boolean;
+  type?: string;
+  value?: string | number;
+  defaultValue?: string | number | null;
+  min?: number | string;
+  max?: number | string;
+  step?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  onChange?: (value: string) => void;
+}) {
   if (["date", "month", "time", "datetime-local"].includes(type)) {
     return (
       <div className="flex flex-col gap-1.5 text-left">
-        <span className="text-xs font-semibold text-slate-700">{label}{required ? " *" : ""}</span>
-        <DateTimeControl ariaLabel={label} defaultValue={defaultValue} disabled={disabled} invalid={Boolean(error)} max={max} min={min} mode={type as DateTimeMode} name={name} onValueChange={(val) => { clear(name); onChange?.(val); }} placeholder={placeholder} />
+        <span className="text-xs font-semibold text-slate-700">
+          {label}
+          {required ? " *" : ""}
+        </span>
+        <DateTimeControl
+          ariaLabel={label}
+          defaultValue={defaultValue}
+          disabled={disabled}
+          invalid={Boolean(error)}
+          max={max}
+          min={min}
+          mode={type as DateTimeMode}
+          name={name}
+          onValueChange={(val) => {
+            clear(name);
+            onChange?.(val);
+          }}
+          placeholder={placeholder}
+        />
         {error ? <small className="field-error">{error}</small> : null}
       </div>
     );
   }
   return (
     <label className="flex flex-col gap-1.5 text-left">
-      <span className="text-xs font-semibold text-slate-700">{label}{required ? " *" : ""}</span>
+      <span className="text-xs font-semibold text-slate-700">
+        {label}
+        {required ? " *" : ""}
+      </span>
       <input
         aria-invalid={Boolean(error)}
         aria-readonly={readOnly || undefined}
@@ -347,7 +509,10 @@ export function Field({ label, name, error, clear, required = false, type = "tex
         max={max}
         min={min}
         name={name}
-        onChange={(event) => { clear(name); onChange?.(event.target.value); }}
+        onChange={(event) => {
+          clear(name);
+          onChange?.(event.target.value);
+        }}
         placeholder={placeholder}
         readOnly={readOnly}
         step={step}
@@ -359,17 +524,62 @@ export function Field({ label, name, error, clear, required = false, type = "tex
   );
 }
 
-export function SelectField({ label, name, error, clear, options, value, defaultValue = "", required = false, onChange }: { label: string; name: string; error?: string; clear: (name: string) => void; options: SelectOption[]; value?: string; defaultValue?: string; required?: boolean; onChange?: (value: string, form: HTMLFormElement | null) => void }) {
+export function SelectField({
+  label,
+  name,
+  error,
+  clear,
+  options,
+  value,
+  defaultValue = "",
+  required = false,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  error?: string;
+  clear: (name: string) => void;
+  options: SelectOption[];
+  value?: string;
+  defaultValue?: string;
+  required?: boolean;
+  onChange?: (value: string, form: HTMLFormElement | null) => void;
+}) {
   return (
     <div className="flex flex-col gap-1.5 text-left">
-      <span className="text-xs font-semibold text-slate-700">{label}{required ? " *" : ""}</span>
-      <SelectControl ariaLabel={label} defaultValue={defaultValue} invalid={Boolean(error)} name={name} onValueChange={(nextValue, form) => { clear(name); onChange?.(nextValue, form); }} options={options} placeholder={`เลือก${label}`} value={value} />
+      <span className="text-xs font-semibold text-slate-700">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <SelectControl
+        ariaLabel={label}
+        defaultValue={defaultValue}
+        invalid={Boolean(error)}
+        name={name}
+        onValueChange={(nextValue, form) => {
+          clear(name);
+          onChange?.(nextValue, form);
+        }}
+        options={options}
+        placeholder={`เลือก${label}`}
+        value={value}
+      />
       {error ? <small className="field-error">{error}</small> : null}
     </div>
   );
 }
 
-export function EditButton({ label, onClick, disabled = false, title = "แก้ไข" }: { label: string; onClick: () => void; disabled?: boolean; title?: string }) {
+export function EditButton({
+  label,
+  onClick,
+  disabled = false,
+  title = "แก้ไข",
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+}) {
   return (
     <button
       aria-label={`แก้ไข ${label}`}
@@ -384,7 +594,17 @@ export function EditButton({ label, onClick, disabled = false, title = "แก�
   );
 }
 
-export function DeleteButton({ label, onClick, disabled = false, title = "ลบ" }: { label: string; onClick: () => void; disabled?: boolean; title?: string }) {
+export function DeleteButton({
+  label,
+  onClick,
+  disabled = false,
+  title = "ลบ",
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+}) {
   return (
     <button
       aria-label={`ลบ ${label}`}
@@ -399,7 +619,15 @@ export function DeleteButton({ label, onClick, disabled = false, title = "ลบ
   );
 }
 
-export function ViewButton({ label, onClick, title = "ดูรายละเอียด" }: { label: string; onClick: () => void; title?: string }) {
+export function ViewButton({
+  label,
+  onClick,
+  title = "ดูรายละเอียด",
+}: {
+  label: string;
+  onClick: () => void;
+  title?: string;
+}) {
   return (
     <button
       aria-label={`${title} ${label}`}
@@ -413,7 +641,15 @@ export function ViewButton({ label, onClick, title = "ดูรายละเ�
   );
 }
 
-export function PrintButton({ label, onClick, title = "พิมพ์ A4" }: { label: string; onClick: () => void; title?: string }) {
+export function PrintButton({
+  label,
+  onClick,
+  title = "พิมพ์ A4",
+}: {
+  label: string;
+  onClick: () => void;
+  title?: string;
+}) {
   return (
     <button
       aria-label={`${title} ${label}`}
@@ -423,7 +659,15 @@ export function PrintButton({ label, onClick, title = "พิมพ์ A4" }: { 
       type="button"
     >
       <X size={0} className="hidden" />
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+      <svg
+        className="w-3.5 h-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
         <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
         <path d="M6 14h12v8H6z" />
       </svg>

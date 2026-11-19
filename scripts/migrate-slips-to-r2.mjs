@@ -1,5 +1,9 @@
 import { Pool } from "pg";
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import { createClient } from "@supabase/supabase-js";
 
 const args = process.argv.slice(2);
@@ -7,7 +11,9 @@ const isApply = args.includes("--apply");
 const isDryRun = !isApply || args.includes("--dry-run");
 
 console.log(`=== สคริปต์ย้ายสลิปโอนเงินจาก Supabase Storage ไป Cloudflare R2 ===`);
-console.log(`โหมดการทำงาน: ${isDryRun ? "DRY-RUN (ตรวจสอบอย่างเดียว ไม่เปลี่ยนแปลงข้อมูล)" : "APPLY (ดำเนินการย้ายจริง)"}\n`);
+console.log(
+  `โหมดการทำงาน: ${isDryRun ? "DRY-RUN (ตรวจสอบอย่างเดียว ไม่เปลี่ยนแปลงข้อมูล)" : "APPLY (ดำเนินการย้ายจริง)"}\n`,
+);
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -15,12 +21,19 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const supabaseUrl = process.env.SUPABASE_MIGRATION_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_MIGRATION_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl =
+  process.env.SUPABASE_MIGRATION_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_MIGRATION_SERVICE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn("คำเตือน: ขาด SUPABASE_MIGRATION_URL หรือ SUPABASE_MIGRATION_SERVICE_KEY");
-  console.warn("หากไม่มี credentials ของ Supabase Storage จะไม่สามารถดาวน์โหลดไฟล์เก่าได้\n");
+  console.warn(
+    "คำเตือน: ขาด SUPABASE_MIGRATION_URL หรือ SUPABASE_MIGRATION_SERVICE_KEY",
+  );
+  console.warn(
+    "หากไม่มี credentials ของ Supabase Storage จะไม่สามารถดาวน์โหลดไฟล์เก่าได้\n",
+  );
 }
 
 const r2Endpoint = process.env.R2_S3_ENDPOINT;
@@ -30,7 +43,9 @@ const r2SecretKey = process.env.R2_PRIVATE_SECRET_ACCESS_KEY;
 const r2Region = process.env.R2_REGION || "auto";
 
 if (!r2Endpoint || !r2AccessKey || !r2SecretKey) {
-  console.error("ข้อผิดพลาด: ขาดการกำหนดค่า Cloudflare R2 Private Bucket ใน environment variables");
+  console.error(
+    "ข้อผิดพลาด: ขาดการกำหนดค่า Cloudflare R2 Private Bucket ใน environment variables",
+  );
   process.exit(1);
 }
 
@@ -43,7 +58,8 @@ const s3Client = new S3Client({
   },
 });
 
-const isLocalhost = databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+const isLocalhost =
+  databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
 let cleanDbUrl = databaseUrl;
 if (!isLocalhost && cleanDbUrl.includes("sslmode=")) {
   cleanDbUrl = cleanDbUrl.replace(/[\?&]sslmode=[^&]+/g, "");
@@ -73,7 +89,9 @@ try {
 
   console.log("\nรายการสลิปที่ต้องย้าย:");
   for (const s of legacySlips.slice(0, 10)) {
-    console.log(`- ID: ${s.id} | Org: ${s.organization_id} | Path เดิม: ${s.slip_path}`);
+    console.log(
+      `- ID: ${s.id} | Org: ${s.organization_id} | Path เดิม: ${s.slip_path}`,
+    );
   }
   if (legacySlips.length > 10) {
     console.log(`  ... และอีก ${legacySlips.length - 10} รายการ`);
@@ -83,13 +101,17 @@ try {
     console.log("\n[DRY RUN สรุป]:");
     console.log(`- จำนวนที่ต้องย้าย: ${legacySlips.length} ไฟล์`);
     console.log(`- ปลายทาง R2 Bucket: ${r2Bucket}`);
-    console.log("หากต้องการย้ายจริง ให้รันคำสั่ง: node scripts/migrate-slips-to-r2.mjs --apply");
+    console.log(
+      "หากต้องการย้ายจริง ให้รันคำสั่ง: node scripts/migrate-slips-to-r2.mjs --apply",
+    );
     process.exit(0);
   }
 
   // Live Apply Mode
   if (!supabaseUrl || !supabaseKey) {
-    console.error("ข้อผิดพลาด: การย้ายจริง (--apply) ต้องระบุ SUPABASE_MIGRATION_URL และ SUPABASE_MIGRATION_SERVICE_KEY เพื่อดาวน์โหลดไฟล์");
+    console.error(
+      "ข้อผิดพลาด: การย้ายจริง (--apply) ต้องระบุ SUPABASE_MIGRATION_URL และ SUPABASE_MIGRATION_SERVICE_KEY เพื่อดาวน์โหลดไฟล์",
+    );
     process.exit(1);
   }
 
@@ -110,7 +132,10 @@ try {
         .download(slip.slip_path);
 
       if (downloadError || !blob) {
-        console.error(`  - ดาวน์โหลดจาก Supabase ล้มเหลว:`, downloadError?.message);
+        console.error(
+          `  - ดาวน์โหลดจาก Supabase ล้มเหลว:`,
+          downloadError?.message,
+        );
         errorCount++;
         continue;
       }

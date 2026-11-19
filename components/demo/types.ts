@@ -1,15 +1,37 @@
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
 
-export type RoleKey = "super_admin" | "owner" | "manager" | "accounting" | "staff";
+export type RoleKey =
+  "super_admin" | "owner" | "manager" | "accounting" | "staff";
 export type SubscriptionState = "trialing" | "active" | "expired";
 
 export type PageKey =
-  | "dashboard" | "companies" | "properties" | "rooms" | "tenants" | "contracts"
-  | "meters" | "invoices" | "payments" | "receivables" | "reports" | "line"
-  | "users" | "roles" | "permissions" | "menus" | "subscriptions" | "audit" | "settings";
+  | "dashboard"
+  | "companies"
+  | "properties"
+  | "rooms"
+  | "tenants"
+  | "contracts"
+  | "meters"
+  | "invoices"
+  | "payments"
+  | "receivables"
+  | "reports"
+  | "line"
+  | "users"
+  | "roles"
+  | "permissions"
+  | "menus"
+  | "subscriptions"
+  | "audit"
+  | "settings";
 
-export type NavItem = { code: PageKey; label: string; icon: ComponentType<LucideProps>; addon?: boolean };
+export type NavItem = {
+  code: PageKey;
+  label: string;
+  icon: ComponentType<LucideProps>;
+  addon?: boolean;
+};
 export type NavGroup = { label: string; items: NavItem[] };
 
 export type Company = {

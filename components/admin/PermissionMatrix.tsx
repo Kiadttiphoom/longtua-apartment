@@ -2,12 +2,33 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { saveRoleMenuActionsAction, saveUserMenuActionsAction, updateMembershipRoleAction } from "@/app/(admin)/admin/actions";
+import {
+  saveRoleMenuActionsAction,
+  saveUserMenuActionsAction,
+  updateMembershipRoleAction,
+} from "@/app/(admin)/admin/actions";
 
 export type ActionOption = { code: string; name: string };
-export type MenuOption = { id: string; code: string; label: string; actionCodes: string[] };
-export type RoleOption = { id: string; code: string; name: string; values: Record<string, boolean> };
-export type UserOption = { id: string; username: string; name: string; roleCode: string; roleName: string; values: Record<string, "inherit" | "allow" | "deny"> };
+export type MenuOption = {
+  id: string;
+  code: string;
+  label: string;
+  actionCodes: string[];
+};
+export type RoleOption = {
+  id: string;
+  code: string;
+  name: string;
+  values: Record<string, boolean>;
+};
+export type UserOption = {
+  id: string;
+  username: string;
+  name: string;
+  roleCode: string;
+  roleName: string;
+  values: Record<string, "inherit" | "allow" | "deny">;
+};
 
 function useDirtyWarning(dirty: boolean) {
   useEffect(() => {
@@ -25,14 +46,27 @@ function changeLocation(url: string, dirty: boolean) {
   }
 }
 
-export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: { menus: MenuOption[]; actions: ActionOption[]; roles: RoleOption[]; selectedRoleId: string }) {
+export function RolePermissionMatrix({
+  menus,
+  actions,
+  roles,
+  selectedRoleId,
+}: {
+  menus: MenuOption[];
+  actions: ActionOption[];
+  roles: RoleOption[];
+  selectedRoleId: string;
+}) {
   const role = roles.find((item) => item.id === selectedRoleId) ?? roles[0];
-  const [values, setValues] = useState<Record<string, boolean>>(role?.values ?? {});
+  const [values, setValues] = useState<Record<string, boolean>>(
+    role?.values ?? {},
+  );
   const [dirty, setDirty] = useState(false);
   useDirtyWarning(dirty);
 
   const locked = !role || role.code === "super_admin";
-  const supported = (menu: MenuOption, actionCode: string) => menu.actionCodes.includes(actionCode);
+  const supported = (menu: MenuOption, actionCode: string) =>
+    menu.actionCodes.includes(actionCode);
 
   const setCell = (menu: MenuOption, actionCode: string, checked: boolean) => {
     setValues((current) => {
@@ -56,9 +90,9 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
           menuId: menu.id,
           actionCode,
           isAllowed: Boolean(values[`${menu.id}:${actionCode}`]),
-        }))
+        })),
       ),
-    [menus, values]
+    [menus, values],
   );
 
   return (
@@ -68,11 +102,18 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
           <span>Role:</span>
           <select
             className="h-8 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal"
-            onChange={(event) => changeLocation(`/admin/permissions?role=${event.target.value}`, dirty)}
+            onChange={(event) =>
+              changeLocation(
+                `/admin/permissions?role=${event.target.value}`,
+                dirty,
+              )
+            }
             value={role?.id ?? ""}
           >
             {roles.map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
             ))}
           </select>
         </label>
@@ -84,7 +125,9 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
             defaultValue=""
             disabled={locked}
             onChange={(event) => {
-              const source = roles.find((item) => item.id === event.target.value);
+              const source = roles.find(
+                (item) => item.id === event.target.value,
+              );
               if (source) {
                 setValues(source.values);
                 setDirty(true);
@@ -92,9 +135,13 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
             }}
           >
             <option value="">เลือก Role</option>
-            {roles.filter((item) => item.id !== role?.id).map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
-            ))}
+            {roles
+              .filter((item) => item.id !== role?.id)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
           </select>
         </label>
       </div>
@@ -113,16 +160,26 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
           <table className="w-full text-left text-[13px] border-collapse whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500">เมนู</th>
+                <th className="px-4 py-3 text-xs font-medium text-slate-500">
+                  เมนู
+                </th>
                 {actions.map((action) => (
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 text-center" key={action.code}>
+                  <th
+                    className="px-4 py-3 text-xs font-medium text-slate-500 text-center"
+                    key={action.code}
+                  >
                     <button
                       className="hover:text-blue-600 cursor-pointer disabled:cursor-default"
                       disabled={locked}
                       onClick={() => {
-                        const targets = menus.filter((menu) => supported(menu, action.code));
-                        const checked = !targets.every((menu) => values[`${menu.id}:${action.code}`]);
-                        for (const menu of targets) setCell(menu, action.code, checked);
+                        const targets = menus.filter((menu) =>
+                          supported(menu, action.code),
+                        );
+                        const checked = !targets.every(
+                          (menu) => values[`${menu.id}:${action.code}`],
+                        );
+                        for (const menu of targets)
+                          setCell(menu, action.code, checked);
                       }}
                       type="button"
                     >
@@ -134,33 +191,48 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
             </thead>
             <tbody className="divide-y divide-slate-100">
               {menus.map((menu) => (
-                <tr className="hover:bg-slate-50/70 transition-colors" key={menu.id}>
+                <tr
+                  className="hover:bg-slate-50/70 transition-colors"
+                  key={menu.id}
+                >
                   <th className="px-4 py-3 align-middle font-normal text-slate-800">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
-                        checked={menu.actionCodes.every((code) => Boolean(values[`${menu.id}:${code}`]))}
+                        checked={menu.actionCodes.every((code) =>
+                          Boolean(values[`${menu.id}:${code}`]),
+                        )}
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                         disabled={locked}
                         onChange={(event) => {
-                          for (const code of menu.actionCodes) setCell(menu, code, event.target.checked);
+                          for (const code of menu.actionCodes)
+                            setCell(menu, code, event.target.checked);
                         }}
                         type="checkbox"
                       />
                       <span>
-                        <strong className="block text-xs font-semibold">{menu.label}</strong>
-                        <small className="block text-[10px] text-slate-400">{menu.code}</small>
+                        <strong className="block text-xs font-semibold">
+                          {menu.label}
+                        </strong>
+                        <small className="block text-[10px] text-slate-400">
+                          {menu.code}
+                        </small>
                       </span>
                     </label>
                   </th>
                   {actions.map((action) => (
-                    <td className="px-4 py-3 align-middle text-center" key={action.code}>
+                    <td
+                      className="px-4 py-3 align-middle text-center"
+                      key={action.code}
+                    >
                       {supported(menu, action.code) ? (
                         <input
                           aria-label={`${menu.label} ${action.name}`}
                           checked={Boolean(values[`${menu.id}:${action.code}`])}
                           className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
                           disabled={locked}
-                          onChange={(event) => setCell(menu, action.code, event.target.checked)}
+                          onChange={(event) =>
+                            setCell(menu, action.code, event.target.checked)
+                          }
                           type="checkbox"
                         />
                       ) : (
@@ -179,12 +251,20 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
             <span className="text-xs text-slate-300 flex items-center gap-1.5">
               {dirty ? (
                 <>
-                  <AlertCircle size={15} className="text-amber-400" strokeWidth={2.2} />
+                  <AlertCircle
+                    size={15}
+                    className="text-amber-400"
+                    strokeWidth={2.2}
+                  />
                   <span>มีการแก้ไขที่ยังไม่ได้บันทึก</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={15} className="text-emerald-400" strokeWidth={2.2} />
+                  <CheckCircle2
+                    size={15}
+                    className="text-emerald-400"
+                    strokeWidth={2.2}
+                  />
                   <span>ข้อมูลเป็นปัจจุบัน</span>
                 </>
               )}
@@ -202,9 +282,27 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
   );
 }
 
-export function UserPermissionMatrix({ menus, actions, organizations, organizationRoles, selectedOrganizationId, users, selectedUserId }: { menus: MenuOption[]; actions: ActionOption[]; organizations: Array<{ id: string; name: string }>; organizationRoles: Array<{ code: string; name: string }>; selectedOrganizationId: string; users: UserOption[]; selectedUserId: string }) {
+export function UserPermissionMatrix({
+  menus,
+  actions,
+  organizations,
+  organizationRoles,
+  selectedOrganizationId,
+  users,
+  selectedUserId,
+}: {
+  menus: MenuOption[];
+  actions: ActionOption[];
+  organizations: Array<{ id: string; name: string }>;
+  organizationRoles: Array<{ code: string; name: string }>;
+  selectedOrganizationId: string;
+  users: UserOption[];
+  selectedUserId: string;
+}) {
   const user = users.find((item) => item.id === selectedUserId) ?? users[0];
-  const [values, setValues] = useState<Record<string, "inherit" | "allow" | "deny">>(user?.values ?? {});
+  const [values, setValues] = useState<
+    Record<string, "inherit" | "allow" | "deny">
+  >(user?.values ?? {});
   const [dirty, setDirty] = useState(false);
   useDirtyWarning(dirty);
 
@@ -215,9 +313,9 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
           menuId: menu.id,
           actionCode,
           mode: values[`${menu.id}:${actionCode}`] ?? "inherit",
-        }))
+        })),
       ),
-    [menus, values]
+    [menus, values],
   );
 
   return (
@@ -227,11 +325,18 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
           <span>กิจการ:</span>
           <select
             className="h-8 px-3 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal"
-            onChange={(event) => changeLocation(`/admin/permissions?mode=user&organization=${event.target.value}`, dirty)}
+            onChange={(event) =>
+              changeLocation(
+                `/admin/permissions?mode=user&organization=${event.target.value}`,
+                dirty,
+              )
+            }
             value={selectedOrganizationId}
           >
             {organizations.map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
             ))}
           </select>
         </label>
@@ -240,11 +345,18 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
           <span>ผู้ใช้งาน:</span>
           <select
             className="h-8 px-3 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal"
-            onChange={(event) => changeLocation(`/admin/permissions?mode=user&organization=${selectedOrganizationId}&user=${event.target.value}`, dirty)}
+            onChange={(event) =>
+              changeLocation(
+                `/admin/permissions?mode=user&organization=${selectedOrganizationId}&user=${event.target.value}`,
+                dirty,
+              )
+            }
             value={user?.id ?? ""}
           >
             {users.map((item) => (
-              <option key={item.id} value={item.id}>{item.name} · {item.username}</option>
+              <option key={item.id} value={item.id}>
+                {item.name} · {item.username}
+              </option>
             ))}
           </select>
         </label>
@@ -252,11 +364,19 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
         {user ? (
           user.roleCode === "owner" ? (
             <p className="text-slate-600">
-              Role: <strong className="text-slate-800">{user.roleName}</strong> (เจ้าของกิจการ)
+              Role: <strong className="text-slate-800">{user.roleName}</strong>{" "}
+              (เจ้าของกิจการ)
             </p>
           ) : (
-            <form action={updateMembershipRoleAction} className="inline-flex items-center gap-2">
-              <input name="organizationId" type="hidden" value={selectedOrganizationId} />
+            <form
+              action={updateMembershipRoleAction}
+              className="inline-flex items-center gap-2"
+            >
+              <input
+                name="organizationId"
+                type="hidden"
+                value={selectedOrganizationId}
+              />
               <input name="userId" type="hidden" value={user.id} />
               <label className="flex items-center gap-2 font-semibold text-slate-700">
                 <span>Role:</span>
@@ -268,7 +388,9 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
                   {organizationRoles
                     .filter((item) => item.code !== "owner")
                     .map((item) => (
-                      <option key={item.code} value={item.code}>{item.name}</option>
+                      <option key={item.code} value={item.code}>
+                        {item.name}
+                      </option>
                     ))}
                 </select>
               </label>
@@ -288,8 +410,15 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
           กิจการนี้ยังไม่มีสมาชิกที่ Active
         </p>
       ) : (
-        <form action={saveUserMenuActionsAction} onSubmit={() => setDirty(false)}>
-          <input name="organizationId" type="hidden" value={selectedOrganizationId} />
+        <form
+          action={saveUserMenuActionsAction}
+          onSubmit={() => setDirty(false)}
+        >
+          <input
+            name="organizationId"
+            type="hidden"
+            value={selectedOrganizationId}
+          />
           <input name="userId" type="hidden" value={user.id} />
           <input name="values" type="hidden" value={JSON.stringify(rows)} />
 
@@ -297,9 +426,14 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
             <table className="w-full text-left text-[13px] border-collapse whitespace-nowrap">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500">เมนู</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500">
+                    เมนู
+                  </th>
                   {actions.map((action) => (
-                    <th className="px-4 py-3 text-xs font-medium text-slate-500 text-center" key={action.code}>
+                    <th
+                      className="px-4 py-3 text-xs font-medium text-slate-500 text-center"
+                      key={action.code}
+                    >
                       {action.name}
                     </th>
                   ))}
@@ -307,18 +441,28 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {menus.map((menu) => (
-                  <tr className="hover:bg-slate-50/70 transition-colors" key={menu.id}>
+                  <tr
+                    className="hover:bg-slate-50/70 transition-colors"
+                    key={menu.id}
+                  >
                     <th className="px-4 py-3 align-middle font-normal text-slate-800">
                       <span>
-                        <strong className="block text-xs font-semibold">{menu.label}</strong>
-                        <small className="block text-[10px] text-slate-400">{menu.code}</small>
+                        <strong className="block text-xs font-semibold">
+                          {menu.label}
+                        </strong>
+                        <small className="block text-[10px] text-slate-400">
+                          {menu.code}
+                        </small>
                       </span>
                     </th>
                     {actions.map((action) => {
                       const enabled = menu.actionCodes.includes(action.code);
                       const key = `${menu.id}:${action.code}`;
                       return (
-                        <td className="px-4 py-3 align-middle text-center" key={action.code}>
+                        <td
+                          className="px-4 py-3 align-middle text-center"
+                          key={action.code}
+                        >
                           {enabled ? (
                             <select
                               aria-label={`${menu.label} ${action.name}`}
@@ -326,7 +470,8 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
                               onChange={(event) => {
                                 setValues((current) => ({
                                   ...current,
-                                  [key]: event.target.value as "inherit" | "allow" | "deny",
+                                  [key]: event.target.value as
+                                    "inherit" | "allow" | "deny",
                                 }));
                                 setDirty(true);
                               }}
@@ -363,12 +508,20 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
               <span className="text-xs text-slate-300 flex items-center gap-1.5">
                 {dirty ? (
                   <>
-                    <AlertCircle size={15} className="text-amber-400" strokeWidth={2.2} />
+                    <AlertCircle
+                      size={15}
+                      className="text-amber-400"
+                      strokeWidth={2.2}
+                    />
                     <span>มีการแก้ไขที่ยังไม่ได้บันทึก</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 size={15} className="text-emerald-400" strokeWidth={2.2} />
+                    <CheckCircle2
+                      size={15}
+                      className="text-emerald-400"
+                      strokeWidth={2.2}
+                    />
                     <span>ข้อมูลเป็นปัจจุบัน</span>
                   </>
                 )}

@@ -125,7 +125,9 @@ export const SUPPORTED_BANKS: BankOption[] = [
  * Searches for a bank by key, name, or shortName.
  * If bankKeyOrText contains an embedded tag e.g. [bank:kbank], extracts it.
  */
-export function findBank(bankKeyOrText?: string | null): BankOption | undefined {
+export function findBank(
+  bankKeyOrText?: string | null,
+): BankOption | undefined {
   if (!bankKeyOrText) return undefined;
   const raw = bankKeyOrText.trim();
 
@@ -144,7 +146,7 @@ export function findBank(bankKeyOrText?: string | null): BankOption | undefined 
       b.name.toLowerCase() === clean ||
       b.shortName.toLowerCase() === clean ||
       clean.includes(b.shortName.toLowerCase()) ||
-      b.name.toLowerCase().includes(clean)
+      b.name.toLowerCase().includes(clean),
   );
 }
 
@@ -156,7 +158,12 @@ export function cleanAccountName(name?: string | null): string {
   if (name.startsWith("{") && name.endsWith("}")) {
     try {
       const parsed = JSON.parse(name);
-      return parsed.bankAccountName || parsed.accountName || parsed.promptpayName || "";
+      return (
+        parsed.bankAccountName ||
+        parsed.accountName ||
+        parsed.promptpayName ||
+        ""
+      );
     } catch {
       // ignore
     }
@@ -189,7 +196,9 @@ export interface ParsedPaymentSettings {
  * Parses settings to extract both Bank Account and PromptPay information,
  * handling backward compatibility and fallback JSON encoding if columns do not exist.
  */
-export function parsePaymentSettings(setting?: PaymentSettingsInput | null): ParsedPaymentSettings {
+export function parsePaymentSettings(
+  setting?: PaymentSettingsInput | null,
+): ParsedPaymentSettings {
   if (!setting) {
     return {
       hasBank: false,
@@ -206,7 +215,11 @@ export function parsePaymentSettings(setting?: PaymentSettingsInput | null): Par
 
   // 1. Check if account_name contains encoded JSON fallback
   let jsonFallback: Record<string, string> | null = null;
-  if (setting.account_name && setting.account_name.startsWith("{") && setting.account_name.endsWith("}")) {
+  if (
+    setting.account_name &&
+    setting.account_name.startsWith("{") &&
+    setting.account_name.endsWith("}")
+  ) {
     try {
       jsonFallback = JSON.parse(setting.account_name);
     } catch {
@@ -254,7 +267,13 @@ export function parsePaymentSettings(setting?: PaymentSettingsInput | null): Par
 
   // Fallback: If bankAccountNo wasn't set, but bankKey was set and promptpay_id is present
   // and bankKey is NOT promptpay, user might have used old promptpay_id as bank account.
-  if (!hasBank && !hasPromptpay && bankKey && bankKey !== "promptpay" && setting.promptpay_id) {
+  if (
+    !hasBank &&
+    !hasPromptpay &&
+    bankKey &&
+    bankKey !== "promptpay" &&
+    setting.promptpay_id
+  ) {
     return {
       hasBank: true,
       bank,
@@ -282,4 +301,3 @@ export function parsePaymentSettings(setting?: PaymentSettingsInput | null): Par
     hasAny: hasBank || hasPromptpay,
   };
 }
-

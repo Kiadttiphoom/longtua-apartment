@@ -77,26 +77,86 @@ export function PaymentsPage({
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState("all");
-  const [selectedPropertyId, setSelectedPropertyId] = useState(activeProperty?.id ?? properties[0]?.id ?? "");
+  const [selectedPropertyId, setSelectedPropertyId] = useState(
+    activeProperty?.id ?? properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
 
-  const currentProperty = properties.find((p) => p.id === selectedPropertyId) ?? activeProperty ?? properties[0];
+  const currentProperty =
+    properties.find((p) => p.id === selectedPropertyId) ??
+    activeProperty ??
+    properties[0];
 
   const floorLabel = (key: string) => `ชั้น ${key}`;
 
   // Local demo payments
   const [payments, setPayments] = useState<DemoPayment[]>(() => {
     const list: DemoPayment[] = [];
-    const propsList = properties && properties.length > 0 ? properties : [activeProperty];
+    const propsList =
+      properties && properties.length > 0 ? properties : [activeProperty];
 
     propsList.forEach((prop) => {
       const demoData = [
-        { room: "101", floor: "1", tenant: "สมมุต ศรีสระเกษ", phone: "089-123-4567", amount: 3210, date: "2026-08-01", method: "promptpay" as const, ref: "PP-987213456" },
-        { room: "102", floor: "1", tenant: "อารยา พรดี", phone: "089-876-5432", amount: 3105, date: "2026-07-31", method: "transfer" as const, ref: "KBANK-11209" },
-        { room: "201", floor: "2", tenant: "กิตติภพ ทองแท้", phone: "081-998-7766", amount: 3450, date: "2026-08-02", method: "transfer" as const, ref: "SCB-876231" },
-        { room: "202", floor: "2", tenant: "ธนกฤต มั่งคั่ง", phone: "092-333-8888", amount: 3800, date: "2026-08-03", method: "cash" as const, ref: "CASH-202608" },
-        { room: "301", floor: "3", tenant: "ปรียานุช รุ่งเรือง", phone: "084-222-1111", amount: 4150, date: "2026-08-02", method: "promptpay" as const, ref: "PP-6543219" },
-        { room: "302", floor: "3", tenant: "อภิสิทธิ์ วงศ์ไทย", phone: "085-777-9999", amount: 4300, date: "2026-08-01", method: "card" as const, ref: "VISA-9912" },
+        {
+          room: "101",
+          floor: "1",
+          tenant: "สมมุต ศรีสระเกษ",
+          phone: "089-123-4567",
+          amount: 3210,
+          date: "2026-08-01",
+          method: "promptpay" as const,
+          ref: "PP-987213456",
+        },
+        {
+          room: "102",
+          floor: "1",
+          tenant: "อารยา พรดี",
+          phone: "089-876-5432",
+          amount: 3105,
+          date: "2026-07-31",
+          method: "transfer" as const,
+          ref: "KBANK-11209",
+        },
+        {
+          room: "201",
+          floor: "2",
+          tenant: "กิตติภพ ทองแท้",
+          phone: "081-998-7766",
+          amount: 3450,
+          date: "2026-08-02",
+          method: "transfer" as const,
+          ref: "SCB-876231",
+        },
+        {
+          room: "202",
+          floor: "2",
+          tenant: "ธนกฤต มั่งคั่ง",
+          phone: "092-333-8888",
+          amount: 3800,
+          date: "2026-08-03",
+          method: "cash" as const,
+          ref: "CASH-202608",
+        },
+        {
+          room: "301",
+          floor: "3",
+          tenant: "ปรียานุช รุ่งเรือง",
+          phone: "084-222-1111",
+          amount: 4150,
+          date: "2026-08-02",
+          method: "promptpay" as const,
+          ref: "PP-6543219",
+        },
+        {
+          room: "302",
+          floor: "3",
+          tenant: "อภิสิทธิ์ วงศ์ไทย",
+          phone: "085-777-9999",
+          amount: 4300,
+          date: "2026-08-01",
+          method: "card" as const,
+          ref: "VISA-9912",
+        },
       ];
 
       demoData.forEach((d) => {
@@ -134,7 +194,12 @@ export function PaymentsPage({
       value,
       count,
       label: floorLabel(value),
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [propertyPayments]);
 
   // Demo slip submission waiting for review
@@ -152,16 +217,21 @@ export function PaymentsPage({
   ]);
 
   // Modal states
-  const [viewingReceipt, setViewingReceipt] = useState<DemoPayment | null>(null);
+  const [viewingReceipt, setViewingReceipt] = useState<DemoPayment | null>(
+    null,
+  );
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [viewingSlip, setViewingSlip] = useState<DemoSlipSubmission | null>(null);
+  const [viewingSlip, setViewingSlip] = useState<DemoSlipSubmission | null>(
+    null,
+  );
 
   // Form states
   const [formRoom, setFormRoom] = useState("101");
   const [formTenant, setFormTenant] = useState("สมมุต ศรีสระเกษ");
   const [formInvoice, setFormInvoice] = useState("INV-2569-08101");
   const [formAmount, setFormAmount] = useState(3210);
-  const [formMethod, setFormMethod] = useState<DemoPayment["method"]>("promptpay");
+  const [formMethod, setFormMethod] =
+    useState<DemoPayment["method"]>("promptpay");
   const [formPaidDate, setFormPaidDate] = useState("2026-08-02");
   const [formRef, setFormRef] = useState("TXN-123456");
 
@@ -200,7 +270,12 @@ export function PaymentsPage({
       value,
       label: floorLabel(value),
       payments: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered]);
 
   const methodLabel = (m: string) => {
@@ -291,7 +366,10 @@ export function PaymentsPage({
       />
 
       {/* 4 Hero Stat Cards (Matching Portal PaymentsPage) */}
-      <section aria-label="ภาพรวมการรับชำระ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมการรับชำระ"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Card 1: Verified Paid Amount */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
           <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
@@ -300,7 +378,9 @@ export function PaymentsPage({
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">รับชำระยืนยันแล้ว</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                รับชำระยืนยันแล้ว
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {money(confirmedAmount)}
               </strong>
@@ -324,7 +404,9 @@ export function PaymentsPage({
               <Receipt size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">รายการทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                รายการทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalCount.toLocaleString("th-TH")} รายการ
               </strong>
@@ -340,7 +422,9 @@ export function PaymentsPage({
               <Clock3 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">สลิปรอตรวจสอบ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                สลิปรอตรวจสอบ
+              </span>
               <strong className="text-2xl font-black text-amber-800 tracking-tight tabular-nums mt-0.5 block">
                 {pendingSlipsCount.toLocaleString("th-TH")} รายการ
               </strong>
@@ -356,7 +440,9 @@ export function PaymentsPage({
               <CreditCard size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ใบแจ้งหนี้รอชำระ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ใบแจ้งหนี้รอชำระ
+              </span>
               <strong className="text-2xl font-black text-rose-800 tracking-tight tabular-nums mt-0.5 block">
                 {openInvoicesCount.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -386,12 +472,20 @@ export function PaymentsPage({
                     <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-mono font-bold">
                       ห้อง {sub.roomNumber}
                     </span>
-                    <strong className="text-xs font-bold text-slate-800">{sub.tenant}</strong>
+                    <strong className="text-xs font-bold text-slate-800">
+                      {sub.tenant}
+                    </strong>
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
-                    ยอดเงิน: <strong className="text-emerald-700 font-mono">{money(sub.amount)}</strong> · {sub.paidAt}
+                    ยอดเงิน:{" "}
+                    <strong className="text-emerald-700 font-mono">
+                      {money(sub.amount)}
+                    </strong>{" "}
+                    · {sub.paidAt}
                   </p>
-                  <span className="text-[11px] text-slate-400 block truncate">{sub.method}</span>
+                  <span className="text-[11px] text-slate-400 block truncate">
+                    {sub.method}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -419,20 +513,31 @@ export function PaymentsPage({
       ) : null}
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายการรับชำระ</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงรายการรับชำระ
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
             {properties.length} หอพัก · {payments.length} รายการรับชำระทั้งหมดในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === currentProperty.id;
-            const propPayments = payments.filter((p) => p.propertyId === property.id);
+            const propPayments = payments.filter(
+              (p) => p.propertyId === property.id,
+            );
             return (
               <button
                 aria-selected={active}
@@ -450,13 +555,21 @@ export function PaymentsPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {property.rooms.length} ห้อง · รับชำระ <strong className="text-blue-600 font-bold">{propPayments.length}</strong> รายการ
+                    {property.rooms.length} ห้อง · รับชำระ{" "}
+                    <strong className="text-blue-600 font-bold">
+                      {propPayments.length}
+                    </strong>{" "}
+                    รายการ
                   </span>
                 </div>
               </button>
@@ -466,35 +579,55 @@ export function PaymentsPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyPayments.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyPayments.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -507,7 +640,9 @@ export function PaymentsPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -518,7 +653,9 @@ export function PaymentsPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -564,33 +701,50 @@ export function PaymentsPage({
                 "การจัดการ",
               ]}
               rows={filtered.map((item) => [
-                <strong className="text-slate-900 font-mono font-bold text-xs" key="receipt">
+                <strong
+                  className="text-slate-900 font-mono font-bold text-xs"
+                  key="receipt"
+                >
                   {item.receiptNumber}
                 </strong>,
                 <div className="flex items-center gap-2" key="inv">
                   <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-mono font-bold border border-blue-200">
                     ห้อง {item.roomNumber}
                   </span>
-                  <span className="text-xs text-slate-500 font-mono">{item.invoiceNumber}</span>
+                  <span className="text-xs text-slate-500 font-mono">
+                    {item.invoiceNumber}
+                  </span>
                 </div>,
-                <span className="text-xs font-semibold text-slate-700" key="floor">
+                <span
+                  className="text-xs font-semibold text-slate-700"
+                  key="floor"
+                >
                   ชั้น {item.floor}
                 </span>,
                 <span className="text-xs font-bold text-slate-800" key="tenant">
                   {item.tenant}
                 </span>,
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium" key="method">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium"
+                  key="method"
+                >
                   {methodIcon(item.method)}
                   <span>{methodLabel(item.method)}</span>
                 </span>,
                 <span className="text-xs text-slate-600 font-mono" key="date">
                   {item.paidAt}
                 </span>,
-                <strong className="text-xs font-mono font-black text-emerald-700" key="amt">
+                <strong
+                  className="text-xs font-mono font-black text-emerald-700"
+                  key="amt"
+                >
                   {money(item.amount)}
                 </strong>,
                 <StatusBadge key="status" status="confirmed" />,
-                <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                <div
+                  className="inline-flex items-center gap-1.5 justify-end"
+                  key="actions"
+                >
                   <button
                     className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                     onClick={() => setViewingReceipt(item)}
@@ -610,10 +764,16 @@ export function PaymentsPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.payments.length} รายการ)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.payments.length} รายการ)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.payments.map((item) => (
@@ -635,7 +795,8 @@ export function PaymentsPage({
                                 {item.receiptNumber}
                               </strong>
                               <span className="text-[11px] text-slate-400 block truncate">
-                                {item.propertyName} · ชั้น {item.floor} · {item.invoiceNumber}
+                                {item.propertyName} · ชั้น {item.floor} ·{" "}
+                                {item.invoiceNumber}
                               </span>
                             </div>
                           </div>
@@ -644,15 +805,23 @@ export function PaymentsPage({
 
                         {/* Tenant */}
                         <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 mb-3 text-xs">
-                          <span className="text-slate-400 text-[11px] block">ผู้ชำระเงิน</span>
-                          <strong className="text-slate-800 font-bold text-sm block mt-0.5">{item.tenant}</strong>
-                          <span className="text-slate-500 font-mono mt-0.5 block">{item.tenantPhone}</span>
+                          <span className="text-slate-400 text-[11px] block">
+                            ผู้ชำระเงิน
+                          </span>
+                          <strong className="text-slate-800 font-bold text-sm block mt-0.5">
+                            {item.tenant}
+                          </strong>
+                          <span className="text-slate-500 font-mono mt-0.5 block">
+                            {item.tenantPhone}
+                          </span>
                         </div>
 
                         {/* Amount Paid Callout */}
                         <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between mb-3">
                           <div>
-                            <span className="text-[11px] font-bold text-emerald-800 block">ยอดรับชำระเงิน</span>
+                            <span className="text-[11px] font-bold text-emerald-800 block">
+                              ยอดรับชำระเงิน
+                            </span>
                             <strong className="text-lg font-black text-emerald-800 font-mono mt-0.5 block">
                               {money(item.amount)}
                             </strong>
@@ -667,11 +836,15 @@ export function PaymentsPage({
                         <div className="space-y-1 text-xs text-slate-500 px-1">
                           <div className="flex items-center justify-between">
                             <span>วันที่ชำระ:</span>
-                            <strong className="text-slate-700 font-mono">{item.paidAt}</strong>
+                            <strong className="text-slate-700 font-mono">
+                              {item.paidAt}
+                            </strong>
                           </div>
                           <div className="flex items-center justify-between">
                             <span>เลขอ้างอิง:</span>
-                            <span className="font-mono text-slate-500">{item.reference}</span>
+                            <span className="font-mono text-slate-500">
+                              {item.reference}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -715,9 +888,15 @@ export function PaymentsPage({
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">{activeProperty.name}</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{activeProperty.address}</p>
-                  <p className="text-xs text-slate-500">โทร. {activeProperty.settings.promptpay}</p>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    {activeProperty.name}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {activeProperty.address}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    โทร. {activeProperty.settings.promptpay}
+                  </p>
                 </div>
                 <div className="sm:text-right">
                   <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 mb-1">
@@ -726,8 +905,12 @@ export function PaymentsPage({
                   <strong className="block text-sm font-mono font-bold text-slate-800">
                     เลขที่: {viewingReceipt.receiptNumber}
                   </strong>
-                  <span className="text-xs text-slate-500 block">วันที่รับเงิน: {viewingReceipt.paidAt}</span>
-                  <span className="text-xs text-slate-400 block font-mono">อ้างอิงบิล: {viewingReceipt.invoiceNumber}</span>
+                  <span className="text-xs text-slate-500 block">
+                    วันที่รับเงิน: {viewingReceipt.paidAt}
+                  </span>
+                  <span className="text-xs text-slate-400 block font-mono">
+                    อ้างอิงบิล: {viewingReceipt.invoiceNumber}
+                  </span>
                 </div>
               </div>
 
@@ -735,13 +918,22 @@ export function PaymentsPage({
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-slate-400 block">ได้รับเงินจาก:</span>
-                  <strong className="text-sm font-bold text-slate-800 block">{viewingReceipt.tenant}</strong>
-                  <span className="text-slate-500">โทร. {viewingReceipt.tenantPhone}</span>
+                  <strong className="text-sm font-bold text-slate-800 block">
+                    {viewingReceipt.tenant}
+                  </strong>
+                  <span className="text-slate-500">
+                    โทร. {viewingReceipt.tenantPhone}
+                  </span>
                 </div>
                 <div className="sm:text-right">
                   <span className="text-slate-400 block">ห้องพัก:</span>
-                  <strong className="text-sm font-bold text-blue-700 block">ห้อง {viewingReceipt.roomNumber}</strong>
-                  <span className="text-slate-500">ช่องทาง: {methodLabel(viewingReceipt.method)} ({viewingReceipt.reference})</span>
+                  <strong className="text-sm font-bold text-blue-700 block">
+                    ห้อง {viewingReceipt.roomNumber}
+                  </strong>
+                  <span className="text-slate-500">
+                    ช่องทาง: {methodLabel(viewingReceipt.method)} (
+                    {viewingReceipt.reference})
+                  </span>
                 </div>
               </div>
 
@@ -758,8 +950,13 @@ export function PaymentsPage({
                   <tbody className="divide-y divide-slate-100 font-mono">
                     <tr>
                       <td className="p-3">1</td>
-                      <td className="p-3 font-sans">ชำระค่าห้องพักและสาธารณูปโภค ตามใบแจ้งหนี้ {viewingReceipt.invoiceNumber}</td>
-                      <td className="p-3 text-right font-bold">{money(viewingReceipt.amount)}</td>
+                      <td className="p-3 font-sans">
+                        ชำระค่าห้องพักและสาธารณูปโภค ตามใบแจ้งหนี้{" "}
+                        {viewingReceipt.invoiceNumber}
+                      </td>
+                      <td className="p-3 text-right font-bold">
+                        {money(viewingReceipt.amount)}
+                      </td>
                     </tr>
                   </tbody>
                   <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-slate-800">
@@ -777,7 +974,9 @@ export function PaymentsPage({
 
               {/* Amount In Thai Text */}
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">จำนวนเงินตัวอักษร:</span>
+                <span className="text-slate-500 font-medium">
+                  จำนวนเงินตัวอักษร:
+                </span>
                 <strong className="text-slate-800 font-bold">
                   ({thaiBahtText(viewingReceipt.amount)})
                 </strong>
@@ -786,8 +985,12 @@ export function PaymentsPage({
               {/* Signature Line */}
               <div className="pt-6 flex justify-end text-xs text-center">
                 <div className="space-y-6">
-                  <p>ลงชื่อ........................................................ผู้รับเงิน</p>
-                  <p className="text-slate-500">({activeProperty.settings.accountName || "ผู้มีอำนาจลงนาม"})</p>
+                  <p>
+                    ลงชื่อ........................................................ผู้รับเงิน
+                  </p>
+                  <p className="text-slate-500">
+                    ({activeProperty.settings.accountName || "ผู้มีอำนาจลงนาม"})
+                  </p>
                 </div>
               </div>
             </div>
@@ -830,16 +1033,23 @@ export function PaymentsPage({
                 <CheckCircle2 size={32} />
               </span>
               <div>
-                <span className="text-slate-400 block text-xs">สลิปการโอนเงิน (จำลอง)</span>
+                <span className="text-slate-400 block text-xs">
+                  สลิปการโอนเงิน (จำลอง)
+                </span>
                 <strong className="text-2xl font-black font-mono mt-1 block text-emerald-400">
                   {money(viewingSlip.amount)}
                 </strong>
               </div>
               <div className="pt-2 border-t border-slate-800 text-left space-y-1 text-slate-300">
-                <p>ผู้โอน: <strong>{viewingSlip.tenant}</strong> (ห้อง {viewingSlip.roomNumber})</p>
+                <p>
+                  ผู้โอน: <strong>{viewingSlip.tenant}</strong> (ห้อง{" "}
+                  {viewingSlip.roomNumber})
+                </p>
                 <p>เวลาที่โอน: {viewingSlip.paidAt}</p>
                 <p>ช่องทาง: {viewingSlip.method}</p>
-                <p className="text-slate-400 italic mt-2">&ldquo;{viewingSlip.slipNote}&rdquo;</p>
+                <p className="text-slate-400 italic mt-2">
+                  &ldquo;{viewingSlip.slipNote}&rdquo;
+                </p>
               </div>
             </div>
 
@@ -878,7 +1088,9 @@ export function PaymentsPage({
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="leading-relaxed">
-                <strong className="font-bold block text-blue-950">บันทึกรับเงินชำระและออกใบเสร็จ</strong>
+                <strong className="font-bold block text-blue-950">
+                  บันทึกรับเงินชำระและออกใบเสร็จ
+                </strong>
                 <span className="text-[11px] text-blue-800/80">
                   เลือกใบแจ้งหนี้ที่มียอดค้างชำระเพื่อบันทึกการรับเงิน พร้อมตัดยอดคงค้างให้อัตโนมัติ
                 </span>
@@ -892,12 +1104,17 @@ export function PaymentsPage({
                   <Building2 size={14} className="text-slate-500" />
                   <span>เลือกหอพัก / อาคาร</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">สาขา</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  สาขา
+                </span>
               </label>
               <SelectControl
                 ariaLabel="หอพัก"
                 onValueChange={() => {}}
-                options={(properties || [activeProperty]).map((p) => ({ value: p.id, label: p.name }))}
+                options={(properties || [activeProperty]).map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
                 value={activeProperty.id}
               />
             </div>
@@ -908,9 +1125,13 @@ export function PaymentsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <DoorOpen size={14} className="text-slate-500" />
-                    <span>ห้องพัก <span className="text-rose-500">*</span></span>
+                    <span>
+                      ห้องพัก <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">เลือกห้องที่รับชำระ</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    เลือกห้องที่รับชำระ
+                  </span>
                 </label>
                 <SelectControl
                   ariaLabel="ห้องพัก"
@@ -932,7 +1153,9 @@ export function PaymentsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <ReceiptText size={14} className="text-slate-500" />
-                    <span>เลขที่ใบแจ้งหนี้อ้างอิง <span className="text-rose-500">*</span></span>
+                    <span>
+                      เลขที่ใบแจ้งหนี้อ้างอิง <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <div className="relative">
@@ -951,7 +1174,9 @@ export function PaymentsPage({
             {/* Balance Due Notice */}
             <div className="flex items-center justify-between rounded-xl bg-emerald-50/80 p-3 text-xs border border-emerald-200/80">
               <div>
-                <span className="block text-[11px] font-medium text-emerald-700">ยอดคงเหลือของบิลที่เลือก</span>
+                <span className="block text-[11px] font-medium text-emerald-700">
+                  ยอดคงเหลือของบิลที่เลือก
+                </span>
                 <strong className="mt-0.5 block font-mono text-sm font-black text-emerald-900">
                   {money(formAmount)}
                 </strong>
@@ -967,7 +1192,9 @@ export function PaymentsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-slate-500" />
-                    <span>วันที่รับเงินจริง <span className="text-rose-500">*</span></span>
+                    <span>
+                      วันที่รับเงินจริง <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <DateTimeControl
@@ -984,7 +1211,10 @@ export function PaymentsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Banknote size={14} className="text-slate-500" />
-                    <span>จำนวนเงินที่รับจริง (บาท) <span className="text-rose-500">*</span></span>
+                    <span>
+                      จำนวนเงินที่รับจริง (บาท){" "}
+                      <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <div className="relative">
@@ -1008,12 +1238,16 @@ export function PaymentsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <CreditCard size={14} className="text-slate-500" />
-                    <span>ช่องทางการชำระ <span className="text-rose-500">*</span></span>
+                    <span>
+                      ช่องทางการชำระ <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <SelectControl
                   ariaLabel="วิธีชำระเงิน"
-                  onValueChange={(val) => setFormMethod(val as DemoPayment["method"])}
+                  onValueChange={(val) =>
+                    setFormMethod(val as DemoPayment["method"])
+                  }
                   options={[
                     { value: "promptpay", label: "พร้อมเพย์ (PromptPay)" },
                     { value: "transfer", label: "โอนผ่านธนาคาร" },

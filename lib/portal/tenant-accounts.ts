@@ -9,7 +9,9 @@ export type TenantPortalAccountSummary = {
   username: string;
 };
 
-export async function loadTenantPortalAccountSummaries(organizationId: string): Promise<TenantPortalAccountSummary[]> {
+export async function loadTenantPortalAccountSummaries(
+  organizationId: string,
+): Promise<TenantPortalAccountSummary[]> {
   const supabase = await createClient();
   const { data: accounts, error } = await supabase
     .from("tenant_accounts")
@@ -23,8 +25,13 @@ export async function loadTenantPortalAccountSummaries(organizationId: string): 
   const { data: aliases } = await admin
     .from("auth_login_aliases")
     .select("auth_user_id, username")
-    .in("auth_user_id", accounts.map((account) => account.auth_user_id));
-  const usernameByUserId = new Map((aliases ?? []).map((alias) => [alias.auth_user_id, alias.username]));
+    .in(
+      "auth_user_id",
+      accounts.map((account) => account.auth_user_id),
+    );
+  const usernameByUserId = new Map(
+    (aliases ?? []).map((alias) => [alias.auth_user_id, alias.username]),
+  );
 
   return accounts.map((account) => ({
     tenantId: account.tenant_id,

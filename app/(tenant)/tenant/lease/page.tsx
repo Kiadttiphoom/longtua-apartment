@@ -1,12 +1,7 @@
 import { requireTenantContext } from "@/lib/auth/tenant-access";
 import { ContractUploadForm } from "@/components/tenant/ContractUploadForm";
 import { TenantContractList } from "@/components/tenant/TenantContractList";
-import {
-  Calendar,
-  FileText,
-  Home,
-  ShieldCheck,
-} from "lucide-react";
+import { Calendar, FileText, Home, ShieldCheck } from "lucide-react";
 import { money, thaiDate } from "@/lib/format";
 
 export default async function TenantLeasePage() {
@@ -16,15 +11,23 @@ export default async function TenantLeasePage() {
   // Load leases with complete details
   const { data: leases } = await supabase
     .from("leases")
-    .select("id, lease_number, property_id, room_id, start_date, end_date, rent_amount, deposit_amount, advance_amount, occupant_count, terms, status")
+    .select(
+      "id, lease_number, property_id, room_id, start_date, end_date, rent_amount, deposit_amount, advance_amount, occupant_count, terms, status",
+    )
     .eq("organization_id", organizationId)
     .eq("primary_tenant_id", tenantId)
     .order("created_at", { ascending: false });
 
   // Load rooms and properties
   const [roomsRes, propertiesRes, filesRes] = await Promise.all([
-    supabase.from("rooms").select("id, room_number, floor, property_id").eq("organization_id", organizationId),
-    supabase.from("properties").select("id, name, address, phone").eq("organization_id", organizationId),
+    supabase
+      .from("rooms")
+      .select("id, room_number, floor, property_id")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("properties")
+      .select("id, name, address, phone")
+      .eq("organization_id", organizationId),
     supabase
       .from("tenant_contract_uploads")
       .select("id, file_name, created_at, lease_id")
@@ -40,7 +43,8 @@ export default async function TenantLeasePage() {
   const uploadCountsByLease: Record<string, number> = {};
   files.forEach((f) => {
     if (f.lease_id) {
-      uploadCountsByLease[f.lease_id] = (uploadCountsByLease[f.lease_id] || 0) + 1;
+      uploadCountsByLease[f.lease_id] =
+        (uploadCountsByLease[f.lease_id] || 0) + 1;
     }
   });
 
@@ -117,7 +121,9 @@ export default async function TenantLeasePage() {
                     <strong className="text-xl sm:text-2xl font-black text-blue-900 mt-1 block tabular-nums">
                       {money(Number(lease.rent_amount))}
                     </strong>
-                    <span className="text-[10px] text-blue-600 mt-0.5 block">บาท / เดือน</span>
+                    <span className="text-[10px] text-blue-600 mt-0.5 block">
+                      บาท / เดือน
+                    </span>
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
@@ -127,7 +133,9 @@ export default async function TenantLeasePage() {
                     <strong className="text-xl sm:text-2xl font-black text-slate-800 mt-1 block tabular-nums">
                       {money(Number(lease.deposit_amount))}
                     </strong>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">คืนเมื่อย้ายออก</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      คืนเมื่อย้ายออก
+                    </span>
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
@@ -137,7 +145,9 @@ export default async function TenantLeasePage() {
                     <strong className="text-xl sm:text-2xl font-black text-slate-800 mt-1 block tabular-nums">
                       {money(Number(lease.advance_amount))}
                     </strong>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">ชำระตอนเข้าอยู่</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      ชำระตอนเข้าอยู่
+                    </span>
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
@@ -147,7 +157,9 @@ export default async function TenantLeasePage() {
                     <strong className="text-xl sm:text-2xl font-black text-slate-800 mt-1 block tabular-nums">
                       {lease.occupant_count ?? 1} ท่าน
                     </strong>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">ตามสัญญาเช่า</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      ตามสัญญาเช่า
+                    </span>
                   </div>
                 </div>
 
@@ -162,7 +174,10 @@ export default async function TenantLeasePage() {
                         ระยะเวลาสัญญา
                       </span>
                       <strong className="text-xs sm:text-sm font-bold text-slate-800">
-                        {thaiDate(lease.start_date)} — {lease.end_date ? thaiDate(lease.end_date) : "ไม่ระบุวันสิ้นสุด"}
+                        {thaiDate(lease.start_date)} —{" "}
+                        {lease.end_date
+                          ? thaiDate(lease.end_date)
+                          : "ไม่ระบุวันสิ้นสุด"}
                       </strong>
                     </div>
                   </div>
@@ -175,8 +190,12 @@ export default async function TenantLeasePage() {
                 {/* Terms text if provided */}
                 {lease.terms && (
                   <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100 text-xs text-slate-600 space-y-1">
-                    <strong className="text-slate-800 font-bold block">เงื่อนไขเพิ่มเติม:</strong>
-                    <p className="whitespace-pre-wrap leading-relaxed">{lease.terms}</p>
+                    <strong className="text-slate-800 font-bold block">
+                      เงื่อนไขเพิ่มเติม:
+                    </strong>
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {lease.terms}
+                    </p>
                   </div>
                 )}
               </div>
@@ -194,7 +213,9 @@ export default async function TenantLeasePage() {
       <section className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">แนบไฟล์หรือรูปภาพสัญญา</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              แนบไฟล์หรือรูปภาพสัญญา
+            </h2>
             <p className="text-xs text-slate-500">
               ถ่ายรูปสัญญาหรือแนบไฟล์เก็บไว้ในระบบเพื่อความสะดวกในการเปิดดู (สูงสุด 5 ภาพ)
             </p>
@@ -202,7 +223,10 @@ export default async function TenantLeasePage() {
         </div>
 
         <ContractUploadForm
-          leases={(leases ?? []).map((l) => ({ id: l.id, lease_number: l.lease_number }))}
+          leases={(leases ?? []).map((l) => ({
+            id: l.id,
+            lease_number: l.lease_number,
+          }))}
           uploadCountsByLease={uploadCountsByLease}
         />
       </section>
@@ -211,7 +235,9 @@ export default async function TenantLeasePage() {
       <section className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">แกลเลอรีภาพสัญญาที่แนบไว้</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              แกลเลอรีภาพสัญญาที่แนบไว้
+            </h2>
             <p className="text-xs text-slate-500">
               คลิกที่รูปเพื่อเปิดดูแบบเต็มจอ ขยายดูตัวหนังสือ หรือดาวน์โหลดเก็บไว้
             </p>
@@ -226,4 +252,3 @@ export default async function TenantLeasePage() {
     </div>
   );
 }
-

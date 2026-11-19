@@ -48,14 +48,23 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
             </span>
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-xl font-bold text-slate-800 tracking-tight">Standard Package</h2>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${current.badgeBg} ${current.badgeText}`}>
+                <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+                  Standard Package
+                </h2>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${current.badgeBg} ${current.badgeText}`}
+                >
                   {current.label}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500">{current.desc}</p>
+              <p className="text-xs sm:text-sm text-slate-500">
+                {current.desc}
+              </p>
               <p className="text-xs font-medium text-slate-700 pt-1">
-                รอบถัดไปวันที่: <strong className="text-blue-600 font-bold">25 กันยายน 2569</strong>
+                รอบถัดไปวันที่:{" "}
+                <strong className="text-blue-600 font-bold">
+                  25 กันยายน 2569
+                </strong>
               </p>
             </div>
           </div>
@@ -76,7 +85,10 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-600">
               {features.map((feat) => (
                 <li className="flex items-center gap-2.5" key={feat}>
-                  <CheckCircle2 className="text-emerald-500 shrink-0" size={16} />
+                  <CheckCircle2
+                    className="text-emerald-500 shrink-0"
+                    size={16}
+                  />
                   <span>{feat}</span>
                 </li>
               ))}
@@ -89,15 +101,20 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
                 <Zap size={14} />
                 <span>ติดต่อทีมงาน</span>
               </div>
-              <h3 className="text-lg font-bold">ต้องการเพิ่มจำนวนห้อง หรือปรับแต่งระบบ?</h3>
+              <h3 className="text-lg font-bold">
+                ต้องการเพิ่มจำนวนห้อง หรือปรับแต่งระบบ?
+              </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                หากท่านต้องการปลดล็อกโควตาห้องพักมากกว่า 100 ห้อง หรือต้องการติดตั้ง LINE Notify แจ้งเตือนยอดชำระแบบอัตโนมัติ ติดต่อฝ่ายบริการลูกค้าได้ตลอด 24 ชั่วโมง
+                หากท่านต้องการปลดล็อกโควตาห้องพักมากกว่า 100 ห้อง หรือต้องการติดตั้ง LINE
+                Notify แจ้งเตือนยอดชำระแบบอัตโนมัติ ติดต่อฝ่ายบริการลูกค้าได้ตลอด 24 ชั่วโมง
               </p>
             </div>
 
             <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
               <span>โทร: 063-090-7500 · LINE: p.pond29</span>
-              <span className="font-semibold text-white">official.longtua@gmail.com</span>
+              <span className="font-semibold text-white">
+                official.longtua@gmail.com
+              </span>
             </div>
           </div>
         </section>

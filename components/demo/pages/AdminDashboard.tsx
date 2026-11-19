@@ -1,4 +1,11 @@
-import { Building2, ChevronRight, CircleDollarSign, Gauge, Hotel, Users } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  CircleDollarSign,
+  Gauge,
+  Hotel,
+  Users,
+} from "lucide-react";
 import { DataTable, StatusBadge } from "@/components/portal/PortalUI";
 import { companies } from "../mock-data";
 import type { PageKey } from "../types";
@@ -6,14 +13,42 @@ import { Metric } from "../ui/Metric";
 import { PanelHeading } from "../ui/PanelHeading";
 import { StatusBar } from "../ui/StatusBar";
 
-export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => void }) {
+export function AdminDashboard({
+  onNavigate,
+}: {
+  onNavigate: (page: PageKey) => void;
+}) {
   return (
     <>
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Metric label="กิจการทั้งหมด" value="28" delta="+4 เดือนนี้" icon={Building2} tone="blue" />
-        <Metric label="หอพักในระบบ" value="46" delta="2,184 ห้อง" icon={Hotel} tone="violet" />
-        <Metric label="Subscription Active" value="21" delta="75% ของลูกค้า" icon={CircleDollarSign} tone="green" />
-        <Metric label="Trial ใกล้หมด" value="4" delta="ภายใน 7 วัน" icon={Gauge} tone="orange" />
+        <Metric
+          label="กิจการทั้งหมด"
+          value="28"
+          delta="+4 เดือนนี้"
+          icon={Building2}
+          tone="blue"
+        />
+        <Metric
+          label="หอพักในระบบ"
+          value="46"
+          delta="2,184 ห้อง"
+          icon={Hotel}
+          tone="violet"
+        />
+        <Metric
+          label="Subscription Active"
+          value="21"
+          delta="75% ของลูกค้า"
+          icon={CircleDollarSign}
+          tone="green"
+        />
+        <Metric
+          label="Trial ใกล้หมด"
+          value="4"
+          delta="ภายใน 7 วัน"
+          icon={Gauge}
+          tone="orange"
+        />
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -30,7 +65,12 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
               <small className="text-[10px] text-slate-400">Active</small>
             </div>
             <div className="flex-1 w-full space-y-3">
-              <StatusBar label="ชำระแล้ว" value={21} total={28} color="emerald" />
+              <StatusBar
+                label="ชำระแล้ว"
+                value={21}
+                total={28}
+                color="emerald"
+              />
               <StatusBar label="กำลังทดลอง" value={5} total={28} color="blue" />
               <StatusBar label="หมดอายุ" value={2} total={28} color="rose" />
             </div>
@@ -50,8 +90,12 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
                   <Gauge size={18} />
                 </span>
                 <div>
-                  <strong className="text-xs font-bold text-slate-800 block">Trial ใกล้หมด</strong>
-                  <small className="text-[11px] text-slate-400">4 กิจการ ภายใน 7 วัน</small>
+                  <strong className="text-xs font-bold text-slate-800 block">
+                    Trial ใกล้หมด
+                  </strong>
+                  <small className="text-[11px] text-slate-400">
+                    4 กิจการ ภายใน 7 วัน
+                  </small>
                 </div>
               </div>
               <ChevronRight size={16} className="text-slate-400" />
@@ -67,8 +111,12 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
                   <CircleDollarSign size={18} />
                 </span>
                 <div>
-                  <strong className="text-xs font-bold text-slate-800 block">เกินกำหนดชำระ</strong>
-                  <small className="text-[11px] text-slate-400">2 กิจการ รวม ฿3,180</small>
+                  <strong className="text-xs font-bold text-slate-800 block">
+                    เกินกำหนดชำระ
+                  </strong>
+                  <small className="text-[11px] text-slate-400">
+                    2 กิจการ รวม ฿3,180
+                  </small>
                 </div>
               </div>
               <ChevronRight size={16} className="text-slate-400" />
@@ -84,7 +132,9 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
                   <Users size={18} />
                 </span>
                 <div>
-                  <strong className="text-xs font-bold text-slate-800 block">คำเชิญรอยืนยัน</strong>
+                  <strong className="text-xs font-bold text-slate-800 block">
+                    คำเชิญรอยืนยัน
+                  </strong>
                   <small className="text-[11px] text-slate-400">6 ผู้ใช้งาน</small>
                 </div>
               </div>
@@ -98,7 +148,9 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-bold text-slate-800">กิจการล่าสุด</h2>
-            <p className="text-xs text-slate-500 mt-0.5">ลูกค้าและสถานะบริการที่มีการเปลี่ยนแปลงล่าสุด</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              ลูกค้าและสถานะบริการที่มีการเปลี่ยนแปลงล่าสุด
+            </p>
           </div>
           <button
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-all bg-transparent border-0 cursor-pointer"
@@ -109,22 +161,45 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (page: PageKey) => 
           </button>
         </div>
         <DataTable
-          headers={["กิจการ / เจ้าของ", "เบอร์โทร", "หอพัก / ห้อง", "แพ็กเกจ", "รอบถัดไป", "สถานะ"]}
+          headers={[
+            "กิจการ / เจ้าของ",
+            "เบอร์โทร",
+            "หอพัก / ห้อง",
+            "แพ็กเกจ",
+            "รอบถัดไป",
+            "สถานะ",
+          ]}
           rows={companies.slice(0, 4).map((c) => [
             <div className="flex items-center gap-3" key="c">
               <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                 <Building2 size={18} />
               </span>
               <div className="flex flex-col text-xs min-w-0">
-                <strong className="text-slate-800 font-bold truncate">{c.name}</strong>
+                <strong className="text-slate-800 font-bold truncate">
+                  {c.name}
+                </strong>
                 <small className="text-slate-400 mt-0.5">{c.owner}</small>
               </div>
             </div>,
-            <span key="phone" className="text-slate-700 font-mono text-xs">{c.phone}</span>,
-            <span key="rooms" className="text-slate-700 text-xs">{c.dorms} หอ · {c.rooms} ห้อง</span>,
-            <span key="plan" className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">{c.plan}</span>,
-            <span key="date" className="text-slate-500 text-xs">{c.date}</span>,
-            <StatusBadge key="st" status={c.status as "active" | "trial" | "pending"} />,
+            <span key="phone" className="text-slate-700 font-mono text-xs">
+              {c.phone}
+            </span>,
+            <span key="rooms" className="text-slate-700 text-xs">
+              {c.dorms} หอ · {c.rooms} ห้อง
+            </span>,
+            <span
+              key="plan"
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700"
+            >
+              {c.plan}
+            </span>,
+            <span key="date" className="text-slate-500 text-xs">
+              {c.date}
+            </span>,
+            <StatusBadge
+              key="st"
+              status={c.status as "active" | "trial" | "pending"}
+            />,
           ])}
         />
       </section>

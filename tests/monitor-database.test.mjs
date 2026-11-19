@@ -6,7 +6,13 @@ import { PGlite } from "@electric-sql/pglite";
 const db = new PGlite();
 const org = "11111111-1111-4111-8111-111111111111";
 const actor = "22222222-2222-4222-8222-222222222222";
-const migration = readFileSync(new URL("../supabase/migrations/20260910100055_admin_monitor.sql", import.meta.url), "utf8");
+const migration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260910100055_admin_monitor.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 before(async () => {
   await db.exec(`
@@ -25,11 +31,28 @@ before(async () => {
   `);
   await db.exec(migration);
 });
-after(async () => { await db.close(); });
+after(async () => {
+  await db.close();
+});
 
 async function query(overrides = {}) {
-  const f = { start: "2026-09-09T17:00:00Z", end: "2026-09-10T17:00:00Z", timeFrom: "00:00", timeTo: "23:59", organization: "", person: "", search: "", outcome: "all", bucket: "hour", page: 1, ...overrides };
-  const result = await db.query("select public.query_admin_monitor($1::timestamptz,$2::timestamptz,$3::time,$4::time,$5,$6,$7,$8,$9,$10::integer) as data", Object.values(f));
+  const f = {
+    start: "2026-09-09T17:00:00Z",
+    end: "2026-09-10T17:00:00Z",
+    timeFrom: "00:00",
+    timeTo: "23:59",
+    organization: "",
+    person: "",
+    search: "",
+    outcome: "all",
+    bucket: "hour",
+    page: 1,
+    ...overrides,
+  };
+  const result = await db.query(
+    "select public.query_admin_monitor($1::timestamptz,$2::timestamptz,$3::time,$4::time,$5,$6,$7,$8,$9,$10::integer) as data",
+    Object.values(f),
+  );
   return result.rows[0].data;
 }
 
@@ -46,8 +69,14 @@ test("monitorDatabase_tracksCreateUpdateDeleteWithoutSensitiveRowContents", asyn
     update rooms set room_number = '102' where id = '${org}';
     delete from rooms where id = '${org}';`);
   const { rows } = await db.query("select * from monitor_events order by id");
-  assert.deepEqual(rows.map((e) => e.action), ["rooms.insert", "rooms.update", "rooms.delete"]);
-  assert.equal(rows.every((e) => e.actor_user_id === actor && e.organization_id === org), true);
+  assert.deepEqual(
+    rows.map((e) => e.action),
+    ["rooms.insert", "rooms.update", "rooms.delete"],
+  );
+  assert.equal(
+    rows.every((e) => e.actor_user_id === actor && e.organization_id === org),
+    true,
+  );
   assert.equal(JSON.stringify(rows).includes("DO-NOT-LOG-SECRET"), false);
 });
 
@@ -59,12 +88,22 @@ test("monitorDatabase_combinesDateTimeOutcomeCompanyPersonAndErrorSearch", async
     ('2026-09-10T17:00:00Z','${org}','${actor}','invoice.create','error','server','23505'),
     ('2026-09-10T06:00:00Z','${org}','${actor}','invoice.create','error','server','23505'),
     ('2026-09-09T18:00:00Z','${org}','${actor}','invoice.create','success','server',null);`);
-  const result = await query({ timeFrom: "22:00", timeTo: "02:00", organization: "100%_", person: "OWNER.A", search: "23505", outcome: "error" });
+  const result = await query({
+    timeFrom: "22:00",
+    timeTo: "02:00",
+    organization: "100%_",
+    person: "OWNER.A",
+    search: "23505",
+    outcome: "error",
+  });
   assert.equal(result.total, 2);
   assert.equal(result.errors, 2);
   assert.equal(result.users, 1);
   assert.equal(result.organizations, 1);
-  assert.equal(result.series.reduce((sum, p) => sum + p.errors, 0), 2);
+  assert.equal(
+    result.series.reduce((sum, p) => sum + p.errors, 0),
+    2,
+  );
   assert.equal((await query({ timeFrom: "23:59", timeTo: "23:59" })).total, 1);
 });
 
@@ -77,10 +116,16 @@ test("monitorDatabase_graphsAggregateAllMatchesBeyondCurrentPageAndFillZeroBucke
   assert.equal(first.total, 75);
   assert.equal(first.rows.length, 50);
   assert.equal(second.rows.length, 25);
-  assert.equal(new Set([...first.rows, ...second.rows].map((r) => r.id)).size, 75);
+  assert.equal(
+    new Set([...first.rows, ...second.rows].map((r) => r.id)).size,
+    75,
+  );
   assert.equal(first.series.length, 24);
   assert.equal(first.series.filter((p) => p.success === 0).length, 23);
-  assert.equal(first.series.reduce((sum, p) => sum + p.success, 0), 75);
+  assert.equal(
+    first.series.reduce((sum, p) => sum + p.success, 0),
+    75,
+  );
   assert.deepEqual(first.series, second.series);
   assert.equal(first.actions[0].total, 75);
 });
@@ -89,10 +134,18 @@ test("monitorDatabase_emptyFiltersReturnZeroAndOrdinaryUsersCannotReadLogs", asy
   const empty = await query({ person: "ไม่พบผู้ใช้นี้" });
   assert.equal(empty.total, 0);
   assert.equal(empty.rows.length, 0);
-  assert.equal(empty.series.every((p) => p.success === 0 && p.errors === 0), true);
+  assert.equal(
+    empty.series.every((p) => p.success === 0 && p.errors === 0),
+    true,
+  );
   await db.exec("set role authenticated");
   try {
-    await assert.rejects(db.query("select * from public.monitor_events"), /permission denied/);
+    await assert.rejects(
+      db.query("select * from public.monitor_events"),
+      /permission denied/,
+    );
     await assert.rejects(query(), /permission denied/);
-  } finally { await db.exec("reset role"); }
+  } finally {
+    await db.exec("reset role");
+  }
 });

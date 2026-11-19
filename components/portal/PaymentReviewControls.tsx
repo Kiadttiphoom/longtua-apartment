@@ -53,8 +53,13 @@ export function PaymentReviewControls({
         if (result.ok) {
           setShowReject(false);
           await alertSuccess(
-            decision === "approve" ? "อนุมัติการชำระเงินสำเร็จ!" : "ปฏิเสธสลิปเรียบร้อยแล้ว",
-            result.message || (decision === "approve" ? "ยืนยันยอดและตัดใบแจ้งหนี้เรียบร้อยแล้ว" : "ส่งผลการตรวจสอบไปยังผู้เช่าแล้ว")
+            decision === "approve"
+              ? "อนุมัติการชำระเงินสำเร็จ!"
+              : "ปฏิเสธสลิปเรียบร้อยแล้ว",
+            result.message ||
+              (decision === "approve"
+                ? "ยืนยันยอดและตัดใบแจ้งหนี้เรียบร้อยแล้ว"
+                : "ส่งผลการตรวจสอบไปยังผู้เช่าแล้ว"),
           );
           router.refresh();
         } else {
@@ -79,7 +84,11 @@ export function PaymentReviewControls({
           className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
           title="ยืนยันการรับชำระเงินและตัดยอดบิลใบแจ้งหนี้ทันที"
         >
-          {isBusy ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={16} />}
+          {isBusy ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <CheckCircle2 size={16} />
+          )}
           <span>{isBusy ? "กำลังบันทึก..." : "อนุมัติการชำระเงิน"}</span>
         </button>
 

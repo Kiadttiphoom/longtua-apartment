@@ -5,15 +5,21 @@ export function AuthBrandPanel() {
   return (
     <section className="hidden md:flex flex-col justify-between p-8 lg:p-12 bg-[#091830] text-white">
       <div>
-        <BrandLogo className="max-h-12 w-auto object-contain" variant="inverse" />
+        <BrandLogo
+          className="max-h-12 w-auto object-contain"
+          variant="inverse"
+        />
       </div>
       <div className="space-y-6 max-w-md my-auto py-10">
         <div className="space-y-3">
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tight leading-tight">
-            บริหารทุกหอพัก<br />ครบจบในที่เดียวอย่างเป็นระบบ
+            บริหารทุกหอพัก
+            <br />
+            ครบจบในที่เดียวอย่างเป็นระบบ
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            เช็กสถานะห้อง บันทึกมิเตอร์ ออกบิลค่าเช่า ค่าน้ำ ค่าไฟ และตรวจยอดชำระเงินได้สะดวกรวดเร็ว
+            เช็กสถานะห้อง บันทึกมิเตอร์ ออกบิลค่าเช่า ค่าน้ำ ค่าไฟ
+            และตรวจยอดชำระเงินได้สะดวกรวดเร็ว
           </p>
         </div>
         <ul className="space-y-3 text-xs sm:text-sm text-slate-200">

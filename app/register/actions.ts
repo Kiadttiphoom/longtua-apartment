@@ -9,9 +9,18 @@ export type RegisterState = {
   values?: Record<string, string>;
 };
 
-export async function registerAction(_previous: RegisterState, formData: FormData): Promise<RegisterState> {
+export async function registerAction(
+  _previous: RegisterState,
+  formData: FormData,
+): Promise<RegisterState> {
   const values: Record<string, string> = {};
-  for (const key of ["username", "operatorName", "propertyName", "contactEmail", "phone"]) {
+  for (const key of [
+    "username",
+    "operatorName",
+    "propertyName",
+    "contactEmail",
+    "phone",
+  ]) {
     const value = formData.get(key);
     values[key] = typeof value === "string" ? value : "";
   }
@@ -22,6 +31,12 @@ export async function registerAction(_previous: RegisterState, formData: FormDat
     accepted: formData.get("accepted") === "on",
   });
   const result = await response.json();
-  if (!response.ok) return { status: "error", message: result.message, fields: result.fields, values };
+  if (!response.ok)
+    return {
+      status: "error",
+      message: result.message,
+      fields: result.fields,
+      values,
+    };
   return { status: "success", message: result.message };
 }

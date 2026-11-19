@@ -9,6 +9,7 @@ export default async function Home() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
-  if (userId && await isPendingApplicant(userId)) redirect("/registration/pending");
+  if (userId && (await isPendingApplicant(userId)))
+    redirect("/registration/pending");
   redirect(userId ? "/dashboard" : "/login");
 }

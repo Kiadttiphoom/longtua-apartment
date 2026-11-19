@@ -41,30 +41,58 @@ export function DashboardOverview({ data }: { data: PortalData }) {
     .filter((item) => item.status !== "void")
     .reduce((sum, item) => sum + Number(item.balance_due), 0);
 
-  const occupiedRooms = data.rooms.filter((item) => item.status === "occupied").length;
-  const vacantRooms = data.rooms.filter((item) => item.status === "vacant").length;
+  const occupiedRooms = data.rooms.filter(
+    (item) => item.status === "occupied",
+  ).length;
+  const vacantRooms = data.rooms.filter(
+    (item) => item.status === "vacant",
+  ).length;
   const totalRoomsCount = data.rooms.length || 1;
-  const occupancy = data.rooms.length ? Math.round((occupiedRooms / data.rooms.length) * 100) : 0;
+  const occupancy = data.rooms.length
+    ? Math.round((occupiedRooms / data.rooms.length) * 100)
+    : 0;
 
-  const roomMap = new Map(data.rooms.map((item) => [item.id, item.room_number]));
+  const roomMap = new Map(
+    data.rooms.map((item) => [item.id, item.room_number]),
+  );
   const tenantMap = new Map(data.tenants.map((t) => [t.id, t.full_name]));
   const leaseTenantMap = new Map(
-    data.leases.map((l) => [l.room_id, tenantMap.get(l.primary_tenant_id) || "ผู้เช่า"])
+    data.leases.map((l) => [
+      l.room_id,
+      tenantMap.get(l.primary_tenant_id) || "ผู้เช่า",
+    ]),
   );
 
   // Projected next month guaranteed base rent
-  const projectedBaseRent = activeLeases.reduce((sum, l) => sum + Number(l.rent_amount || 0), 0);
+  const projectedBaseRent = activeLeases.reduce(
+    (sum, l) => sum + Number(l.rent_amount || 0),
+    0,
+  );
 
   // Per-Property Aggregations
   const propertyStats = useMemo(() => {
     return data.properties.map((prop) => {
       const propRooms = data.rooms.filter((r) => r.property_id === prop.id);
-      const propOccupied = propRooms.filter((r) => r.status === "occupied").length;
-      const propOccupancy = propRooms.length ? Math.round((propOccupied / propRooms.length) * 100) : 0;
-      const propInvoices = data.invoices.filter((i) => i.property_id === prop.id && i.status !== "void");
-      const propOutstanding = propInvoices.reduce((sum, i) => sum + Number(i.balance_due), 0);
-      const propPayments = data.payments.filter((p) => p.property_id === prop.id && p.status === "confirmed");
-      const propRevenue = propPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const propOccupied = propRooms.filter(
+        (r) => r.status === "occupied",
+      ).length;
+      const propOccupancy = propRooms.length
+        ? Math.round((propOccupied / propRooms.length) * 100)
+        : 0;
+      const propInvoices = data.invoices.filter(
+        (i) => i.property_id === prop.id && i.status !== "void",
+      );
+      const propOutstanding = propInvoices.reduce(
+        (sum, i) => sum + Number(i.balance_due),
+        0,
+      );
+      const propPayments = data.payments.filter(
+        (p) => p.property_id === prop.id && p.status === "confirmed",
+      );
+      const propRevenue = propPayments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0,
+      );
       const setting = data.settings.find((s) => s.property_id === prop.id);
 
       return {
@@ -80,7 +108,13 @@ export function DashboardOverview({ data }: { data: PortalData }) {
         dueDay: setting?.due_day || 5,
       };
     });
-  }, [data.properties, data.rooms, data.invoices, data.payments, data.settings]);
+  }, [
+    data.properties,
+    data.rooms,
+    data.invoices,
+    data.payments,
+    data.settings,
+  ]);
 
   // Modern Impeccable KPI Cards
   const cards = [
@@ -145,16 +179,35 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: outstanding > 0 ? "มียอดค้างชำระรอติดตาม" : "ไม่มีบิลค้างชำระ",
       icon: ReceiptText,
       href: "/receivables",
-      iconBg: outstanding > 0 ? "bg-rose-600 text-white" : "bg-slate-200 text-slate-700",
+      iconBg:
+        outstanding > 0
+          ? "bg-rose-600 text-white"
+          : "bg-slate-200 text-slate-700",
       borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: outstanding > 0 ? "ค้างชำระ" : "เรียบร้อย",
-      pillColor: outstanding > 0 ? "bg-rose-50 text-rose-700 border-rose-200/70" : "bg-slate-50 text-slate-700 border-slate-200/70",
+      pillColor:
+        outstanding > 0
+          ? "bg-rose-50 text-rose-700 border-rose-200/70"
+          : "bg-slate-50 text-slate-700 border-slate-200/70",
     },
   ] as const;
 
   // Real Dynamic Monthly Revenue & Billed Trend Data (6 Months)
   const monthlyStats = useMemo(() => {
-    const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const monthNames = [
+      "ม.ค.",
+      "ก.พ.",
+      "มี.ค.",
+      "เม.ย.",
+      "พ.ค.",
+      "มิ.ย.",
+      "ก.ค.",
+      "ส.ค.",
+      "ก.ย.",
+      "ต.ค.",
+      "พ.ย.",
+      "ธ.ค.",
+    ];
     const now = new Date();
     const past6Months = Array.from({ length: 6 }).map((_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -166,13 +219,30 @@ export function DashboardOverview({ data }: { data: PortalData }) {
     });
 
     return past6Months.map(({ key, label }) => {
-      const monthInvoices = data.invoices.filter((inv) => inv.issued_at?.startsWith(key));
-      const billed = monthInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-      const monthPayments = data.payments.filter((p) => p.status === "confirmed" && p.paid_at?.startsWith(key));
-      const collected = monthPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-      const rate = billed > 0 ? Math.min(100, Math.round((collected / billed) * 100)) : (collected > 0 ? 100 : 0);
+      const monthInvoices = data.invoices.filter((inv) =>
+        inv.issued_at?.startsWith(key),
+      );
+      const billed = monthInvoices.reduce(
+        (sum, inv) => sum + Number(inv.total),
+        0,
+      );
+      const monthPayments = data.payments.filter(
+        (p) => p.status === "confirmed" && p.paid_at?.startsWith(key),
+      );
+      const collected = monthPayments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0,
+      );
+      const rate =
+        billed > 0
+          ? Math.min(100, Math.round((collected / billed) * 100))
+          : collected > 0
+            ? 100
+            : 0;
 
-      const monthReadings = data.meterReadings.filter((mr) => mr.period_month === key || mr.read_at?.startsWith(key));
+      const monthReadings = data.meterReadings.filter(
+        (mr) => mr.period_month === key || mr.read_at?.startsWith(key),
+      );
       const elecUnits = monthReadings
         .filter((mr) => {
           const meter = data.meters.find((m) => m.id === mr.meter_id);
@@ -198,16 +268,25 @@ export function DashboardOverview({ data }: { data: PortalData }) {
     });
   }, [data.invoices, data.payments, data.meterReadings, data.meters]);
 
-  const maxBilled = Math.max(...monthlyStats.map((s) => Math.max(s.billed, s.collected)), 1000);
+  const maxBilled = Math.max(
+    ...monthlyStats.map((s) => Math.max(s.billed, s.collected)),
+    1000,
+  );
   const maxElec = Math.max(...monthlyStats.map((s) => s.elecUnits), 10);
   const maxWater = Math.max(...monthlyStats.map((s) => s.waterUnits), 10);
 
-  const hasAnyRevenue = monthlyStats.some((s) => s.billed > 0 || s.collected > 0);
+  const hasAnyRevenue = monthlyStats.some(
+    (s) => s.billed > 0 || s.collected > 0,
+  );
   const hasAnyElec = monthlyStats.some((s) => s.elecUnits > 0);
   const hasAnyWater = monthlyStats.some((s) => s.waterUnits > 0);
 
   // Real Urgent follow-ups calculated strictly from data
-  const overdueInvoices = data.invoices.filter((i) => i.status === "overdue" || (i.status !== "void" && Number(i.balance_due) > 0));
+  const overdueInvoices = data.invoices.filter(
+    (i) =>
+      i.status === "overdue" ||
+      (i.status !== "void" && Number(i.balance_due) > 0),
+  );
   const expiringSoonCount = activeLeases.filter((l) => {
     if (!l.end_date) return false;
     const endDate = new Date(l.end_date);
@@ -223,7 +302,10 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       if (!meter || meter.meter_type === "electric") {
         const rId = meter?.room_id || "";
         if (rId) {
-          roomUsage.set(rId, (roomUsage.get(rId) || 0) + Number(mr.usage_value || 0));
+          roomUsage.set(
+            rId,
+            (roomUsage.get(rId) || 0) + Number(mr.usage_value || 0),
+          );
         }
       }
     });
@@ -251,7 +333,10 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       if (meter && meter.meter_type === "water") {
         const rId = meter.room_id;
         if (rId) {
-          roomUsage.set(rId, (roomUsage.get(rId) || 0) + Number(mr.usage_value || 0));
+          roomUsage.set(
+            rId,
+            (roomUsage.get(rId) || 0) + Number(mr.usage_value || 0),
+          );
         }
       }
     });
@@ -274,12 +359,22 @@ export function DashboardOverview({ data }: { data: PortalData }) {
   // 3. Slowest Payer / Longest Overdue Room
   const slowestPayer = useMemo(() => {
     const overdueList = data.invoices
-      .filter((i) => (i.status === "overdue" || Number(i.balance_due) > 0) && i.due_at)
-      .sort((a, b) => new Date(a.due_at).getTime() - new Date(b.due_at).getTime());
+      .filter(
+        (i) =>
+          (i.status === "overdue" || Number(i.balance_due) > 0) && i.due_at,
+      )
+      .sort(
+        (a, b) => new Date(a.due_at).getTime() - new Date(b.due_at).getTime(),
+      );
 
     if (!overdueList.length) return null;
     const worst = overdueList[0];
-    const diffDays = Math.max(0, Math.floor((Date.now() - new Date(worst.due_at).getTime()) / (1000 * 60 * 60 * 24)));
+    const diffDays = Math.max(
+      0,
+      Math.floor(
+        (Date.now() - new Date(worst.due_at).getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    );
     return {
       roomNumber: roomMap.get(worst.room_id) || "—",
       tenantName: leaseTenantMap.get(worst.room_id) || "ผู้เช่า",
@@ -291,7 +386,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
 
   // 4. On-time / Best Payers
   const onTimePayer = useMemo(() => {
-    const paidInvoices = data.invoices.filter((i) => i.status === "paid" && Number(i.balance_due) === 0);
+    const paidInvoices = data.invoices.filter(
+      (i) => i.status === "paid" && Number(i.balance_due) === 0,
+    );
     if (!paidInvoices.length) return null;
     const firstPaid = paidInvoices[0];
     return {
@@ -311,9 +408,13 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
             </span>
-            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">ภาพรวมกิจการ</h1>
+            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+              ภาพรวมกิจการ
+            </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">ศูนย์บัญชาการวิเคราะห์สถานะหอพัก สัญญา และกระแสเงินสดเรียลไทม์</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            ศูนย์บัญชาการวิเคราะห์สถานะหอพัก สัญญา และกระแสเงินสดเรียลไทม์
+          </p>
         </div>
 
         {/* Action Hub */}
@@ -336,14 +437,22 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] text-slate-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
             href="/leases"
           >
-            <CalendarCheck size={15} strokeWidth={2.2} className="text-emerald-500" />
+            <CalendarCheck
+              size={15}
+              strokeWidth={2.2}
+              className="text-emerald-500"
+            />
             <span>ทำสัญญา</span>
           </Link>
           <Link
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] text-slate-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
             href="/reports"
           >
-            <LineChart size={15} strokeWidth={2.2} className="text-purple-500" />
+            <LineChart
+              size={15}
+              strokeWidth={2.2}
+              className="text-purple-500"
+            />
             <span>รายงานสถิติ</span>
           </Link>
         </div>
@@ -357,7 +466,10 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       ) : null}
 
       {/* 6 High-Impact Hero KPI Cards */}
-      <section aria-label="ตัวชี้วัดสำคัญ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section
+        aria-label="ตัวชี้วัดสำคัญ"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+      >
         {cards.map((c) => {
           const Icon = c.icon;
           return (
@@ -369,25 +481,34 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <div className="relative flex flex-col justify-between h-full gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5">
-                    <span className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg} transition-transform duration-300 group-hover:scale-110`}>
+                    <span
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg} transition-transform duration-300 group-hover:scale-110`}
+                    >
                       <Icon size={22} strokeWidth={2.2} />
                     </span>
                     <div>
-                      <span className="text-xs font-bold text-slate-500 block tracking-wide">{c.label}</span>
+                      <span className="text-xs font-bold text-slate-500 block tracking-wide">
+                        {c.label}
+                      </span>
                       <strong className="text-2xl lg:text-3xl font-black text-slate-900 block tracking-tight mt-0.5 tabular-nums">
                         {c.value}
                       </strong>
                     </div>
                   </div>
 
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${c.pillColor} shrink-0`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${c.pillColor} shrink-0`}
+                  >
                     {c.pill}
                   </span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                   <span className="truncate">{c.sub}</span>
-                  <ChevronRight size={15} className="text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ChevronRight
+                    size={15}
+                    className="text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 transition-all shrink-0"
+                  />
                 </div>
               </div>
             </Link>
@@ -403,8 +524,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <Lightbulb size={17} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">ข้อมูลเชิงลึก & พฤติกรรมผู้เช่า</h2>
-              <p className="text-xs text-slate-500">วิเคราะห์ห้องที่ใช้พลังงานสูงสุด และห้องที่มีประวัติการชำระเงินโดดเด่น</p>
+              <h2 className="text-base font-bold text-slate-900">
+                ข้อมูลเชิงลึก & พฤติกรรมผู้เช่า
+              </h2>
+              <p className="text-xs text-slate-500">
+                วิเคราะห์ห้องที่ใช้พลังงานสูงสุด และห้องที่มีประวัติการชำระเงินโดดเด่น
+              </p>
             </div>
           </div>
           <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
@@ -429,7 +554,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {topElecRoom ? (
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง {topElecRoom.roomNumber}</strong>
+                  <strong className="text-xl font-black text-slate-900 tracking-tight">
+                    ห้อง {topElecRoom.roomNumber}
+                  </strong>
                   <span className="text-xs font-black text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-lg border border-amber-200">
                     {topElecRoom.usage} หน่วย
                   </span>
@@ -440,7 +567,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 </p>
               </div>
             ) : (
-              <div className="py-2 text-xs text-slate-400">ยังไม่มีข้อมูลการใช้ไฟในรอบบิลนี้</div>
+              <div className="py-2 text-xs text-slate-400">
+                ยังไม่มีข้อมูลการใช้ไฟในรอบบิลนี้
+              </div>
             )}
           </article>
 
@@ -460,7 +589,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {topWaterRoom ? (
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง {topWaterRoom.roomNumber}</strong>
+                  <strong className="text-xl font-black text-slate-900 tracking-tight">
+                    ห้อง {topWaterRoom.roomNumber}
+                  </strong>
                   <span className="text-xs font-black text-sky-700 bg-sky-100/80 px-2 py-0.5 rounded-lg border border-sky-200">
                     {topWaterRoom.usage} m³
                   </span>
@@ -471,7 +602,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 </p>
               </div>
             ) : (
-              <div className="py-2 text-xs text-slate-400">ยังไม่มีข้อมูลการใช้น้ำในรอบบิลนี้</div>
+              <div className="py-2 text-xs text-slate-400">
+                ยังไม่มีข้อมูลการใช้น้ำในรอบบิลนี้
+              </div>
             )}
           </article>
 
@@ -491,14 +624,19 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {slowestPayer ? (
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <strong className="text-xl font-black text-rose-700 tracking-tight">ห้อง {slowestPayer.roomNumber}</strong>
+                  <strong className="text-xl font-black text-rose-700 tracking-tight">
+                    ห้อง {slowestPayer.roomNumber}
+                  </strong>
                   <span className="text-xs font-black text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-lg border border-rose-200">
                     {money(slowestPayer.balanceDue)}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 font-medium truncate mt-2 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  {slowestPayer.tenantName} {slowestPayer.overdueDays > 0 ? `(เกิน ${slowestPayer.overdueDays} วัน)` : ""}
+                  {slowestPayer.tenantName}{" "}
+                  {slowestPayer.overdueDays > 0
+                    ? `(เกิน ${slowestPayer.overdueDays} วัน)`
+                    : ""}
                 </p>
               </div>
             ) : (
@@ -513,7 +651,11 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
-                  <Star size={13} strokeWidth={2.2} className="fill-emerald-500" />
+                  <Star
+                    size={13}
+                    strokeWidth={2.2}
+                    className="fill-emerald-500"
+                  />
                 </span>
                 ชำระตรงเวลาสม่ำเสมอ
               </span>
@@ -524,7 +666,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {onTimePayer ? (
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง {onTimePayer.roomNumber}</strong>
+                  <strong className="text-xl font-black text-slate-900 tracking-tight">
+                    ห้อง {onTimePayer.roomNumber}
+                  </strong>
                   <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200">
                     ชำระตรง 100%
                   </span>
@@ -535,7 +679,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 </p>
               </div>
             ) : (
-              <div className="py-2 text-xs text-slate-400">รอการรับชำระบิลรอบแรก</div>
+              <div className="py-2 text-xs text-slate-400">
+                รอการรับชำระบิลรอบแรก
+              </div>
             )}
           </article>
         </div>
@@ -548,9 +694,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             <AlertCircle size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-rose-700 font-bold block tracking-wide">บิลค้างชำระรอติดตาม</small>
+            <small className="text-xs text-rose-700 font-bold block tracking-wide">
+              บิลค้างชำระรอติดตาม
+            </small>
             <strong className="text-base font-black text-rose-950 block truncate mt-0.5 tabular-nums">
-              {overdueInvoices.length} รายการ {outstanding > 0 ? `(${money(outstanding)})` : ""}
+              {overdueInvoices.length} รายการ{" "}
+              {outstanding > 0 ? `(${money(outstanding)})` : ""}
             </strong>
           </div>
         </div>
@@ -560,8 +709,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             <Clock size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-amber-700 font-bold block tracking-wide">สัญญาใกล้หมดใน 30 วัน</small>
-            <strong className="text-base font-black text-amber-950 block truncate mt-0.5 tabular-nums">{expiringSoonCount} ฉบับ</strong>
+            <small className="text-xs text-amber-700 font-bold block tracking-wide">
+              สัญญาใกล้หมดใน 30 วัน
+            </small>
+            <strong className="text-base font-black text-amber-950 block truncate mt-0.5 tabular-nums">
+              {expiringSoonCount} ฉบับ
+            </strong>
           </div>
         </div>
 
@@ -570,8 +723,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             <Gauge size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-blue-700 font-bold block tracking-wide">รอบจดมิเตอร์ปัจจุบัน</small>
-            <strong className="text-base font-black text-blue-950 block truncate mt-0.5">พร้อมออกใบแจ้งหนี้</strong>
+            <small className="text-xs text-blue-700 font-bold block tracking-wide">
+              รอบจดมิเตอร์ปัจจุบัน
+            </small>
+            <strong className="text-base font-black text-blue-950 block truncate mt-0.5">
+              พร้อมออกใบแจ้งหนี้
+            </strong>
           </div>
         </div>
       </section>
@@ -586,8 +743,13 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <TrendingUp size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติกระแสเงินสด & ยอดเรียกเก็บ</h2>
-                <p className="text-xs text-slate-500 mt-0.5">เปรียบเทียบยอดเรียกเก็บ (Billed) และยอดรับชำระจริง (Collected) 6 เดือนล่าสุด</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติกระแสเงินสด & ยอดเรียกเก็บ
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  เปรียบเทียบยอดเรียกเก็บ (Billed) และยอดรับชำระจริง (Collected) 6
+                  เดือนล่าสุด
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">
@@ -607,13 +769,26 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {hasAnyRevenue ? (
               <div className="h-52 flex items-end justify-between gap-3 sm:gap-6 px-2">
                 {monthlyStats.map((item) => {
-                  const billedHeight = item.billed > 0 ? Math.max(8, Math.round((item.billed / maxBilled) * 100)) : 0;
-                  const collectedHeight = item.collected > 0 ? Math.max(8, Math.round((item.collected / maxBilled) * 100)) : 0;
+                  const billedHeight =
+                    item.billed > 0
+                      ? Math.max(8, Math.round((item.billed / maxBilled) * 100))
+                      : 0;
+                  const collectedHeight =
+                    item.collected > 0
+                      ? Math.max(
+                          8,
+                          Math.round((item.collected / maxBilled) * 100),
+                        )
+                      : 0;
                   return (
-                    <div className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative" key={item.month}>
+                    <div
+                      className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative"
+                      key={item.month}
+                    >
                       {/* Tooltip on Hover */}
                       <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1.5 px-2.5 rounded-xl shadow-xl pointer-events-none whitespace-nowrap z-20 scale-95 group-hover:scale-100">
-                        เรียกเก็บ: ฿{item.billed.toLocaleString()} | ชำระ: ฿{item.collected.toLocaleString()} ({item.rate}%)
+                        เรียกเก็บ: ฿{item.billed.toLocaleString()} | ชำระ: ฿
+                        {item.collected.toLocaleString()} ({item.rate}%)
                       </div>
 
                       <div className="w-full max-w-[48px] flex items-end justify-center gap-1.5 h-full">
@@ -626,7 +801,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                           style={{ height: `${collectedHeight}%` }}
                         />
                       </div>
-                      <span className="text-xs font-bold text-slate-600 mt-1">{item.month}</span>
+                      <span className="text-xs font-bold text-slate-600 mt-1">
+                        {item.month}
+                      </span>
                     </div>
                   );
                 })}
@@ -636,15 +813,31 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <span className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-2.5 shadow-2xs">
                   <TrendingUp size={22} strokeWidth={2.2} />
                 </span>
-                <strong className="text-sm font-bold text-slate-800">เริ่มบันทึกข้อมูลรอบแรก</strong>
-                <p className="text-xs text-slate-400 mt-0.5">เมื่อมีการออกใบแจ้งหนี้หรือบันทึกรับเงิน กราฟเปรียบเทียบรายได้จะปรากฏที่นี่</p>
+                <strong className="text-sm font-bold text-slate-800">
+                  เริ่มบันทึกข้อมูลรอบแรก
+                </strong>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  เมื่อมีการออกใบแจ้งหนี้หรือบันทึกรับเงิน กราฟเปรียบเทียบรายได้จะปรากฏที่นี่
+                </p>
               </div>
             )}
           </div>
 
           <footer className="mt-4 pt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
-            <span>อัตราการจัดเก็บสะสม: <strong className="text-emerald-600 font-bold">{revenue + outstanding > 0 ? `${Math.round((revenue / (revenue + outstanding)) * 100)}%` : "100%"}</strong></span>
-            <span>ยอดรับชำระสะสม: <strong className="text-slate-900 font-extrabold">{money(revenue)}</strong></span>
+            <span>
+              อัตราการจัดเก็บสะสม:{" "}
+              <strong className="text-emerald-600 font-bold">
+                {revenue + outstanding > 0
+                  ? `${Math.round((revenue / (revenue + outstanding)) * 100)}%`
+                  : "100%"}
+              </strong>
+            </span>
+            <span>
+              ยอดรับชำระสะสม:{" "}
+              <strong className="text-slate-900 font-extrabold">
+                {money(revenue)}
+              </strong>
+            </span>
           </footer>
         </div>
 
@@ -655,8 +848,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <PieChart size={19} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">สถานะห้องพัก ({occupancy}%)</h2>
-              <p className="text-xs text-slate-500 mt-0.5">สัดส่วนการเข้าพักทั้งหมด {data.rooms.length} ห้อง</p>
+              <h2 className="text-base font-bold text-slate-900">
+                สถานะห้องพัก ({occupancy}%)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                สัดส่วนการเข้าพักทั้งหมด {data.rooms.length} ห้อง
+              </p>
             </div>
           </header>
 
@@ -681,8 +878,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
                   ห้องมีผู้เช่า
                 </span>
-                <strong className="text-2xl font-black text-emerald-950 mt-1 tabular-nums">{occupiedRooms} ห้อง</strong>
-                <small className="text-[10px] text-emerald-700 font-semibold">{occupancy}% ของทั้งหมด</small>
+                <strong className="text-2xl font-black text-emerald-950 mt-1 tabular-nums">
+                  {occupiedRooms} ห้อง
+                </strong>
+                <small className="text-[10px] text-emerald-700 font-semibold">
+                  {occupancy}% ของทั้งหมด
+                </small>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
@@ -690,38 +891,49 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                   <span className="w-2 h-2 rounded-full bg-slate-400" />
                   ห้องว่างพร้อมเช่า
                 </span>
-                <strong className="text-2xl font-black text-slate-900 mt-1 tabular-nums">{vacantRooms} ห้อง</strong>
-                <small className="text-[10px] text-slate-500 font-semibold">{100 - occupancy}% ว่างอยู่</small>
+                <strong className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
+                  {vacantRooms} ห้อง
+                </strong>
+                <small className="text-[10px] text-slate-500 font-semibold">
+                  {100 - occupancy}% ว่างอยู่
+                </small>
               </div>
             </div>
           </div>
 
           {/* Revenue Breakdown */}
           <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-            <small className="text-xs font-bold text-slate-800 block">สัดส่วนโครงสร้างรายได้</small>
+            <small className="text-xs font-bold text-slate-800 block">
+              สัดส่วนโครงสร้างรายได้
+            </small>
             {revenue > 0 ? (
               <div className="space-y-2 text-xs font-medium">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" /> ค่าเช่าห้องพัก
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />{" "}
+                    ค่าเช่าห้องพัก
                   </span>
                   <strong className="text-slate-900 font-bold">78%</strong>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" /> ค่ากระแสไฟฟ้า
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />{" "}
+                    ค่ากระแสไฟฟ้า
                   </span>
                   <strong className="text-slate-900 font-bold">16%</strong>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-sky-500" /> ค่าน้ำประปา & บริการ
+                    <span className="w-2 h-2 rounded-full bg-sky-500" />{" "}
+                    ค่าน้ำประปา & บริการ
                   </span>
                   <strong className="text-slate-900 font-bold">6%</strong>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-400">ยังไม่มีรายการรับชำระเงินในระบบ</p>
+              <p className="text-xs text-slate-400">
+                ยังไม่มีรายการรับชำระเงินในระบบ
+              </p>
             )}
           </div>
         </div>
@@ -737,38 +949,63 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <Building2 size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">ผลการดำเนินงานแยกรายหอพัก ({propertyStats.length} แห่ง)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">เปรียบเทียบอัตราเข้าพักและยอดเงินของแต่ละหอพัก</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  ผลการดำเนินงานแยกรายหอพัก ({propertyStats.length} แห่ง)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  เปรียบเทียบอัตราเข้าพักและยอดเงินของแต่ละหอพัก
+                </p>
               </div>
             </div>
-            <Link className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700" href="/dormitories">
+            <Link
+              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+              href="/dormitories"
+            >
               จัดการหอพัก <ChevronRight size={14} />
             </Link>
           </header>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {propertyStats.map((prop) => (
-              <article className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors duration-150 flex flex-col justify-between" key={prop.id}>
+              <article
+                className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors duration-150 flex flex-col justify-between"
+                key={prop.id}
+              >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">{prop.name}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 truncate">
+                      {prop.name}
+                    </h3>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200/80 shrink-0">
                       {prop.occupancy}%
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 truncate mt-0.5">{prop.address}</p>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {prop.address}
+                  </p>
 
                   <div className="mt-3.5 space-y-2 text-xs">
                     <div className="flex justify-between font-medium">
                       <span className="text-slate-500">จำนวนห้อง:</span>
-                      <strong className="text-slate-800">{prop.occupiedCount} / {prop.roomsCount} ห้อง</strong>
+                      <strong className="text-slate-800">
+                        {prop.occupiedCount} / {prop.roomsCount} ห้อง
+                      </strong>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
-                      <div className="h-full rounded-full bg-blue-600 transition-[width] duration-500" style={{ width: `${prop.occupancy}%` }} />
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-[width] duration-500"
+                        style={{ width: `${prop.occupancy}%` }}
+                      />
                     </div>
                     <div className="flex justify-between pt-1">
                       <span className="text-slate-500">ยอดค้างชำระ:</span>
-                      <strong className={prop.outstanding > 0 ? "text-rose-600 font-bold" : "text-slate-700 font-semibold"}>
+                      <strong
+                        className={
+                          prop.outstanding > 0
+                            ? "text-rose-600 font-bold"
+                            : "text-slate-700 font-semibold"
+                        }
+                      >
                         {money(prop.outstanding)}
                       </strong>
                     </div>
@@ -776,8 +1013,13 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-medium">รอบบิล: วันที่ {prop.billDay}</span>
-                  <Link href={`/guestrooms`} className="font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-slate-400 font-medium">
+                    รอบบิล: วันที่ {prop.billDay}
+                  </span>
+                  <Link
+                    href={`/guestrooms`}
+                    className="font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
                     ดูผังห้อง <ArrowRight size={13} />
                   </Link>
                 </div>
@@ -793,8 +1035,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <CalendarDays size={19} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">กำหนดการรอบเดือน (Milestones)</h2>
-              <p className="text-xs text-slate-500 mt-0.5">ตารางงานที่ต้องดำเนินการในแต่ละรอบบิล</p>
+              <h2 className="text-base font-bold text-slate-900">
+                กำหนดการรอบเดือน (Milestones)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ตารางงานที่ต้องดำเนินการในแต่ละรอบบิล
+              </p>
             </div>
           </header>
 
@@ -804,8 +1050,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 25
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ตัดรอบจดมิเตอร์น้ำ-ไฟ</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">บันทึกตัวเลขมิเตอร์เพื่อคำนวณยอดการใช้</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ตัดรอบจดมิเตอร์น้ำ-ไฟ
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  บันทึกตัวเลขมิเตอร์เพื่อคำนวณยอดการใช้
+                </p>
               </div>
             </div>
 
@@ -814,8 +1064,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 1
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ออกและส่งใบแจ้งหนี้</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">พิมพ์หรือส่งแจ้งเตือนยอดชำระทาง LINE</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ออกและส่งใบแจ้งหนี้
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  พิมพ์หรือส่งแจ้งเตือนยอดชำระทาง LINE
+                </p>
               </div>
             </div>
 
@@ -824,8 +1078,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 5
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">วันครบกำหนดชำระเงิน</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">ผู้เช่าชำระเงินค่าเช่าและส่งหลักฐานสลิป</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  วันครบกำหนดชำระเงิน
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  ผู้เช่าชำระเงินค่าเช่าและส่งหลักฐานสลิป
+                </p>
               </div>
             </div>
 
@@ -834,15 +1092,21 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 6
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ติดตามบิลเกินกำหนด & คิดค่าปรับ</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">ตรวจสอบยอดค้างชำระและทวงถาม</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ติดตามบิลเกินกำหนด & คิดค่าปรับ
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  ตรวจสอบยอดค้างชำระและทวงถาม
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span>ประมาณการค่าเช่าฐานเดือนหน้า:</span>
-            <strong className="text-slate-900 font-black tabular-nums">{money(projectedBaseRent)}</strong>
+            <strong className="text-slate-900 font-black tabular-nums">
+              {money(projectedBaseRent)}
+            </strong>
           </div>
         </div>
       </section>
@@ -857,8 +1121,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <Zap size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติการใช้ไฟฟ้า (หน่วย / kWh)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">ปริมาณการใช้ไฟฟ้าของทั้งหอพัก 6 เดือนย้อนหลัง</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติการใช้ไฟฟ้า (หน่วย / kWh)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ปริมาณการใช้ไฟฟ้าของทั้งหอพัก 6 เดือนย้อนหลัง
+                </p>
               </div>
             </div>
             {hasAnyElec ? (
@@ -872,9 +1140,18 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {hasAnyElec ? (
               <div className="h-36 flex items-end justify-between gap-3 px-2">
                 {monthlyStats.map((item) => {
-                  const height = item.elecUnits > 0 ? Math.max(10, Math.round((item.elecUnits / maxElec) * 100)) : 0;
+                  const height =
+                    item.elecUnits > 0
+                      ? Math.max(
+                          10,
+                          Math.round((item.elecUnits / maxElec) * 100),
+                        )
+                      : 0;
                   return (
-                    <div className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative" key={item.month}>
+                    <div
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
+                      key={item.month}
+                    >
                       <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1 px-2 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-10 scale-95 group-hover:scale-100">
                         {item.elecUnits} หน่วย
                       </div>
@@ -882,7 +1159,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                         className="w-full max-w-[32px] rounded-t-lg bg-amber-500 group-hover:bg-amber-600 transition-colors shadow-2xs"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>
+                      <span className="text-[11px] font-bold text-slate-500 mt-1">
+                        {item.month}
+                      </span>
                     </div>
                   );
                 })}
@@ -892,13 +1171,18 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <span className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-1.5">
                   <Zap size={18} strokeWidth={2.2} />
                 </span>
-                <p className="text-xs text-slate-400 font-medium">ยังไม่มีประวัติการจดมิเตอร์ไฟฟ้า</p>
+                <p className="text-xs text-slate-400 font-medium">
+                  ยังไม่มีประวัติการจดมิเตอร์ไฟฟ้า
+                </p>
               </div>
             )}
           </div>
           <div className="mt-3 flex justify-between text-xs text-slate-400 font-medium">
             <span>สถานะ: บันทึกข้อมูลตามรอบบิล</span>
-            <Link href="/meters" className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1">
+            <Link
+              href="/meters"
+              className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+            >
               ไปหน้าจดมิเตอร์ <ArrowRight size={13} />
             </Link>
           </div>
@@ -912,8 +1196,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <Droplets size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติการใช้น้ำประปา (ลูกบาศก์เมตร / m³)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">ปริมาณการใช้น้ำประปาของทั้งหอพัก 6 เดือนย้อนหลัง</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติการใช้น้ำประปา (ลูกบาศก์เมตร / m³)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ปริมาณการใช้น้ำประปาของทั้งหอพัก 6 เดือนย้อนหลัง
+                </p>
               </div>
             </div>
             {hasAnyWater ? (
@@ -927,9 +1215,18 @@ export function DashboardOverview({ data }: { data: PortalData }) {
             {hasAnyWater ? (
               <div className="h-36 flex items-end justify-between gap-3 px-2">
                 {monthlyStats.map((item) => {
-                  const height = item.waterUnits > 0 ? Math.max(10, Math.round((item.waterUnits / maxWater) * 100)) : 0;
+                  const height =
+                    item.waterUnits > 0
+                      ? Math.max(
+                          10,
+                          Math.round((item.waterUnits / maxWater) * 100),
+                        )
+                      : 0;
                   return (
-                    <div className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative" key={item.month}>
+                    <div
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
+                      key={item.month}
+                    >
                       <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1 px-2 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-10 scale-95 group-hover:scale-100">
                         {item.waterUnits} m³
                       </div>
@@ -937,7 +1234,9 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                         className="w-full max-w-[32px] rounded-t-lg bg-sky-500 group-hover:bg-sky-600 transition-colors shadow-2xs"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>
+                      <span className="text-[11px] font-bold text-slate-500 mt-1">
+                        {item.month}
+                      </span>
                     </div>
                   );
                 })}
@@ -947,13 +1246,18 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                 <span className="w-10 h-10 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center mb-1.5">
                   <Droplets size={18} strokeWidth={2.2} />
                 </span>
-                <p className="text-xs text-slate-400 font-medium">ยังไม่มีประวัติการจดมิเตอร์น้ำประปา</p>
+                <p className="text-xs text-slate-400 font-medium">
+                  ยังไม่มีประวัติการจดมิเตอร์น้ำประปา
+                </p>
               </div>
             )}
           </div>
           <div className="mt-3 flex justify-between text-xs text-slate-400 font-medium">
             <span>สถานะ: บันทึกข้อมูลตามรอบบิล</span>
-            <Link href="/meters" className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1">
+            <Link
+              href="/meters"
+              className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+            >
               ไปหน้าจดมิเตอร์ <ArrowRight size={13} />
             </Link>
           </div>
@@ -965,9 +1269,14 @@ export function DashboardOverview({ data }: { data: PortalData }) {
         <header className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900">ใบแจ้งหนี้ล่าสุด</h2>
-            <p className="text-xs text-slate-500 mt-0.5">รายการเคลื่อนไหวและยอดเรียกเก็บที่ควรติดตาม</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              รายการเคลื่อนไหวและยอดเรียกเก็บที่ควรติดตาม
+            </p>
           </div>
-          <Link className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700" href="/invoices">
+          <Link
+            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+            href="/invoices"
+          >
             ดูทั้งหมด <ChevronRight size={14} />
           </Link>
         </header>
@@ -990,13 +1299,26 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                   {roomMap.get(item.room_id) ?? "—"}
                 </span>
                 <div className="flex flex-col text-xs min-w-0">
-                  <strong className="text-slate-900 font-bold truncate">{item.invoice_number}</strong>
-                  <small className="text-slate-400 mt-0.5">ห้อง {roomMap.get(item.room_id) ?? "—"}</small>
+                  <strong className="text-slate-900 font-bold truncate">
+                    {item.invoice_number}
+                  </strong>
+                  <small className="text-slate-400 mt-0.5">
+                    ห้อง {roomMap.get(item.room_id) ?? "—"}
+                  </small>
                 </div>
               </div>,
-              <span className="text-xs text-slate-700 font-medium" key="issued">{thaiDate(item.issued_at)}</span>,
-              <span className="text-xs text-slate-700 font-medium" key="due">{thaiDate(item.due_at)}</span>,
-              <strong className="text-xs font-black text-slate-900 tabular-nums" key="tot">{money(Number(item.total))}</strong>,
+              <span className="text-xs text-slate-700 font-medium" key="issued">
+                {thaiDate(item.issued_at)}
+              </span>,
+              <span className="text-xs text-slate-700 font-medium" key="due">
+                {thaiDate(item.due_at)}
+              </span>,
+              <strong
+                className="text-xs font-black text-slate-900 tabular-nums"
+                key="tot"
+              >
+                {money(Number(item.total))}
+              </strong>,
               <strong
                 className={`text-xs font-black tabular-nums ${Number(item.balance_due) > 0 ? "text-rose-600" : "text-emerald-600"}`}
                 key="bal"

@@ -1,5 +1,12 @@
-import { AdminSectionPage, type AdminSearchParams } from "@/components/admin/AdminSectionPage";
+import {
+  AdminSectionPage,
+  type AdminSearchParams,
+} from "@/components/admin/AdminSectionPage";
 
-export default function AdminPaymentsPage({ searchParams }: { searchParams: Promise<AdminSearchParams> }) {
+export default function AdminPaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<AdminSearchParams>;
+}) {
   return <AdminSectionPage section="payments" searchParams={searchParams} />;
 }

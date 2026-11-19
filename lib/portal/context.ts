@@ -11,7 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const ACTIVE_ORGANIZATION_COOKIE = "longtua_active_organization";
-export const IMPERSONATE_ORGANIZATION_COOKIE = "longtua_impersonate_organization";
+export const IMPERSONATE_ORGANIZATION_COOKIE =
+  "longtua_impersonate_organization";
 
 const menuPaths: Record<string, string> = {
   customer_overview: "/dashboard",
@@ -30,17 +31,32 @@ const menuPaths: Record<string, string> = {
 };
 
 const fallbackMenus = [
-  ["customer_overview", "แดชบอร์ด"], ["customer_properties", "หอพัก"],
-  ["customer_users", "ผู้ใช้งาน"], ["customer_rooms", "ห้องพัก"],
-  ["customer_tenants", "ผู้เช่า"], ["customer_leases", "สัญญาเช่า"],
-  ["customer_meters", "มิเตอร์"], ["customer_invoices", "ใบแจ้งหนี้"],
-  ["customer_payments", "รับชำระ"], ["customer_receivables", "ยอดค้าง"],
-  ["customer_reports", "รายงาน"], ["customer_settings", "ตั้งค่าหอพัก"],
+  ["customer_overview", "แดชบอร์ด"],
+  ["customer_properties", "หอพัก"],
+  ["customer_users", "ผู้ใช้งาน"],
+  ["customer_rooms", "ห้องพัก"],
+  ["customer_tenants", "ผู้เช่า"],
+  ["customer_leases", "สัญญาเช่า"],
+  ["customer_meters", "มิเตอร์"],
+  ["customer_invoices", "ใบแจ้งหนี้"],
+  ["customer_payments", "รับชำระ"],
+  ["customer_receivables", "ยอดค้าง"],
+  ["customer_reports", "รายงาน"],
+  ["customer_settings", "ตั้งค่าหอพัก"],
   ["customer_subscription", "แพ็กเกจและบริการ"],
 ] as const;
 
 function roleLabel(role: string) {
-  return ({ owner: "เจ้าของกิจการ", manager: "ผู้จัดการ", accounting: "ฝ่ายบัญชี", staff: "พนักงาน" } as Record<string, string>)[role] ?? role;
+  return (
+    (
+      {
+        owner: "เจ้าของกิจการ",
+        manager: "ผู้จัดการ",
+        accounting: "ฝ่ายบัญชี",
+        staff: "พนักงาน",
+      } as Record<string, string>
+    )[role] ?? role
+  );
 }
 
 export type PortalContext = {
@@ -72,23 +88,42 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
 
   const cookieStore = await cookies();
   const isSysAdmin = await isSystemAdmin(userId);
-  const impersonatedOrgId = isSysAdmin ? cookieStore.get(IMPERSONATE_ORGANIZATION_COOKIE)?.value : undefined;
+  const impersonatedOrgId = isSysAdmin
+    ? cookieStore.get(IMPERSONATE_ORGANIZATION_COOKIE)?.value
+    : undefined;
 
   if (isSysAdmin && !impersonatedOrgId) redirect("/admin");
 
   if (isSysAdmin && impersonatedOrgId) {
     const admin = createAdminClient();
-    const [{ data: targetOrg }, { data: profile }, { data: subResult }] = await Promise.all([
-      admin.from("organizations").select("id, name").eq("id", impersonatedOrgId).maybeSingle(),
-      admin.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
-      admin.from("subscriptions").select("status, trial_ends_at, max_properties, max_rooms").eq("organization_id", impersonatedOrgId).maybeSingle(),
-    ]);
+    const [{ data: targetOrg }, { data: profile }, { data: subResult }] =
+      await Promise.all([
+        admin
+          .from("organizations")
+          .select("id, name")
+          .eq("id", impersonatedOrgId)
+          .maybeSingle(),
+        admin
+          .from("profiles")
+          .select("display_name")
+          .eq("id", userId)
+          .maybeSingle(),
+        admin
+          .from("subscriptions")
+          .select("status, trial_ends_at, max_properties, max_rooms")
+          .eq("organization_id", impersonatedOrgId)
+          .maybeSingle(),
+      ]);
 
     if (!targetOrg) {
       redirect("/admin/organizations");
     }
 
-    const fallback = fallbackMenus.map(([code, label]) => ({ code, label, href: menuPaths[code] }));
+    const fallback = fallbackMenus.map(([code, label]) => ({
+      code,
+      label,
+      href: menuPaths[code],
+    }));
 
     return {
       userId,
@@ -97,7 +132,12 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
       roleLabel: "Super Admin [โหมดเข้าดูแทน]",
       organization: targetOrg,
       organizations: [targetOrg],
-      subscription: subResult ?? { status: "active", trial_ends_at: null, max_properties: 1, max_rooms: 10 },
+      subscription: subResult ?? {
+        status: "active",
+        trial_ends_at: null,
+        max_properties: 1,
+        max_rooms: 10,
+      },
       permissions: fallbackMenus.map(([code]) => `${code}:view`),
       granularReady: false,
       menus: fallback,
@@ -105,34 +145,73 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
     };
   }
 
-  const [{ data: profile }, { data: memberships, error: membershipError }] = await Promise.all([
-    supabase.from("profiles").select("display_name, status").eq("id", userId).maybeSingle(),
-    supabase.from("organization_members").select("organization_id, role_code").eq("user_id", userId).eq("status", "active").order("created_at"),
-  ]);
+  const [{ data: profile }, { data: memberships, error: membershipError }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("display_name, status")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabase
+        .from("organization_members")
+        .select("organization_id, role_code")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("created_at"),
+    ]);
   if (profile?.status === "pending") redirect("/registration/pending");
-  if (!profile || profile.status !== "active" || membershipError || !memberships?.length) redirect("/login");
+  if (
+    !profile ||
+    profile.status !== "active" ||
+    membershipError ||
+    !memberships?.length
+  )
+    redirect("/login");
 
   const { data: organizations, error: organizationError } = await supabase
     .from("organizations")
     .select("id, name")
-    .in("id", memberships.map((membership) => membership.organization_id))
+    .in(
+      "id",
+      memberships.map((membership) => membership.organization_id),
+    )
     .order("created_at");
   if (organizationError || !organizations?.length) redirect("/login");
 
-  const requestedOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
-  const membership = memberships.find((item) => item.organization_id === requestedOrganizationId) ?? memberships[0];
-  const organization = organizations.find((item) => item.id === membership.organization_id);
+  const requestedOrganizationId = cookieStore.get(
+    ACTIVE_ORGANIZATION_COOKIE,
+  )?.value;
+  const membership =
+    memberships.find(
+      (item) => item.organization_id === requestedOrganizationId,
+    ) ?? memberships[0];
+  const organization = organizations.find(
+    (item) => item.id === membership.organization_id,
+  );
   if (!organization) redirect("/login");
 
   const [access, subscriptionResult] = await Promise.all([
     getOrganizationAccess(userId, organization.id),
-    supabase.from("subscriptions").select("status, trial_ends_at, max_properties, max_rooms").eq("organization_id", organization.id).single(),
+    supabase
+      .from("subscriptions")
+      .select("status, trial_ends_at, max_properties, max_rooms")
+      .eq("organization_id", organization.id)
+      .single(),
   ]);
-  if (!access || subscriptionResult.error || !subscriptionResult.data) redirect("/login");
+  if (!access || subscriptionResult.error || !subscriptionResult.data)
+    redirect("/login");
 
   const menus = access.granularReady
-    ? access.menus.flatMap((menu) => menuPaths[menu.code] ? [{ code: menu.code, label: menu.label, href: menuPaths[menu.code] }] : [])
-    : fallbackMenus.map(([code, label]) => ({ code, label, href: menuPaths[code] }));
+    ? access.menus.flatMap((menu) =>
+        menuPaths[menu.code]
+          ? [{ code: menu.code, label: menu.label, href: menuPaths[menu.code] }]
+          : [],
+      )
+    : fallbackMenus.map(([code, label]) => ({
+        code,
+        label,
+        href: menuPaths[code],
+      }));
 
   return {
     userId,
@@ -149,5 +228,8 @@ export const requirePortalContext = cache(async (): Promise<PortalContext> => {
 });
 
 export function can(context: PortalContext, menuCode: string, action: string) {
-  return !context.granularReady || context.permissions.includes(`${menuCode}:${action}`);
+  return (
+    !context.granularReady ||
+    context.permissions.includes(`${menuCode}:${action}`)
+  );
 }

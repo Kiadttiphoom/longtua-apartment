@@ -20,15 +20,27 @@ export default async function TenantHomePage() {
   const { supabase, organizationId, tenantId } = data.context;
 
   // Active lease & room
-  const primaryLease = data.leases.find((l) => l.status === "active") ?? data.leases[0];
+  const primaryLease =
+    data.leases.find((l) => l.status === "active") ?? data.leases[0];
   const primaryRoom = data.rooms.find((r) => r.id === primaryLease?.room_id);
-  const primaryProperty = data.properties.find((p) => p.id === primaryLease?.property_id) ?? data.properties[0];
+  const primaryProperty =
+    data.properties.find((p) => p.id === primaryLease?.property_id) ??
+    data.properties[0];
 
   // Invoices & Submissions
-  const outstanding = data.invoices.filter((i) => i.status !== "void" && Number(i.balance_due) > 0);
-  const totalBalance = outstanding.reduce((sum, i) => sum + Number(i.balance_due), 0);
-  const pendingSubmissions = data.submissions.filter((i) => i.status === "pending");
-  const nextInvoice = outstanding.toSorted((a, b) => a.due_at.localeCompare(b.due_at))[0];
+  const outstanding = data.invoices.filter(
+    (i) => i.status !== "void" && Number(i.balance_due) > 0,
+  );
+  const totalBalance = outstanding.reduce(
+    (sum, i) => sum + Number(i.balance_due),
+    0,
+  );
+  const pendingSubmissions = data.submissions.filter(
+    (i) => i.status === "pending",
+  );
+  const nextInvoice = outstanding.toSorted((a, b) =>
+    a.due_at.localeCompare(b.due_at),
+  )[0];
   const latestNonVoidInvoice = data.invoices.find((i) => i.status !== "void");
 
   // Fetch active repair requests
@@ -40,7 +52,9 @@ export default async function TenantHomePage() {
     .order("created_at", { ascending: false })
     .limit(3);
 
-  const activeRepairs = (repairs ?? []).filter((r) => ["pending", "in_progress"].includes(r.status));
+  const activeRepairs = (repairs ?? []).filter((r) =>
+    ["pending", "in_progress"].includes(r.status),
+  );
 
   // Today's date in Thai
   const todayFormatted = new Intl.DateTimeFormat("th-TH", {
@@ -73,7 +87,9 @@ export default async function TenantHomePage() {
               {primaryRoom && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-800 font-bold">
                   <Layers size={13} className="text-blue-600" />
-                  <span>ห้อง {primaryRoom.room_number} (ชั้น {primaryRoom.floor || 1})</span>
+                  <span>
+                    ห้อง {primaryRoom.room_number} (ชั้น {primaryRoom.floor || 1})
+                  </span>
                 </span>
               )}
               {primaryLease && (
@@ -107,7 +123,9 @@ export default async function TenantHomePage() {
                   <Clock size={14} className="text-amber-300" />
                   <span>
                     กำหนดชำระบิลถัดไป:{" "}
-                    <strong className="text-white font-bold">{thaiDate(nextInvoice.due_at)}</strong>{" "}
+                    <strong className="text-white font-bold">
+                      {thaiDate(nextInvoice.due_at)}
+                    </strong>{" "}
                     ({nextInvoice.invoice_number})
                   </span>
                 </div>
@@ -140,7 +158,8 @@ export default async function TenantHomePage() {
                   ไม่มีบิลค้างชำระ 🎉
                 </div>
                 <p className="text-xs text-emerald-100 leading-relaxed max-w-lg">
-                  ขอบคุณที่ชำระค่าเช่าและค่าน้ำ-ไฟตรงเวลา คุณสามารถดูประวัติใบเสร็จย้อนหลังได้ตลอดเวลา
+                  ขอบคุณที่ชำระค่าเช่าและค่าน้ำ-ไฟตรงเวลา
+                  คุณสามารถดูประวัติใบเสร็จย้อนหลังได้ตลอดเวลา
                 </p>
               </div>
             </div>
@@ -164,7 +183,8 @@ export default async function TenantHomePage() {
             </span>
             <div>
               <strong className="block text-xs font-bold">
-                มีหลักฐานการโอนรอเจ้าหน้าที่ตรวจสอบ ({pendingSubmissions.length} รายการ)
+                มีหลักฐานการโอนรอเจ้าหน้าที่ตรวจสอบ ({pendingSubmissions.length}{" "}
+                รายการ)
               </strong>
               <span className="text-[11px] text-amber-700 leading-snug block">
                 ระบบได้รับสลิปเรียบร้อยแล้ว ยอดค้างชำระจะปรับลดลงทันทีเมื่อเจ้าหน้าที่ยืนยันยอด
@@ -204,7 +224,9 @@ export default async function TenantHomePage() {
                 บิลและชำระ
               </strong>
               <span className="block text-[11px] text-slate-600 mt-0.5">
-                {outstanding.length > 0 ? `${outstanding.length} บิลรอชำระ` : "ชำระครบถ้วน"}
+                {outstanding.length > 0
+                  ? `${outstanding.length} บิลรอชำระ`
+                  : "ชำระครบถ้วน"}
               </span>
             </div>
           </Link>
@@ -280,8 +302,12 @@ export default async function TenantHomePage() {
                 <Phone size={22} />
               </span>
               <div className="mt-3">
-                <strong className="block text-sm font-bold text-slate-700">ติดต่อหอพัก</strong>
-                <span className="block text-[11px] text-slate-600 mt-0.5">ติดต่อสำนักงาน</span>
+                <strong className="block text-sm font-bold text-slate-700">
+                  ติดต่อหอพัก
+                </strong>
+                <span className="block text-[11px] text-slate-600 mt-0.5">
+                  ติดต่อสำนักงาน
+                </span>
               </div>
             </div>
           )}
@@ -314,19 +340,25 @@ export default async function TenantHomePage() {
             {nextInvoice ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-600">เลขที่ใบแจ้งหนี้</span>
+                  <span className="text-xs font-medium text-slate-600">
+                    เลขที่ใบแจ้งหนี้
+                  </span>
                   <strong className="text-xs font-bold font-mono text-slate-800">
                     {nextInvoice.invoice_number}
                   </strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-600">วันที่ครบกำหนด</span>
+                  <span className="text-xs font-medium text-slate-600">
+                    วันที่ครบกำหนด
+                  </span>
                   <span className="text-xs font-semibold text-slate-700">
                     {thaiDate(nextInvoice.due_at)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-dashed border-slate-100">
-                  <span className="text-xs font-bold text-slate-800">ยอดที่ต้องชำระ</span>
+                  <span className="text-xs font-bold text-slate-800">
+                    ยอดที่ต้องชำระ
+                  </span>
                   <strong className="text-lg font-black text-blue-700 tabular-nums">
                     {money(Number(nextInvoice.balance_due))}
                   </strong>
@@ -335,13 +367,17 @@ export default async function TenantHomePage() {
             ) : latestNonVoidInvoice ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-600">บิลรอบล่าสุด</span>
+                  <span className="text-xs font-medium text-slate-600">
+                    บิลรอบล่าสุด
+                  </span>
                   <strong className="text-xs font-bold font-mono text-slate-800">
                     {latestNonVoidInvoice.invoice_number}
                   </strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-600">สถานะ</span>
+                  <span className="text-xs font-medium text-slate-600">
+                    สถานะ
+                  </span>
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
                     <CheckCircle2 size={13} />
                     <span>ชำระเรียบร้อยแล้ว</span>
@@ -390,11 +426,27 @@ export default async function TenantHomePage() {
             {repairs && repairs.length > 0 ? (
               <div className="space-y-2.5">
                 {repairs.map((r) => {
-                  const statusMap: Record<string, { label: string; badge: string }> = {
-                    pending: { label: "รอรับเรื่อง", badge: "bg-amber-50 text-amber-800 border-amber-200" },
-                    in_progress: { label: "กำลังดำเนินการ", badge: "bg-blue-50 text-blue-800 border-blue-200" },
-                    completed: { label: "เสร็จสิ้น", badge: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-                    cancelled: { label: "ยกเลิก", badge: "bg-slate-50 text-slate-700 border-slate-200" },
+                  const statusMap: Record<
+                    string,
+                    { label: string; badge: string }
+                  > = {
+                    pending: {
+                      label: "รอรับเรื่อง",
+                      badge: "bg-amber-50 text-amber-800 border-amber-200",
+                    },
+                    in_progress: {
+                      label: "กำลังดำเนินการ",
+                      badge: "bg-blue-50 text-blue-800 border-blue-200",
+                    },
+                    completed: {
+                      label: "เสร็จสิ้น",
+                      badge:
+                        "bg-emerald-50 text-emerald-800 border-emerald-200",
+                    },
+                    cancelled: {
+                      label: "ยกเลิก",
+                      badge: "bg-slate-50 text-slate-700 border-slate-200",
+                    },
                   };
                   const current = statusMap[r.status] ?? statusMap.pending;
                   return (
@@ -410,7 +462,9 @@ export default async function TenantHomePage() {
                           {thaiDate(r.created_at)}
                         </span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${current.badge}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${current.badge}`}
+                      >
                         {current.label}
                       </span>
                     </div>
@@ -450,30 +504,40 @@ export default async function TenantHomePage() {
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-600 block">เลขที่ห้อง</span>
+              <span className="text-[11px] font-semibold text-slate-600 block">
+                เลขที่ห้อง
+              </span>
               <strong className="text-base font-black text-slate-800 mt-0.5 block">
                 {primaryRoom?.room_number ?? "—"}
               </strong>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-600 block">ค่าเช่ารายเดือน</span>
+              <span className="text-[11px] font-semibold text-slate-600 block">
+                ค่าเช่ารายเดือน
+              </span>
               <strong className="text-base font-black text-blue-700 mt-0.5 block">
                 {money(Number(primaryLease.rent_amount))}
               </strong>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-600 block">เงินประกัน</span>
+              <span className="text-[11px] font-semibold text-slate-600 block">
+                เงินประกัน
+              </span>
               <strong className="text-base font-black text-slate-800 mt-0.5 block">
                 {money(Number(primaryLease.deposit_amount))}
               </strong>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-600 block">สิ้นสุดสัญญา</span>
+              <span className="text-[11px] font-semibold text-slate-600 block">
+                สิ้นสุดสัญญา
+              </span>
               <strong className="text-sm font-black text-slate-800 mt-1 block">
-                {primaryLease.end_date ? thaiDate(primaryLease.end_date) : "ไม่ระบุ"}
+                {primaryLease.end_date
+                  ? thaiDate(primaryLease.end_date)
+                  : "ไม่ระบุ"}
               </strong>
             </div>
           </div>

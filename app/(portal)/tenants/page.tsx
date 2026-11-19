@@ -4,8 +4,13 @@ import { can, requirePortalContext } from "@/lib/portal/context";
 import { loadTenantPortalAccountSummaries } from "@/lib/portal/tenant-accounts";
 
 export default async function Page() {
-  const [context, data] = await Promise.all([requirePortalContext(), loadPortalData()]);
-  const accounts = await loadTenantPortalAccountSummaries(context.organization.id);
+  const [context, data] = await Promise.all([
+    requirePortalContext(),
+    loadPortalData(),
+  ]);
+  const accounts = await loadTenantPortalAccountSummaries(
+    context.organization.id,
+  );
   return (
     <TenantsPage
       canCreate={can(context, "customer_tenants", "create")}

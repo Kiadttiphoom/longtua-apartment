@@ -7,7 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function isTenantUser(userId: string) {
   const admin = createAdminClient();
-  const { data, error } = await admin.from("tenant_accounts").select("tenant_id").eq("auth_user_id", userId).eq("status", "active").maybeSingle();
+  const { data, error } = await admin
+    .from("tenant_accounts")
+    .select("tenant_id")
+    .eq("auth_user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
   return !error && Boolean(data);
 }
 
@@ -24,5 +29,10 @@ export const requireTenantContext = cache(async () => {
     .eq("status", "active")
     .maybeSingle();
   if (error || !account) redirect("/dashboard");
-  return { supabase, userId, tenantId: account.tenant_id, organizationId: account.organization_id };
+  return {
+    supabase,
+    userId,
+    tenantId: account.tenant_id,
+    organizationId: account.organization_id,
+  };
 });

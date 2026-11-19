@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { SUPPORTED_BANKS, findBank, type BankOption } from "@/lib/constants/banks";
+import {
+  SUPPORTED_BANKS,
+  findBank,
+  type BankOption,
+} from "@/lib/constants/banks";
 import { Check, ChevronDown, Landmark } from "lucide-react";
 
 export function BankSelector({
@@ -13,7 +17,7 @@ export function BankSelector({
   onSelect?: (bank: BankOption | null) => void;
   allowNone?: boolean;
 }) {
-  const defaultBank = initialBank ? findBank(initialBank) ?? null : null;
+  const defaultBank = initialBank ? (findBank(initialBank) ?? null) : null;
   const [selected, setSelected] = useState<BankOption | null>(defaultBank);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -22,7 +26,7 @@ export function BankSelector({
     (b) =>
       b.key !== "promptpay" && // exclude promptpay from bank list if it's bank-only selector
       (b.name.toLowerCase().includes(search.toLowerCase()) ||
-        b.shortName.toLowerCase().includes(search.toLowerCase()))
+        b.shortName.toLowerCase().includes(search.toLowerCase())),
   );
 
   function handleSelect(bank: BankOption | null) {
@@ -40,7 +44,9 @@ export function BankSelector({
           <Landmark size={14} className="text-slate-500" />
           <span>ธนาคาร</span>
         </span>
-        <span className="text-[11px] text-slate-400 font-normal">เลือกโลโก้และธนาคาร</span>
+        <span className="text-[11px] text-slate-400 font-normal">
+          เลือกโลโก้และธนาคาร
+        </span>
       </label>
 
       {/* Trigger Button */}
@@ -73,7 +79,10 @@ export function BankSelector({
             </span>
           </div>
         </div>
-        <ChevronDown size={16} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          size={16}
+          className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {/* Dropdown Menu */}
@@ -96,7 +105,9 @@ export function BankSelector({
                 type="button"
                 onClick={() => handleSelect(null)}
                 className={`w-full p-2 rounded-xl flex items-center justify-between gap-2.5 transition text-left cursor-pointer ${
-                  !selected ? "bg-blue-50 text-blue-900 font-bold" : "hover:bg-slate-50 text-slate-600"
+                  !selected
+                    ? "bg-blue-50 text-blue-900 font-bold"
+                    : "hover:bg-slate-50 text-slate-600"
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -105,7 +116,9 @@ export function BankSelector({
                   </div>
                   <span className="truncate text-xs">ไม่ระบุบัญชีธนาคาร</span>
                 </div>
-                {!selected && <Check size={15} className="text-blue-600 shrink-0" />}
+                {!selected && (
+                  <Check size={15} className="text-blue-600 shrink-0" />
+                )}
               </button>
             )}
 
@@ -117,7 +130,9 @@ export function BankSelector({
                   type="button"
                   onClick={() => handleSelect(bank)}
                   className={`w-full p-2 rounded-xl flex items-center justify-between gap-2.5 transition text-left cursor-pointer ${
-                    isSelected ? "bg-blue-50 text-blue-900 font-bold" : "hover:bg-slate-50 text-slate-700"
+                    isSelected
+                      ? "bg-blue-50 text-blue-900 font-bold"
+                      : "hover:bg-slate-50 text-slate-700"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -131,12 +146,16 @@ export function BankSelector({
                     </div>
                     <span className="truncate text-xs">{bank.name}</span>
                   </div>
-                  {isSelected && <Check size={15} className="text-blue-600 shrink-0" />}
+                  {isSelected && (
+                    <Check size={15} className="text-blue-600 shrink-0" />
+                  )}
                 </button>
               );
             })}
             {!filteredBanks.length && (
-              <p className="p-3 text-center text-xs text-slate-400">ไม่พบธนาคารที่ค้นหา</p>
+              <p className="p-3 text-center text-xs text-slate-400">
+                ไม่พบธนาคารที่ค้นหา
+              </p>
             )}
           </div>
         </div>

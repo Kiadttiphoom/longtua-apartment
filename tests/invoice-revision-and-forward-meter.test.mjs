@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), "utf8");
+const read = (path) =>
+  readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), "utf8");
 
 test("cancelInvoiceAction_capturesReasonAndStoresInAuditLogMetadata", () => {
   const source = read("app/(portal)/resource-actions.ts");

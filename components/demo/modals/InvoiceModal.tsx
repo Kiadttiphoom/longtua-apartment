@@ -58,7 +58,9 @@ export function InvoiceModal({
                 <Building2 size={24} strokeWidth={2.2} />
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">สมชายแมนชั่น</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+              สมชายแมนชั่น
+            </h1>
             <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
               ใบแจ้งหนี้ / ใบเรียกเก็บเงินประจำเดือน (INVOICE)
             </p>
@@ -80,7 +82,8 @@ export function InvoiceModal({
           </div>
 
           <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 text-xs text-slate-700">
-            <strong>ผู้เช่าพักอาศัย:</strong> {room.tenant || "ผู้เช่าห้องพัก"} · <strong>รอบบิล:</strong> 1–31 สิงหาคม 2569
+            <strong>ผู้เช่าพักอาศัย:</strong> {room.tenant || "ผู้เช่าห้องพัก"} ·{" "}
+            <strong>รอบบิล:</strong> 1–31 สิงหาคม 2569
           </div>
 
           <div className="my-4 overflow-x-auto rounded-xl border border-slate-200">
@@ -95,27 +98,40 @@ export function InvoiceModal({
               <tbody className="divide-y divide-slate-100">
                 <tr>
                   <td className="p-3 text-slate-500">1</td>
-                  <td className="p-3 text-slate-800 font-semibold">ค่าเช่าห้องพักประจำเดือน (ห้อง {room.number})</td>
-                  <td className="p-3 text-right font-semibold text-slate-900">{room.rent.toLocaleString()}.00</td>
+                  <td className="p-3 text-slate-800 font-semibold">
+                    ค่าเช่าห้องพักประจำเดือน (ห้อง {room.number})
+                  </td>
+                  <td className="p-3 text-right font-semibold text-slate-900">
+                    {room.rent.toLocaleString()}.00
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3 text-slate-500">2</td>
                   <td className="p-3 text-slate-800 font-semibold">
-                    ค่ากระแสไฟฟ้า ({room.prevElec.toLocaleString()} → {room.newElec?.toLocaleString() ?? "-"} = {units} หน่วย ×{" "}
+                    ค่ากระแสไฟฟ้า ({room.prevElec.toLocaleString()} →{" "}
+                    {room.newElec?.toLocaleString() ?? "-"} = {units} หน่วย ×{" "}
                     {settings.electricRate} บ./หน่วย)
                   </td>
-                  <td className="p-3 text-right font-semibold text-slate-900">{elecCost.toFixed(2)}</td>
+                  <td className="p-3 text-right font-semibold text-slate-900">
+                    {elecCost.toFixed(2)}
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3 text-slate-500">3</td>
-                  <td className="p-3 text-slate-800 font-semibold">ค่าน้ำประปา (อัตราเหมาจ่าย)</td>
-                  <td className="p-3 text-right font-semibold text-slate-900">{settings.waterRate.toFixed(2)}</td>
+                  <td className="p-3 text-slate-800 font-semibold">
+                    ค่าน้ำประปา (อัตราเหมาจ่าย)
+                  </td>
+                  <td className="p-3 text-right font-semibold text-slate-900">
+                    {settings.waterRate.toFixed(2)}
+                  </td>
                 </tr>
                 <tr className="bg-slate-50/80 font-bold">
                   <td className="p-3.5 text-slate-900" colSpan={2}>
                     ยอดรวมสุทธิที่ต้องชำระ (TOTAL AMOUNT):
                   </td>
-                  <td className="p-3.5 text-right text-sm text-slate-900">฿{total.toFixed(2)}</td>
+                  <td className="p-3.5 text-right text-sm text-slate-900">
+                    ฿{total.toFixed(2)}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -128,7 +144,8 @@ export function InvoiceModal({
           <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1">
             <strong className="block font-bold">ช่องทางการชำระเงิน:</strong>
             <p>
-              พร้อมเพย์: <strong>{settings.promptpay || "081-999-8888"}</strong> ({settings.accountName || "สมชายแมนชั่น"})
+              พร้อมเพย์: <strong>{settings.promptpay || "081-999-8888"}</strong> (
+              {settings.accountName || "สมชายแมนชั่น"})
             </p>
             <small className="text-slate-500 block">
               * กรุณาชำระเงินภายในวันที่ <strong>5 ก.ย. 2569</strong>
@@ -137,16 +154,32 @@ export function InvoiceModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 mt-6 border-t border-dashed border-slate-300 text-center">
             <div className="flex flex-col items-center space-y-1">
-              <p className="text-xs text-slate-600">ลงชื่อ ............................................................ ผู้แจ้งยอด</p>
+              <p className="text-xs text-slate-600">
+                ลงชื่อ
+                ............................................................
+                ผู้แจ้งยอด
+              </p>
               <div className="w-3/4 border-b border-dotted border-slate-300 my-2 h-4" />
-              <p className="text-xs font-semibold text-slate-800">(สมชายแมนชั่น)</p>
-              <p className="text-[11px] text-slate-400">เจ้าหน้าที่ / ผู้จัดการอาคาร</p>
+              <p className="text-xs font-semibold text-slate-800">
+                (สมชายแมนชั่น)
+              </p>
+              <p className="text-[11px] text-slate-400">
+                เจ้าหน้าที่ / ผู้จัดการอาคาร
+              </p>
             </div>
             <div className="flex flex-col items-center space-y-1">
-              <p className="text-xs text-slate-600">ลงชื่อ ............................................................ ผู้รับใบแจ้งหนี้</p>
+              <p className="text-xs text-slate-600">
+                ลงชื่อ
+                ............................................................
+                ผู้รับใบแจ้งหนี้
+              </p>
               <div className="w-3/4 border-b border-dotted border-slate-300 my-2 h-4" />
-              <p className="text-xs font-semibold text-slate-800">( {room.tenant || "ผู้เช่าห้องพัก"} )</p>
-              <p className="text-[11px] text-slate-400">ผู้เช่าห้องพักหมายเลข {room.number}</p>
+              <p className="text-xs font-semibold text-slate-800">
+                ( {room.tenant || "ผู้เช่าห้องพัก"} )
+              </p>
+              <p className="text-[11px] text-slate-400">
+                ผู้เช่าห้องพักหมายเลข {room.number}
+              </p>
             </div>
           </div>
         </div>

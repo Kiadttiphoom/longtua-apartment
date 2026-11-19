@@ -19,8 +19,14 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        {eyebrow ? <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">{eyebrow}</p> : null}
-        <h1 className="text-xl lg:text-2xl font-bold text-slate-800 tracking-tight">{title}</h1>
+        {eyebrow ? (
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h1 className="text-xl lg:text-2xl font-bold text-slate-800 tracking-tight">
+          {title}
+        </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">{description}</p>
       </div>
       <div className="flex items-center gap-3">

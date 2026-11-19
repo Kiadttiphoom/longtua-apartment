@@ -11,7 +11,10 @@ export async function GET(request: Request) {
 
   if (!cronSecret) {
     return NextResponse.json(
-      { ok: false, error: "Health check is not configured (missing CRON_SECRET)." },
+      {
+        ok: false,
+        error: "Health check is not configured (missing CRON_SECRET).",
+      },
       { status: 503, headers: noStoreHeaders },
     );
   }
@@ -25,7 +28,10 @@ export async function GET(request: Request) {
 
   if (!databaseUrl) {
     return NextResponse.json(
-      { ok: false, error: "Health check is not configured (missing DATABASE_URL)." },
+      {
+        ok: false,
+        error: "Health check is not configured (missing DATABASE_URL).",
+      },
       { status: 503, headers: noStoreHeaders },
     );
   }

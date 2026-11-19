@@ -42,13 +42,18 @@ export function PropertiesPage({
     return properties.filter(
       (p) =>
         !needle ||
-        `${p.name} ${p.address} ${p.phone}`.toLowerCase().includes(needle)
+        `${p.name} ${p.address} ${p.phone}`.toLowerCase().includes(needle),
     );
   }, [properties, query]);
 
   const totalRooms = properties.reduce((s, p) => s + p.rooms.length, 0);
-  const totalOccupied = properties.reduce((s, p) => s + p.rooms.filter((r) => Boolean(r.tenant)).length, 0);
-  const overallOccupancy = totalRooms ? Math.round((totalOccupied / totalRooms) * 100) : 0;
+  const totalOccupied = properties.reduce(
+    (s, p) => s + p.rooms.filter((r) => Boolean(r.tenant)).length,
+    0,
+  );
+  const overallOccupancy = totalRooms
+    ? Math.round((totalOccupied / totalRooms) * 100)
+    : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -68,7 +73,9 @@ export function PropertiesPage({
               <Building2 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">หอพักทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                หอพักทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {properties.length.toLocaleString("th-TH")} แห่ง
               </strong>
@@ -83,7 +90,9 @@ export function PropertiesPage({
               <CheckCircle2 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">กำลังใช้งาน</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                กำลังใช้งาน
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {properties.length.toLocaleString("th-TH")} แห่ง
               </strong>
@@ -98,7 +107,9 @@ export function PropertiesPage({
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ห้องพักรวม</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ห้องพักรวม
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalRooms.toLocaleString("th-TH")} ห้อง
               </strong>
@@ -113,7 +124,9 @@ export function PropertiesPage({
               <Activity size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">อัตราเข้าพักเฉลี่ย</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                อัตราเข้าพักเฉลี่ย
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {overallOccupancy}%
               </strong>
@@ -130,7 +143,9 @@ export function PropertiesPage({
                 <button
                   aria-label="มุมมองตาราง"
                   className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                    viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                    viewMode === "table"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   onClick={() => setViewMode("table")}
                   type="button"
@@ -141,7 +156,9 @@ export function PropertiesPage({
                 <button
                   aria-label="มุมมองการ์ด"
                   className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                    viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                    viewMode === "grid"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   onClick={() => setViewMode("grid")}
                   type="button"
@@ -181,9 +198,15 @@ export function PropertiesPage({
                     "การจัดการ",
                   ]}
                   rows={visibleItems.map((item) => {
-                    const vacantRooms = item.rooms.filter((room) => !room.tenant).length;
-                    const occupiedRooms = item.rooms.filter((room) => Boolean(room.tenant)).length;
-                    const propOccupancy = item.rooms.length ? Math.round((occupiedRooms / item.rooms.length) * 100) : 0;
+                    const vacantRooms = item.rooms.filter(
+                      (room) => !room.tenant,
+                    ).length;
+                    const occupiedRooms = item.rooms.filter((room) =>
+                      Boolean(room.tenant),
+                    ).length;
+                    const propOccupancy = item.rooms.length
+                      ? Math.round((occupiedRooms / item.rooms.length) * 100)
+                      : 0;
 
                     return [
                       <div className="flex items-center gap-3.5" key="prop">
@@ -191,31 +214,57 @@ export function PropertiesPage({
                           <Building2 size={19} strokeWidth={2.2} />
                         </span>
                         <div>
-                          <strong className="text-slate-900 text-sm font-bold block">{item.name}</strong>
-                          <span className="text-[11px] text-slate-400 block mt-0.5">ID: {item.id.slice(0, 8)}...</span>
+                          <strong className="text-slate-900 text-sm font-bold block">
+                            {item.name}
+                          </strong>
+                          <span className="text-[11px] text-slate-400 block mt-0.5">
+                            ID: {item.id.slice(0, 8)}...
+                          </span>
                         </div>
                       </div>,
                       <div className="flex flex-col text-xs" key="contact">
-                        <span className="text-slate-700 font-medium">{item.address || "—"}</span>
-                        <small className="text-slate-400 mt-0.5">{item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}</small>
+                        <span className="text-slate-700 font-medium">
+                          {item.address || "—"}
+                        </span>
+                        <small className="text-slate-400 mt-0.5">
+                          {item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}
+                        </small>
                       </div>,
-                      <div className="flex flex-col text-xs font-medium" key="rooms">
-                        <strong className="text-slate-900 font-black tabular-nums">{item.rooms.length} ห้อง</strong>
+                      <div
+                        className="flex flex-col text-xs font-medium"
+                        key="rooms"
+                      >
+                        <strong className="text-slate-900 font-black tabular-nums">
+                          {item.rooms.length} ห้อง
+                        </strong>
                         <small className="text-slate-400 mt-0.5">
                           (ว่าง {vacantRooms} • มีผู้เช่า {occupiedRooms})
                         </small>
                       </div>,
-                      <div className="flex flex-col gap-1 min-w-[120px]" key="occ">
+                      <div
+                        className="flex flex-col gap-1 min-w-[120px]"
+                        key="occ"
+                      >
                         <div className="flex justify-between text-xs">
-                          <span className="font-bold text-slate-700">{propOccupancy}%</span>
-                          <span className="text-[11px] text-slate-400">{occupiedRooms}/{item.rooms.length}</span>
+                          <span className="font-bold text-slate-700">
+                            {propOccupancy}%
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {occupiedRooms}/{item.rooms.length}
+                          </span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/50">
-                          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400" style={{ width: `${propOccupancy}%` }} />
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+                            style={{ width: `${propOccupancy}%` }}
+                          />
                         </div>
                       </div>,
                       <StatusBadge key="status" status="active" />,
-                      <div className="inline-flex items-center gap-2 justify-end" key="actions">
+                      <div
+                        className="inline-flex items-center gap-2 justify-end"
+                        key="actions"
+                      >
                         <button
                           className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
                           onClick={() => {
@@ -236,7 +285,9 @@ export function PropertiesPage({
                         <DeleteButton
                           disabled={isLocked || properties.length <= 1}
                           label="ลบ"
-                          onClick={() => onToast("ไม่สามารถลบหอพักหลักได้ในโหมดตัวอย่าง")}
+                          onClick={() =>
+                            onToast("ไม่สามารถลบหอพักหลักได้ในโหมดตัวอย่าง")
+                          }
                         />
                       </div>,
                     ];
@@ -246,9 +297,15 @@ export function PropertiesPage({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleItems.map((item) => {
-                  const vacantRooms = item.rooms.filter((room) => !room.tenant).length;
-                  const occupiedRooms = item.rooms.filter((room) => Boolean(room.tenant)).length;
-                  const propOccupancy = item.rooms.length ? Math.round((occupiedRooms / item.rooms.length) * 100) : 0;
+                  const vacantRooms = item.rooms.filter(
+                    (room) => !room.tenant,
+                  ).length;
+                  const occupiedRooms = item.rooms.filter((room) =>
+                    Boolean(room.tenant),
+                  ).length;
+                  const propOccupancy = item.rooms.length
+                    ? Math.round((occupiedRooms / item.rooms.length) * 100)
+                    : 0;
 
                   return (
                     <article
@@ -279,7 +336,9 @@ export function PropertiesPage({
                         </header>
 
                         <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs mb-4">
-                          <span className="text-slate-400 block text-[10px] font-bold tracking-wide uppercase">ที่ตั้ง / ที่อยู่</span>
+                          <span className="text-slate-400 block text-[10px] font-bold tracking-wide uppercase">
+                            ที่ตั้ง / ที่อยู่
+                          </span>
                           <p className="text-slate-700 font-medium mt-1 line-clamp-2 leading-relaxed">
                             {item.address || "ยังไม่ได้ระบุที่อยู่ของอาคาร"}
                           </p>
@@ -287,8 +346,12 @@ export function PropertiesPage({
 
                         <div className="space-y-1.5 mb-4">
                           <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-medium">อัตราการเข้าพัก</span>
-                            <strong className="text-slate-900 font-black">{propOccupancy}%</strong>
+                            <span className="text-slate-500 font-medium">
+                              อัตราการเข้าพัก
+                            </span>
+                            <strong className="text-slate-900 font-black">
+                              {propOccupancy}%
+                            </strong>
                           </div>
                           <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
                             <div
@@ -300,16 +363,28 @@ export function PropertiesPage({
 
                         <dl className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-center mb-5">
                           <div className="flex flex-col">
-                            <dt className="text-[11px] text-slate-400 font-medium">ห้องทั้งหมด</dt>
-                            <dd className="text-lg font-black text-slate-900 mt-0.5 tabular-nums">{item.rooms.length}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              ห้องทั้งหมด
+                            </dt>
+                            <dd className="text-lg font-black text-slate-900 mt-0.5 tabular-nums">
+                              {item.rooms.length}
+                            </dd>
                           </div>
                           <div className="flex flex-col border-x border-slate-200/60">
-                            <dt className="text-[11px] text-slate-400 font-medium">มีผู้เช่า</dt>
-                            <dd className="text-lg font-black text-emerald-600 mt-0.5 tabular-nums">{occupiedRooms}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              มีผู้เช่า
+                            </dt>
+                            <dd className="text-lg font-black text-emerald-600 mt-0.5 tabular-nums">
+                              {occupiedRooms}
+                            </dd>
                           </div>
                           <div className="flex flex-col">
-                            <dt className="text-[11px] text-slate-400 font-medium">ห้องว่าง</dt>
-                            <dd className="text-lg font-black text-blue-600 mt-0.5 tabular-nums">{vacantRooms}</dd>
+                            <dt className="text-[11px] text-slate-400 font-medium">
+                              ห้องว่าง
+                            </dt>
+                            <dd className="text-lg font-black text-blue-600 mt-0.5 tabular-nums">
+                              {vacantRooms}
+                            </dd>
                           </div>
                         </dl>
                       </div>
@@ -335,7 +410,9 @@ export function PropertiesPage({
                         <DeleteButton
                           disabled={isLocked || properties.length <= 1}
                           label="ลบ"
-                          onClick={() => onToast("ไม่สามารถลบหอพักหลักได้ในโหมดตัวอย่าง")}
+                          onClick={() =>
+                            onToast("ไม่สามารถลบหอพักหลักได้ในโหมดตัวอย่าง")
+                          }
                         />
                       </footer>
                     </article>

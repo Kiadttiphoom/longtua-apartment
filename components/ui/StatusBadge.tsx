@@ -18,8 +18,17 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
-export function StatusBadge({ status, label, compact = false }: { status: string; label?: string; compact?: boolean }) {
-  const style = statusStyles[status] ?? "bg-slate-100 text-slate-700 border-slate-200";
+export function StatusBadge({
+  status,
+  label,
+  compact = false,
+}: {
+  status: string;
+  label?: string;
+  compact?: boolean;
+}) {
+  const style =
+    statusStyles[status] ?? "bg-slate-100 text-slate-700 border-slate-200";
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border font-semibold tracking-wide ${

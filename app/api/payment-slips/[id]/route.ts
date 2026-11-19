@@ -6,7 +6,10 @@ import { getOrganizationAccess } from "@/lib/auth/organization-access";
 import { readPrivateSlip } from "@/lib/storage/private-r2";
 
 export const runtime = "nodejs";
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const baseHeaders = {
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "sandbox",
@@ -15,7 +18,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const denied = () =>
     new Response("ไม่พบไฟล์หรือไม่มีสิทธิ์เข้าถึง", {
       status: 404,
-      headers: { ...baseHeaders, "Cache-Control": "private, no-store, max-age=0" },
+      headers: {
+        ...baseHeaders,
+        "Cache-Control": "private, no-store, max-age=0",
+      },
     });
 
   const { id } = await params;
@@ -26,7 +32,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!userId)
     return new Response("กรุณาเข้าสู่ระบบ", {
       status: 401,
-      headers: { ...baseHeaders, "Cache-Control": "private, no-store, max-age=0" },
+      headers: {
+        ...baseHeaders,
+        "Cache-Control": "private, no-store, max-age=0",
+      },
     });
 
   const { data: submission, error } = await supabase
@@ -45,10 +54,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .eq("status", "active")
     .maybeSingle();
 
-  const managingOrganization = await isSystemAdmin(userId)
-    && (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value === submission.organization_id;
+  const managingOrganization =
+    (await isSystemAdmin(userId)) &&
+    (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value ===
+      submission.organization_id;
   if (!account && !managingOrganization) {
-    const access = await getOrganizationAccess(userId, submission.organization_id);
+    const access = await getOrganizationAccess(
+      userId,
+      submission.organization_id,
+    );
     const allowed = access?.granularReady
       ? access.permissions.has("customer_payments:view")
       : access && ["owner", "manager", "accounting"].includes(access.roleCode);
@@ -78,14 +92,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Legacy Supabase Storage fallback (only if credentials exist during migration period)
-    const legacyUrl = process.env.SUPABASE_MIGRATION_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const legacyKey = process.env.SUPABASE_MIGRATION_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const legacyUrl =
+      process.env.SUPABASE_MIGRATION_URL ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const legacyKey =
+      process.env.SUPABASE_MIGRATION_SERVICE_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (legacyUrl && legacyKey) {
-      const { createClient: createLegacyClient } = await import("@supabase/supabase-js");
+      const { createClient: createLegacyClient } =
+        await import("@supabase/supabase-js");
       const legacySupabase = createLegacyClient(legacyUrl, legacyKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      const { data: legacy } = await legacySupabase.storage.from("payment-slips").download(submission.slip_path);
+      const { data: legacy } = await legacySupabase.storage
+        .from("payment-slips")
+        .download(submission.slip_path);
       if (!legacy) return denied();
       const ext = legacy.type === "image/png" ? ".png" : ".jpg";
       const disposition = isDownload

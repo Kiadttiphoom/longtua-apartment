@@ -12,7 +12,9 @@ export async function isSystemAdmin(userId: string) {
     .maybeSingle();
 
   if (error) {
-    console.error(`[admin] ${JSON.stringify({ stage: "system_admin.lookup", userId, code: error.code, message: error.message })}`);
+    console.error(
+      `[admin] ${JSON.stringify({ stage: "system_admin.lookup", userId, code: error.code, message: error.message })}`,
+    );
     return false;
   }
   return Boolean(data);
@@ -27,7 +29,9 @@ export async function isRegistrationEnabled() {
     .maybeSingle();
 
   if (error) {
-    console.error(`[admin] ${JSON.stringify({ stage: "registration_setting.read", code: error.code, message: error.message })}`);
+    console.error(
+      `[admin] ${JSON.stringify({ stage: "registration_setting.read", code: error.code, message: error.message })}`,
+    );
     return { enabled: false, configured: false };
   }
   return { enabled: data?.value === true, configured: Boolean(data) };

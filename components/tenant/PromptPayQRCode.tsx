@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { Download, Maximize2, QrCode as QrIcon, X } from "lucide-react";
-import { formatPromptPayDisplay, generatePromptPayPayload } from "@/lib/constants/promptpay";
+import {
+  formatPromptPayDisplay,
+  generatePromptPayPayload,
+} from "@/lib/constants/promptpay";
 
 interface PromptPayQRCodeProps {
   promptpayId: string;
@@ -80,7 +83,7 @@ export function PromptPayQRCode({
               bannerX,
               bannerY,
               bannerWidth,
-              bannerHeight
+              bannerHeight,
             );
           }
 
@@ -188,12 +191,16 @@ export function PromptPayQRCode({
               </strong>
               {accountName && (
                 <p className="text-xs text-slate-600">
-                  ชื่อบัญชี: <span className="font-bold text-slate-900">{accountName}</span>
+                  ชื่อบัญชี:{" "}
+                  <span className="font-bold text-slate-900">
+                    {accountName}
+                  </span>
                 </p>
               )}
               {amount && amount > 0 ? (
                 <p className="mt-0.5 text-lg font-black text-blue-700">
-                  ฿{amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                  ฿
+                  {amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                 </p>
               ) : null}
             </div>

@@ -7,7 +7,10 @@ const SALT_ROUNDS = 10;
  * Supabase Auth (GoTrue) stores passwords as bcrypt hashes ($2a$ or $2b$),
  * so existing hashes in the database can be verified directly without password resets!
  */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string,
+): Promise<boolean> {
   if (!password || !hash) return false;
   try {
     return await bcrypt.compare(password, hash);

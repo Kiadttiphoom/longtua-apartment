@@ -8,7 +8,10 @@ import {
   createPrivateUploadPresignedUrl,
   checkPrivateObjectExists,
 } from "@/lib/storage/private-r2";
-import { detectSlipType, MAX_SLIP_BYTES } from "@/lib/tenant/slip-validation.mjs";
+import {
+  detectSlipType,
+  MAX_SLIP_BYTES,
+} from "@/lib/tenant/slip-validation.mjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyNewPaymentSubmission } from "@/lib/telegram/notifications";
 
@@ -28,8 +31,8 @@ export async function requestPaymentSlipUploadPresignedUrl({
     contentType === "image/png"
       ? "png"
       : contentType === "image/jpeg"
-      ? "jpg"
-      : null;
+        ? "jpg"
+        : null;
 
   if (!extension) {
     return { ok: false as const, message: "รองรับเฉพาะไฟล์ JPG หรือ PNG ที่ถูกต้อง" };
@@ -75,12 +78,19 @@ export async function requestPaymentSlipUploadPresignedUrl({
     .limit(1);
 
   if (pending?.length) {
-    return { ok: false as const, message: "มีหลักฐานรอตรวจสอบแล้ว กรุณารอเจ้าหน้าที่ตรวจสอบหรือยกเลิกสลิปเดิมก่อน" };
+    return {
+      ok: false as const,
+      message: "มีหลักฐานรอตรวจสอบแล้ว กรุณารอเจ้าหน้าที่ตรวจสอบหรือยกเลิกสลิปเดิมก่อน",
+    };
   }
 
   try {
     const key = `payment-slips/${context.organizationId}/${context.tenantId}/${invoiceId}/${crypto.randomUUID()}.${extension}`;
-    const { uploadUrl, fileUri } = await createPrivateUploadPresignedUrl(key, contentType, 600);
+    const { uploadUrl, fileUri } = await createPrivateUploadPresignedUrl(
+      key,
+      contentType,
+      600,
+    );
     return {
       ok: true as const,
       uploadUrl,
@@ -88,7 +98,10 @@ export async function requestPaymentSlipUploadPresignedUrl({
       key,
     };
   } catch {
-    return { ok: false as const, message: "ไม่สามารถสร้าง URL สำหรับอัปโหลดได้ กรุณาลองอีกครั้ง" };
+    return {
+      ok: false as const,
+      message: "ไม่สามารถสร้าง URL สำหรับอัปโหลดได้ กรุณาลองอีกครั้ง",
+    };
   }
 }
 
@@ -112,12 +125,20 @@ export async function confirmPaymentSubmissionWithR2({
   const context = await requireTenantContext();
   const fail = (message: string) => ({ ok: false, message });
 
-  if (!/^[0-9a-f-]{36}$/i.test(invoiceId) || !Number.isFinite(amount) || amount <= 0) {
+  if (
+    !/^[0-9a-f-]{36}$/i.test(invoiceId) ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
     return fail("กรุณาตรวจสอบใบแจ้งหนี้และยอดชำระ");
   }
 
   const parsedDate = new Date(paidAt);
-  if (!Number.isFinite(parsedDate.getTime()) || parsedDate.getTime() > Date.now() + 60000 || !["transfer", "promptpay"].includes(method)) {
+  if (
+    !Number.isFinite(parsedDate.getTime()) ||
+    parsedDate.getTime() > Date.now() + 60000 ||
+    !["transfer", "promptpay"].includes(method)
+  ) {
     return fail("กรุณาตรวจสอบวันที่และช่องทางชำระ");
   }
 
@@ -209,7 +230,9 @@ export async function confirmPaymentSubmissionWithR2({
     amount,
     invoiceNumber: invoice.invoice_number,
     paidAt: parsedDate.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }),
-  }).catch((err) => console.error("[telegram] payment submission notification error:", err));
+  }).catch((err) =>
+    console.error("[telegram] payment submission notification error:", err),
+  );
 
   return { ok: true, message: "ส่งหลักฐานแล้ว รอเจ้าหน้าที่ตรวจสอบก่อนยืนยันยอดชำระ" };
 }
@@ -235,7 +258,8 @@ export async function cancelPendingPaymentSubmission(submissionId: string) {
   if (submission.status !== "pending") {
     return {
       ok: false,
-      message: "ไม่สามารถลบสลิปนี้ได้ เนื่องจากเจ้าของหอพักได้ตรวจสอบหรืออนุมัติแล้ว (ต้องติดต่อเจ้าของหอพักเพื่อดำเนินการ)",
+      message:
+        "ไม่สามารถลบสลิปนี้ได้ เนื่องจากเจ้าของหอพักได้ตรวจสอบหรืออนุมัติแล้ว (ต้องติดต่อเจ้าของหอพักเพื่อดำเนินการ)",
     };
   }
 
@@ -262,7 +286,10 @@ export async function cancelPendingPaymentSubmission(submissionId: string) {
   revalidatePath("/tenant");
   revalidatePath("/tenant/bills");
   revalidatePath("/payments");
-  return { ok: true, message: "ยกเลิกและลบสลิปเรียบร้อยแล้ว คุณสามารถแจ้งชำระใหม่ได้ทันที" };
+  return {
+    ok: true,
+    message: "ยกเลิกและลบสลิปเรียบร้อยแล้ว คุณสามารถแจ้งชำระใหม่ได้ทันที",
+  };
 }
 
 export async function submitPaymentEvidenceAction(data: FormData) {
@@ -273,34 +300,81 @@ export async function submitPaymentEvidenceAction(data: FormData) {
   const paidAt = new Date(String(data.get("paidAt")));
   const file = data.get("slip");
   const fail = (message: string) => ({ ok: false, message });
-  if (!/^[0-9a-f-]{36}$/i.test(invoiceId) || !Number.isFinite(amount) || amount <= 0) return fail("กรุณาตรวจสอบใบแจ้งหนี้และยอดชำระ");
-  if (!Number.isFinite(paidAt.getTime()) || paidAt.getTime() > Date.now() + 60000 || !["transfer", "promptpay"].includes(method)) return fail("กรุณาตรวจสอบวันที่และช่องทางชำระ");
-  if (!(file instanceof File) || !file.size || file.size > MAX_SLIP_BYTES) return fail("กรุณาแนบสลิปขนาดไม่เกิน 4.5 MB");
+  if (
+    !/^[0-9a-f-]{36}$/i.test(invoiceId) ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  )
+    return fail("กรุณาตรวจสอบใบแจ้งหนี้และยอดชำระ");
+  if (
+    !Number.isFinite(paidAt.getTime()) ||
+    paidAt.getTime() > Date.now() + 60000 ||
+    !["transfer", "promptpay"].includes(method)
+  )
+    return fail("กรุณาตรวจสอบวันที่และช่องทางชำระ");
+  if (!(file instanceof File) || !file.size || file.size > MAX_SLIP_BYTES)
+    return fail("กรุณาแนบสลิปขนาดไม่เกิน 4.5 MB");
   const bytes = new Uint8Array(await file.arrayBuffer());
   const format = detectSlipType(bytes);
-  if (!format || format.type !== file.type) return fail("รองรับเฉพาะไฟล์ JPG หรือ PNG ที่ถูกต้อง");
-  const { data: invoice } = await context.supabase.from("rent_invoices").select("id, organization_id, property_id, lease_id, balance_due, status").eq("id", invoiceId).eq("organization_id", context.organizationId).maybeSingle();
+  if (!format || format.type !== file.type)
+    return fail("รองรับเฉพาะไฟล์ JPG หรือ PNG ที่ถูกต้อง");
+  const { data: invoice } = await context.supabase
+    .from("rent_invoices")
+    .select("id, organization_id, property_id, lease_id, balance_due, status")
+    .eq("id", invoiceId)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
   if (!invoice) return fail("ไม่พบข้อมูลใบแจ้งหนี้");
   if (invoice.status === "void") return fail("ใบแจ้งหนี้นี้ถูกยกเลิกไปแล้ว");
-  if (invoice.status === "paid") return fail("ใบแจ้งหนี้นี้ได้รับการชำระเงินเรียบร้อยแล้ว");
-  if (!invoice.lease_id || amount > Number(invoice.balance_due)) return fail("ใบแจ้งหนี้นี้ไม่พร้อมรับชำระ หรือยอดเกินยอดคงเหลือ");
-  const { data: lease } = await context.supabase.from("leases").select("id, primary_tenant_id").eq("id", invoice.lease_id).eq("organization_id", context.organizationId).maybeSingle();
-  if (!lease || lease.primary_tenant_id !== context.tenantId) return fail("คุณไม่มีสิทธิ์ส่งหลักฐานสำหรับใบแจ้งหนี้นี้");
-  const { data: pending, error: pendingError } = await context.supabase.from("payment_submissions").select("id").eq("invoice_id", invoiceId).eq("tenant_id", context.tenantId).eq("status", "pending").limit(1);
+  if (invoice.status === "paid")
+    return fail("ใบแจ้งหนี้นี้ได้รับการชำระเงินเรียบร้อยแล้ว");
+  if (!invoice.lease_id || amount > Number(invoice.balance_due))
+    return fail("ใบแจ้งหนี้นี้ไม่พร้อมรับชำระ หรือยอดเกินยอดคงเหลือ");
+  const { data: lease } = await context.supabase
+    .from("leases")
+    .select("id, primary_tenant_id")
+    .eq("id", invoice.lease_id)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
+  if (!lease || lease.primary_tenant_id !== context.tenantId)
+    return fail("คุณไม่มีสิทธิ์ส่งหลักฐานสำหรับใบแจ้งหนี้นี้");
+  const { data: pending, error: pendingError } = await context.supabase
+    .from("payment_submissions")
+    .select("id")
+    .eq("invoice_id", invoiceId)
+    .eq("tenant_id", context.tenantId)
+    .eq("status", "pending")
+    .limit(1);
   if (pendingError) return fail("ตรวจสอบหลักฐานเดิมไม่สำเร็จ");
   if (pending?.length) return fail("มีหลักฐานรอตรวจสอบแล้ว กรุณารอเจ้าหน้าที่ตรวจสอบ");
   try {
     const key = `payment-slips/${context.organizationId}/${context.tenantId}/${invoiceId}/${crypto.randomUUID()}.${format.extension}`;
     const slipPath = await storePrivateSlip(key, bytes, format.type);
-    const { error } = await context.supabase.from("payment_submissions").insert({
-      organization_id: context.organizationId, property_id: invoice.property_id, tenant_id: context.tenantId,
-      lease_id: lease.id, invoice_id: invoice.id, amount, paid_at: paidAt.toISOString(), method,
-      reference: String(data.get("reference") ?? "").trim() || null,
-      slip_path: slipPath, note: String(data.get("note") ?? "").trim() || null, status: "pending",
-    });
-    if (error) { await deletePrivateSlip(slipPath); return fail("ส่งหลักฐานไม่สำเร็จ กรุณาลองอีกครั้ง"); }
-  } catch { return fail("อัปโหลดหลักฐานไม่สำเร็จ กรุณาลองใหม่หรือติดต่อเจ้าหน้าที่"); }
-  revalidatePath("/tenant"); revalidatePath("/tenant/bills"); revalidatePath("/payments");
+    const { error } = await context.supabase
+      .from("payment_submissions")
+      .insert({
+        organization_id: context.organizationId,
+        property_id: invoice.property_id,
+        tenant_id: context.tenantId,
+        lease_id: lease.id,
+        invoice_id: invoice.id,
+        amount,
+        paid_at: paidAt.toISOString(),
+        method,
+        reference: String(data.get("reference") ?? "").trim() || null,
+        slip_path: slipPath,
+        note: String(data.get("note") ?? "").trim() || null,
+        status: "pending",
+      });
+    if (error) {
+      await deletePrivateSlip(slipPath);
+      return fail("ส่งหลักฐานไม่สำเร็จ กรุณาลองอีกครั้ง");
+    }
+  } catch {
+    return fail("อัปโหลดหลักฐานไม่สำเร็จ กรุณาลองใหม่หรือติดต่อเจ้าหน้าที่");
+  }
+  revalidatePath("/tenant");
+  revalidatePath("/tenant/bills");
+  revalidatePath("/payments");
   return { ok: true, message: "ส่งหลักฐานแล้ว รอเจ้าหน้าที่ตรวจสอบก่อนยืนยันยอดชำระ" };
 }
-

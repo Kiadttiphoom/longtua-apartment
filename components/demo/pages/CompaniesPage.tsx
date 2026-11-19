@@ -12,7 +12,12 @@ import {
 } from "@/components/portal/PortalUI";
 import type { PageContentProps } from "../types";
 
-export function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCompany, onToast }: PageContentProps) {
+export function CompaniesPage({
+  onOpenPanel,
+  companies: companyItems,
+  onDeleteCompany,
+  onToast,
+}: PageContentProps) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
 
@@ -47,13 +52,17 @@ export function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCo
         </div>
         <div className="flex flex-col">
           <strong className="text-2xl font-bold text-emerald-600 tracking-tight">
-            {companyItems.filter((c) => c.status === "active").length.toLocaleString("th-TH")}
+            {companyItems
+              .filter((c) => c.status === "active")
+              .length.toLocaleString("th-TH")}
           </strong>
           <span className="text-xs text-slate-500 mt-0.5">Active</span>
         </div>
         <div className="flex flex-col">
           <strong className="text-2xl font-bold text-amber-600 tracking-tight">
-            {companyItems.filter((c) => c.status === "trial").length.toLocaleString("th-TH")}
+            {companyItems
+              .filter((c) => c.status === "trial")
+              .length.toLocaleString("th-TH")}
           </strong>
           <span className="text-xs text-slate-500 mt-0.5">Trial</span>
         </div>
@@ -82,14 +91,24 @@ export function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCo
         <DataTable
           emptyDescription="ไม่พบกิจการที่ค้นหา"
           emptyTitle="ไม่พบกิจการ"
-          headers={["กิจการ / เจ้าของ", "เบอร์โทร", "หอพัก / ห้อง", "แพ็กเกจ", "รอบถัดไป", "สถานะ", "การจัดการ"]}
+          headers={[
+            "กิจการ / เจ้าของ",
+            "เบอร์โทร",
+            "หอพัก / ห้อง",
+            "แพ็กเกจ",
+            "รอบถัดไป",
+            "สถานะ",
+            "การจัดการ",
+          ]}
           rows={filtered.map((item, idx) => [
             <div className="flex items-center gap-3" key="comp">
               <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                 <Building2 size={18} />
               </span>
               <div className="flex flex-col text-xs min-w-0">
-                <strong className="text-slate-800 font-bold truncate">{item.name}</strong>
+                <strong className="text-slate-800 font-bold truncate">
+                  {item.name}
+                </strong>
                 <small className="text-slate-400 mt-0.5">{item.owner}</small>
               </div>
             </div>,
@@ -99,16 +118,28 @@ export function CompaniesPage({ onOpenPanel, companies: companyItems, onDeleteCo
             <span key="rooms" className="text-slate-700 text-xs">
               {item.dorms} หอ · {item.rooms} ห้อง
             </span>,
-            <span key="plan" className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+            <span
+              key="plan"
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700"
+            >
               {item.plan}
             </span>,
             <span key="date" className="text-slate-500 text-xs">
               {item.date}
             </span>,
-            <StatusBadge key="status" status={item.status as "active" | "trial" | "pending"} />,
+            <StatusBadge
+              key="status"
+              status={item.status as "active" | "trial" | "pending"}
+            />,
             <div className="flex items-center gap-1.5" key="action">
-              <EditButton label={item.name} onClick={() => onToast?.("เปิดแก้ไขกิจการ")} />
-              <DeleteButton label={item.name} onClick={() => onDeleteCompany(idx)} />
+              <EditButton
+                label={item.name}
+                onClick={() => onToast?.("เปิดแก้ไขกิจการ")}
+              />
+              <DeleteButton
+                label={item.name}
+                onClick={() => onDeleteCompany(idx)}
+              />
             </div>,
           ])}
         />

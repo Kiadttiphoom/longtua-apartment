@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import { QueryBuilder, executeRpc } from "./query-builder";
-import { getClaims, getSession, setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import {
+  getClaims,
+  getSession,
+  setSessionCookie,
+  clearSessionCookie,
+} from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/passwords";
 import { query } from "./pool";
 import crypto from "crypto";
@@ -10,12 +15,21 @@ export interface DatabaseClient {
   from: <T = any>(table: string) => QueryBuilder<T>;
   rpc: (name: string, params?: Record<string, any>) => Promise<any>;
   auth: {
-    getClaims: () => Promise<{ data: { claims: { sub: string } | null }; error: null }>;
-    getUser: () => Promise<{ data: { user: { id: string } | null }; error: null }>;
+    getClaims: () => Promise<{
+      data: { claims: { sub: string } | null };
+      error: null;
+    }>;
+    getUser: () => Promise<{
+      data: { user: { id: string } | null };
+      error: null;
+    }>;
     signInWithPassword: (credentials: {
       email?: string;
       password?: string;
-    }) => Promise<{ data: { user: any; session: any } | null; error: any | null }>;
+    }) => Promise<{
+      data: { user: any; session: any } | null;
+      error: any | null;
+    }>;
     signOut: () => Promise<{ error: null }>;
     admin: {
       createUser: (options: {
@@ -23,12 +37,20 @@ export interface DatabaseClient {
         password?: string;
         user_metadata?: Record<string, any>;
         email_confirm?: boolean;
-      }) => Promise<{ data: { user: { id: string } | null }; error: any | null }>;
+      }) => Promise<{
+        data: { user: { id: string } | null };
+        error: any | null;
+      }>;
       updateUserById: (
         userId: string,
         attributes: { password?: string; user_metadata?: Record<string, any> },
-      ) => Promise<{ data: { user: { id: string } | null }; error: any | null }>;
-      deleteUser: (userId: string) => Promise<{ data: null; error: any | null }>;
+      ) => Promise<{
+        data: { user: { id: string } | null };
+        error: any | null;
+      }>;
+      deleteUser: (
+        userId: string,
+      ) => Promise<{ data: null; error: any | null }>;
     };
   };
 }
@@ -36,7 +58,8 @@ export interface DatabaseClient {
 export function createDatabaseClient(): DatabaseClient {
   return {
     from: <T = any>(table: string) => new QueryBuilder<T>(table),
-    rpc: (name: string, params?: Record<string, any>) => executeRpc(name, params),
+    rpc: (name: string, params?: Record<string, any>) =>
+      executeRpc(name, params),
     auth: {
       getClaims,
       getUser: async () => {
@@ -52,7 +75,10 @@ export function createDatabaseClient(): DatabaseClient {
         if (!email || !password) {
           return {
             data: null,
-            error: { message: "Invalid login credentials", code: "invalid_credentials" },
+            error: {
+              message: "Invalid login credentials",
+              code: "invalid_credentials",
+            },
           };
         }
 
@@ -75,15 +101,24 @@ export function createDatabaseClient(): DatabaseClient {
           if (!user || !user.encrypted_password) {
             return {
               data: null,
-              error: { message: "Invalid login credentials", code: "invalid_credentials" },
+              error: {
+                message: "Invalid login credentials",
+                code: "invalid_credentials",
+              },
             };
           }
 
-          const isValid = await verifyPassword(password, user.encrypted_password);
+          const isValid = await verifyPassword(
+            password,
+            user.encrypted_password,
+          );
           if (!isValid) {
             return {
               data: null,
-              error: { message: "Invalid login credentials", code: "invalid_credentials" },
+              error: {
+                message: "Invalid login credentials",
+                code: "invalid_credentials",
+              },
             };
           }
 
@@ -102,7 +137,10 @@ export function createDatabaseClient(): DatabaseClient {
         } catch (err: any) {
           return {
             data: null,
-            error: { message: err.message || "Authentication error", code: "auth_error" },
+            error: {
+              message: err.message || "Authentication error",
+              code: "auth_error",
+            },
           };
         }
       },
@@ -114,7 +152,9 @@ export function createDatabaseClient(): DatabaseClient {
         createUser: async ({ email, password, user_metadata }) => {
           try {
             const userId = crypto.randomUUID();
-            const hashedPassword = password ? await hashPassword(password) : null;
+            const hashedPassword = password
+              ? await hashPassword(password)
+              : null;
             const now = new Date();
 
             await query(
@@ -182,7 +222,10 @@ export function createDatabaseClient(): DatabaseClient {
             await query(`DELETE FROM auth.users WHERE id = $1`, [userId]);
             return { data: null, error: null };
           } catch (err: any) {
-            return { data: null, error: { message: err.message, code: err.code } };
+            return {
+              data: null,
+              error: { message: err.message, code: err.code },
+            };
           }
         },
       },

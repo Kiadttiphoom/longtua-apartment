@@ -3,10 +3,27 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Activity, BookOpenCheck, Building2, CalendarRange, CircleDollarSign,
-  ClipboardCheck, FileText, Gauge, Hotel, KeyRound, LayoutDashboard,
-  LogOut, Menu, MessageCircle, ReceiptText, Settings, ShieldCheck,
-  UserCog, Users, WalletCards, X,
+  Activity,
+  BookOpenCheck,
+  Building2,
+  CalendarRange,
+  CircleDollarSign,
+  ClipboardCheck,
+  FileText,
+  Gauge,
+  Hotel,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageCircle,
+  ReceiptText,
+  Settings,
+  ShieldCheck,
+  UserCog,
+  Users,
+  WalletCards,
+  X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { logoutAction } from "@/app/auth/actions";
@@ -14,18 +31,67 @@ import { AppNavLink } from "@/components/ui/AppNavLink";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 
 const navigation = [
-  ["overview", "ภาพรวมระบบ", LayoutDashboard], ["trial-requests", "คำขอทดลองใช้", ClipboardCheck], ["organizations", "กิจการ", Building2], ["properties", "หอพัก", Hotel], ["users", "ผู้ใช้งาน", Users], ["rooms", "ห้องพัก", KeyRound], ["tenants", "ผู้เช่า", Users], ["leases", "สัญญาเช่า", CalendarRange], ["meters", "มิเตอร์", Gauge], ["invoices", "ใบแจ้งหนี้", FileText], ["payments", "รับชำระ", WalletCards], ["receivables", "ยอดค้าง", ReceiptText], ["reports", "รายงาน", BookOpenCheck], ["line", "LINE แจ้งเตือน", MessageCircle], ["subscriptions", "แพ็กเกจและบริการ", CircleDollarSign], ["roles", "Role", UserCog], ["permissions", "Permission", KeyRound], ["menus", "เมนูระบบ", Menu], ["monitor", "Monitor", Activity], ["audit", "Audit Log", Activity], ["settings", "ตั้งค่าระบบ", Settings],
+  ["overview", "ภาพรวมระบบ", LayoutDashboard],
+  ["trial-requests", "คำขอทดลองใช้", ClipboardCheck],
+  ["organizations", "กิจการ", Building2],
+  ["properties", "หอพัก", Hotel],
+  ["users", "ผู้ใช้งาน", Users],
+  ["rooms", "ห้องพัก", KeyRound],
+  ["tenants", "ผู้เช่า", Users],
+  ["leases", "สัญญาเช่า", CalendarRange],
+  ["meters", "มิเตอร์", Gauge],
+  ["invoices", "ใบแจ้งหนี้", FileText],
+  ["payments", "รับชำระ", WalletCards],
+  ["receivables", "ยอดค้าง", ReceiptText],
+  ["reports", "รายงาน", BookOpenCheck],
+  ["line", "LINE แจ้งเตือน", MessageCircle],
+  ["subscriptions", "แพ็กเกจและบริการ", CircleDollarSign],
+  ["roles", "Role", UserCog],
+  ["permissions", "Permission", KeyRound],
+  ["menus", "เมนูระบบ", Menu],
+  ["monitor", "Monitor", Activity],
+  ["audit", "Audit Log", Activity],
+  ["settings", "ตั้งค่าระบบ", Settings],
 ] as const;
 
 const adminCategories = [
-  { label: "ภาพรวม", keys: ["overview", "trial-requests", "organizations", "properties", "users"] },
+  {
+    label: "ภาพรวม",
+    keys: [
+      "overview",
+      "trial-requests",
+      "organizations",
+      "properties",
+      "users",
+    ],
+  },
   { label: "จัดการหอพัก", keys: ["rooms", "tenants", "leases"] },
-  { label: "การเงิน", keys: ["meters", "invoices", "payments", "receivables", "reports"] },
+  {
+    label: "การเงิน",
+    keys: ["meters", "invoices", "payments", "receivables", "reports"],
+  },
   { label: "บริการเสริม", keys: ["line"] },
-  { label: "ระบบ", keys: ["subscriptions", "roles", "permissions", "menus", "monitor", "audit", "settings"] },
+  {
+    label: "ระบบ",
+    keys: [
+      "subscriptions",
+      "roles",
+      "permissions",
+      "menus",
+      "monitor",
+      "audit",
+      "settings",
+    ],
+  },
 ];
 
-export function AdminPlatformShell({ profileName, children }: { profileName: string; children: React.ReactNode }) {
+export function AdminPlatformShell({
+  profileName,
+  children,
+}: {
+  profileName: string;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -52,18 +118,27 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
             <ShieldCheck size={18} />
           </span>
           <div className="min-w-0 flex flex-col">
-            <strong className="text-xs font-bold text-white truncate">{profileName}</strong>
-            <small className="text-[10px] text-slate-400">Super Admin · Longtua</small>
+            <strong className="text-xs font-bold text-white truncate">
+              {profileName}
+            </strong>
+            <small className="text-[10px] text-slate-400">
+              Super Admin · Longtua
+            </small>
           </div>
         </div>
         <div className="px-3 mb-2">
           <AdminGlobalSearch />
         </div>
-        <nav aria-label="เมนูระบบ" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 space-y-4">
+        <nav
+          aria-label="เมนูระบบ"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 space-y-4"
+        >
           {adminCategories.map((group) => {
             const items = group.keys
               .map((k) => navigation.find(([itemKey]) => itemKey === k))
-              .filter((item): item is NonNullable<typeof item> => Boolean(item));
+              .filter((item): item is NonNullable<typeof item> =>
+                Boolean(item),
+              );
             if (items.length === 0) return null;
             return (
               <section className="space-y-1" key={group.label}>
@@ -72,7 +147,10 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
                 </p>
                 {items.map(([key, label, Icon]) => {
                   const href = key === "overview" ? "/admin" : `/admin/${key}`;
-                  const active = key === "overview" ? pathname === "/admin" : pathname.startsWith(href);
+                  const active =
+                    key === "overview"
+                      ? pathname === "/admin"
+                      : pathname.startsWith(href);
                   return (
                     <AppNavLink
                       active={active}
@@ -94,7 +172,10 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
             );
           })}
         </nav>
-        <form action={logoutAction} className="mt-auto shrink-0 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10">
+        <form
+          action={logoutAction}
+          className="mt-auto shrink-0 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10"
+        >
           <button
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-300 text-xs font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
             type="submit"
@@ -135,10 +216,15 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
           <div className="ml-auto flex items-center gap-3">
             <span className="relative w-9 h-9 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm ring-1 ring-blue-500/20">
               {profileName.trim().slice(0, 1)}
-              <i aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <i
+                aria-hidden="true"
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
+              />
             </span>
             <div className="flex flex-col text-right sm:text-left">
-              <strong className="text-xs font-semibold text-slate-800 leading-tight">{profileName}</strong>
+              <strong className="text-xs font-semibold text-slate-800 leading-tight">
+                {profileName}
+              </strong>
               <small className="text-[10px] text-slate-500">Super Admin</small>
             </div>
           </div>

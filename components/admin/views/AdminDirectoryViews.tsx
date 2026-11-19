@@ -12,11 +12,29 @@ import {
   updateUserAdminAction,
   updateUserStatusAction,
 } from "@/app/(admin)/admin/actions";
-import { AdminConfirmDeleteModal, AdminModal, AdminTable, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
+import {
+  AdminConfirmDeleteModal,
+  AdminModal,
+  AdminTable,
+  statusLabel,
+  thaiDate,
+} from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Building2, Eye, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import {
+  Building2,
+  Eye,
+  Pencil,
+  Plus,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
-import type { AdminViewContentProps, Organization, Profile } from "@/components/admin/admin-types";
+import type {
+  AdminViewContentProps,
+  Organization,
+  Profile,
+} from "@/components/admin/admin-types";
 
 const organizationStatuses = ["active", "suspended", "closed"];
 
@@ -25,7 +43,10 @@ export function AdminOrganizationsView({
   profileMap,
   profiles,
   memberCountByOrganization,
-}: Pick<AdminViewContentProps, "organizations" | "profileMap" | "profiles" | "memberCountByOrganization">) {
+}: Pick<
+  AdminViewContentProps,
+  "organizations" | "profileMap" | "profiles" | "memberCountByOrganization"
+>) {
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Organization | null>(null);
 
@@ -33,9 +54,15 @@ export function AdminOrganizationsView({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อกิจการ</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">กิจการทั้งหมดในระบบ ({organizations.length})</h2>
-          <p className="text-xs text-slate-500 mt-0.5">เพิ่ม แก้ไข หรือลบกิจการได้โดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายชื่อกิจการ
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            กิจการทั้งหมดในระบบ ({organizations.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            เพิ่ม แก้ไข หรือลบกิจการได้โดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -48,17 +75,38 @@ export function AdminOrganizationsView({
       </div>
 
       <AdminTable
-        headers={["ชื่อกิจการ", "เจ้าของ", "สมาชิก", "วันที่สมัคร", "ควบคุมสถานะ", "จัดการ"]}
+        headers={[
+          "ชื่อกิจการ",
+          "เจ้าของ",
+          "สมาชิก",
+          "วันที่สมัคร",
+          "ควบคุมสถานะ",
+          "จัดการ",
+        ]}
         rows={organizations.map((item) => [
           <div key="n">
-            <strong className="text-xs font-bold text-slate-800 block">{item.name}</strong>
+            <strong className="text-xs font-bold text-slate-800 block">
+              {item.name}
+            </strong>
           </div>,
           profileMap.get(item.owner_user_id) ?? "—",
           memberCountByOrganization.get(item.id) ?? 0,
           thaiDate(item.created_at),
-          <form action={updateOrganizationAction} className="inline-flex items-center gap-2" key="f">
+          <form
+            action={updateOrganizationAction}
+            className="inline-flex items-center gap-2"
+            key="f"
+          >
             <input name="organizationId" type="hidden" value={item.id} />
-            <input name="name" aria-label={`ชื่อกิจการ ${item.name}`} defaultValue={item.name} required minLength={2} maxLength={160} className="h-8 w-36 rounded-lg border border-slate-200 px-2.5 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            <input
+              name="name"
+              aria-label={`ชื่อกิจการ ${item.name}`}
+              defaultValue={item.name}
+              required
+              minLength={2}
+              maxLength={160}
+              className="h-8 w-36 rounded-lg border border-slate-200 px-2.5 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
             <select
               aria-label={`สถานะ ${item.name}`}
               className="h-8 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -66,7 +114,9 @@ export function AdminOrganizationsView({
               name="status"
             >
               {organizationStatuses.map((status) => (
-                <option key={status} value={status}>{statusLabel(status)}</option>
+                <option key={status} value={status}>
+                  {statusLabel(status)}
+                </option>
               ))}
             </select>
             <button
@@ -104,10 +154,19 @@ export function AdminOrganizationsView({
 
       {/* Create Organization Modal */}
       {createOpen && (
-        <AdminModal title="เพิ่มกิจการใหม่" onClose={() => setCreateOpen(false)} maxWidth={500}>
-          <form action={createOrganizationAdminAction} className="p-6 space-y-4">
+        <AdminModal
+          title="เพิ่มกิจการใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={500}
+        >
+          <form
+            action={createOrganizationAdminAction}
+            className="p-6 space-y-4"
+          >
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อกิจการ *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อกิจการ *
+              </label>
               <input
                 name="name"
                 required
@@ -118,7 +177,9 @@ export function AdminOrganizationsView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">Slug (URL ประจำกิจการ, ภาษาอังกฤษและขีดกลาง)</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Slug (URL ประจำกิจการ, ภาษาอังกฤษและขีดกลาง)
+              </label>
               <input
                 name="slug"
                 placeholder="เช่น sukhjai-residence (เว้นว่างเพื่อสร้างอัตโนมัติ)"
@@ -126,19 +187,25 @@ export function AdminOrganizationsView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">เจ้าของกิจการ (Owner Profile)</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                เจ้าของกิจการ (Owner Profile)
+              </label>
               <select
                 name="ownerUserId"
                 className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {profiles?.map((p) => (
-                  <option key={p.id} value={p.id}>{p.display_name} (@{p.username})</option>
+                  <option key={p.id} value={p.id}>
+                    {p.display_name} (@{p.username})
+                  </option>
                 ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะ</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะ
+                </label>
                 <select
                   name="status"
                   defaultValue="active"
@@ -149,7 +216,9 @@ export function AdminOrganizationsView({
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">แพ็กเกจเริ่มต้น</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  แพ็กเกจเริ่มต้น
+                </label>
                 <select
                   name="planCode"
                   defaultValue="starter"
@@ -206,7 +275,16 @@ export function AdminUsersView({
   organizationMap,
   organizations,
   roles,
-}: Pick<AdminViewContentProps, "profiles" | "systemAdminIds" | "organizationCountByUser" | "memberships" | "organizationMap" | "organizations" | "roles">) {
+}: Pick<
+  AdminViewContentProps,
+  | "profiles"
+  | "systemAdminIds"
+  | "organizationCountByUser"
+  | "memberships"
+  | "organizationMap"
+  | "organizations"
+  | "roles"
+>) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
@@ -215,9 +293,15 @@ export function AdminUsersView({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อผู้ใช้</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">ผู้ใช้งานทั้งหมด ({profiles.length})</h2>
-          <p className="mt-0.5 text-xs text-slate-500">สร้าง แก้ไขข้อมูล หรือลบบัญชีผู้ใช้งานโดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายชื่อผู้ใช้
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            ผู้ใช้งานทั้งหมด ({profiles.length})
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            สร้าง แก้ไขข้อมูล หรือลบบัญชีผู้ใช้งานโดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -235,11 +319,18 @@ export function AdminUsersView({
           const isSys = systemAdminIds.has(item.id);
           return [
             <div key="u">
-              <strong className="text-xs font-bold text-slate-800 block">{item.username}</strong>
-              <small className="text-[11px] text-slate-400 block">{item.display_name} · {item.phone || "ไม่มีเบอร์"}</small>
+              <strong className="text-xs font-bold text-slate-800 block">
+                {item.username}
+              </strong>
+              <small className="text-[11px] text-slate-400 block">
+                {item.display_name} · {item.phone || "ไม่มีเบอร์"}
+              </small>
             </div>,
             isSys ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200" key="r">
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200"
+                key="r"
+              >
                 SUPER ADMIN
               </span>
             ) : (
@@ -249,23 +340,59 @@ export function AdminUsersView({
             <div key="permissions" className="space-y-2 min-w-[160px]">
               {isSys ? (
                 <span className="text-xs text-slate-500">สิทธิ์ผู้ดูแลระบบสูงสุด</span>
-              ) : memberships.some((membership) => membership.user_id === item.id && membership.status === "active") ? (
-                memberships.filter((membership) => membership.user_id === item.id && membership.status === "active").map((membership) => (
-                  <Link
-                    key={membership.organization_id}
-                    href={{ pathname: "/admin/permissions", query: { mode: "user", organization: membership.organization_id, user: item.id } }}
-                    className="block rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700 hover:bg-blue-100"
-                  >
-                    <span className="block font-semibold">ปรับสิทธิ์ · {organizationMap.get(membership.organization_id) ?? "กิจการ"}</span>
-                    <span className="block text-[11px] text-blue-600">บทบาท: {membership.role_code}</span>
-                  </Link>
-                ))
-              ) : <span className="text-xs text-slate-500">ยังไม่มีสมาชิกกิจการที่ใช้งาน</span>}
+              ) : memberships.some(
+                  (membership) =>
+                    membership.user_id === item.id &&
+                    membership.status === "active",
+                ) ? (
+                memberships
+                  .filter(
+                    (membership) =>
+                      membership.user_id === item.id &&
+                      membership.status === "active",
+                  )
+                  .map((membership) => (
+                    <Link
+                      key={membership.organization_id}
+                      href={{
+                        pathname: "/admin/permissions",
+                        query: {
+                          mode: "user",
+                          organization: membership.organization_id,
+                          user: item.id,
+                        },
+                      }}
+                      className="block rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700 hover:bg-blue-100"
+                    >
+                      <span className="block font-semibold">
+                        ปรับสิทธิ์ ·{" "}
+                        {organizationMap.get(membership.organization_id) ??
+                          "กิจการ"}
+                      </span>
+                      <span className="block text-[11px] text-blue-600">
+                        บทบาท: {membership.role_code}
+                      </span>
+                    </Link>
+                  ))
+              ) : (
+                <span className="text-xs text-slate-500">
+                  ยังไม่มีสมาชิกกิจการที่ใช้งาน
+                </span>
+              )}
             </div>,
             isSys ? (
-              <StatusBadge compact key="s" label="ป้องกันการระงับ" status="active" />
+              <StatusBadge
+                compact
+                key="s"
+                label="ป้องกันการระงับ"
+                status="active"
+              />
             ) : (
-              <form action={updateUserStatusAction} className="inline-flex items-center gap-1.5" key="f">
+              <form
+                action={updateUserStatusAction}
+                className="inline-flex items-center gap-1.5"
+                key="f"
+              >
                 <input name="userId" type="hidden" value={item.id} />
                 <select
                   className="h-8 px-2 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -311,9 +438,14 @@ export function AdminUsersView({
                 <summary className="h-8 px-2.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold cursor-pointer flex items-center gap-1 list-none select-none">
                   <span>รีเซ็ตรหัส</span>
                 </summary>
-                <form action={resetUserPasswordAction} className="absolute right-0 top-9 z-20 p-3 bg-white rounded-xl shadow-xl border border-slate-200 w-64 space-y-2">
+                <form
+                  action={resetUserPasswordAction}
+                  className="absolute right-0 top-9 z-20 p-3 bg-white rounded-xl shadow-xl border border-slate-200 w-64 space-y-2"
+                >
                   <input name="userId" type="hidden" value={item.id} />
-                  <span className="text-[11px] font-bold text-slate-600 block">ตั้งรหัสผ่านใหม่:</span>
+                  <span className="text-[11px] font-bold text-slate-600 block">
+                    ตั้งรหัสผ่านใหม่:
+                  </span>
                   <input
                     autoComplete="new-password"
                     className="w-full h-8 px-2.5 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -339,11 +471,17 @@ export function AdminUsersView({
 
       {/* Create User Modal */}
       {createOpen && (
-        <AdminModal title="เพิ่มผู้ใช้งานใหม่" onClose={() => setCreateOpen(false)} maxWidth={500}>
+        <AdminModal
+          title="เพิ่มผู้ใช้งานใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={500}
+        >
           <form action={createUserAdminAction} className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Username / อีเมล *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Username / อีเมล *
+                </label>
                 <input
                   name="username"
                   required
@@ -353,7 +491,9 @@ export function AdminUsersView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อที่แสดง (Display Name) *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ชื่อที่แสดง (Display Name) *
+                </label>
                 <input
                   name="displayName"
                   required
@@ -365,7 +505,9 @@ export function AdminUsersView({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   name="phone"
                   placeholder="08xxxxxxxx"
@@ -373,7 +515,9 @@ export function AdminUsersView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">รหัสผ่านเริ่มต้น *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  รหัสผ่านเริ่มต้น *
+                </label>
                 <input
                   name="password"
                   type="password"
@@ -386,23 +530,31 @@ export function AdminUsersView({
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-3">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">การกำหนดสิทธิ์และกิจการ</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                การกำหนดสิทธิ์และกิจการ
+              </span>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ผูกกับกิจการ</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ผูกกับกิจการ
+                </label>
                 <select
                   name="organizationId"
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">-- ไม่ผูกกิจการตอนนี้ --</option>
                   {organizations?.map((o) => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">บทบาท (Role)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    บทบาท (Role)
+                  </label>
                   <select
                     name="roleCode"
                     defaultValue="staff"
@@ -416,7 +568,12 @@ export function AdminUsersView({
                 </div>
                 <div className="flex items-center pt-5">
                   <label className="flex items-center gap-2 text-xs font-semibold text-blue-700 cursor-pointer">
-                    <input type="checkbox" name="isSystemAdmin" value="true" className="rounded text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      name="isSystemAdmin"
+                      value="true"
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
                     <span>เป็น Super Admin</span>
                   </label>
                 </div>
@@ -445,11 +602,17 @@ export function AdminUsersView({
 
       {/* Edit User Modal */}
       {editTarget && (
-        <AdminModal title={`แก้ไขข้อมูลผู้ใช้: @${editTarget.username}`} onClose={() => setEditTarget(null)} maxWidth={460}>
+        <AdminModal
+          title={`แก้ไขข้อมูลผู้ใช้: @${editTarget.username}`}
+          onClose={() => setEditTarget(null)}
+          maxWidth={460}
+        >
           <form action={updateUserAdminAction} className="p-6 space-y-4">
             <input type="hidden" name="userId" value={editTarget.id} />
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อที่แสดง (Display Name) *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อที่แสดง (Display Name) *
+              </label>
               <input
                 name="displayName"
                 required
@@ -458,7 +621,9 @@ export function AdminUsersView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                เบอร์โทรศัพท์
+              </label>
               <input
                 name="phone"
                 defaultValue={editTarget.phone ?? ""}
@@ -467,7 +632,9 @@ export function AdminUsersView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะการใช้งาน</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                สถานะการใช้งาน
+              </label>
               <select
                 name="status"
                 defaultValue={editTarget.status}
@@ -512,4 +679,3 @@ export function AdminUsersView({
     </section>
   );
 }
-

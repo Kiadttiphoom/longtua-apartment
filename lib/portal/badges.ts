@@ -10,11 +10,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * - customer_receivables: Unpaid/overdue invoices with balance due
  */
 export const loadPortalMenuBadges = cache(
-  async (organizationId: string, isImpersonating?: boolean): Promise<Record<string, number>> => {
+  async (
+    organizationId: string,
+    isImpersonating?: boolean,
+  ): Promise<Record<string, number>> => {
     if (!organizationId) return {};
 
     try {
-      const supabase = isImpersonating ? createAdminClient() : await createClient();
+      const supabase = isImpersonating
+        ? createAdminClient()
+        : await createClient();
       const [pendingSubmissions, outstandingInvoices] = await Promise.all([
         supabase
           .from("payment_submissions")
@@ -44,5 +49,5 @@ export const loadPortalMenuBadges = cache(
     } catch {
       return {};
     }
-  }
+  },
 );

@@ -18,7 +18,11 @@ import {
 
 function getCategoryIcon(title: string) {
   const lower = title.toLowerCase();
-  if (lower.includes("แอร์") || lower.includes("พัดลม") || lower.includes("ปรับอากาศ")) {
+  if (
+    lower.includes("แอร์") ||
+    lower.includes("พัดลม") ||
+    lower.includes("ปรับอากาศ")
+  ) {
     return Wind;
   }
   if (
@@ -69,8 +73,11 @@ export default async function RepairsPage() {
   // Metrics
   const totalCount = requests?.length ?? 0;
   const activeCount =
-    requests?.filter((r) => r.status === "pending" || r.status === "in_progress").length ?? 0;
-  const completedCount = requests?.filter((r) => r.status === "completed").length ?? 0;
+    requests?.filter(
+      (r) => r.status === "pending" || r.status === "in_progress",
+    ).length ?? 0;
+  const completedCount =
+    requests?.filter((r) => r.status === "completed").length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -93,16 +100,28 @@ export default async function RepairsPage() {
           {/* Quick Metrics Bar */}
           <div className="flex items-center gap-2 self-start sm:self-center">
             <div className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-white px-4 py-2 text-center shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400">ทั้งหมด</span>
-              <span className="text-lg font-black text-slate-800">{totalCount}</span>
+              <span className="text-[11px] font-bold text-slate-400">
+                ทั้งหมด
+              </span>
+              <span className="text-lg font-black text-slate-800">
+                {totalCount}
+              </span>
             </div>
             <div className="flex flex-col items-center rounded-2xl border border-amber-200/80 bg-amber-50/70 px-4 py-2 text-center shadow-xs">
-              <span className="text-[11px] font-bold text-amber-700">รอดำเนินการ</span>
-              <span className="text-lg font-black text-amber-800">{activeCount}</span>
+              <span className="text-[11px] font-bold text-amber-700">
+                รอดำเนินการ
+              </span>
+              <span className="text-lg font-black text-amber-800">
+                {activeCount}
+              </span>
             </div>
             <div className="flex flex-col items-center rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-2 text-center shadow-xs">
-              <span className="text-[11px] font-bold text-emerald-700">เสร็จสิ้น</span>
-              <span className="text-lg font-black text-emerald-800">{completedCount}</span>
+              <span className="text-[11px] font-bold text-emerald-700">
+                เสร็จสิ้น
+              </span>
+              <span className="text-lg font-black text-emerald-800">
+                {completedCount}
+              </span>
             </div>
           </div>
         </div>
@@ -136,8 +155,12 @@ export default async function RepairsPage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div>
-            <h2 className="text-base font-bold text-slate-900">ส่งคำขอแจ้งซ่อมใหม่</h2>
-            <p className="text-xs text-slate-500">เลือกหมวดหมู่และกรอกรายละเอียดเพื่อให้ช่างเข้าดูแลได้รวดเร็ว</p>
+            <h2 className="text-base font-bold text-slate-900">
+              ส่งคำขอแจ้งซ่อมใหม่
+            </h2>
+            <p className="text-xs text-slate-500">
+              เลือกหมวดหมู่และกรอกรายละเอียดเพื่อให้ช่างเข้าดูแลได้รวดเร็ว
+            </p>
           </div>
         </div>
 
@@ -158,7 +181,9 @@ export default async function RepairsPage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900">ประวัติและสถานะการแจ้งซ่อม</h2>
+            <h2 className="text-base font-bold text-slate-900">
+              ประวัติและสถานะการแจ้งซ่อม
+            </h2>
             <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-bold text-slate-700">
               {requests?.length ?? 0}
             </span>
@@ -170,9 +195,12 @@ export default async function RepairsPage() {
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">
               <Sparkles size={26} />
             </div>
-            <strong className="text-sm font-bold text-slate-800">ยังไม่มีรายการแจ้งซ่อม</strong>
+            <strong className="text-sm font-bold text-slate-800">
+              ยังไม่มีรายการแจ้งซ่อม
+            </strong>
             <p className="mt-1 max-w-sm text-xs text-slate-500">
-              อุปกรณ์และห้องพักของคุณอยู่ในสภาพสมบูรณ์ หากพบปัญหา สามารถกรอกแบบฟอร์มด้านบนได้ตลอดเวลา
+              อุปกรณ์และห้องพักของคุณอยู่ในสภาพสมบูรณ์ หากพบปัญหา
+              สามารถกรอกแบบฟอร์มด้านบนได้ตลอดเวลา
             </p>
           </div>
         )}
@@ -212,7 +240,10 @@ export default async function RepairsPage() {
                   icon: XCircle,
                   step: 0,
                 },
-              }[r.status as "pending" | "in_progress" | "completed" | "cancelled"] ?? {
+              }[
+                r.status as
+                  "pending" | "in_progress" | "completed" | "cancelled"
+              ] ?? {
                 label: r.status,
                 color: "bg-slate-100 text-slate-700 border-slate-200",
                 dot: "bg-slate-400",
@@ -255,7 +286,9 @@ export default async function RepairsPage() {
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-bold ${statusMeta.color}`}
                       >
-                        <span className={`h-2 w-2 rounded-full ${statusMeta.dot}`} />
+                        <span
+                          className={`h-2 w-2 rounded-full ${statusMeta.dot}`}
+                        />
                         <StatusIcon size={13} />
                         <span>{statusMeta.label}</span>
                       </span>
@@ -279,15 +312,23 @@ export default async function RepairsPage() {
                         <div className="space-y-1.5">
                           <div
                             className={`h-1.5 w-full rounded-full transition-colors ${
-                              statusMeta.step >= 2 ? "bg-blue-600" : "bg-slate-200"
+                              statusMeta.step >= 2
+                                ? "bg-blue-600"
+                                : "bg-slate-200"
                             }`}
                           />
                           <div
                             className={`flex items-center gap-1 text-[11px] font-bold ${
-                              statusMeta.step >= 2 ? "text-blue-700" : "text-slate-400"
+                              statusMeta.step >= 2
+                                ? "text-blue-700"
+                                : "text-slate-400"
                             }`}
                           >
-                            {statusMeta.step >= 2 ? <Wrench size={12} /> : <Clock size={12} />}
+                            {statusMeta.step >= 2 ? (
+                              <Wrench size={12} />
+                            ) : (
+                              <Clock size={12} />
+                            )}
                             <span>2. ช่างรับเรื่อง/กำลังซ่อม</span>
                           </div>
                         </div>
@@ -296,12 +337,16 @@ export default async function RepairsPage() {
                         <div className="space-y-1.5">
                           <div
                             className={`h-1.5 w-full rounded-full transition-colors ${
-                              statusMeta.step >= 3 ? "bg-emerald-500" : "bg-slate-200"
+                              statusMeta.step >= 3
+                                ? "bg-emerald-500"
+                                : "bg-slate-200"
                             }`}
                           />
                           <div
                             className={`flex items-center gap-1 text-[11px] font-bold ${
-                              statusMeta.step >= 3 ? "text-emerald-700" : "text-slate-400"
+                              statusMeta.step >= 3
+                                ? "text-emerald-700"
+                                : "text-slate-400"
                             }`}
                           >
                             <CheckCircle2 size={12} />
@@ -321,7 +366,9 @@ export default async function RepairsPage() {
                     <span className="block text-[11px] font-bold text-slate-400 mb-1">
                       รายละเอียดปัญหา & วันเวลาที่สะดวก:
                     </span>
-                    <p className="whitespace-pre-wrap leading-relaxed font-medium">{r.detail}</p>
+                    <p className="whitespace-pre-wrap leading-relaxed font-medium">
+                      {r.detail}
+                    </p>
                   </div>
                 </article>
               );

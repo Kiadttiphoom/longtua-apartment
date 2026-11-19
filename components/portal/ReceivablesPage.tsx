@@ -15,8 +15,16 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
-import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
-import { DataTable, EmptyState, PageHeader, StatusBadge } from "@/components/portal/PortalUI";
+import {
+  DateFilterControl,
+  type DateFilterMode,
+} from "@/components/portal/DateFilterControl";
+import {
+  DataTable,
+  EmptyState,
+  PageHeader,
+  StatusBadge,
+} from "@/components/portal/PortalUI";
 import type { Invoice, Property, Room } from "@/components/portal/types";
 import { money, thaiDate } from "@/lib/format";
 
@@ -29,7 +37,9 @@ export function ReceivablesPage({
   rooms: Room[];
   properties?: Property[];
 }) {
-  const [activePropertyId, setActivePropertyId] = useState(() => properties[0]?.id ?? "");
+  const [activePropertyId, setActivePropertyId] = useState(
+    () => properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
   const [query, setQuery] = useState("");
   const [urgency, setUrgency] = useState("all");
@@ -39,22 +49,28 @@ export function ReceivablesPage({
 
   const resolvedPropertyId = properties.some((p) => p.id === activePropertyId)
     ? activePropertyId
-    : properties[0]?.id ?? "";
+    : (properties[0]?.id ?? "");
   const activeProperty = properties.find((p) => p.id === resolvedPropertyId);
 
-  const roomMap = useMemo(() => new Map(rooms.map((item) => [item.id, item])), [rooms]);
+  const roomMap = useMemo(
+    () => new Map(rooms.map((item) => [item.id, item])),
+    [rooms],
+  );
   const outstanding = useMemo(
-    () => invoices.filter((item) => Number(item.balance_due) > 0 && item.status !== "void"),
-    [invoices]
+    () =>
+      invoices.filter(
+        (item) => Number(item.balance_due) > 0 && item.status !== "void",
+      ),
+    [invoices],
   );
   const today = new Date().toISOString().slice(0, 10);
 
   const propertyInvoices = useMemo(
     () =>
       outstanding.filter((item) =>
-        !resolvedPropertyId ? true : item.property_id === resolvedPropertyId
+        !resolvedPropertyId ? true : item.property_id === resolvedPropertyId,
       ),
-    [outstanding, resolvedPropertyId]
+    [outstanding, resolvedPropertyId],
   );
 
   const getInvoiceFloor = (inv: Invoice) => {
@@ -74,21 +90,27 @@ export function ReceivablesPage({
       value,
       count,
       label: floorLabel(value),
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [propertyInvoices]);
 
   const overdueInvoices = useMemo(
     () => propertyInvoices.filter((item) => item.due_at < today),
-    [propertyInvoices, today]
+    [propertyInvoices, today],
   );
   const upcomingInvoices = useMemo(
     () => propertyInvoices.filter((item) => item.due_at >= today),
-    [propertyInvoices, today]
+    [propertyInvoices, today],
   );
 
   const totalOutstandingBalance = useMemo(
-    () => propertyInvoices.reduce((sum, item) => sum + Number(item.balance_due), 0),
-    [propertyInvoices]
+    () =>
+      propertyInvoices.reduce((sum, item) => sum + Number(item.balance_due), 0),
+    [propertyInvoices],
   );
 
   const availableYears = useMemo(() => {
@@ -107,12 +129,13 @@ export function ReceivablesPage({
       const fl = getInvoiceFloor(item);
       const matchesFloor = floor === "all" || fl === floor;
       const overdue = item.due_at < today;
-      const matchesUrgency = urgency === "all" || (urgency === "overdue" ? overdue : !overdue);
+      const matchesUrgency =
+        urgency === "all" || (urgency === "overdue" ? overdue : !overdue);
       const room = roomMap.get(item.room_id);
       const matchesSearch =
         !keyword ||
         [item.invoice_number, room?.room_number, item.note].some((value) =>
-          value?.toLocaleLowerCase("th-TH").includes(keyword)
+          value?.toLocaleLowerCase("th-TH").includes(keyword),
         );
 
       let matchesDate = true;
@@ -120,17 +143,32 @@ export function ReceivablesPage({
         const issued = item.issued_at || "";
         const due = item.due_at || "";
         if (dateFilterMode === "date") {
-          matchesDate = issued.slice(0, 10) === dateFilterValue || due.slice(0, 10) === dateFilterValue;
+          matchesDate =
+            issued.slice(0, 10) === dateFilterValue ||
+            due.slice(0, 10) === dateFilterValue;
         } else if (dateFilterMode === "month") {
-          matchesDate = issued.slice(0, 7) === dateFilterValue || due.slice(0, 7) === dateFilterValue;
+          matchesDate =
+            issued.slice(0, 7) === dateFilterValue ||
+            due.slice(0, 7) === dateFilterValue;
         } else if (dateFilterMode === "year") {
-          matchesDate = issued.slice(0, 4) === dateFilterValue || due.slice(0, 4) === dateFilterValue;
+          matchesDate =
+            issued.slice(0, 4) === dateFilterValue ||
+            due.slice(0, 4) === dateFilterValue;
         }
       }
 
       return matchesFloor && matchesUrgency && matchesSearch && matchesDate;
     });
-  }, [propertyInvoices, floor, today, urgency, query, roomMap, dateFilterValue, dateFilterMode]);
+  }, [
+    propertyInvoices,
+    floor,
+    today,
+    urgency,
+    query,
+    roomMap,
+    dateFilterValue,
+    dateFilterMode,
+  ]);
 
   const visibleFloorGroups = useMemo(() => {
     if (floor !== "all") {
@@ -146,7 +184,12 @@ export function ReceivablesPage({
       value,
       label: floorLabel(value),
       invoices: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered]);
 
   return (
@@ -157,7 +200,10 @@ export function ReceivablesPage({
       />
 
       {/* 4-Metric Hero Stat Cards */}
-      <section aria-label="ภาพรวมยอดค้างชำระ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมยอดค้างชำระ"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Card 1: Total Outstanding Documents */}
         <button
           aria-pressed={urgency === "all"}
@@ -174,7 +220,9 @@ export function ReceivablesPage({
               <ReceiptText size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เอกสารค้างชำระ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เอกสารค้างชำระ
+              </span>
               <strong className="text-2xl font-black text-rose-800 tracking-tight tabular-nums mt-0.5 block">
                 {propertyInvoices.length.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -189,7 +237,9 @@ export function ReceivablesPage({
               <CalendarClock size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ยอดค้างรวมทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ยอดค้างรวมทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-rose-900 tracking-tight tabular-nums mt-0.5 block">
                 {money(totalOutstandingBalance)}
               </strong>
@@ -213,7 +263,9 @@ export function ReceivablesPage({
               <ShieldAlert size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">เกินกำหนดชำระ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                เกินกำหนดชำระ
+              </span>
               <strong className="text-2xl font-black text-red-700 tracking-tight tabular-nums mt-0.5 block">
                 {overdueInvoices.length.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -237,7 +289,9 @@ export function ReceivablesPage({
               <Clock3 size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ยังไม่ถึงกำหนด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ยังไม่ถึงกำหนด
+              </span>
               <strong className="text-2xl font-black text-amber-800 tracking-tight tabular-nums mt-0.5 block">
                 {upcomingInvoices.length.toLocaleString("th-TH")} ฉบับ
               </strong>
@@ -247,21 +301,35 @@ export function ReceivablesPage({
       </section>
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงยอดค้างชำระ</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงยอดค้างชำระ
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
-            {properties.length} หอพัก · {outstanding.length} เอกสารค้างชำระทั้งหมดในระบบ
+            {properties.length} หอพัก · {outstanding.length}{" "}
+            เอกสารค้างชำระทั้งหมดในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === resolvedPropertyId;
-            const propRooms = rooms.filter((r) => r.property_id === property.id);
-            const propReceivables = outstanding.filter((inv) => inv.property_id === property.id);
+            const propRooms = rooms.filter(
+              (r) => r.property_id === property.id,
+            );
+            const propReceivables = outstanding.filter(
+              (inv) => inv.property_id === property.id,
+            );
             return (
               <button
                 aria-selected={active}
@@ -279,13 +347,21 @@ export function ReceivablesPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {propRooms.length} ห้อง · ค้าง <strong className="text-rose-600 font-bold">{propReceivables.length}</strong> ฉบับ
+                    {propRooms.length} ห้อง · ค้าง{" "}
+                    <strong className="text-rose-600 font-bold">
+                      {propReceivables.length}
+                    </strong>{" "}
+                    ฉบับ
                   </span>
                 </div>
               </button>
@@ -295,35 +371,55 @@ export function ReceivablesPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyInvoices.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyInvoices.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -336,7 +432,9 @@ export function ReceivablesPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -347,7 +445,9 @@ export function ReceivablesPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -417,18 +517,28 @@ export function ReceivablesPage({
                       {room?.room_number ?? "—"}
                     </span>
                     <div className="flex flex-col text-xs min-w-0">
-                      <strong className="text-slate-900 font-mono font-bold block">{item.invoice_number}</strong>
-                      <small className="text-slate-400">ห้อง {room?.room_number ?? "—"}</small>
+                      <strong className="text-slate-900 font-mono font-bold block">
+                        {item.invoice_number}
+                      </strong>
+                      <small className="text-slate-400">
+                        ห้อง {room?.room_number ?? "—"}
+                      </small>
                     </div>
                   </div>,
 
                   // 2. ชั้น
-                  <span className="text-xs font-semibold text-slate-700" key="floor">
+                  <span
+                    className="text-xs font-semibold text-slate-700"
+                    key="floor"
+                  >
                     ชั้น {fl}
                   </span>,
 
                   // 3. ยอดค้างชำระ
-                  <strong className="text-xs font-mono font-black text-rose-600" key="bal">
+                  <strong
+                    className="text-xs font-mono font-black text-rose-600"
+                    key="bal"
+                  >
                     {money(Number(item.balance_due))}
                   </strong>,
 
@@ -438,17 +548,26 @@ export function ReceivablesPage({
                   </span>,
 
                   // 5. กำหนดชำระ
-                  <span className="text-xs text-slate-700 font-medium" key="due">
+                  <span
+                    className="text-xs text-slate-700 font-medium"
+                    key="due"
+                  >
                     {thaiDate(item.due_at)}
                   </span>,
 
                   // 6. สถานะกำหนด
                   overdue ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-lg" key="status-urgency">
+                    <span
+                      className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-lg"
+                      key="status-urgency"
+                    >
                       <AlertTriangle size={12} strokeWidth={2.2} /> เกินกำหนด
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg" key="status-urgency">
+                    <span
+                      className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg"
+                      key="status-urgency"
+                    >
                       <Clock3 size={12} strokeWidth={2.2} /> ปกติ
                     </span>
                   ),
@@ -457,7 +576,10 @@ export function ReceivablesPage({
                   <StatusBadge key="status" status={item.status} />,
 
                   // 8. การดำเนินการ
-                  <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-1.5 justify-end"
+                    key="actions"
+                  >
                     <Link
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all shadow-2xs cursor-pointer"
                       href="/payments"
@@ -477,10 +599,16 @@ export function ReceivablesPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.invoices.length} รายการค้าง)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.invoices.length} รายการค้าง)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.invoices.map((item) => {
@@ -490,7 +618,9 @@ export function ReceivablesPage({
                     return (
                       <article
                         className={`relative overflow-hidden p-6 rounded-2xl bg-white border shadow-xs transition-colors duration-150 flex flex-col justify-between ${
-                          overdue ? "border-rose-200 hover:border-rose-300" : "border-slate-200/90 hover:border-slate-300"
+                          overdue
+                            ? "border-rose-200 hover:border-rose-300"
+                            : "border-slate-200/90 hover:border-slate-300"
                         }`}
                         key={item.id}
                       >
@@ -520,12 +650,20 @@ export function ReceivablesPage({
                           {/* Numbers Grid */}
                           <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[11px] font-medium text-slate-500">ยอดเรียกเก็บ</dt>
-                              <dd className="text-base font-mono font-bold text-slate-800 mt-1">{money(Number(item.total))}</dd>
+                              <dt className="text-[11px] font-medium text-slate-500">
+                                ยอดเรียกเก็บ
+                              </dt>
+                              <dd className="text-base font-mono font-bold text-slate-800 mt-1">
+                                {money(Number(item.total))}
+                              </dd>
                             </div>
                             <div className="p-3 rounded-xl bg-rose-50/60 border border-rose-100">
-                              <dt className="text-[11px] font-medium text-rose-600">ยอดค้างชำระ</dt>
-                              <dd className="text-base font-mono font-black text-rose-600 mt-1">{money(Number(item.balance_due))}</dd>
+                              <dt className="text-[11px] font-medium text-rose-600">
+                                ยอดค้างชำระ
+                              </dt>
+                              <dd className="text-base font-mono font-black text-rose-600 mt-1">
+                                {money(Number(item.balance_due))}
+                              </dd>
                             </div>
                           </dl>
                         </div>
@@ -534,12 +672,17 @@ export function ReceivablesPage({
                         <footer className="pt-3 border-t border-slate-100 space-y-3">
                           <div className="flex items-center justify-between text-xs">
                             <div>
-                              <span className="text-[11px] text-slate-400 block">ครบกำหนด</span>
-                              <strong className="text-xs font-medium text-slate-800">{thaiDate(item.due_at)}</strong>
+                              <span className="text-[11px] text-slate-400 block">
+                                ครบกำหนด
+                              </span>
+                              <strong className="text-xs font-medium text-slate-800">
+                                {thaiDate(item.due_at)}
+                              </strong>
                             </div>
                             {overdue ? (
                               <span className="inline-flex items-center gap-1 font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-xl text-[11px] border border-rose-200 shrink-0">
-                                <AlertTriangle size={12} strokeWidth={2.2} /> เกินกำหนด
+                                <AlertTriangle size={12} strokeWidth={2.2} />{" "}
+                                เกินกำหนด
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-xl text-[11px] border border-amber-200 shrink-0">
@@ -551,7 +694,11 @@ export function ReceivablesPage({
                             className="w-full h-9 flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 shadow-2xs transition-all hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/20"
                             href="/payments"
                           >
-                            <CreditCard aria-hidden="true" size={14} strokeWidth={2.2} />
+                            <CreditCard
+                              aria-hidden="true"
+                              size={14}
+                              strokeWidth={2.2}
+                            />
                             <span>บันทึกรับชำระเงิน</span>
                           </Link>
                         </footer>

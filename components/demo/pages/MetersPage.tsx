@@ -55,27 +55,75 @@ export function MetersPage({
 }: PageContentProps) {
   const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "electric" | "water">("all");
-  const [selectedPropertyId, setSelectedPropertyId] = useState(activeProperty?.id ?? properties[0]?.id ?? "");
+  const [typeFilter, setTypeFilter] = useState<"all" | "electric" | "water">(
+    "all",
+  );
+  const [selectedPropertyId, setSelectedPropertyId] = useState(
+    activeProperty?.id ?? properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
 
-  const currentProperty = properties.find((p) => p.id === selectedPropertyId) ?? activeProperty ?? properties[0];
+  const currentProperty =
+    properties.find((p) => p.id === selectedPropertyId) ??
+    activeProperty ??
+    properties[0];
 
   // Local meter readings list in demo with multiple floors per property
   const [readings, setReadings] = useState<MeterReadingItem[]>(() => {
     const list: MeterReadingItem[] = [];
-    const propsList = properties && properties.length > 0 ? properties : [activeProperty];
+    const propsList =
+      properties && properties.length > 0 ? properties : [activeProperty];
 
     propsList.forEach((prop, pIdx) => {
       const demoRooms = [
-        { number: "101", floor: "1", prevElec: 12430 + pIdx * 200, prevWater: 320 + pIdx * 15 },
-        { number: "102", floor: "1", prevElec: 13120 + pIdx * 200, prevWater: 345 + pIdx * 15 },
-        { number: "103", floor: "1", prevElec: 11800 + pIdx * 200, prevWater: 290 + pIdx * 15 },
-        { number: "201", floor: "2", prevElec: 14560 + pIdx * 200, prevWater: 380 + pIdx * 15 },
-        { number: "202", floor: "2", prevElec: 12890 + pIdx * 200, prevWater: 310 + pIdx * 15 },
-        { number: "203", floor: "2", prevElec: 13450 + pIdx * 200, prevWater: 360 + pIdx * 15 },
-        { number: "301", floor: "3", prevElec: 15200 + pIdx * 200, prevWater: 410 + pIdx * 15 },
-        { number: "302", floor: "3", prevElec: 14110 + pIdx * 200, prevWater: 375 + pIdx * 15 },
+        {
+          number: "101",
+          floor: "1",
+          prevElec: 12430 + pIdx * 200,
+          prevWater: 320 + pIdx * 15,
+        },
+        {
+          number: "102",
+          floor: "1",
+          prevElec: 13120 + pIdx * 200,
+          prevWater: 345 + pIdx * 15,
+        },
+        {
+          number: "103",
+          floor: "1",
+          prevElec: 11800 + pIdx * 200,
+          prevWater: 290 + pIdx * 15,
+        },
+        {
+          number: "201",
+          floor: "2",
+          prevElec: 14560 + pIdx * 200,
+          prevWater: 380 + pIdx * 15,
+        },
+        {
+          number: "202",
+          floor: "2",
+          prevElec: 12890 + pIdx * 200,
+          prevWater: 310 + pIdx * 15,
+        },
+        {
+          number: "203",
+          floor: "2",
+          prevElec: 13450 + pIdx * 200,
+          prevWater: 360 + pIdx * 15,
+        },
+        {
+          number: "301",
+          floor: "3",
+          prevElec: 15200 + pIdx * 200,
+          prevWater: 410 + pIdx * 15,
+        },
+        {
+          number: "302",
+          floor: "3",
+          prevElec: 14110 + pIdx * 200,
+          prevWater: 375 + pIdx * 15,
+        },
       ];
 
       demoRooms.forEach((r, idx) => {
@@ -111,12 +159,18 @@ export function MetersPage({
   });
 
   const floorKey = (item: MeterReadingItem) =>
-    item.floor ? String(item.floor) : item.roomNumber.length >= 3 ? item.roomNumber[0] : "1";
+    item.floor
+      ? String(item.floor)
+      : item.roomNumber.length >= 3
+        ? item.roomNumber[0]
+        : "1";
   const floorLabel = (key: string) => `ชั้น ${key}`;
 
   const propertyReadings = useMemo(() => {
     return readings.filter(
-      (item) => item.propertyId === currentProperty.id || (!item.propertyId && currentProperty.id === properties[0]?.id)
+      (item) =>
+        item.propertyId === currentProperty.id ||
+        (!item.propertyId && currentProperty.id === properties[0]?.id),
     );
   }, [readings, currentProperty.id, properties]);
 
@@ -126,15 +180,26 @@ export function MetersPage({
       const key = floorKey(reading);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
-      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    return Array.from(counts, ([value, count]) => ({
+      value,
+      count,
+      label: floorLabel(value),
+    })).sort((left, right) =>
+      left.value.localeCompare(right.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
     );
   }, [propertyReadings]);
 
   // Counts & Stats
   const totalCount = propertyReadings.length;
-  const electricCount = propertyReadings.filter((item) => item.type === "electric").length;
-  const waterCount = propertyReadings.filter((item) => item.type === "water").length;
+  const electricCount = propertyReadings.filter(
+    (item) => item.type === "electric",
+  ).length;
+  const waterCount = propertyReadings.filter(
+    (item) => item.type === "water",
+  ).length;
   const totalUnits = propertyReadings.reduce((sum, item) => {
     const diff = item.currentValue - item.previousValue;
     return sum + (diff > 0 ? diff : 0);
@@ -169,12 +234,19 @@ export function MetersPage({
       value,
       label: floorLabel(value),
       readings: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered]);
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingReading, setEditingReading] = useState<MeterReadingItem | null>(null);
+  const [editingReading, setEditingReading] = useState<MeterReadingItem | null>(
+    null,
+  );
   const [modalRoom, setModalRoom] = useState(meterRooms[0]?.number ?? "101");
   const [modalType, setModalType] = useState<"electric" | "water">("electric");
   const [modalPeriod, setModalPeriod] = useState("2026-08");
@@ -254,8 +326,8 @@ export function MetersPage({
                 currentValue: modalCur,
                 recordedAt: modalDate,
               }
-            : it
-        )
+            : it,
+        ),
       );
       if (modalType === "electric") {
         onMeterChange(modalRoom, modalCur);
@@ -291,7 +363,10 @@ export function MetersPage({
       />
 
       {/* 4 Hero Stat Cards (Matching Portal MetersPage) */}
-      <section aria-label="ภาพรวมมิเตอร์" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section
+        aria-label="ภาพรวมมิเตอร์"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Card 1: Total Readings */}
         <button
           className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
@@ -308,7 +383,9 @@ export function MetersPage({
               <Gauge size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">รายการจดทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                รายการจดทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalCount.toLocaleString("th-TH")} รายการ
               </strong>
@@ -332,7 +409,9 @@ export function MetersPage({
               <Zap size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">มิเตอร์ไฟฟ้า</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                มิเตอร์ไฟฟ้า
+              </span>
               <strong className="text-2xl font-black text-amber-800 tracking-tight tabular-nums mt-0.5 block">
                 {electricCount.toLocaleString("th-TH")} รายการ
               </strong>
@@ -356,7 +435,9 @@ export function MetersPage({
               <Droplets size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">มิเตอร์น้ำ</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                มิเตอร์น้ำ
+              </span>
               <strong className="text-2xl font-black text-cyan-800 tracking-tight tabular-nums mt-0.5 block">
                 {waterCount.toLocaleString("th-TH")} รายการ
               </strong>
@@ -372,7 +453,9 @@ export function MetersPage({
               <TrendingUp size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">หน่วยการใช้งานรวม</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                หน่วยการใช้งานรวม
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
                 {totalUnits.toLocaleString("th-TH")} หน่วย
               </strong>
@@ -382,23 +465,35 @@ export function MetersPage({
       </section>
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายการมิเตอร์</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงรายการมิเตอร์
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
             {properties.length} หอพัก · {readings.length} รายการจดมิเตอร์ในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === currentProperty.id;
             const propReadings = readings.filter(
-              (r) => r.propertyId === property.id || (!r.propertyId && property.id === properties[0]?.id)
+              (r) =>
+                r.propertyId === property.id ||
+                (!r.propertyId && property.id === properties[0]?.id),
             );
-            const distinctRooms = new Set(propReadings.map((r) => r.roomNumber)).size;
+            const distinctRooms = new Set(propReadings.map((r) => r.roomNumber))
+              .size;
             return (
               <button
                 aria-selected={active}
@@ -416,13 +511,20 @@ export function MetersPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {distinctRooms || 8} ห้อง · จดแล้ว <strong className="text-blue-600 font-bold">{propReadings.length}</strong>
+                    {distinctRooms || 8} ห้อง · จดแล้ว{" "}
+                    <strong className="text-blue-600 font-bold">
+                      {propReadings.length}
+                    </strong>
                   </span>
                 </div>
               </button>
@@ -432,35 +534,55 @@ export function MetersPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyReadings.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyReadings.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -473,7 +595,9 @@ export function MetersPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -484,7 +608,9 @@ export function MetersPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -537,10 +663,18 @@ export function MetersPage({
                       ห้อง {item.roomNumber}
                     </span>
                   </div>,
-                  <span className="text-slate-700 text-xs font-semibold" key="floor">
-                    {item.floor ? `ชั้น ${item.floor}` : `ชั้น ${item.roomNumber[0] ?? "1"}`}
+                  <span
+                    className="text-slate-700 text-xs font-semibold"
+                    key="floor"
+                  >
+                    {item.floor
+                      ? `ชั้น ${item.floor}`
+                      : `ชั้น ${item.roomNumber[0] ?? "1"}`}
                   </span>,
-                  <span className="text-xs text-slate-500 font-medium" key="property">
+                  <span
+                    className="text-xs text-slate-500 font-medium"
+                    key="property"
+                  >
                     {item.propertyName}
                   </span>,
                   <span
@@ -554,22 +688,34 @@ export function MetersPage({
                     {isElectric ? <Zap size={13} /> : <Droplets size={13} />}
                     <span>{isElectric ? "ไฟฟ้า" : "น้ำประปา"}</span>
                   </span>,
-                  <strong className="text-slate-800 text-xs font-bold font-mono" key="period">
+                  <strong
+                    className="text-slate-800 text-xs font-bold font-mono"
+                    key="period"
+                  >
                     {item.periodMonth}
                   </strong>,
                   <span className="text-slate-500 font-mono text-xs" key="prev">
                     {item.previousValue.toLocaleString("th-TH")}
                   </span>,
-                  <strong className="text-slate-900 font-mono text-xs font-bold" key="cur">
+                  <strong
+                    className="text-slate-900 font-mono text-xs font-bold"
+                    key="cur"
+                  >
                     {item.currentValue.toLocaleString("th-TH")}
                   </strong>,
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono" key="diff">
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono"
+                    key="diff"
+                  >
                     +{diff.toLocaleString("th-TH")} หน่วย
                   </span>,
                   <span className="text-slate-400 text-xs" key="date">
                     {item.recordedAt}
                   </span>,
-                  <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-1.5 justify-end"
+                    key="actions"
+                  >
                     <button
                       aria-label={`แก้ไขมิเตอร์ห้อง ${item.roomNumber}`}
                       className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
@@ -591,10 +737,16 @@ export function MetersPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.readings.length} รายการ)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.readings.length} รายการ)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.readings.map((item) => {
@@ -615,8 +767,13 @@ export function MetersPage({
                                 ห้อง {item.roomNumber}
                               </span>
                               <div className="min-w-0">
-                                <span className="text-xs font-bold text-slate-500 block truncate">{item.propertyName} · ชั้น {item.floor ?? item.roomNumber[0] ?? "1"}</span>
-                                <span className="text-[11px] font-mono text-slate-400 block truncate">รอบ {item.periodMonth}</span>
+                                <span className="text-xs font-bold text-slate-500 block truncate">
+                                  {item.propertyName} · ชั้น{" "}
+                                  {item.floor ?? item.roomNumber[0] ?? "1"}
+                                </span>
+                                <span className="text-[11px] font-mono text-slate-400 block truncate">
+                                  รอบ {item.periodMonth}
+                                </span>
                               </div>
                             </div>
 
@@ -627,7 +784,11 @@ export function MetersPage({
                                   : "bg-cyan-50 text-cyan-800 border-cyan-200/80"
                               }`}
                             >
-                              {isElectric ? <Zap size={14} /> : <Droplets size={14} />}
+                              {isElectric ? (
+                                <Zap size={14} />
+                              ) : (
+                                <Droplets size={14} />
+                              )}
                               <span>{isElectric ? "ไฟฟ้า" : "น้ำประปา"}</span>
                             </span>
                           </header>
@@ -636,13 +797,17 @@ export function MetersPage({
                           <div className="p-4 rounded-xl bg-slate-50/90 border border-slate-100 my-3">
                             <div className="grid grid-cols-2 gap-4 text-center">
                               <div className="border-r border-slate-200/80 pr-2">
-                                <span className="text-[11px] font-medium text-slate-400 block">เลขครั้งก่อน</span>
+                                <span className="text-[11px] font-medium text-slate-400 block">
+                                  เลขครั้งก่อน
+                                </span>
                                 <strong className="text-base font-black text-slate-600 font-mono mt-0.5 block">
                                   {item.previousValue.toLocaleString("th-TH")}
                                 </strong>
                               </div>
                               <div className="pl-2">
-                                <span className="text-[11px] font-medium text-slate-400 block">เลขครั้งนี้</span>
+                                <span className="text-[11px] font-medium text-slate-400 block">
+                                  เลขครั้งนี้
+                                </span>
                                 <strong className="text-base font-black text-slate-900 font-mono mt-0.5 block">
                                   {item.currentValue.toLocaleString("th-TH")}
                                 </strong>
@@ -651,7 +816,10 @@ export function MetersPage({
 
                             <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
                               <span className="font-bold text-slate-600 flex items-center gap-1">
-                                <TrendingUp size={14} className="text-emerald-600" />
+                                <TrendingUp
+                                  size={14}
+                                  className="text-emerald-600"
+                                />
                                 <span>ปริมาณการใช้งาน</span>
                               </span>
                               <span className="px-2.5 py-0.5 rounded-full font-black font-mono bg-emerald-100/80 text-emerald-800 text-xs">
@@ -699,7 +867,9 @@ export function MetersPage({
           description="ระบบจะค้นหาเลขอ่านครั้งก่อนหน้าให้อัตโนมัติ และนำผลต่างไปคำนวณค่าไฟ/ค่าน้ำลงในใบแจ้งหนี้"
           maxWidth={640}
           onClose={() => setModalOpen(false)}
-          title={editingReading ? `แก้ไขมิเตอร์ห้อง ${modalRoom}` : "บันทึกมิเตอร์น้ำ-ไฟ"}
+          title={
+            editingReading ? `แก้ไขมิเตอร์ห้อง ${modalRoom}` : "บันทึกมิเตอร์น้ำ-ไฟ"
+          }
         >
           <div className="p-6 flex flex-col gap-4 text-left text-xs">
             {/* Feature Intro Banner */}
@@ -708,9 +878,12 @@ export function MetersPage({
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="leading-relaxed">
-                <strong className="font-bold block text-blue-950">บันทึกเลขอ่านมิเตอร์ประจำรอบ</strong>
+                <strong className="font-bold block text-blue-950">
+                  บันทึกเลขอ่านมิเตอร์ประจำรอบ
+                </strong>
                 <span className="text-[11px] text-blue-800/80">
-                  ระบบจะค้นหาเลขอ่านครั้งก่อนหน้าให้อัตโนมัติ และนำผลต่างไปคำนวณค่าไฟ/ค่าน้ำลงในใบแจ้งหนี้
+                  ระบบจะค้นหาเลขอ่านครั้งก่อนหน้าให้อัตโนมัติ
+                  และนำผลต่างไปคำนวณค่าไฟ/ค่าน้ำลงในใบแจ้งหนี้
                 </span>
               </div>
             </div>
@@ -722,12 +895,17 @@ export function MetersPage({
                   <Building2 size={14} className="text-slate-500" />
                   <span>เลือกหอพัก / อาคาร</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">สาขา</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  สาขา
+                </span>
               </label>
               <SelectControl
                 ariaLabel="หอพัก"
                 onValueChange={() => {}}
-                options={(properties || [activeProperty]).map((p) => ({ value: p.id, label: p.name }))}
+                options={(properties || [activeProperty]).map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
                 value={activeProperty.id}
               />
             </div>
@@ -738,9 +916,13 @@ export function MetersPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <DoorOpen size={14} className="text-slate-500" />
-                    <span>ห้องพัก <span className="text-rose-500">*</span></span>
+                    <span>
+                      ห้องพัก <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">เลือกห้องที่ต้องการจด</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    เลือกห้องที่ต้องการจด
+                  </span>
                 </label>
                 <SelectControl
                   ariaLabel="ห้องพัก"
@@ -762,14 +944,20 @@ export function MetersPage({
                     ) : (
                       <Droplets size={14} className="text-cyan-500" />
                     )}
-                    <span>ประเภทมิเตอร์ <span className="text-rose-500">*</span></span>
+                    <span>
+                      ประเภทมิเตอร์ <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">น้ำ / ไฟ</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    น้ำ / ไฟ
+                  </span>
                 </label>
                 <SelectControl
                   ariaLabel="ประเภทมิเตอร์"
                   disabled={Boolean(editingReading)}
-                  onValueChange={(val) => handleTypeToggle(val as "electric" | "water")}
+                  onValueChange={(val) =>
+                    handleTypeToggle(val as "electric" | "water")
+                  }
                   options={[
                     { value: "electric", label: "ไฟฟ้า (Electric)" },
                     { value: "water", label: "น้ำประปา (Water)" },
@@ -781,8 +969,14 @@ export function MetersPage({
 
             {/* Context Status notice */}
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs text-slate-700 font-medium flex items-center gap-2.5">
-              <Info size={15} className="text-blue-600 shrink-0" strokeWidth={2.2} />
-              <span>เลขอ่านครั้งก่อนหน้าบันทึกไว้ที่ {modalPrev.toLocaleString("th-TH")} หน่วย</span>
+              <Info
+                size={15}
+                className="text-blue-600 shrink-0"
+                strokeWidth={2.2}
+              />
+              <span>
+                เลขอ่านครั้งก่อนหน้าบันทึกไว้ที่ {modalPrev.toLocaleString("th-TH")} หน่วย
+              </span>
             </div>
 
             {/* Period Month & Date */}
@@ -791,9 +985,13 @@ export function MetersPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-slate-500" />
-                    <span>รอบเดือนที่จด <span className="text-rose-500">*</span></span>
+                    <span>
+                      รอบเดือนที่จด <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">ประจำเดือน</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    ประจำเดือน
+                  </span>
                 </label>
                 <DateTimeControl
                   ariaLabel="รอบเดือนที่จด"
@@ -809,9 +1007,13 @@ export function MetersPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-slate-500" />
-                    <span>วันที่จดจริง <span className="text-rose-500">*</span></span>
+                    <span>
+                      วันที่จดจริง <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">วันที่บันทึก</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    วันที่บันทึก
+                  </span>
                 </label>
                 <DateTimeControl
                   ariaLabel="วันที่จดจริง"
@@ -832,7 +1034,9 @@ export function MetersPage({
                     <History size={14} className="text-slate-500" />
                     <span>เลขอ่านครั้งก่อนหน้า</span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">ระบบดึงให้อัตโนมัติ</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    ระบบดึงให้อัตโนมัติ
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -850,9 +1054,14 @@ export function MetersPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Gauge size={14} className="text-slate-500" />
-                    <span>เลขอ่านครั้งนี้ (Current) <span className="text-rose-500">*</span></span>
+                    <span>
+                      เลขอ่านครั้งนี้ (Current){" "}
+                      <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">ต้องไม่น้อยกว่าครั้งก่อน</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    ต้องไม่น้อยกว่าครั้งก่อน
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -877,7 +1086,9 @@ export function MetersPage({
                 <span>คำนวณหน่วยการใช้งาน:</span>
               </span>
               <strong className="text-base font-black text-blue-700 font-mono">
-                {modalCur >= modalPrev ? `+${(modalCur - modalPrev).toLocaleString("th-TH")} หน่วย` : "ตัวเลขไม่ถูกต้อง"}
+                {modalCur >= modalPrev
+                  ? `+${(modalCur - modalPrev).toLocaleString("th-TH")} หน่วย`
+                  : "ตัวเลขไม่ถูกต้อง"}
               </strong>
             </div>
 

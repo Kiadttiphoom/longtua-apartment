@@ -47,9 +47,13 @@ export function CustomerDashboard({
 }) {
   const activeContracts = contracts.filter((c) => c.status === "active");
   const totalRooms = properties.reduce((acc, p) => acc + p.rooms.length, 0);
-  const occupiedCount = meterRooms.filter((r) => r.tenant && r.tenant !== "(ว่าง)").length;
+  const occupiedCount = meterRooms.filter(
+    (r) => r.tenant && r.tenant !== "(ว่าง)",
+  ).length;
   const vacantCount = totalRooms - occupiedCount;
-  const occupancy = totalRooms ? Math.round((occupiedCount / totalRooms) * 100) : 0;
+  const occupancy = totalRooms
+    ? Math.round((occupiedCount / totalRooms) * 100)
+    : 0;
   const revenue = 45000;
   const outstanding = 11100;
 
@@ -61,7 +65,8 @@ export function CustomerDashboard({
       icon: Building2,
       page: "properties" as PageKey,
       gradient: "from-blue-500/10 via-indigo-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25",
       borderHover: "hover:border-blue-400 hover:shadow-blue-500/10",
       pill: `${properties.length} หอ`,
       pillColor: "bg-blue-50 text-blue-700 border-blue-200/70",
@@ -73,7 +78,8 @@ export function CustomerDashboard({
       icon: KeyRound,
       page: "rooms" as PageKey,
       gradient: "from-purple-500/10 via-violet-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25",
       borderHover: "hover:border-purple-400 hover:shadow-purple-500/10",
       pill: `${occupancy}% เข้าพัก`,
       pillColor: "bg-purple-50 text-purple-700 border-purple-200/70",
@@ -85,7 +91,8 @@ export function CustomerDashboard({
       icon: CalendarRange,
       page: "contracts" as PageKey,
       gradient: "from-sky-500/10 via-cyan-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25",
       borderHover: "hover:border-sky-400 hover:shadow-sky-500/10",
       pill: "Active",
       pillColor: "bg-sky-50 text-sky-700 border-sky-200/70",
@@ -97,7 +104,8 @@ export function CustomerDashboard({
       icon: Activity,
       page: "rooms" as PageKey,
       gradient: "from-emerald-500/10 via-teal-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25",
       borderHover: "hover:border-emerald-400 hover:shadow-emerald-500/10",
       pill: occupancy >= 80 ? "ยอดเยี่ยม" : "ปกติ",
       pillColor: "bg-emerald-50 text-emerald-700 border-emerald-200/70",
@@ -109,7 +117,8 @@ export function CustomerDashboard({
       icon: WalletCards,
       page: "payments" as PageKey,
       gradient: "from-teal-500/10 via-emerald-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25",
       borderHover: "hover:border-teal-400 hover:shadow-teal-500/10",
       pill: "รับชำระแล้ว",
       pillColor: "bg-teal-50 text-teal-700 border-teal-200/70",
@@ -121,7 +130,8 @@ export function CustomerDashboard({
       icon: ReceiptText,
       page: "receivables" as PageKey,
       gradient: "from-rose-500/10 via-pink-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25",
+      iconBg:
+        "bg-gradient-to-tr from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25",
       borderHover: "hover:border-rose-400 hover:shadow-rose-500/10",
       pill: "ค้างชำระ",
       pillColor: "bg-rose-50 text-rose-700 border-rose-200/70",
@@ -129,23 +139,107 @@ export function CustomerDashboard({
   ] as const;
 
   const monthlyStats = [
-    { month: "มี.ค.", billed: 45000, collected: 45000, elecUnits: 1420, waterUnits: 110 },
-    { month: "เม.ย.", billed: 48500, collected: 46000, elecUnits: 1680, waterUnits: 125 },
-    { month: "พ.ค.", billed: 50200, collected: 49000, elecUnits: 1590, waterUnits: 118 },
-    { month: "มิ.ย.", billed: 52000, collected: 50500, elecUnits: 1530, waterUnits: 115 },
-    { month: "ก.ค.", billed: 54300, collected: 51200, elecUnits: 1610, waterUnits: 120 },
-    { month: "ส.ค.", billed: 56100, collected: 45000, elecUnits: 1720, waterUnits: 128 },
+    {
+      month: "มี.ค.",
+      billed: 45000,
+      collected: 45000,
+      elecUnits: 1420,
+      waterUnits: 110,
+    },
+    {
+      month: "เม.ย.",
+      billed: 48500,
+      collected: 46000,
+      elecUnits: 1680,
+      waterUnits: 125,
+    },
+    {
+      month: "พ.ค.",
+      billed: 50200,
+      collected: 49000,
+      elecUnits: 1590,
+      waterUnits: 118,
+    },
+    {
+      month: "มิ.ย.",
+      billed: 52000,
+      collected: 50500,
+      elecUnits: 1530,
+      waterUnits: 115,
+    },
+    {
+      month: "ก.ค.",
+      billed: 54300,
+      collected: 51200,
+      elecUnits: 1610,
+      waterUnits: 120,
+    },
+    {
+      month: "ส.ค.",
+      billed: 56100,
+      collected: 45000,
+      elecUnits: 1720,
+      waterUnits: 128,
+    },
   ];
   const maxBilled = 60000;
   const maxElec = 2000;
 
   const mockInvoices = [
-    { number: "INV-2568-08101", room: "101", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿5,050.00", balance: "฿0.00", status: "paid" },
-    { number: "INV-2568-08102", room: "102", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿5,050.00", balance: "฿5,050.00", status: "overdue" },
-    { number: "INV-2568-08201", room: "201", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿5,600.00", balance: "฿0.00", status: "paid" },
-    { number: "INV-2568-08301", room: "301", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿6,050.00", balance: "฿6,050.00", status: "overdue" },
-    { number: "INV-2568-08302", room: "302", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿5,600.00", balance: "฿0.00", status: "paid" },
-    { number: "INV-2568-08401", room: "401", issued: "1 ส.ค. 2568", due: "5 ส.ค. 2568", total: "฿6,700.00", balance: "฿0.00", status: "paid" },
+    {
+      number: "INV-2568-08101",
+      room: "101",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿5,050.00",
+      balance: "฿0.00",
+      status: "paid",
+    },
+    {
+      number: "INV-2568-08102",
+      room: "102",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿5,050.00",
+      balance: "฿5,050.00",
+      status: "overdue",
+    },
+    {
+      number: "INV-2568-08201",
+      room: "201",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿5,600.00",
+      balance: "฿0.00",
+      status: "paid",
+    },
+    {
+      number: "INV-2568-08301",
+      room: "301",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿6,050.00",
+      balance: "฿6,050.00",
+      status: "overdue",
+    },
+    {
+      number: "INV-2568-08302",
+      room: "302",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿5,600.00",
+      balance: "฿0.00",
+      status: "paid",
+    },
+    {
+      number: "INV-2568-08401",
+      room: "401",
+      issued: "1 ส.ค. 2568",
+      due: "5 ส.ค. 2568",
+      total: "฿6,700.00",
+      balance: "฿0.00",
+      status: "paid",
+    },
   ];
 
   return (
@@ -157,9 +251,13 @@ export function CustomerDashboard({
             <span className="relative flex h-3 w-3">
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
             </span>
-            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">ภาพรวมกิจการ</h1>
+            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+              ภาพรวมกิจการ
+            </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">ศูนย์บัญชาการวิเคราะห์สถานะหอพัก สัญญา และกระแสเงินสดเรียลไทม์</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            ศูนย์บัญชาการวิเคราะห์สถานะหอพัก สัญญา และกระแสเงินสดเรียลไทม์
+          </p>
         </div>
 
         {/* Quick Shortcut Buttons */}
@@ -185,7 +283,11 @@ export function CustomerDashboard({
             onClick={() => onNavigate("contracts")}
             type="button"
           >
-            <CalendarCheck size={15} strokeWidth={2.2} className="text-emerald-500" />
+            <CalendarCheck
+              size={15}
+              strokeWidth={2.2}
+              className="text-emerald-500"
+            />
             <span>ทำสัญญา</span>
           </button>
           <button
@@ -193,14 +295,21 @@ export function CustomerDashboard({
             onClick={() => onNavigate("reports")}
             type="button"
           >
-            <LineChart size={15} strokeWidth={2.2} className="text-purple-500" />
+            <LineChart
+              size={15}
+              strokeWidth={2.2}
+              className="text-purple-500"
+            />
             <span>รายงานสถิติ</span>
           </button>
         </div>
       </header>
 
       {/* KPI Cards Grid */}
-      <section aria-label="ตัวชี้วัดสำคัญ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section
+        aria-label="ตัวชี้วัดสำคัญ"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+      >
         {cards.map((c) => {
           const Icon = c.icon;
           return (
@@ -210,30 +319,41 @@ export function CustomerDashboard({
               onClick={() => onNavigate(c.page)}
               type="button"
             >
-              <div className={`absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-bl ${c.gradient} rounded-full blur-2xl pointer-events-none opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500`} />
+              <div
+                className={`absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-bl ${c.gradient} rounded-full blur-2xl pointer-events-none opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500`}
+              />
 
               <div className="relative flex flex-col justify-between h-full gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5">
-                    <span className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg} transition-transform duration-300 group-hover:scale-110`}>
+                    <span
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg} transition-transform duration-300 group-hover:scale-110`}
+                    >
                       <Icon size={22} strokeWidth={2.2} />
                     </span>
                     <div>
-                      <span className="text-xs font-bold text-slate-500 block tracking-wide">{c.label}</span>
+                      <span className="text-xs font-bold text-slate-500 block tracking-wide">
+                        {c.label}
+                      </span>
                       <strong className="text-2xl lg:text-3xl font-black text-slate-900 block tracking-tight mt-0.5 tabular-nums">
                         {c.value}
                       </strong>
                     </div>
                   </div>
 
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${c.pillColor} shrink-0`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${c.pillColor} shrink-0`}
+                  >
                     {c.pill}
                   </span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                   <span className="truncate">{c.sub}</span>
-                  <ChevronRight size={15} className="text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ChevronRight
+                    size={15}
+                    className="text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 transition-all shrink-0"
+                  />
                 </div>
               </div>
             </button>
@@ -249,8 +369,12 @@ export function CustomerDashboard({
               <Lightbulb size={17} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">ข้อมูลเชิงลึก & พฤติกรรมผู้เช่า</h2>
-              <p className="text-xs text-slate-500">วิเคราะห์ห้องที่ใช้พลังงานสูงสุด และห้องที่มีประวัติการชำระเงินโดดเด่น</p>
+              <h2 className="text-base font-bold text-slate-900">
+                ข้อมูลเชิงลึก & พฤติกรรมผู้เช่า
+              </h2>
+              <p className="text-xs text-slate-500">
+                วิเคราะห์ห้องที่ใช้พลังงานสูงสุด และห้องที่มีประวัติการชำระเงินโดดเด่น
+              </p>
             </div>
           </div>
           <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
@@ -275,7 +399,9 @@ export function CustomerDashboard({
             </header>
             <div>
               <div className="flex items-baseline justify-between gap-2">
-                <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง 401</strong>
+                <strong className="text-xl font-black text-slate-900 tracking-tight">
+                  ห้อง 401
+                </strong>
                 <span className="text-xs font-black text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-lg border border-amber-200">
                   320 หน่วย
                 </span>
@@ -302,7 +428,9 @@ export function CustomerDashboard({
             </header>
             <div>
               <div className="flex items-baseline justify-between gap-2">
-                <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง 201</strong>
+                <strong className="text-xl font-black text-slate-900 tracking-tight">
+                  ห้อง 201
+                </strong>
                 <span className="text-xs font-black text-sky-700 bg-sky-100/80 px-2 py-0.5 rounded-lg border border-sky-200">
                   24 m³
                 </span>
@@ -329,7 +457,9 @@ export function CustomerDashboard({
             </header>
             <div>
               <div className="flex items-baseline justify-between gap-2">
-                <strong className="text-xl font-black text-rose-700 tracking-tight">ห้อง 301</strong>
+                <strong className="text-xl font-black text-rose-700 tracking-tight">
+                  ห้อง 301
+                </strong>
                 <span className="text-xs font-black text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-lg border border-rose-200">
                   ฿6,050.00
                 </span>
@@ -346,7 +476,11 @@ export function CustomerDashboard({
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
-                  <Star size={13} strokeWidth={2.2} className="fill-emerald-500" />
+                  <Star
+                    size={13}
+                    strokeWidth={2.2}
+                    className="fill-emerald-500"
+                  />
                 </span>
                 ชำระตรงเวลาสม่ำเสมอ
               </span>
@@ -356,7 +490,9 @@ export function CustomerDashboard({
             </header>
             <div>
               <div className="flex items-baseline justify-between gap-2">
-                <strong className="text-xl font-black text-slate-900 tracking-tight">ห้อง 101</strong>
+                <strong className="text-xl font-black text-slate-900 tracking-tight">
+                  ห้อง 101
+                </strong>
                 <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200">
                   ชำระตรง 100%
                 </span>
@@ -377,8 +513,12 @@ export function CustomerDashboard({
             <AlertCircle size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-rose-700 font-bold block tracking-wide">บิลค้างชำระรอติดตาม</small>
-            <strong className="text-base font-black text-rose-950 block truncate mt-0.5 tabular-nums">2 รายการ (฿11,100)</strong>
+            <small className="text-xs text-rose-700 font-bold block tracking-wide">
+              บิลค้างชำระรอติดตาม
+            </small>
+            <strong className="text-base font-black text-rose-950 block truncate mt-0.5 tabular-nums">
+              2 รายการ (฿11,100)
+            </strong>
           </div>
         </div>
 
@@ -387,8 +527,12 @@ export function CustomerDashboard({
             <Clock size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-amber-700 font-bold block tracking-wide">สัญญาใกล้หมดใน 30 วัน</small>
-            <strong className="text-base font-black text-amber-950 block truncate mt-0.5 tabular-nums">2 ฉบับ</strong>
+            <small className="text-xs text-amber-700 font-bold block tracking-wide">
+              สัญญาใกล้หมดใน 30 วัน
+            </small>
+            <strong className="text-base font-black text-amber-950 block truncate mt-0.5 tabular-nums">
+              2 ฉบับ
+            </strong>
           </div>
         </div>
 
@@ -397,8 +541,12 @@ export function CustomerDashboard({
             <Gauge size={22} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <small className="text-xs text-blue-700 font-bold block tracking-wide">รอบจดมิเตอร์ปัจจุบัน</small>
-            <strong className="text-base font-black text-blue-950 block truncate mt-0.5">พร้อมออกใบแจ้งหนี้</strong>
+            <small className="text-xs text-blue-700 font-bold block tracking-wide">
+              รอบจดมิเตอร์ปัจจุบัน
+            </small>
+            <strong className="text-base font-black text-blue-950 block truncate mt-0.5">
+              พร้อมออกใบแจ้งหนี้
+            </strong>
           </div>
         </div>
       </section>
@@ -413,8 +561,13 @@ export function CustomerDashboard({
                 <TrendingUp size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติกระแสเงินสด & ยอดเรียกเก็บ</h2>
-                <p className="text-xs text-slate-500 mt-0.5">เปรียบเทียบยอดเรียกเก็บ (Billed) และยอดรับชำระจริง (Collected) 6 เดือนล่าสุด</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติกระแสเงินสด & ยอดเรียกเก็บ
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  เปรียบเทียบยอดเรียกเก็บ (Billed) และยอดรับชำระจริง (Collected) 6
+                  เดือนล่าสุด
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">
@@ -432,12 +585,20 @@ export function CustomerDashboard({
           <div className="pt-4 pb-2 border-b border-slate-100">
             <div className="h-52 flex items-end justify-between gap-3 sm:gap-6 px-2">
               {monthlyStats.map((item) => {
-                const billedHeight = Math.round((item.billed / maxBilled) * 100);
-                const collectedHeight = Math.round((item.collected / maxBilled) * 100);
+                const billedHeight = Math.round(
+                  (item.billed / maxBilled) * 100,
+                );
+                const collectedHeight = Math.round(
+                  (item.collected / maxBilled) * 100,
+                );
                 return (
-                  <div className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative" key={item.month}>
+                  <div
+                    className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative"
+                    key={item.month}
+                  >
                     <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1.5 px-2.5 rounded-xl shadow-xl pointer-events-none whitespace-nowrap z-20 scale-95 group-hover:scale-100">
-                      เรียกเก็บ: ฿{item.billed.toLocaleString()} | ชำระ: ฿{item.collected.toLocaleString()}
+                      เรียกเก็บ: ฿{item.billed.toLocaleString()} | ชำระ: ฿
+                      {item.collected.toLocaleString()}
                     </div>
                     <div className="w-full max-w-[48px] flex items-end justify-center gap-1.5 h-full">
                       <div
@@ -449,7 +610,9 @@ export function CustomerDashboard({
                         style={{ height: `${collectedHeight}%` }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-slate-600 mt-1">{item.month}</span>
+                    <span className="text-xs font-bold text-slate-600 mt-1">
+                      {item.month}
+                    </span>
                   </div>
                 );
               })}
@@ -457,8 +620,16 @@ export function CustomerDashboard({
           </div>
 
           <footer className="mt-4 pt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
-            <span>อัตราการจัดเก็บเฉลี่ย: <strong className="text-emerald-600 font-bold">94.2%</strong></span>
-            <span>ยอดรับชำระรอบปัจจุบัน: <strong className="text-slate-900 font-extrabold">฿{revenue.toLocaleString()}.00</strong></span>
+            <span>
+              อัตราการจัดเก็บเฉลี่ย:{" "}
+              <strong className="text-emerald-600 font-bold">94.2%</strong>
+            </span>
+            <span>
+              ยอดรับชำระรอบปัจจุบัน:{" "}
+              <strong className="text-slate-900 font-extrabold">
+                ฿{revenue.toLocaleString()}.00
+              </strong>
+            </span>
           </footer>
         </div>
 
@@ -469,8 +640,12 @@ export function CustomerDashboard({
               <PieChart size={19} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">สถานะห้องพัก ({occupancy}%)</h2>
-              <p className="text-xs text-slate-500 mt-0.5">สัดส่วนการเข้าพักทั้งหมด {totalRooms} ห้อง</p>
+              <h2 className="text-base font-bold text-slate-900">
+                สถานะห้องพัก ({occupancy}%)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                สัดส่วนการเข้าพักทั้งหมด {totalRooms} ห้อง
+              </p>
             </div>
           </header>
 
@@ -494,8 +669,12 @@ export function CustomerDashboard({
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
                   ห้องมีผู้เช่า
                 </span>
-                <strong className="text-2xl font-black text-emerald-950 mt-1 tabular-nums">{occupiedCount} ห้อง</strong>
-                <small className="text-[10px] text-emerald-700 font-semibold">{occupancy}% ของทั้งหมด</small>
+                <strong className="text-2xl font-black text-emerald-950 mt-1 tabular-nums">
+                  {occupiedCount} ห้อง
+                </strong>
+                <small className="text-[10px] text-emerald-700 font-semibold">
+                  {occupancy}% ของทั้งหมด
+                </small>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
@@ -503,30 +682,39 @@ export function CustomerDashboard({
                   <span className="w-2 h-2 rounded-full bg-slate-400" />
                   ห้องว่างพร้อมเช่า
                 </span>
-                <strong className="text-2xl font-black text-slate-900 mt-1 tabular-nums">{vacantCount} ห้อง</strong>
-                <small className="text-[10px] text-slate-500 font-semibold">{100 - occupancy}% ว่างอยู่</small>
+                <strong className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
+                  {vacantCount} ห้อง
+                </strong>
+                <small className="text-[10px] text-slate-500 font-semibold">
+                  {100 - occupancy}% ว่างอยู่
+                </small>
               </div>
             </div>
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-            <small className="text-xs font-bold text-slate-800 block">สัดส่วนโครงสร้างรายได้</small>
+            <small className="text-xs font-bold text-slate-800 block">
+              สัดส่วนโครงสร้างรายได้
+            </small>
             <div className="space-y-2 text-xs font-medium">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> ค่าเช่าห้องพัก
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />{" "}
+                  ค่าเช่าห้องพัก
                 </span>
                 <strong className="text-slate-900 font-bold">78%</strong>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> ค่ากระแสไฟฟ้า
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />{" "}
+                  ค่ากระแสไฟฟ้า
                 </span>
                 <strong className="text-slate-900 font-bold">16%</strong>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-sky-500" /> ค่าน้ำประปา & บริการ
+                  <span className="w-2 h-2 rounded-full bg-sky-500" /> ค่าน้ำประปา
+                  & บริการ
                 </span>
                 <strong className="text-slate-900 font-bold">6%</strong>
               </div>
@@ -545,8 +733,12 @@ export function CustomerDashboard({
                 <Building2 size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">ผลการดำเนินงานแยกรายหอพัก ({properties.length} แห่ง)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">เปรียบเทียบอัตราเข้าพักและยอดเงินของแต่ละหอพัก</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  ผลการดำเนินงานแยกรายหอพัก ({properties.length} แห่ง)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  เปรียบเทียบอัตราเข้าพักและยอดเงินของแต่ละหอพัก
+                </p>
               </div>
             </div>
             <button
@@ -560,23 +752,35 @@ export function CustomerDashboard({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {properties.map((prop) => (
-              <article className="p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50/80 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col justify-between group" key={prop.id}>
+              <article
+                className="p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50/80 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col justify-between group"
+                key={prop.id}
+              >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{prop.name}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                      {prop.name}
+                    </h3>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200/80 shrink-0">
                       {occupancy}%
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 truncate mt-0.5">{prop.address || "กรุงเทพมหานคร"}</p>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {prop.address || "กรุงเทพมหานคร"}
+                  </p>
 
                   <div className="mt-3.5 space-y-2 text-xs">
                     <div className="flex justify-between font-medium">
                       <span className="text-slate-500">จำนวนห้อง:</span>
-                      <strong className="text-slate-800">{occupiedCount} / {prop.rooms.length} ห้อง</strong>
+                      <strong className="text-slate-800">
+                        {occupiedCount} / {prop.rooms.length} ห้อง
+                      </strong>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
-                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style={{ width: `${occupancy}%` }} />
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                        style={{ width: `${occupancy}%` }}
+                      />
                     </div>
                     <div className="flex justify-between pt-1">
                       <span className="text-slate-500">ยอดค้างชำระ:</span>
@@ -588,7 +792,9 @@ export function CustomerDashboard({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-medium">รอบบิล: วันที่ 1</span>
+                  <span className="text-slate-400 font-medium">
+                    รอบบิล: วันที่ 1
+                  </span>
                   <button
                     onClick={() => onNavigate("rooms")}
                     className="font-bold text-blue-600 hover:text-blue-700 bg-transparent border-0 cursor-pointer flex items-center gap-1"
@@ -609,8 +815,12 @@ export function CustomerDashboard({
               <CalendarDays size={19} strokeWidth={2.2} />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">กำหนดการรอบเดือน (Milestones)</h2>
-              <p className="text-xs text-slate-500 mt-0.5">ตารางงานที่ต้องดำเนินการในแต่ละรอบบิล</p>
+              <h2 className="text-base font-bold text-slate-900">
+                กำหนดการรอบเดือน (Milestones)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ตารางงานที่ต้องดำเนินการในแต่ละรอบบิล
+              </p>
             </div>
           </header>
 
@@ -620,8 +830,12 @@ export function CustomerDashboard({
                 25
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ตัดรอบจดมิเตอร์น้ำ-ไฟ</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">บันทึกตัวเลขมิเตอร์เพื่อคำนวณยอดการใช้</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ตัดรอบจดมิเตอร์น้ำ-ไฟ
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  บันทึกตัวเลขมิเตอร์เพื่อคำนวณยอดการใช้
+                </p>
               </div>
             </div>
 
@@ -630,8 +844,12 @@ export function CustomerDashboard({
                 1
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ออกและส่งใบแจ้งหนี้</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">พิมพ์หรือส่งแจ้งเตือนยอดชำระทาง LINE</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ออกและส่งใบแจ้งหนี้
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  พิมพ์หรือส่งแจ้งเตือนยอดชำระทาง LINE
+                </p>
               </div>
             </div>
 
@@ -640,8 +858,12 @@ export function CustomerDashboard({
                 5
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">วันครบกำหนดชำระเงิน</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">ผู้เช่าชำระเงินค่าเช่าและส่งหลักฐานสลิป</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  วันครบกำหนดชำระเงิน
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  ผู้เช่าชำระเงินค่าเช่าและส่งหลักฐานสลิป
+                </p>
               </div>
             </div>
 
@@ -650,15 +872,21 @@ export function CustomerDashboard({
                 6
               </span>
               <div>
-                <strong className="text-xs font-bold text-slate-800 block">ติดตามบิลเกินกำหนด & คิดค่าปรับ</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">ตรวจสอบยอดค้างชำระและทวงถาม</p>
+                <strong className="text-xs font-bold text-slate-800 block">
+                  ติดตามบิลเกินกำหนด & คิดค่าปรับ
+                </strong>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  ตรวจสอบยอดค้างชำระและทวงถาม
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span>ประมาณการค่าเช่าฐานเดือนหน้า:</span>
-            <strong className="text-slate-900 font-black tabular-nums">฿{revenue.toLocaleString()}.00</strong>
+            <strong className="text-slate-900 font-black tabular-nums">
+              ฿{revenue.toLocaleString()}.00
+            </strong>
           </div>
         </div>
       </section>
@@ -672,8 +900,12 @@ export function CustomerDashboard({
                 <Zap size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติการใช้ไฟฟ้า (หน่วย / kWh)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">ปริมาณการใช้ไฟฟ้าเฉลี่ยของทั้งหอพัก 6 เดือนย้อนหลัง</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติการใช้ไฟฟ้า (หน่วย / kWh)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ปริมาณการใช้ไฟฟ้าเฉลี่ยของทั้งหอพัก 6 เดือนย้อนหลัง
+                </p>
               </div>
             </div>
             <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
@@ -686,7 +918,10 @@ export function CustomerDashboard({
               {monthlyStats.map((item) => {
                 const height = Math.round((item.elecUnits / maxElec) * 100);
                 return (
-                  <div className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative" key={item.month}>
+                  <div
+                    className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
+                    key={item.month}
+                  >
                     <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1 px-2 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-10 scale-95 group-hover:scale-100">
                       {item.elecUnits} หน่วย
                     </div>
@@ -694,7 +929,9 @@ export function CustomerDashboard({
                       className="w-full max-w-[32px] rounded-t-lg bg-gradient-to-t from-amber-500 to-amber-400 group-hover:from-amber-600 group-hover:to-amber-500 transition-all duration-300 shadow-2xs"
                       style={{ height: `${height}%` }}
                     />
-                    <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>
+                    <span className="text-[11px] font-bold text-slate-500 mt-1">
+                      {item.month}
+                    </span>
                   </div>
                 );
               })}
@@ -713,8 +950,12 @@ export function CustomerDashboard({
                 <Droplets size={19} strokeWidth={2.2} />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-900">สถิติการใช้น้ำประปา (ลูกบาศก์เมตร / m³)</h2>
-                <p className="text-xs text-slate-500 mt-0.5">ปริมาณการใช้น้ำประปาเฉลี่ยของทั้งหอพัก 6 เดือนย้อนหลัง</p>
+                <h2 className="text-base font-bold text-slate-900">
+                  สถิติการใช้น้ำประปา (ลูกบาศก์เมตร / m³)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ปริมาณการใช้น้ำประปาเฉลี่ยของทั้งหอพัก 6 เดือนย้อนหลัง
+                </p>
               </div>
             </div>
             <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-800 font-bold text-xs border border-sky-200">
@@ -727,7 +968,10 @@ export function CustomerDashboard({
               {monthlyStats.map((item) => {
                 const height = Math.round((item.waterUnits / 150) * 100);
                 return (
-                  <div className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative" key={item.month}>
+                  <div
+                    className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
+                    key={item.month}
+                  >
                     <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-slate-950 text-white text-[10px] font-bold py-1 px-2 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-10 scale-95 group-hover:scale-100">
                       {item.waterUnits} m³
                     </div>
@@ -735,7 +979,9 @@ export function CustomerDashboard({
                       className="w-full max-w-[32px] rounded-t-lg bg-gradient-to-t from-sky-500 to-sky-400 group-hover:from-sky-600 group-hover:to-sky-500 transition-all duration-300 shadow-2xs"
                       style={{ height: `${height}%` }}
                     />
-                    <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>
+                    <span className="text-[11px] font-bold text-slate-500 mt-1">
+                      {item.month}
+                    </span>
                   </div>
                 );
               })}
@@ -753,7 +999,9 @@ export function CustomerDashboard({
         <header className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900">ใบแจ้งหนี้ล่าสุด</h2>
-            <p className="text-xs text-slate-500 mt-0.5">รายการเคลื่อนไหวและยอดเรียกเก็บที่ควรติดตาม</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              รายการเคลื่อนไหวและยอดเรียกเก็บที่ควรติดตาม
+            </p>
           </div>
           <button
             className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-all bg-transparent border-0 cursor-pointer"
@@ -768,27 +1016,50 @@ export function CustomerDashboard({
           <DataTable
             emptyDescription="สร้างหอพัก ห้อง ผู้เช่า และสัญญา เพื่อเริ่มออกใบแจ้งหนี้"
             emptyTitle="ยังไม่มีใบแจ้งหนี้"
-            headers={["เลขที่เอกสาร / ห้อง", "วันที่ออก", "ครบกำหนด", "ยอดรวม", "คงเหลือ", "สถานะ"]}
+            headers={[
+              "เลขที่เอกสาร / ห้อง",
+              "วันที่ออก",
+              "ครบกำหนด",
+              "ยอดรวม",
+              "คงเหลือ",
+              "สถานะ",
+            ]}
             rows={mockInvoices.map((item) => [
               <div className="flex items-center gap-2.5" key="num">
                 <span className="inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-lg bg-slate-100 text-slate-900 text-xs font-black">
                   {item.room}
                 </span>
                 <div className="flex flex-col text-xs min-w-0">
-                  <strong className="text-slate-900 font-bold truncate">{item.number}</strong>
-                  <small className="text-slate-400 mt-0.5">ห้อง {item.room}</small>
+                  <strong className="text-slate-900 font-bold truncate">
+                    {item.number}
+                  </strong>
+                  <small className="text-slate-400 mt-0.5">
+                    ห้อง {item.room}
+                  </small>
                 </div>
               </div>,
-              <span className="text-xs text-slate-700 font-medium" key="issued">{item.issued}</span>,
-              <span className="text-xs text-slate-700 font-medium" key="due">{item.due}</span>,
-              <strong className="text-xs font-black text-slate-900 tabular-nums" key="tot">{item.total}</strong>,
+              <span className="text-xs text-slate-700 font-medium" key="issued">
+                {item.issued}
+              </span>,
+              <span className="text-xs text-slate-700 font-medium" key="due">
+                {item.due}
+              </span>,
+              <strong
+                className="text-xs font-black text-slate-900 tabular-nums"
+                key="tot"
+              >
+                {item.total}
+              </strong>,
               <strong
                 className={`text-xs font-black tabular-nums ${item.balance !== "฿0.00" ? "text-rose-600" : "text-emerald-600"}`}
                 key="bal"
               >
                 {item.balance}
               </strong>,
-              <StatusBadge key="status" status={item.status as "paid" | "overdue"} />,
+              <StatusBadge
+                key="status"
+                status={item.status as "paid" | "overdue"}
+              />,
             ])}
           />
         </div>

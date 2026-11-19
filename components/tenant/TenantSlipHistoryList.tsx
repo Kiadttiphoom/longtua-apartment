@@ -27,7 +27,9 @@ export interface SlipHistoryItem {
 export function TenantSlipHistoryList({ slips }: { slips: SlipHistoryItem[] }) {
   const router = useRouter();
   const [viewingSlip, setViewingSlip] = useState<SlipHistoryItem | null>(null);
-  const [slipToCancel, setSlipToCancel] = useState<SlipHistoryItem | null>(null);
+  const [slipToCancel, setSlipToCancel] = useState<SlipHistoryItem | null>(
+    null,
+  );
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
@@ -96,8 +98,12 @@ export function TenantSlipHistoryList({ slips }: { slips: SlipHistoryItem[] }) {
                 </div>
               </button>
               <div>
-                <strong className="text-sm font-bold text-slate-800">{money(Number(slip.amount))}</strong>
-                <p className="mt-0.5 text-slate-500">แจ้งโอน {thaiDate(slip.paid_at)}</p>
+                <strong className="text-sm font-bold text-slate-800">
+                  {money(Number(slip.amount))}
+                </strong>
+                <p className="mt-0.5 text-slate-500">
+                  แจ้งโอน {thaiDate(slip.paid_at)}
+                </p>
               </div>
             </div>
 
@@ -234,7 +240,9 @@ export function TenantSlipHistoryList({ slips }: { slips: SlipHistoryItem[] }) {
                 <Trash2 size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 text-base">ยกเลิกและลบสลิปนี้?</h3>
+                <h3 className="font-bold text-slate-800 text-base">
+                  ยกเลิกและลบสลิปนี้?
+                </h3>
                 <p className="text-xs text-slate-500">
                   สลิปจะถูกลบออกจากระบบ และคุณสามารถส่งหลักฐานใหม่ได้ทันที
                 </p>
@@ -243,10 +251,14 @@ export function TenantSlipHistoryList({ slips }: { slips: SlipHistoryItem[] }) {
 
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-700 space-y-1">
               <p>
-                <span className="font-semibold text-slate-500">ยอดแจ้งชำระ:</span> {money(Number(slipToCancel.amount))}
+                <span className="font-semibold text-slate-500">
+                  ยอดแจ้งชำระ:
+                </span>{" "}
+                {money(Number(slipToCancel.amount))}
               </p>
               <p>
-                <span className="font-semibold text-slate-500">วันที่โอน:</span> {thaiDate(slipToCancel.paid_at)}
+                <span className="font-semibold text-slate-500">วันที่โอน:</span>{" "}
+                {thaiDate(slipToCancel.paid_at)}
               </p>
             </div>
 

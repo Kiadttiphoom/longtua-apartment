@@ -10,10 +10,19 @@ import {
   deleteRoomAdminAction,
 } from "@/app/(admin)/admin/actions";
 import { AdminManageOrganizationButton } from "@/components/admin/AdminManageOrganization";
-import { AdminConfirmDeleteModal, AdminModal, AdminTable, money } from "@/components/admin/AdminPrimitives";
+import {
+  AdminConfirmDeleteModal,
+  AdminModal,
+  AdminTable,
+  money,
+} from "@/components/admin/AdminPrimitives";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Building2, DoorOpen, Pencil, Plus, Trash2 } from "lucide-react";
-import type { AdminViewContentProps, Property, Room } from "@/components/admin/admin-types";
+import type {
+  AdminViewContentProps,
+  Property,
+  Room,
+} from "@/components/admin/admin-types";
 
 // =========================================================================
 // 1. AdminPropertiesView
@@ -24,7 +33,10 @@ export function AdminPropertiesView({
   organizations = [],
   organizationMap,
   propertiesReady,
-}: Pick<AdminViewContentProps, "properties" | "rooms" | "organizationMap" | "propertiesReady"> & {
+}: Pick<
+  AdminViewContentProps,
+  "properties" | "rooms" | "organizationMap" | "propertiesReady"
+> & {
   organizations?: AdminViewContentProps["organizations"];
 }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -35,9 +47,15 @@ export function AdminPropertiesView({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อหอพัก</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">หอพักทั้งหมดในระบบ ({properties.length})</h2>
-          <p className="text-xs text-slate-500 mt-0.5">เพิ่ม แก้ไข หรือลบหอพักได้โดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายชื่อหอพัก
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            หอพักทั้งหมดในระบบ ({properties.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            เพิ่ม แก้ไข หรือลบหอพักได้โดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -50,13 +68,28 @@ export function AdminPropertiesView({
       </div>
 
       <AdminTable
-        headers={["กิจการ", "ชื่อหอพัก", "ที่อยู่", "โทรศัพท์", "จำนวนห้อง", "สถานะ", "จัดการ"]}
+        headers={[
+          "กิจการ",
+          "ชื่อหอพัก",
+          "ที่อยู่",
+          "โทรศัพท์",
+          "จำนวนห้อง",
+          "สถานะ",
+          "จัดการ",
+        ]}
         rows={properties.map((item) => [
           <div key="organization" className="space-y-1">
-            <span className="font-semibold text-slate-800 block text-xs">{organizationMap.get(item.organization_id) ?? "—"}</span>
-            <AdminManageOrganizationButton organizationId={item.organization_id} section="properties" />
+            <span className="font-semibold text-slate-800 block text-xs">
+              {organizationMap.get(item.organization_id) ?? "—"}
+            </span>
+            <AdminManageOrganizationButton
+              organizationId={item.organization_id}
+              section="properties"
+            />
           </div>,
-          <strong key="n" className="text-xs font-bold text-slate-800 block">{item.name}</strong>,
+          <strong key="n" className="text-xs font-bold text-slate-800 block">
+            {item.name}
+          </strong>,
           item.address || "—",
           item.phone || "—",
           rooms.filter((room) => room.property_id === item.id).length,
@@ -85,10 +118,16 @@ export function AdminPropertiesView({
 
       {/* Create Property Modal */}
       {createOpen && (
-        <AdminModal title="เพิ่มหอพักใหม่" onClose={() => setCreateOpen(false)} maxWidth={500}>
+        <AdminModal
+          title="เพิ่มหอพักใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={500}
+        >
           <form action={createPropertyAdminAction} className="p-6 space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">สังกัดกิจการ *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                สังกัดกิจการ *
+              </label>
               <select
                 name="organizationId"
                 required
@@ -104,7 +143,9 @@ export function AdminPropertiesView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อหอพัก *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อหอพัก *
+              </label>
               <input
                 name="name"
                 required
@@ -114,7 +155,9 @@ export function AdminPropertiesView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ที่อยู่</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ที่อยู่
+              </label>
               <textarea
                 name="address"
                 rows={2}
@@ -125,7 +168,9 @@ export function AdminPropertiesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   name="phone"
                   placeholder="08X-XXX-XXXX"
@@ -133,7 +178,9 @@ export function AdminPropertiesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าไฟ (บาท/หน่วย)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ค่าไฟ (บาท/หน่วย)
+                </label>
                 <input
                   name="electricRate"
                   type="number"
@@ -145,7 +192,9 @@ export function AdminPropertiesView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าน้ำ (บาท/หน่วย หรือ เหมาจ่าย)</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ค่าน้ำ (บาท/หน่วย หรือ เหมาจ่าย)
+              </label>
               <input
                 name="waterRate"
                 type="number"
@@ -177,12 +226,18 @@ export function AdminPropertiesView({
 
       {/* Edit Property Modal */}
       {editTarget && (
-        <AdminModal title={`แก้ไขหอพัก: ${editTarget.name}`} onClose={() => setEditTarget(null)} maxWidth={500}>
+        <AdminModal
+          title={`แก้ไขหอพัก: ${editTarget.name}`}
+          onClose={() => setEditTarget(null)}
+          maxWidth={500}
+        >
           <form action={updatePropertyAdminAction} className="p-6 space-y-4">
             <input type="hidden" name="propertyId" value={editTarget.id} />
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ชื่อหอพัก *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ชื่อหอพัก *
+              </label>
               <input
                 name="name"
                 defaultValue={editTarget.name}
@@ -192,7 +247,9 @@ export function AdminPropertiesView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">ที่อยู่</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                ที่อยู่
+              </label>
               <textarea
                 name="address"
                 defaultValue={editTarget.address ?? ""}
@@ -203,7 +260,9 @@ export function AdminPropertiesView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เบอร์โทรศัพท์</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   name="phone"
                   defaultValue={editTarget.phone ?? ""}
@@ -211,7 +270,9 @@ export function AdminPropertiesView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะ</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะ
+                </label>
                 <select
                   name="status"
                   defaultValue={editTarget.status}
@@ -269,7 +330,10 @@ export function AdminRoomsView({
   organizationMap,
   propertyMap,
   roomsReady,
-}: Pick<AdminViewContentProps, "rooms" | "organizationMap" | "propertyMap" | "roomsReady"> & {
+}: Pick<
+  AdminViewContentProps,
+  "rooms" | "organizationMap" | "propertyMap" | "roomsReady"
+> & {
   properties?: AdminViewContentProps["properties"];
   organizations?: AdminViewContentProps["organizations"];
 }) {
@@ -287,9 +351,15 @@ export function AdminRoomsView({
     <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">รายชื่อห้องพัก</span>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">ห้องพักทั้งหมดในระบบ ({rooms.length})</h2>
-          <p className="text-xs text-slate-500 mt-0.5">เพิ่ม แก้ไข หรือลบห้องพักได้โดยตรงในฐานะ Super Admin</p>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            รายชื่อห้องพัก
+          </span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+            ห้องพักทั้งหมดในระบบ ({rooms.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            เพิ่ม แก้ไข หรือลบห้องพักได้โดยตรงในฐานะ Super Admin
+          </p>
         </div>
         <button
           type="button"
@@ -308,11 +378,18 @@ export function AdminRoomsView({
         headers={["กิจการ", "หอพัก", "ห้อง", "ชั้น", "ค่าเช่า", "สถานะ", "จัดการ"]}
         rows={rooms.map((item) => [
           <div key="organization" className="space-y-1">
-            <span className="font-semibold text-slate-800 block text-xs">{organizationMap.get(item.organization_id) ?? "—"}</span>
-            <AdminManageOrganizationButton organizationId={item.organization_id} section="rooms" />
+            <span className="font-semibold text-slate-800 block text-xs">
+              {organizationMap.get(item.organization_id) ?? "—"}
+            </span>
+            <AdminManageOrganizationButton
+              organizationId={item.organization_id}
+              section="rooms"
+            />
           </div>,
           propertyMap.get(item.property_id) ?? "—",
-          <strong key="rn" className="text-xs font-bold text-slate-800 block">{item.room_number}</strong>,
+          <strong key="rn" className="text-xs font-bold text-slate-800 block">
+            {item.room_number}
+          </strong>,
           item.floor || "—",
           money(Number(item.base_rent)),
           <StatusBadge compact key="s" status={item.status} />,
@@ -340,10 +417,16 @@ export function AdminRoomsView({
 
       {/* Create Room Modal */}
       {createOpen && (
-        <AdminModal title="เพิ่มห้องพักใหม่" onClose={() => setCreateOpen(false)} maxWidth={500}>
+        <AdminModal
+          title="เพิ่มห้องพักใหม่"
+          onClose={() => setCreateOpen(false)}
+          maxWidth={500}
+        >
           <form action={createRoomAdminAction} className="p-6 space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">สังกัดกิจการ *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                สังกัดกิจการ *
+              </label>
               <select
                 name="organizationId"
                 value={selectedOrgId}
@@ -361,7 +444,9 @@ export function AdminRoomsView({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">เลือกหอพัก *</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                เลือกหอพัก *
+              </label>
               <select
                 name="propertyId"
                 required
@@ -378,7 +463,9 @@ export function AdminRoomsView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลขห้องพัก *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลขห้องพัก *
+                </label>
                 <input
                   name="roomNumber"
                   required
@@ -387,7 +474,9 @@ export function AdminRoomsView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ชั้น</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ชั้น
+                </label>
                 <input
                   name="floor"
                   placeholder="เช่น 1, 2, G"
@@ -398,7 +487,9 @@ export function AdminRoomsView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าเช่าพื้นฐาน (บาท/เดือน)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ค่าเช่าพื้นฐาน (บาท/เดือน)
+                </label>
                 <input
                   name="baseRent"
                   type="number"
@@ -409,7 +500,9 @@ export function AdminRoomsView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะห้อง</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะห้อง
+                </label>
                 <select
                   name="status"
                   defaultValue="vacant"
@@ -449,13 +542,19 @@ export function AdminRoomsView({
 
       {/* Edit Room Modal */}
       {editTarget && (
-        <AdminModal title={`แก้ไขห้องพัก: ${editTarget.room_number}`} onClose={() => setEditTarget(null)} maxWidth={500}>
+        <AdminModal
+          title={`แก้ไขห้องพัก: ${editTarget.room_number}`}
+          onClose={() => setEditTarget(null)}
+          maxWidth={500}
+        >
           <form action={updateRoomAdminAction} className="p-6 space-y-4">
             <input type="hidden" name="roomId" value={editTarget.id} />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">เลขห้องพัก *</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  เลขห้องพัก *
+                </label>
                 <input
                   name="roomNumber"
                   defaultValue={editTarget.room_number}
@@ -464,7 +563,9 @@ export function AdminRoomsView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ชั้น</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ชั้น
+                </label>
                 <input
                   name="floor"
                   defaultValue={editTarget.floor ?? ""}
@@ -475,7 +576,9 @@ export function AdminRoomsView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">ค่าเช่าพื้นฐาน (บาท)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ค่าเช่าพื้นฐาน (บาท)
+                </label>
                 <input
                   name="baseRent"
                   type="number"
@@ -485,7 +588,9 @@ export function AdminRoomsView({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">สถานะห้อง</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  สถานะห้อง
+                </label>
                 <select
                   name="status"
                   defaultValue={editTarget.status}

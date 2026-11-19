@@ -25,7 +25,11 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
-import { createTenantAction, deleteTenantAction, updateTenantAction } from "@/app/(portal)/resource-actions";
+import {
+  createTenantAction,
+  deleteTenantAction,
+  updateTenantAction,
+} from "@/app/(portal)/resource-actions";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
 import {
   DataTable,
@@ -43,7 +47,8 @@ import type { Lease, Property, Room, Tenant } from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
 import { validateTenant } from "@/lib/portal/validation.mjs";
 
-const phoneDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "").slice(0, 15);
+const phoneDigits = (value: string | null | undefined) =>
+  (value ?? "").replace(/\D/g, "").slice(0, 15);
 
 export function TenantsPage({
   organizationId,
@@ -70,7 +75,9 @@ export function TenantsPage({
   const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
   const [portalTarget, setPortalTarget] = useState<Tenant | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [activePropertyId, setActivePropertyId] = useState(properties[0]?.id ?? "");
+  const [activePropertyId, setActivePropertyId] = useState(
+    properties[0]?.id ?? "",
+  );
   const [floor, setFloor] = useState("all");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -79,7 +86,7 @@ export function TenantsPage({
   const editing = selected && selected !== "create" ? selected : null;
   const accountMap = useMemo(
     () => new Map(portalAccounts.map((account) => [account.tenantId, account])),
-    [portalAccounts]
+    [portalAccounts],
   );
 
   const roomMap = useMemo(() => new Map(rooms.map((r) => [r.id, r])), [rooms]);
@@ -96,7 +103,8 @@ export function TenantsPage({
     return map;
   }, [leases, roomMap]);
 
-  const activeProperty = properties.find((p) => p.id === activePropertyId) ?? properties[0];
+  const activeProperty =
+    properties.find((p) => p.id === activePropertyId) ?? properties[0];
   const resolvedPropertyId = activeProperty?.id ?? "";
 
   const floorKey = (room?: Room) => (room?.floor ? String(room.floor) : "1");
@@ -120,13 +128,26 @@ export function TenantsPage({
       const key = floorKey(leaseInfo?.room);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return Array.from(counts, ([value, count]) => ({ value, count, label: floorLabel(value) })).sort(
-      (left, right) => left.value.localeCompare(right.value, "th", { numeric: true, sensitivity: "base" })
+    return Array.from(counts, ([value, count]) => ({
+      value,
+      count,
+      label: floorLabel(value),
+    })).sort((left, right) =>
+      left.value.localeCompare(right.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
     );
   }, [propertyTenants, tenantLeaseMap]);
 
-  const activeCount = useMemo(() => propertyTenants.filter((item) => item.status === "active").length, [propertyTenants]);
-  const formerCount = useMemo(() => propertyTenants.filter((item) => item.status === "former").length, [propertyTenants]);
+  const activeCount = useMemo(
+    () => propertyTenants.filter((item) => item.status === "active").length,
+    [propertyTenants],
+  );
+  const formerCount = useMemo(
+    () => propertyTenants.filter((item) => item.status === "former").length,
+    [propertyTenants],
+  );
   const portalCount = useMemo(() => portalAccounts.length, [portalAccounts]);
 
   const filtered = useMemo(() => {
@@ -138,9 +159,16 @@ export function TenantsPage({
       const matchesStatus = status === "all" || item.status === status;
       const matchesSearch =
         !keyword ||
-        [item.full_name, item.phone, item.email, item.address, item.line_id, item.vehicle_plate, item.emergency_contact_name, leaseInfo?.room?.room_number].some((value) =>
-          value?.toLocaleLowerCase("th").includes(keyword)
-        );
+        [
+          item.full_name,
+          item.phone,
+          item.email,
+          item.address,
+          item.line_id,
+          item.vehicle_plate,
+          item.emergency_contact_name,
+          leaseInfo?.room?.room_number,
+        ].some((value) => value?.toLocaleLowerCase("th").includes(keyword));
       return matchesFloor && matchesStatus && matchesSearch;
     });
   }, [propertyTenants, tenantLeaseMap, floor, status, query]);
@@ -160,7 +188,12 @@ export function TenantsPage({
       value,
       label: floorLabel(value),
       tenants: list,
-    })).sort((a, b) => a.value.localeCompare(b.value, "th", { numeric: true, sensitivity: "base" }));
+    })).sort((a, b) =>
+      a.value.localeCompare(b.value, "th", {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
   }, [floor, filtered, tenantLeaseMap]);
 
   return (
@@ -176,7 +209,10 @@ export function TenantsPage({
       />
 
       {/* 4-Metric Hero Stat Cards (Identical style to /users and /guestrooms) */}
-      <section aria-label="ภาพรวมผู้เช่า" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section
+        aria-label="ภาพรวมผู้เช่า"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+      >
         {/* Card 1: Total Tenants */}
         <button
           className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
@@ -187,12 +223,14 @@ export function TenantsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ผู้เช่าทั้งหมด</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ผู้เช่าทั้งหมด
+              </span>
               <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {items.length.toLocaleString("th-TH")} คน
               </strong>
@@ -210,12 +248,14 @@ export function TenantsPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">กำลังพักอาศัย</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                กำลังพักอาศัย
+              </span>
               <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
                 {activeCount.toLocaleString("th-TH")} คน
               </strong>
@@ -233,12 +273,14 @@ export function TenantsPage({
           onClick={() => setStatus("former")}
           type="button"
         >
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserMinus size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">ผู้เช่าเดิม</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                ผู้เช่าเดิม
+              </span>
               <strong className="text-2xl font-black text-slate-800 tracking-tight tabular-nums mt-0.5 block">
                 {formerCount.toLocaleString("th-TH")} คน
               </strong>
@@ -248,12 +290,14 @@ export function TenantsPage({
 
         {/* Card 4: Tenant Portal Accounts */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
-              <span className="text-xs font-bold text-slate-500 block">บัญชี Tenant Portal</span>
+              <span className="text-xs font-bold text-slate-500 block">
+                บัญชี Tenant Portal
+              </span>
               <strong className="text-2xl font-black text-purple-900 tracking-tight tabular-nums mt-0.5 block">
                 {portalCount.toLocaleString("th-TH")} บัญชี
               </strong>
@@ -263,20 +307,31 @@ export function TenantsPage({
       </section>
 
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
-      <section aria-label="เลือกหอพัก" className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <section
+        aria-label="เลือกหอพัก"
+        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+      >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
             <Building2 size={16} className="text-blue-600" strokeWidth={2.2} />
-            <strong className="text-xs font-bold text-slate-800">เลือกหอพักเพื่อแสดงรายชื่อผู้เช่า</strong>
+            <strong className="text-xs font-bold text-slate-800">
+              เลือกหอพักเพื่อแสดงรายชื่อผู้เช่า
+            </strong>
           </div>
           <small className="text-xs text-slate-500 font-semibold">
             {properties.length} หอพัก · {items.length} ผู้เช่าทั้งหมดในระบบ
           </small>
         </header>
-        <div aria-label="รายชื่อหอพัก" className="p-3 flex gap-2.5 overflow-x-auto" role="tablist">
+        <div
+          aria-label="รายชื่อหอพัก"
+          className="p-3 flex gap-2.5 overflow-x-auto"
+          role="tablist"
+        >
           {properties.map((property) => {
             const active = property.id === resolvedPropertyId;
-            const propRooms = rooms.filter((r) => r.property_id === property.id);
+            const propRooms = rooms.filter(
+              (r) => r.property_id === property.id,
+            );
             const propTenants = items.filter((t) => {
               const info = tenantLeaseMap.get(t.id);
               return info?.room?.property_id === property.id;
@@ -298,13 +353,21 @@ export function TenantsPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <strong className="text-xs font-bold text-slate-900 block truncate">{property.name}</strong>
+                  <strong className="text-xs font-bold text-slate-900 block truncate">
+                    {property.name}
+                  </strong>
                   <span className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {propRooms.length} ห้อง · พักอยู่ <strong className="text-blue-600 font-bold">{propTenants.length}</strong> คน
+                    {propRooms.length} ห้อง · พักอยู่{" "}
+                    <strong className="text-blue-600 font-bold">
+                      {propTenants.length}
+                    </strong>{" "}
+                    คน
                   </span>
                 </div>
               </button>
@@ -314,35 +377,55 @@ export function TenantsPage({
       </section>
 
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
-      <nav aria-label="เลือกชั้น" className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto">
+      <nav
+        aria-label="เลือกชั้น"
+        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+      >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
           <span>ชั้น:</span>
         </div>
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl" role="tablist">
+        <div
+          className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl"
+          role="tablist"
+        >
           <button
             aria-selected={floor === "all"}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              floor === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              floor === "all"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
             onClick={() => setFloor("all")}
             role="tab"
             type="button"
           >
-            ทุกชั้น <span className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}>({propertyTenants.length})</span>
+            ทุกชั้น{" "}
+            <span
+              className={`text-[11px] font-bold ${floor === "all" ? "text-blue-600" : "text-slate-400"}`}
+            >
+              ({propertyTenants.length})
+            </span>
           </button>
           {floorOptions.map((option) => (
             <button
               aria-selected={floor === option.value}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                floor === option.value ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                floor === option.value
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
               key={option.value}
               onClick={() => setFloor(option.value)}
               role="tab"
               type="button"
             >
-              {option.label} <span className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}>({option.count})</span>
+              {option.label}{" "}
+              <span
+                className={`text-[11px] font-bold ${floor === option.value ? "text-blue-600" : "text-slate-400"}`}
+              >
+                ({option.count})
+              </span>
             </button>
           ))}
         </div>
@@ -355,7 +438,9 @@ export function TenantsPage({
             <button
               aria-label="มุมมองตาราง"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("table")}
               type="button"
@@ -366,7 +451,9 @@ export function TenantsPage({
             <button
               aria-label="มุมมองการ์ด"
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               onClick={() => setViewMode("grid")}
               type="button"
@@ -416,7 +503,9 @@ export function TenantsPage({
                       {item.full_name.slice(0, 1)}
                     </span>
                     <div className="flex flex-col text-xs min-w-0">
-                      <strong className="text-slate-900 font-bold truncate">{item.full_name}</strong>
+                      <strong className="text-slate-900 font-bold truncate">
+                        {item.full_name}
+                      </strong>
                       <small className="text-slate-400 mt-0.5 font-medium font-mono">
                         {item.id_card_last4
                           ? `บัตร ปชช. •••• ${item.id_card_last4}`
@@ -427,18 +516,33 @@ export function TenantsPage({
                   <div className="flex flex-col text-xs" key="room">
                     {leaseInfo?.room ? (
                       <>
-                        <strong className="text-slate-900 font-bold">ห้อง {leaseInfo.room.room_number}</strong>
-                        <span className="text-slate-500 font-medium text-[11px]">{leaseInfo.room.floor ? `ชั้น ${leaseInfo.room.floor}` : "ไม่ระบุชั้น"}</span>
+                        <strong className="text-slate-900 font-bold">
+                          ห้อง {leaseInfo.room.room_number}
+                        </strong>
+                        <span className="text-slate-500 font-medium text-[11px]">
+                          {leaseInfo.room.floor
+                            ? `ชั้น ${leaseInfo.room.floor}`
+                            : "ไม่ระบุชั้น"}
+                        </span>
                       </>
                     ) : (
-                      <span className="text-slate-400 text-xs">— ยังไม่มีห้อง —</span>
+                      <span className="text-slate-400 text-xs">
+                        — ยังไม่มีห้อง —
+                      </span>
                     )}
                   </div>,
                   <div className="flex flex-col text-xs" key="contact">
-                    <strong className="text-slate-800 font-bold font-mono">{item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}</strong>
-                    <small className="text-slate-400 mt-0.5">{item.email || "ไม่มีอีเมล"}</small>
+                    <strong className="text-slate-800 font-bold font-mono">
+                      {item.phone ? `โทร. ${item.phone}` : "ไม่มีเบอร์โทร"}
+                    </strong>
+                    <small className="text-slate-400 mt-0.5">
+                      {item.email || "ไม่มีอีเมล"}
+                    </small>
                   </div>,
-                  <span className="text-xs text-slate-600 max-w-xs truncate" key="addr">
+                  <span
+                    className="text-xs text-slate-600 max-w-xs truncate"
+                    key="addr"
+                  >
                     {item.address || "—"}
                   </span>,
                   <div key="account">
@@ -454,7 +558,10 @@ export function TenantsPage({
                     )}
                   </div>,
                   <StatusBadge key="status" status={item.status} />,
-                  <div className="inline-flex items-center gap-1.5 justify-end" key="actions">
+                  <div
+                    className="inline-flex items-center gap-1.5 justify-end"
+                    key="actions"
+                  >
                     <button
                       className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                       onClick={() => setPortalTarget(item)}
@@ -500,10 +607,16 @@ export function TenantsPage({
               <section className="space-y-4" key={group.value}>
                 <header className="flex items-baseline gap-2.5">
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers size={16} className="text-blue-600" strokeWidth={2.2} />
+                    <Layers
+                      size={16}
+                      className="text-blue-600"
+                      strokeWidth={2.2}
+                    />
                     <span>{group.label}</span>
                   </h2>
-                  <span className="text-xs text-slate-400 font-semibold">({group.tenants.length} คน)</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    ({group.tenants.length} คน)
+                  </span>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {group.tenants.map((item) => {
@@ -514,7 +627,6 @@ export function TenantsPage({
                         className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
                         key={item.id}
                       >
-                        
                         <div>
                           {/* Header */}
                           <header className="flex items-start justify-between gap-3 mb-4">
@@ -527,7 +639,11 @@ export function TenantsPage({
                                   {item.full_name}
                                 </h2>
                                 <span className="text-xs font-mono font-medium text-slate-400 block truncate mt-0.5">
-                                  {leaseInfo?.room ? `ห้อง ${leaseInfo.room.room_number} (ชั้น ${leaseInfo.room.floor ?? "1"})` : item.id_card_last4 ? `บัตร ปชช. •••• ${item.id_card_last4}` : "ไม่ระบุบัตร ปชช."}
+                                  {leaseInfo?.room
+                                    ? `ห้อง ${leaseInfo.room.room_number} (ชั้น ${leaseInfo.room.floor ?? "1"})`
+                                    : item.id_card_last4
+                                      ? `บัตร ปชช. •••• ${item.id_card_last4}`
+                                      : "ไม่ระบุบัตร ปชช."}
                                 </span>
                               </div>
                             </div>
@@ -537,16 +653,34 @@ export function TenantsPage({
                           {/* Contact info list */}
                           <div className="space-y-2 my-4">
                             <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                              <Phone size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                              <span className="font-bold text-slate-800 font-mono">{item.phone || "ยังไม่มีเบอร์โทรศัพท์"}</span>
+                              <Phone
+                                size={14}
+                                className="text-slate-400 shrink-0"
+                                strokeWidth={2.2}
+                              />
+                              <span className="font-bold text-slate-800 font-mono">
+                                {item.phone || "ยังไม่มีเบอร์โทรศัพท์"}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                              <Mail size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                              <span className="text-slate-700 truncate font-medium">{item.email || "ยังไม่มีอีเมล"}</span>
+                              <Mail
+                                size={14}
+                                className="text-slate-400 shrink-0"
+                                strokeWidth={2.2}
+                              />
+                              <span className="text-slate-700 truncate font-medium">
+                                {item.email || "ยังไม่มีอีเมล"}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                              <MapPin size={14} className="text-slate-400 shrink-0" strokeWidth={2.2} />
-                              <span className="text-slate-600 truncate">{item.address || "ยังไม่มีที่อยู่"}</span>
+                              <MapPin
+                                size={14}
+                                className="text-slate-400 shrink-0"
+                                strokeWidth={2.2}
+                              />
+                              <span className="text-slate-600 truncate">
+                                {item.address || "ยังไม่มีที่อยู่"}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -554,14 +688,18 @@ export function TenantsPage({
                         {/* Footer */}
                         <footer className="mt-2 pt-3.5 border-t border-slate-100">
                           <div className="flex items-center justify-between text-xs mb-3">
-                            <span className="text-slate-400 font-medium">สถานะบัญชี</span>
+                            <span className="text-slate-400 font-medium">
+                              สถานะบัญชี
+                            </span>
                             {account ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
                                 <UserRoundCheck size={13} strokeWidth={2.2} />
                                 <span>{account.username}</span>
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-xs font-normal">ยังไม่มีบัญชีเข้าใช้</span>
+                              <span className="text-slate-400 text-xs font-normal">
+                                ยังไม่มีบัญชีเข้าใช้
+                              </span>
                             )}
                           </div>
                           <div className="grid grid-cols-2 gap-2">
@@ -649,17 +787,22 @@ export function TenantsPage({
           >
             {(errors, clear) => (
               <div className="space-y-4 text-xs">
-                {editing ? <input name="tenantId" type="hidden" value={editing.id} /> : null}
-                
+                {editing ? (
+                  <input name="tenantId" type="hidden" value={editing.id} />
+                ) : null}
+
                 {/* Value Banner */}
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                     <Sparkles size={13} strokeWidth={2.2} />
                   </span>
                   <div className="leading-relaxed">
-                    <strong className="font-bold block text-blue-950">ข้อมูลผู้เช่าและเอกสารสัญญา</strong>
+                    <strong className="font-bold block text-blue-950">
+                      ข้อมูลผู้เช่าและเอกสารสัญญา
+                    </strong>
                     <span className="text-[11px] text-blue-800/80">
-                      ระบบจะเชื่อมโยงข้อมูลผู้เช่าเพื่อใช้ทำสัญญาเช่า ออกใบแจ้งหนี้ และเปิดสิทธิ์ Tenant Portal
+                      ระบบจะเชื่อมโยงข้อมูลผู้เช่าเพื่อใช้ทำสัญญาเช่า ออกใบแจ้งหนี้ และเปิดสิทธิ์
+                      Tenant Portal
                     </span>
                   </div>
                 </div>
@@ -669,9 +812,13 @@ export function TenantsPage({
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <UserRound size={14} className="text-slate-500" />
-                      <span>ชื่อ-นามสกุล <span className="text-rose-500">*</span></span>
+                      <span>
+                        ชื่อ-นามสกุล <span className="text-rose-500">*</span>
+                      </span>
                     </span>
-                    <span className="text-[11px] text-slate-400 font-normal">เช่น นายสมมุติ ศรีสระเกษ</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      เช่น นายสมมุติ ศรีสระเกษ
+                    </span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -688,7 +835,9 @@ export function TenantsPage({
                     />
                   </div>
                   {errors.fullName ? (
-                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.fullName}</p>
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                      {errors.fullName}
+                    </p>
                   ) : null}
                 </div>
 
@@ -700,7 +849,9 @@ export function TenantsPage({
                         <Phone size={14} className="text-slate-500" />
                         <span>เบอร์โทรศัพท์ติดต่อ</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">เช่น 081-234-5678</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        เช่น 081-234-5678
+                      </span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -713,7 +864,9 @@ export function TenantsPage({
                         maxLength={15}
                         name="phone"
                         onChange={(event) => {
-                          event.currentTarget.value = phoneDigits(event.currentTarget.value);
+                          event.currentTarget.value = phoneDigits(
+                            event.currentTarget.value,
+                          );
                           clear("phone");
                         }}
                         pattern="[0-9]{9,15}"
@@ -722,7 +875,9 @@ export function TenantsPage({
                       />
                     </div>
                     {errors.phone ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.phone}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.phone}
+                      </p>
                     ) : null}
                   </div>
 
@@ -732,7 +887,9 @@ export function TenantsPage({
                         <Mail size={14} className="text-slate-500" />
                         <span>อีเมล (Email)</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">รับใบแจ้งหนี้</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        รับใบแจ้งหนี้
+                      </span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -749,7 +906,9 @@ export function TenantsPage({
                       />
                     </div>
                     {errors.email ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.email}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.email}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -762,7 +921,9 @@ export function TenantsPage({
                         <CreditCard size={14} className="text-slate-500" />
                         <span>เลขบัตร ปชช. 4 ตัวท้าย</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">เช่น 1234</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        เช่น 1234
+                      </span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -776,7 +937,9 @@ export function TenantsPage({
                         maxLength={4}
                         name="idCardLast4"
                         onChange={(event) => {
-                          event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "").slice(0, 4);
+                          event.currentTarget.value = event.currentTarget.value
+                            .replace(/\D/g, "")
+                            .slice(0, 4);
                           clear("idCardLast4");
                         }}
                         pattern="[0-9]{4}"
@@ -785,7 +948,9 @@ export function TenantsPage({
                       />
                     </div>
                     {errors.idCardLast4 ? (
-                      <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.idCardLast4}</p>
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.idCardLast4}
+                      </p>
                     ) : null}
                   </div>
 
@@ -793,9 +958,15 @@ export function TenantsPage({
                     <div>
                       <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                         <span>สถานะการพักอาศัย</span>
-                        <span className="text-[11px] text-slate-400 font-normal">Status</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          Status
+                        </span>
                       </label>
-                      <input name="status" type="hidden" value={editingStatus} />
+                      <input
+                        name="status"
+                        type="hidden"
+                        value={editingStatus}
+                      />
                       <SelectControl
                         ariaLabel="สถานะการพักอาศัย"
                         onValueChange={(val) => setEditingStatus(val)}
@@ -818,7 +989,9 @@ export function TenantsPage({
                         <CalendarDays size={14} className="text-slate-500" />
                         <span>วันเกิด</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">ใช้ยืนยันตัวตน</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        ใช้ยืนยันตัวตน
+                      </span>
                     </label>
                     <DateTimeControl
                       ariaLabel="วันเกิดผู้เช่า"
@@ -830,7 +1003,11 @@ export function TenantsPage({
                       onValueChange={() => clear("birthDate")}
                       placeholder="เลือกวันเกิด"
                     />
-                    {errors.birthDate ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.birthDate}</p> : null}
+                    {errors.birthDate ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.birthDate}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -839,7 +1016,9 @@ export function TenantsPage({
                         <Hash size={14} className="text-slate-500" />
                         <span>ทะเบียนรถ</span>
                       </span>
-                      <span className="text-[11px] text-slate-400 font-normal">สำหรับลานจอดรถ</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        สำหรับลานจอดรถ
+                      </span>
                     </label>
                     <input
                       aria-invalid={Boolean(errors.vehiclePlate)}
@@ -850,7 +1029,11 @@ export function TenantsPage({
                       onChange={() => clear("vehiclePlate")}
                       placeholder="เช่น กข 1234 กรุงเทพมหานคร"
                     />
-                    {errors.vehiclePlate ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.vehiclePlate}</p> : null}
+                    {errors.vehiclePlate ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.vehiclePlate}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -861,7 +1044,9 @@ export function TenantsPage({
                       <MapPin size={14} className="text-slate-500" />
                       <span>ที่อยู่ติดต่อ / ตามทะเบียนบ้าน</span>
                     </span>
-                    <span className="text-[11px] text-slate-400 font-normal">สำหรับพิมพ์ลงสัญญา</span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      สำหรับพิมพ์ลงสัญญา
+                    </span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -877,17 +1062,25 @@ export function TenantsPage({
                     />
                   </div>
                   {errors.address ? (
-                    <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.address}</p>
+                    <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                      {errors.address}
+                    </p>
                   ) : null}
                 </div>
 
                 {/* Emergency contact */}
                 <fieldset className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5">
-                  <legend className="px-1.5 text-xs font-bold text-slate-800">ผู้ติดต่อฉุกเฉิน</legend>
-                  <p className="mb-3 text-[11px] text-slate-500">หากเริ่มกรอก กรุณากรอกชื่อ ความสัมพันธ์ และเบอร์โทรให้ครบ</p>
+                  <legend className="px-1.5 text-xs font-bold text-slate-800">
+                    ผู้ติดต่อฉุกเฉิน
+                  </legend>
+                  <p className="mb-3 text-[11px] text-slate-500">
+                    หากเริ่มกรอก กรุณากรอกชื่อ ความสัมพันธ์ และเบอร์โทรให้ครบ
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">ชื่อผู้ติดต่อ</label>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">
+                        ชื่อผู้ติดต่อ
+                      </label>
                       <input
                         aria-invalid={Boolean(errors.emergencyContactName)}
                         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
@@ -897,39 +1090,63 @@ export function TenantsPage({
                         onChange={() => clear("emergencyContactName")}
                         placeholder="ชื่อ-นามสกุล"
                       />
-                      {errors.emergencyContactName ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactName}</p> : null}
+                      {errors.emergencyContactName ? (
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                          {errors.emergencyContactName}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">ความสัมพันธ์</label>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">
+                        ความสัมพันธ์
+                      </label>
                       <input
-                        aria-invalid={Boolean(errors.emergencyContactRelationship)}
+                        aria-invalid={Boolean(
+                          errors.emergencyContactRelationship,
+                        )}
                         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
-                        defaultValue={editing?.emergency_contact_relationship ?? ""}
+                        defaultValue={
+                          editing?.emergency_contact_relationship ?? ""
+                        }
                         maxLength={80}
                         name="emergencyContactRelationship"
                         onChange={() => clear("emergencyContactRelationship")}
                         placeholder="เช่น มารดา พี่น้อง"
                       />
-                      {errors.emergencyContactRelationship ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactRelationship}</p> : null}
+                      {errors.emergencyContactRelationship ? (
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                          {errors.emergencyContactRelationship}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">เบอร์โทร</label>
+                      <label className="mb-1.5 block text-[11px] font-bold text-slate-700">
+                        เบอร์โทร
+                      </label>
                       <input
                         aria-invalid={Boolean(errors.emergencyContactPhone)}
                         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
-                        defaultValue={phoneDigits(editing?.emergency_contact_phone)}
+                        defaultValue={phoneDigits(
+                          editing?.emergency_contact_phone,
+                        )}
                         inputMode="numeric"
                         maxLength={15}
                         name="emergencyContactPhone"
                         onChange={(event) => {
-                          event.currentTarget.value = phoneDigits(event.currentTarget.value);
+                          event.currentTarget.value = phoneDigits(
+                            event.currentTarget.value,
+                          );
                           clear("emergencyContactPhone");
                         }}
                         pattern="[0-9]{9,15}"
                         placeholder="0812345678"
                         type="tel"
                       />
-                      {errors.emergencyContactPhone ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.emergencyContactPhone}</p> : null}
+                      {errors.emergencyContactPhone ? (
+                        <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                          {errors.emergencyContactPhone}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </fieldset>
@@ -937,8 +1154,13 @@ export function TenantsPage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><MessageCircle size={14} className="text-slate-500" /> LINE ID</span>
-                      <span className="text-[11px] text-slate-400 font-normal">สำหรับแจ้งบิล</span>
+                      <span className="flex items-center gap-1.5">
+                        <MessageCircle size={14} className="text-slate-500" />{" "}
+                        LINE ID
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        สำหรับแจ้งบิล
+                      </span>
                     </label>
                     <input
                       aria-invalid={Boolean(errors.lineId)}
@@ -949,12 +1171,20 @@ export function TenantsPage({
                       onChange={() => clear("lineId")}
                       placeholder="เช่น somchai123"
                     />
-                    {errors.lineId ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.lineId}</p> : null}
+                    {errors.lineId ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.lineId}
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><Pencil size={14} className="text-slate-500" /> หมายเหตุ</span>
-                      <span className="text-[11px] text-slate-400 font-normal">สัตว์เลี้ยงหรือข้อจำกัดเฉพาะ</span>
+                      <span className="flex items-center gap-1.5">
+                        <Pencil size={14} className="text-slate-500" /> หมายเหตุ
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        สัตว์เลี้ยงหรือข้อจำกัดเฉพาะ
+                      </span>
                     </label>
                     <textarea
                       aria-invalid={Boolean(errors.notes)}
@@ -965,7 +1195,11 @@ export function TenantsPage({
                       onChange={() => clear("notes")}
                       placeholder="ระบุข้อมูลที่ควรรู้เพิ่มเติม"
                     />
-                    {errors.notes ? <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.notes}</p> : null}
+                    {errors.notes ? (
+                      <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                        {errors.notes}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>

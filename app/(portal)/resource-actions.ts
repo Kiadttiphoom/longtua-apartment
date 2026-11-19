@@ -9,58 +9,142 @@ import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizeUsername } from "@/lib/auth/validation.mjs";
-import { hasOrganizationPermission, type MenuActionCode } from "@/lib/auth/organization-access";
-import { getBangkokPeriodMonth, getBangkokToday, getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
-import { calculateInvoiceBreakdown, invoiceMissingMessage } from "@/lib/portal/invoice-calculation.mjs";
+import {
+  hasOrganizationPermission,
+  type MenuActionCode,
+} from "@/lib/auth/organization-access";
+import {
+  getBangkokPeriodMonth,
+  getBangkokToday,
+  getRelatedPeriodMonth,
+} from "@/lib/portal/meter-reading.mjs";
+import {
+  calculateInvoiceBreakdown,
+  invoiceMissingMessage,
+} from "@/lib/portal/invoice-calculation.mjs";
 import { getPlanByQuota } from "@/lib/portal/plans";
 import { validateLeaseContent } from "@/lib/contracts/lease-content.mjs";
 import { validateFloor, validateTenant } from "@/lib/portal/validation.mjs";
 import { loadLeaseSnapshot } from "@/lib/contracts/server";
 import type { LeaseContent, LeaseDocumentVersion } from "@/lib/contracts/types";
 
-export type DashboardActionResult = { ok: boolean; message: string; requestId?: string };
+export type DashboardActionResult = {
+  ok: boolean;
+  message: string;
+  requestId?: string;
+};
 
-export async function saveLeaseDocumentAction(formData: FormData): Promise<DashboardActionResult & { version?: LeaseDocumentVersion; templateId?: string }> {
+export async function saveLeaseDocumentAction(
+  formData: FormData,
+): Promise<
+  DashboardActionResult & {
+    version?: LeaseDocumentVersion;
+    templateId?: string;
+  }
+> {
   const context = await actionContext(formData, "customer_leases", "update");
   if (!context.ok) return context.error;
   const leaseId = text(formData, "leaseId");
   const parentId = text(formData, "parentId") || null;
   const target = text(formData, "target");
-  if (!UUID_PATTERN.test(leaseId) || (parentId && !UUID_PATTERN.test(parentId)) || !["lease", "template"].includes(target)) return fail("ข้อมูลสัญญาไม่ถูกต้อง");
+  if (
+    !UUID_PATTERN.test(leaseId) ||
+    (parentId && !UUID_PATTERN.test(parentId)) ||
+    !["lease", "template"].includes(target)
+  )
+    return fail("ข้อมูลสัญญาไม่ถูกต้อง");
   const raw = text(formData, "content");
   if (raw.length > 150000) return fail("ข้อความสัญญายาวเกินกำหนด");
   let content: LeaseContent;
-  try { content = JSON.parse(raw); } catch { return fail("รูปแบบข้อความสัญญาไม่ถูกต้อง"); }
+  try {
+    content = JSON.parse(raw);
+  } catch {
+    return fail("รูปแบบข้อความสัญญาไม่ถูกต้อง");
+  }
   const validationError = validateLeaseContent(content);
   if (validationError) return fail(validationError);
   // Whitelist fields. No user-supplied financial snapshot or HTML is accepted.
-  content = { version: 1, title: content.title.trim(), clauses: content.clauses.map(c => ({ id: c.id, title: c.title.trim(), body: c.body.trim() })) };
+  content = {
+    version: 1,
+    title: content.title.trim(),
+    clauses: content.clauses.map((c) => ({
+      id: c.id,
+      title: c.title.trim(),
+      body: c.body.trim(),
+    })),
+  };
   if (target === "template") {
-    const templateContext = await actionContext(formData, "customer_settings", "update");
+    const templateContext = await actionContext(
+      formData,
+      "customer_settings",
+      "update",
+    );
     if (!templateContext.ok) return templateContext.error;
   }
   try {
-    const { lease, snapshot } = await loadLeaseSnapshot(context.supabase, context.organizationId, leaseId);
+    const { lease, snapshot } = await loadLeaseSnapshot(
+      context.supabase,
+      context.organizationId,
+      leaseId,
+    );
     if (target === "template") {
-      const { data, error } = await context.supabase.from("property_lease_templates").insert({
-        organization_id: context.organizationId, property_id: lease.property_id, parent_id: parentId, content, created_by: context.userId,
-      }).select("id").single();
-      if (error) return fail(error.code === "23505" ? "แม่แบบถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดสัญญาใหม่ก่อนบันทึก" : "บันทึกแม่แบบไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration");
+      const { data, error } = await context.supabase
+        .from("property_lease_templates")
+        .insert({
+          organization_id: context.organizationId,
+          property_id: lease.property_id,
+          parent_id: parentId,
+          content,
+          created_by: context.userId,
+        })
+        .select("id")
+        .single();
+      if (error)
+        return fail(
+          error.code === "23505"
+            ? "แม่แบบถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดสัญญาใหม่ก่อนบันทึก"
+            : "บันทึกแม่แบบไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration",
+        );
       revalidatePath("/leases");
-      return { ok: true, message: "บันทึกแม่แบบสำหรับสัญญาใหม่ของหอพักนี้แล้ว", templateId: data.id };
+      return {
+        ok: true,
+        message: "บันทึกแม่แบบสำหรับสัญญาใหม่ของหอพักนี้แล้ว",
+        templateId: data.id,
+      };
     }
-    const { data, error } = await context.supabase.from("lease_document_versions").insert({
-      organization_id: context.organizationId, lease_id: leaseId, parent_id: parentId, content, snapshot, created_by: context.userId,
-    }).select("id,created_at,content,snapshot").single();
-    if (error) return fail(error.code === "23505" ? "สัญญาถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดใหม่เพื่อโหลดฉบับล่าสุด ข้อความในช่องแก้ไขยังอยู่" : "บันทึกข้อความไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration");
+    const { data, error } = await context.supabase
+      .from("lease_document_versions")
+      .insert({
+        organization_id: context.organizationId,
+        lease_id: leaseId,
+        parent_id: parentId,
+        content,
+        snapshot,
+        created_by: context.userId,
+      })
+      .select("id,created_at,content,snapshot")
+      .single();
+    if (error)
+      return fail(
+        error.code === "23505"
+          ? "สัญญาถูกแก้จากหน้าต่างอื่นแล้ว กรุณาปิดและเปิดใหม่เพื่อโหลดฉบับล่าสุด ข้อความในช่องแก้ไขยังอยู่"
+          : "บันทึกข้อความไม่สำเร็จ กรุณาตรวจสิทธิ์และ migration",
+      );
     revalidatePath("/leases");
-    return { ok: true, message: "บันทึกฉบับใหม่แล้ว สามารถพิมพ์หรือเปิดประวัติฉบับเดิมได้", version: data as LeaseDocumentVersion };
+    return {
+      ok: true,
+      message: "บันทึกฉบับใหม่แล้ว สามารถพิมพ์หรือเปิดประวัติฉบับเดิมได้",
+      version: data as LeaseDocumentVersion,
+    };
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง");
+    return fail(
+      error instanceof Error ? error.message : "เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง",
+    );
   }
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -75,19 +159,38 @@ function fail(message: string): DashboardActionResult {
   return { ok: false, message };
 }
 
-function logFailure(requestId: string, stage: string, error: unknown, organizationId?: string) {
-  scheduleMonitorEvent(stage, "error", requestId, error, undefined, organizationId);
-  const details = error && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown; details?: unknown }
-    : {};
-
-  console.error(`[dashboard] ${JSON.stringify({
-    requestId,
+function logFailure(
+  requestId: string,
+  stage: string,
+  error: unknown,
+  organizationId?: string,
+) {
+  scheduleMonitorEvent(
     stage,
-    code: typeof details.code === "string" ? details.code : undefined,
-    message: typeof details.message === "string" ? details.message : "Unexpected dashboard error",
-    details: typeof details.details === "string" ? details.details : undefined,
-  })}`);
+    "error",
+    requestId,
+    error,
+    undefined,
+    organizationId,
+  );
+  const details =
+    error && typeof error === "object"
+      ? (error as { code?: unknown; message?: unknown; details?: unknown })
+      : {};
+
+  console.error(
+    `[dashboard] ${JSON.stringify({
+      requestId,
+      stage,
+      code: typeof details.code === "string" ? details.code : undefined,
+      message:
+        typeof details.message === "string"
+          ? details.message
+          : "Unexpected dashboard error",
+      details:
+        typeof details.details === "string" ? details.details : undefined,
+    })}`,
+  );
 }
 
 type ActionContext =
@@ -104,23 +207,52 @@ type ActionContext =
       };
     };
 
-async function actionContext(formData: FormData, menuCode: string, actionCode: MenuActionCode): Promise<ActionContext> {
+async function actionContext(
+  formData: FormData,
+  menuCode: string,
+  actionCode: MenuActionCode,
+): Promise<ActionContext> {
   const organizationId = text(formData, "organizationId");
-  if (!UUID_PATTERN.test(organizationId)) return { ok: false, error: fail("ไม่พบกิจการที่ต้องการทำรายการ") };
+  if (!UUID_PATTERN.test(organizationId))
+    return { ok: false, error: fail("ไม่พบกิจการที่ต้องการทำรายการ") };
 
   const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.getClaims();
   const userId = authData?.claims?.sub;
-  if (authError || !userId) return { ok: false, error: fail("กรุณาเข้าสู่ระบบอีกครั้ง") };
+  if (authError || !userId)
+    return { ok: false, error: fail("กรุณาเข้าสู่ระบบอีกครั้ง") };
 
   if (await isSystemAdmin(userId)) {
-    const selectedOrganizationId = (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value;
-    if (selectedOrganizationId !== organizationId) return { ok: false, error: fail("กิจการที่เลือกเปลี่ยนไป กรุณาเปิดหน้าจัดการกิจการใหม่อีกครั้ง") };
+    const selectedOrganizationId = (await cookies()).get(
+      IMPERSONATE_ORGANIZATION_COOKIE,
+    )?.value;
+    if (selectedOrganizationId !== organizationId)
+      return {
+        ok: false,
+        error: fail("กิจการที่เลือกเปลี่ยนไป กรุณาเปิดหน้าจัดการกิจการใหม่อีกครั้ง"),
+      };
     // Keep the authenticated client so database policies and audit logs retain
     // the real administrator identity. Database helpers authorize active admins.
-    const { data: organization, error: organizationError } = await supabase.from("organizations").select("id").eq("id", organizationId).maybeSingle();
-    const { data: subscription, error: subscriptionError } = await supabase.from("subscriptions").select("status, max_properties, max_rooms").eq("organization_id", organizationId).maybeSingle();
-    if (organizationError || subscriptionError || !organization || !subscription) return { ok: false, error: fail("เปิดจัดการกิจการไม่สำเร็จ กรุณาตรวจสิทธิ์ Super Admin ในฐานข้อมูล") };
+    const { data: organization, error: organizationError } = await supabase
+      .from("organizations")
+      .select("id")
+      .eq("id", organizationId)
+      .maybeSingle();
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from("subscriptions")
+      .select("status, max_properties, max_rooms")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (
+      organizationError ||
+      subscriptionError ||
+      !organization ||
+      !subscription
+    )
+      return {
+        ok: false,
+        error: fail("เปิดจัดการกิจการไม่สำเร็จ กรุณาตรวจสิทธิ์ Super Admin ในฐานข้อมูล"),
+      };
     return { ok: true, supabase, organizationId, userId, subscription };
   }
 
@@ -139,20 +271,34 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
       .maybeSingle(),
   ]);
 
-  if (!membership || !subscription) return { ok: false, error: fail("คุณไม่มีสิทธิ์เข้าถึงกิจการนี้") };
+  if (!membership || !subscription)
+    return { ok: false, error: fail("คุณไม่มีสิทธิ์เข้าถึงกิจการนี้") };
 
-  const allowed = await hasOrganizationPermission(userId, organizationId, menuCode, actionCode);
-  if (allowed === false) return { ok: false, error: fail("Role ของคุณไม่มี Permission สำหรับรายการนี้") };
-  if (allowed === null && !["owner", "manager", "accounting"].includes(membership.role_code)) {
+  const allowed = await hasOrganizationPermission(
+    userId,
+    organizationId,
+    menuCode,
+    actionCode,
+  );
+  if (allowed === false)
+    return { ok: false, error: fail("Role ของคุณไม่มี Permission สำหรับรายการนี้") };
+  if (
+    allowed === null &&
+    !["owner", "manager", "accounting"].includes(membership.role_code)
+  ) {
     return { ok: false, error: fail("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล") };
   }
 
   const accessUntil = subscription.access_until ?? subscription.grace_ends_at;
-  const writable = subscription.status === "trialing"
-    || subscription.status === "active"
-    || (subscription.status === "past_due" && accessUntil && new Date(accessUntil) > new Date());
+  const writable =
+    subscription.status === "trialing" ||
+    subscription.status === "active" ||
+    (subscription.status === "past_due" &&
+      accessUntil &&
+      new Date(accessUntil) > new Date());
 
-  if (!writable) return { ok: false, error: fail("แพ็กเกจหมดอายุแล้ว ขณะนี้เปิดดูข้อมูลได้อย่างเดียว") };
+  if (!writable)
+    return { ok: false, error: fail("แพ็กเกจหมดอายุแล้ว ขณะนี้เปิดดูข้อมูลได้อย่างเดียว") };
   return {
     ok: true,
     supabase,
@@ -166,16 +312,32 @@ async function actionContext(formData: FormData, menuCode: string, actionCode: M
   };
 }
 
-function success(message: string, organizationId?: string): DashboardActionResult {
-  scheduleMonitorEvent("portal.operation", "success", undefined, undefined, message, organizationId);
+function success(
+  message: string,
+  organizationId?: string,
+): DashboardActionResult {
+  scheduleMonitorEvent(
+    "portal.operation",
+    "success",
+    undefined,
+    undefined,
+    message,
+    organizationId,
+  );
   revalidatePath("/dashboard");
   revalidatePath("/", "layout");
   return { ok: true, message };
 }
 
-export async function createPropertyAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createPropertyAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData, "customer_properties", "create");
+  const context = await actionContext(
+    formData,
+    "customer_properties",
+    "create",
+  );
   if (!context.ok) return context.error;
 
   const maxProperties = context.subscription.max_properties;
@@ -187,31 +349,47 @@ export async function createPropertyAction(formData: FormData): Promise<Dashboar
 
     if (!countError && typeof count === "number" && count >= maxProperties) {
       return fail(
-        `แพ็กเกจของคุณจำกัดที่ ${maxProperties} หอพัก (ปัจจุบันมีแล้ว ${count} หอพัก) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มหอพักใหม่`
+        `แพ็กเกจของคุณจำกัดที่ ${maxProperties} หอพัก (ปัจจุบันมีแล้ว ${count} หอพัก) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มหอพักใหม่`,
       );
     }
   }
 
   const name = text(formData, "name");
-  if (name.length < 1 || name.length > 160) return fail("กรุณากรอกชื่อหอพักไม่เกิน 160 ตัวอักษร");
+  if (name.length < 1 || name.length > 160)
+    return fail("กรุณากรอกชื่อหอพักไม่เกิน 160 ตัวอักษร");
 
-  const { error } = await context.supabase.rpc("create_property_with_defaults", {
-    target_organization_id: context.organizationId,
-    property_name: name,
-    property_address: text(formData, "address"),
-    property_phone: text(formData, "phone"),
-  });
+  const { error } = await context.supabase.rpc(
+    "create_property_with_defaults",
+    {
+      target_organization_id: context.organizationId,
+      property_name: name,
+      property_address: text(formData, "address"),
+      property_phone: text(formData, "phone"),
+    },
+  );
   if (error) {
     logFailure(requestId, "property.create", error, context.organizationId);
-    if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Property limit reached")) {
-      return { ...fail("คุณสร้างหอพักครบตามจำนวนที่แพ็กเกจกำหนดแล้ว กรุณาอัปเกรดแพ็กเกจ"), requestId };
+    if (
+      typeof error === "object" &&
+      error &&
+      "message" in error &&
+      String((error as { message: unknown }).message).includes(
+        "Property limit reached",
+      )
+    ) {
+      return {
+        ...fail("คุณสร้างหอพักครบตามจำนวนที่แพ็กเกจกำหนดแล้ว กรุณาอัปเกรดแพ็กเกจ"),
+        requestId,
+      };
     }
     return { ...fail("เพิ่มหอพักไม่สำเร็จ"), requestId };
   }
   return success("เพิ่มหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function createRoomAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createRoomAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_rooms", "create");
   if (!context.ok) return context.error;
@@ -220,7 +398,8 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
   const baseRent = numberValue(formData, "baseRent");
   const floor = text(formData, "floor");
   if (!UUID_PATTERN.test(propertyId)) return fail("กรุณาเลือกหอพัก");
-  if (!Number.isFinite(baseRent) || baseRent < 0) return fail("ค่าเช่าต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป");
+  if (!Number.isFinite(baseRent) || baseRent < 0)
+    return fail("ค่าเช่าต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป");
   const floorError = validateFloor(floor);
   if (floorError) return fail(floorError);
 
@@ -230,10 +409,21 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
   } catch {
     roomNumbers = [text(formData, "roomNumber")];
   }
-  if (!Array.isArray(roomNumbers) || roomNumbers.length < 1 || roomNumbers.length > 200) {
+  if (
+    !Array.isArray(roomNumbers) ||
+    roomNumbers.length < 1 ||
+    roomNumbers.length > 200
+  ) {
     return fail("กรุณาระบุห้องตั้งแต่ 1–200 ห้องต่อครั้ง");
   }
-  if (roomNumbers.some((roomNumber) => typeof roomNumber !== "string" || !roomNumber.trim() || roomNumber.trim().length > 40)) {
+  if (
+    roomNumbers.some(
+      (roomNumber) =>
+        typeof roomNumber !== "string" ||
+        !roomNumber.trim() ||
+        roomNumber.trim().length > 40,
+    )
+  ) {
     return fail("หมายเลขห้องแต่ละห้องต้องมีความยาว 1–40 ตัวอักษร");
   }
 
@@ -248,25 +438,43 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
       const requestedRooms = (roomNumbers as string[]).map((r) => r.trim());
       if (count + requestedRooms.length > maxRooms) {
         return fail(
-          `แพ็กเกจของคุณจำกัดที่ ${maxRooms} ห้อง ปัจจุบันมีแล้ว ${count} ห้อง (ต้องการเพิ่ม ${requestedRooms.length} ห้อง รวมเป็น ${count + requestedRooms.length} ห้อง) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มห้อง`
+          `แพ็กเกจของคุณจำกัดที่ ${maxRooms} ห้อง ปัจจุบันมีแล้ว ${count} ห้อง (ต้องการเพิ่ม ${requestedRooms.length} ห้อง รวมเป็น ${count + requestedRooms.length} ห้อง) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มห้อง`,
         );
       }
     }
   }
 
-  const { data, error } = await context.supabase.rpc("create_rooms_with_meters", {
-    target_organization_id: context.organizationId,
-    target_property_id: propertyId,
-    requested_room_numbers: roomNumbers.map((roomNumber) => (roomNumber as string).trim()),
-    room_floor: floor || null,
-    room_base_rent: baseRent,
-  });
+  const { data, error } = await context.supabase.rpc(
+    "create_rooms_with_meters",
+    {
+      target_organization_id: context.organizationId,
+      target_property_id: propertyId,
+      requested_room_numbers: roomNumbers.map((roomNumber) =>
+        (roomNumber as string).trim(),
+      ),
+      room_floor: floor || null,
+      room_base_rent: baseRent,
+    },
+  );
   if (error || !data || typeof data !== "object" || Array.isArray(data)) {
     logFailure(requestId, "room.create_bulk", error, context.organizationId);
-    if (typeof error === "object" && error && "message" in error && String((error as { message: unknown }).message).includes("Room limit reached")) {
-      return { ...fail("จำนวนห้องเกินขีดจำกัดของแพ็กเกจ กรุณาอัปเกรดแพ็กเกจ"), requestId };
+    if (
+      typeof error === "object" &&
+      error &&
+      "message" in error &&
+      String((error as { message: unknown }).message).includes(
+        "Room limit reached",
+      )
+    ) {
+      return {
+        ...fail("จำนวนห้องเกินขีดจำกัดของแพ็กเกจ กรุณาอัปเกรดแพ็กเกจ"),
+        requestId,
+      };
     }
-    return { ...fail("เพิ่มห้องไม่สำเร็จ กรุณาตรวจหมายเลขห้องและลองอีกครั้ง"), requestId };
+    return {
+      ...fail("เพิ่มห้องไม่สำเร็จ กรุณาตรวจหมายเลขห้องและลองอีกครั้ง"),
+      requestId,
+    };
   }
 
   const result = data as { created_count?: unknown; skipped_count?: unknown };
@@ -274,11 +482,17 @@ export async function createRoomAction(formData: FormData): Promise<DashboardAct
   const skippedCount = Number(result.skipped_count ?? 0);
   if (createdCount < 1) return fail("ไม่มีห้องใหม่ให้เพิ่ม หมายเลขห้องอาจมีอยู่แล้วทั้งหมด");
 
-  const skippedMessage = skippedCount > 0 ? ` ข้ามหมายเลขที่ซ้ำ ${skippedCount} ห้อง` : "";
-  return success(`เพิ่มห้องพัก ${createdCount} ห้องเรียบร้อยแล้ว${skippedMessage}`, context.organizationId);
+  const skippedMessage =
+    skippedCount > 0 ? ` ข้ามหมายเลขที่ซ้ำ ${skippedCount} ห้อง` : "";
+  return success(
+    `เพิ่มห้องพัก ${createdCount} ห้องเรียบร้อยแล้ว${skippedMessage}`,
+    context.organizationId,
+  );
 }
 
-export async function createTenantAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createTenantAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_tenants", "create");
   if (!context.ok) return context.error;
@@ -287,49 +501,67 @@ export async function createTenantAction(formData: FormData): Promise<DashboardA
   const idCardLast4 = text(formData, "idCardLast4");
   const birthDate = text(formData, "birthDate");
   const emergencyContactName = text(formData, "emergencyContactName");
-  const emergencyContactRelationship = text(formData, "emergencyContactRelationship");
+  const emergencyContactRelationship = text(
+    formData,
+    "emergencyContactRelationship",
+  );
   const emergencyContactPhone = text(formData, "emergencyContactPhone");
-  const validationError = Object.values(validateTenant({
-    fullName,
-    phone: text(formData, "phone"),
-    email: text(formData, "email"),
-    idCardLast4,
-    address: text(formData, "address"),
-    birthDate,
-    emergencyContactName,
-    emergencyContactRelationship,
-    emergencyContactPhone,
-    vehiclePlate: text(formData, "vehiclePlate"),
-    lineId: text(formData, "lineId"),
-    notes: text(formData, "notes"),
-  }))[0];
+  const validationError = Object.values(
+    validateTenant({
+      fullName,
+      phone: text(formData, "phone"),
+      email: text(formData, "email"),
+      idCardLast4,
+      address: text(formData, "address"),
+      birthDate,
+      emergencyContactName,
+      emergencyContactRelationship,
+      emergencyContactPhone,
+      vehiclePlate: text(formData, "vehiclePlate"),
+      lineId: text(formData, "lineId"),
+      notes: text(formData, "notes"),
+    }),
+  )[0];
   if (validationError) return fail(String(validationError));
 
-  const { data, error } = await context.supabase.from("tenants").insert({
-    organization_id: context.organizationId,
-    full_name: fullName,
-    phone: text(formData, "phone") || null,
-    email: text(formData, "email") || null,
-    id_card_last4: idCardLast4 || null,
-    address: text(formData, "address") || null,
-    birth_date: birthDate || null,
-    emergency_contact_name: emergencyContactName || null,
-    emergency_contact_relationship: emergencyContactRelationship || null,
-    emergency_contact_phone: emergencyContactPhone || null,
-    vehicle_plate: text(formData, "vehiclePlate") || null,
-    line_id: text(formData, "lineId") || null,
-    notes: text(formData, "notes") || null,
-  }).select("id").single();
+  const { data, error } = await context.supabase
+    .from("tenants")
+    .insert({
+      organization_id: context.organizationId,
+      full_name: fullName,
+      phone: text(formData, "phone") || null,
+      email: text(formData, "email") || null,
+      id_card_last4: idCardLast4 || null,
+      address: text(formData, "address") || null,
+      birth_date: birthDate || null,
+      emergency_contact_name: emergencyContactName || null,
+      emergency_contact_relationship: emergencyContactRelationship || null,
+      emergency_contact_phone: emergencyContactPhone || null,
+      vehicle_plate: text(formData, "vehiclePlate") || null,
+      line_id: text(formData, "lineId") || null,
+      notes: text(formData, "notes") || null,
+    })
+    .select("id")
+    .single();
 
   if (error || !data) {
     logFailure(requestId, "tenant.create", error, context.organizationId);
     return { ...fail("เพิ่มผู้เช่าไม่สำเร็จ"), requestId };
   }
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "tenant.created", entity_type: "tenant", entity_id: data.id });
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "tenant.created",
+      entity_type: "tenant",
+      entity_id: data.id,
+    });
   return success("เพิ่มผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function createLeaseAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createLeaseAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_leases", "create");
   if (!context.ok) return context.error;
@@ -342,37 +574,61 @@ export async function createLeaseAction(formData: FormData): Promise<DashboardAc
   const startDate = text(formData, "startDate");
   const endDate = text(formData, "endDate");
   const occupantCount = numberValue(formData, "occupantCount");
-  if (![propertyId, roomId, tenantId].every((id) => UUID_PATTERN.test(id))) return fail("กรุณาเลือกหอ ห้อง และผู้เช่าให้ครบ");
+  if (![propertyId, roomId, tenantId].every((id) => UUID_PATTERN.test(id)))
+    return fail("กรุณาเลือกหอ ห้อง และผู้เช่าให้ครบ");
   if (!leaseNumber || !startDate) return fail("กรุณากรอกเลขที่สัญญาและวันเริ่มสัญญา");
-  if (!Number.isFinite(rentAmount) || rentAmount < 0) return fail("ค่าเช่าไม่ถูกต้อง");
-  if (!Number.isInteger(occupantCount) || occupantCount < 1 || occupantCount > 50) return fail("จำนวนผู้พักต้องอยู่ระหว่าง 1–50 คน");
+  if (!Number.isFinite(rentAmount) || rentAmount < 0)
+    return fail("ค่าเช่าไม่ถูกต้อง");
+  if (
+    !Number.isInteger(occupantCount) ||
+    occupantCount < 1 ||
+    occupantCount > 50
+  )
+    return fail("จำนวนผู้พักต้องอยู่ระหว่าง 1–50 คน");
 
-  const { data, error } = await context.supabase.from("leases").insert({
-    organization_id: context.organizationId,
-    property_id: propertyId,
-    room_id: roomId,
-    primary_tenant_id: tenantId,
-    lease_number: leaseNumber,
-    start_date: startDate,
-    end_date: endDate || null,
-    rent_amount: rentAmount,
-    deposit_amount: numberValue(formData, "depositAmount") || 0,
-    advance_amount: numberValue(formData, "advanceAmount") || 0,
-    occupant_count: occupantCount,
-    terms: text(formData, "terms") || null,
-    status: "active",
-  }).select("id").single();
+  const { data, error } = await context.supabase
+    .from("leases")
+    .insert({
+      organization_id: context.organizationId,
+      property_id: propertyId,
+      room_id: roomId,
+      primary_tenant_id: tenantId,
+      lease_number: leaseNumber,
+      start_date: startDate,
+      end_date: endDate || null,
+      rent_amount: rentAmount,
+      deposit_amount: numberValue(formData, "depositAmount") || 0,
+      advance_amount: numberValue(formData, "advanceAmount") || 0,
+      occupant_count: occupantCount,
+      terms: text(formData, "terms") || null,
+      status: "active",
+    })
+    .select("id")
+    .single();
 
   if (error || !data) {
     logFailure(requestId, "lease.create", error, context.organizationId);
     return { ...fail("สร้างสัญญาไม่สำเร็จ ห้องนี้อาจมีสัญญาที่ใช้งานอยู่แล้ว"), requestId };
   }
-  await context.supabase.from("rooms").update({ status: "occupied" }).eq("id", roomId).eq("organization_id", context.organizationId);
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "lease.created", entity_type: "lease", entity_id: data.id });
+  await context.supabase
+    .from("rooms")
+    .update({ status: "occupied" })
+    .eq("id", roomId)
+    .eq("organization_id", context.organizationId);
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "lease.created",
+      entity_type: "lease",
+      entity_id: data.id,
+    });
   return success("สร้างสัญญาเช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function createInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createInvoiceAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_invoices", "create");
   if (!context.ok) return context.error;
@@ -384,7 +640,8 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
   if (!UUID_PATTERN.test(leaseId)) return fail("กรุณาเลือกสัญญาและห้องพัก");
   if (!/^\d{4}-\d{2}$/.test(periodMonth)) return fail("กรุณาเลือกรอบเดือน");
   const today = new Date().toISOString().slice(0, 10);
-  if (!invoiceNumber || !/^\d{4}-\d{2}-\d{2}$/.test(dueAt) || dueAt < today) return fail("กรุณากรอกเลขที่ใบแจ้งหนี้และวันครบกำหนดตั้งแต่วันนี้เป็นต้นไป");
+  if (!invoiceNumber || !/^\d{4}-\d{2}-\d{2}$/.test(dueAt) || dueAt < today)
+    return fail("กรุณากรอกเลขที่ใบแจ้งหนี้และวันครบกำหนดตั้งแต่วันนี้เป็นต้นไป");
 
   const { data: lease, error: leaseError } = await context.supabase
     .from("leases")
@@ -398,43 +655,89 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
   const monthDate = `${periodMonth}-01`;
   const { data: cycle, error: cycleError } = await context.supabase
     .from("billing_cycles")
-    .upsert({ organization_id: context.organizationId, property_id: lease.property_id, period_month: monthDate }, { onConflict: "property_id,period_month" })
+    .upsert(
+      {
+        organization_id: context.organizationId,
+        property_id: lease.property_id,
+        period_month: monthDate,
+      },
+      { onConflict: "property_id,period_month" },
+    )
     .select("id")
     .single();
   if (cycleError || !cycle) {
-    logFailure(requestId, "invoice.billing_cycle", cycleError, context.organizationId);
+    logFailure(
+      requestId,
+      "invoice.billing_cycle",
+      cycleError,
+      context.organizationId,
+    );
     return { ...fail("สร้างรอบบิลไม่สำเร็จ"), requestId };
   }
 
-  const { data: existingInvoice, error: existingInvoiceError } = await context.supabase
-    .from("rent_invoices")
-    .select("id")
-    .eq("organization_id", context.organizationId)
-    .eq("lease_id", lease.id)
-    .eq("billing_cycle_id", cycle.id)
-    .neq("status", "void")
-    .maybeSingle();
+  const { data: existingInvoice, error: existingInvoiceError } =
+    await context.supabase
+      .from("rent_invoices")
+      .select("id")
+      .eq("organization_id", context.organizationId)
+      .eq("lease_id", lease.id)
+      .eq("billing_cycle_id", cycle.id)
+      .neq("status", "void")
+      .maybeSingle();
   if (existingInvoiceError) {
-    logFailure(requestId, "invoice.duplicate_check", existingInvoiceError, context.organizationId);
+    logFailure(
+      requestId,
+      "invoice.duplicate_check",
+      existingInvoiceError,
+      context.organizationId,
+    );
     return { ...fail("ตรวจสอบใบแจ้งหนี้เดิมไม่สำเร็จ"), requestId };
   }
   if (existingInvoice) return fail("สัญญานี้มีใบแจ้งหนี้ของรอบเดือนดังกล่าวแล้ว");
 
-  const [{ data: settings, error: settingsError }, { data: meters, error: metersError }] = await Promise.all([
-    context.supabase.from("property_settings").select("electric_rate, water_rate, water_billing_method").eq("organization_id", context.organizationId).eq("property_id", lease.property_id).single(),
-    context.supabase.from("meters").select("id, room_id, meter_type, status").eq("organization_id", context.organizationId).eq("room_id", lease.room_id).eq("status", "active"),
+  const [
+    { data: settings, error: settingsError },
+    { data: meters, error: metersError },
+  ] = await Promise.all([
+    context.supabase
+      .from("property_settings")
+      .select("electric_rate, water_rate, water_billing_method")
+      .eq("organization_id", context.organizationId)
+      .eq("property_id", lease.property_id)
+      .single(),
+    context.supabase
+      .from("meters")
+      .select("id, room_id, meter_type, status")
+      .eq("organization_id", context.organizationId)
+      .eq("room_id", lease.room_id)
+      .eq("status", "active"),
   ]);
   if (settingsError || metersError || !settings) {
-    logFailure(requestId, "invoice.billing_sources", settingsError ?? metersError, context.organizationId);
+    logFailure(
+      requestId,
+      "invoice.billing_sources",
+      settingsError ?? metersError,
+      context.organizationId,
+    );
     return { ...fail("โหลดการตั้งค่าค่าน้ำและค่าไฟไม่สำเร็จ"), requestId };
   }
 
   const meterIds = (meters ?? []).map((meter) => meter.id);
   const { data: readings, error: readingsError } = meterIds.length
-    ? await context.supabase.from("meter_readings").select("meter_id, previous_value, current_value, usage_value").eq("organization_id", context.organizationId).eq("billing_cycle_id", cycle.id).in("meter_id", meterIds)
+    ? await context.supabase
+        .from("meter_readings")
+        .select("meter_id, previous_value, current_value, usage_value")
+        .eq("organization_id", context.organizationId)
+        .eq("billing_cycle_id", cycle.id)
+        .in("meter_id", meterIds)
     : { data: [], error: null };
   if (readingsError) {
-    logFailure(requestId, "invoice.meter_readings", readingsError, context.organizationId);
+    logFailure(
+      requestId,
+      "invoice.meter_readings",
+      readingsError,
+      context.organizationId,
+    );
     return { ...fail("โหลดเลขมิเตอร์ของรอบบิลไม่สำเร็จ"), requestId };
   }
 
@@ -442,57 +745,93 @@ export async function createInvoiceAction(formData: FormData): Promise<Dashboard
     lease,
     settings,
     meters: meters ?? [],
-    readings: (readings ?? []).map((reading) => ({ ...reading, period_month: monthDate })),
+    readings: (readings ?? []).map((reading) => ({
+      ...reading,
+      period_month: monthDate,
+    })),
     periodMonth,
   });
-  if (!calculation.ready) return fail(invoiceMissingMessage(calculation.missing));
+  if (!calculation.ready)
+    return fail(invoiceMissingMessage(calculation.missing));
 
-  const { data: invoice, error } = await context.supabase.from("rent_invoices").insert({
-    organization_id: context.organizationId,
-    property_id: lease.property_id,
-    room_id: lease.room_id,
-    lease_id: lease.id,
-    billing_cycle_id: cycle.id,
-    invoice_number: invoiceNumber,
-    due_at: dueAt,
-    subtotal: calculation.total,
-    total: calculation.total,
-    balance_due: calculation.total,
-    status: "issued",
-    note: text(formData, "note") || null,
-  }).select("id").single();
+  const { data: invoice, error } = await context.supabase
+    .from("rent_invoices")
+    .insert({
+      organization_id: context.organizationId,
+      property_id: lease.property_id,
+      room_id: lease.room_id,
+      lease_id: lease.id,
+      billing_cycle_id: cycle.id,
+      invoice_number: invoiceNumber,
+      due_at: dueAt,
+      subtotal: calculation.total,
+      total: calculation.total,
+      balance_due: calculation.total,
+      status: "issued",
+      note: text(formData, "note") || null,
+    })
+    .select("id")
+    .single();
 
   if (error || !invoice) {
     logFailure(requestId, "invoice.create", error, context.organizationId);
     if ((error as { code?: string })?.code === "23505") {
       return {
-        ...fail("เลขที่ใบแจ้งหนี้นี้มีอยู่ในระบบแล้ว (หากเป็นการออกบิลใหม่แทนฉบับที่ยกเลิก กรุณาต่อท้าย เช่น -R1)"),
+        ...fail(
+          "เลขที่ใบแจ้งหนี้นี้มีอยู่ในระบบแล้ว (หากเป็นการออกบิลใหม่แทนฉบับที่ยกเลิก กรุณาต่อท้าย เช่น -R1)",
+        ),
         requestId,
       };
     }
     return { ...fail("ออกใบแจ้งหนี้ไม่สำเร็จ เลขที่เอกสารอาจซ้ำ"), requestId };
   }
 
-  const { error: itemError } = await context.supabase.from("rent_invoice_items").insert(calculation.items.map((item) => ({
-    organization_id: context.organizationId,
-    rent_invoice_id: invoice.id,
-    item_type: item.itemType,
-    description: item.description,
-    quantity: item.quantity,
-    unit_price: item.unitPrice,
-    amount: item.amount,
-    metadata: { ...item.metadata, period_month: monthDate, rate_snapshot: item.unitPrice },
-  })));
+  const { error: itemError } = await context.supabase
+    .from("rent_invoice_items")
+    .insert(
+      calculation.items.map((item) => ({
+        organization_id: context.organizationId,
+        rent_invoice_id: invoice.id,
+        item_type: item.itemType,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        amount: item.amount,
+        metadata: {
+          ...item.metadata,
+          period_month: monthDate,
+          rate_snapshot: item.unitPrice,
+        },
+      })),
+    );
   if (itemError) {
-    logFailure(requestId, "invoice.create_item", itemError, context.organizationId);
-    await context.supabase.from("rent_invoices").delete().eq("id", invoice.id).eq("organization_id", context.organizationId);
+    logFailure(
+      requestId,
+      "invoice.create_item",
+      itemError,
+      context.organizationId,
+    );
+    await context.supabase
+      .from("rent_invoices")
+      .delete()
+      .eq("id", invoice.id)
+      .eq("organization_id", context.organizationId);
     return { ...fail("สร้างรายการในใบแจ้งหนี้ไม่สำเร็จ"), requestId };
   }
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "invoice.created", entity_type: "rent_invoice", entity_id: invoice.id });
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "invoice.created",
+      entity_type: "rent_invoice",
+      entity_id: invoice.id,
+    });
   return success("ออกใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function saveMeterReadingAction(formData: FormData): Promise<DashboardActionResult> {
+export async function saveMeterReadingAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_meters", "create");
   if (!context.ok) return context.error;
@@ -503,16 +842,25 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
   const periodMonth = text(formData, "periodMonth");
   const recordedAt = text(formData, "recordedAt");
   const currentValue = numberValue(formData, "currentValue");
-  if (![propertyId, roomId].every((id) => UUID_PATTERN.test(id))) return fail("กรุณาเลือกหอและห้อง");
-  if (!["electric", "water"].includes(meterType)) return fail("ประเภทมิเตอร์ไม่ถูกต้อง");
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodMonth)) return fail("กรุณาเลือกรอบเดือน");
-  if (periodMonth > getBangkokPeriodMonth()) return fail("ไม่สามารถจดมิเตอร์ล่วงหน้าเกินเดือนปัจจุบันได้");
+  if (![propertyId, roomId].every((id) => UUID_PATTERN.test(id)))
+    return fail("กรุณาเลือกหอและห้อง");
+  if (!["electric", "water"].includes(meterType))
+    return fail("ประเภทมิเตอร์ไม่ถูกต้อง");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodMonth))
+    return fail("กรุณาเลือกรอบเดือน");
+  if (periodMonth > getBangkokPeriodMonth())
+    return fail("ไม่สามารถจดมิเตอร์ล่วงหน้าเกินเดือนปัจจุบันได้");
   const recordedDate = new Date(`${recordedAt}T00:00:00Z`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(recordedAt) || Number.isNaN(recordedDate.getTime()) || recordedDate.toISOString().slice(0, 10) !== recordedAt) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(recordedAt) ||
+    Number.isNaN(recordedDate.getTime()) ||
+    recordedDate.toISOString().slice(0, 10) !== recordedAt
+  ) {
     return fail("กรุณาเลือกวันที่จดจริง");
   }
   if (recordedAt > getBangkokToday()) return fail("วันที่จดจริงต้องไม่เกินวันนี้");
-  if (!Number.isFinite(currentValue) || currentValue < 0) return fail("กรุณากรอกเลขมิเตอร์ตั้งแต่ 0 ขึ้นไป");
+  if (!Number.isFinite(currentValue) || currentValue < 0)
+    return fail("กรุณากรอกเลขมิเตอร์ตั้งแต่ 0 ขึ้นไป");
 
   const { data: meter, error: meterError } = await context.supabase
     .from("meters")
@@ -530,11 +878,23 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
   const monthDate = `${periodMonth}-01`;
   const { data: cycle, error: cycleError } = await context.supabase
     .from("billing_cycles")
-    .upsert({ organization_id: context.organizationId, property_id: propertyId, period_month: monthDate }, { onConflict: "property_id,period_month" })
+    .upsert(
+      {
+        organization_id: context.organizationId,
+        property_id: propertyId,
+        period_month: monthDate,
+      },
+      { onConflict: "property_id,period_month" },
+    )
     .select("id")
     .single();
   if (cycleError || !cycle) {
-    logFailure(requestId, "meter.billing_cycle", cycleError, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.billing_cycle",
+      cycleError,
+      context.organizationId,
+    );
     return { ...fail("สร้างรอบบิลไม่สำเร็จ"), requestId };
   }
 
@@ -549,7 +909,10 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     .maybeSingle();
 
   if (activeInvoice) {
-    if (activeInvoice.status === "paid" || Number(activeInvoice.balance_due) <= 0) {
+    if (
+      activeInvoice.status === "paid" ||
+      Number(activeInvoice.balance_due) <= 0
+    ) {
       return fail("ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากใบแจ้งหนี้รอบนี้ชำระเงินเรียบร้อยแล้ว");
     }
 
@@ -562,11 +925,13 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
       .maybeSingle();
 
     if (pendingSubmission) {
-      return fail("ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากผู้เช่าแนบสลิปรอการตรวจสอบอยู่ (กรุณากดไม่อนุมัติสลิปก่อน)");
+      return fail(
+        "ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากผู้เช่าแนบสลิปรอการตรวจสอบอยู่ (กรุณากดไม่อนุมัติสลิปก่อน)",
+      );
     }
 
     return fail(
-      `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากมีการออกใบแจ้งหนี้แล้ว (${activeInvoice.invoice_number}) กรุณายกเลิกใบแจ้งหนี้ก่อนหากต้องการแก้ไขเลขมิเตอร์`
+      `ไม่สามารถแก้ไขเลขมิเตอร์ได้ เนื่องจากมีการออกใบแจ้งหนี้แล้ว (${activeInvoice.invoice_number}) กรุณายกเลิกใบแจ้งหนี้ก่อนหากต้องการแก้ไขเลขมิเตอร์`,
     );
   }
 
@@ -578,7 +943,12 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
     .eq("billing_cycle_id", cycle.id)
     .maybeSingle();
   if (existingError) {
-    logFailure(requestId, "meter.existing_reading", existingError, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.existing_reading",
+      existingError,
+      context.organizationId,
+    );
     return { ...fail("ตรวจสอบเลขมิเตอร์เดิมไม่สำเร็จ"), requestId };
   }
 
@@ -591,56 +961,102 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
       .eq("meter_id", meter.id)
       .lt("billing_cycles.period_month", monthDate);
     if (priorError) {
-      logFailure(requestId, "meter.previous_reading", priorError, context.organizationId);
+      logFailure(
+        requestId,
+        "meter.previous_reading",
+        priorError,
+        context.organizationId,
+      );
       return { ...fail("ค้นหาเลขมิเตอร์รอบก่อนไม่สำเร็จ"), requestId };
     }
-    const latestReading = (priorReadings ?? []).sort((left: { billing_cycles?: unknown; current_value?: unknown }, right: { billing_cycles?: unknown; current_value?: unknown }) =>
-      getRelatedPeriodMonth(right.billing_cycles).localeCompare(getRelatedPeriodMonth(left.billing_cycles))
+    const latestReading = (priorReadings ?? []).sort(
+      (
+        left: { billing_cycles?: unknown; current_value?: unknown },
+        right: { billing_cycles?: unknown; current_value?: unknown },
+      ) =>
+        getRelatedPeriodMonth(right.billing_cycles).localeCompare(
+          getRelatedPeriodMonth(left.billing_cycles),
+        ),
     )[0];
     previousValue = Number(latestReading?.current_value ?? 0);
   }
-  if (currentValue < previousValue) return fail(`เลขครั้งนี้ต้องไม่น้อยกว่าเลขครั้งก่อน (${previousValue.toLocaleString("th-TH")})`);
+  if (currentValue < previousValue)
+    return fail(
+      `เลขครั้งนี้ต้องไม่น้อยกว่าเลขครั้งก่อน (${previousValue.toLocaleString("th-TH")})`,
+    );
 
   // ตรวจสอบความต่อเนื่องกับรอบเดือนถัดไป (กรณีมีข้อมูลล่วงหน้า)
-  const { data: subsequentReadings, error: subsequentError } = await context.supabase
-    .from("meter_readings")
-    .select("id, current_value, previous_value, billing_cycles!inner(period_month)")
-    .eq("organization_id", context.organizationId)
-    .eq("meter_id", meter.id)
-    .gt("billing_cycles.period_month", monthDate);
+  const { data: subsequentReadings, error: subsequentError } =
+    await context.supabase
+      .from("meter_readings")
+      .select(
+        "id, current_value, previous_value, billing_cycles!inner(period_month)",
+      )
+      .eq("organization_id", context.organizationId)
+      .eq("meter_id", meter.id)
+      .gt("billing_cycles.period_month", monthDate);
 
   if (!subsequentError && subsequentReadings && subsequentReadings.length > 0) {
-    const sortedSubsequent = (subsequentReadings as Array<{ id: string; current_value: number; previous_value: number; billing_cycles: unknown }>).sort((left, right) =>
-      getRelatedPeriodMonth(left.billing_cycles).localeCompare(getRelatedPeriodMonth(right.billing_cycles))
+    const sortedSubsequent = (
+      subsequentReadings as Array<{
+        id: string;
+        current_value: number;
+        previous_value: number;
+        billing_cycles: unknown;
+      }>
+    ).sort((left, right) =>
+      getRelatedPeriodMonth(left.billing_cycles).localeCompare(
+        getRelatedPeriodMonth(right.billing_cycles),
+      ),
     );
     const immediateNext = sortedSubsequent[0];
     if (immediateNext && currentValue > Number(immediateNext.current_value)) {
       const nextMonth = getRelatedPeriodMonth(immediateNext.billing_cycles);
       return fail(
-        `เลขมิเตอร์ครั้งนี้ (${currentValue.toLocaleString("th-TH")}) ต้องไม่มากกว่าเลขมิเตอร์ของรอบถัดไป (${nextMonth}: ${Number(immediateNext.current_value).toLocaleString("th-TH")})`
+        `เลขมิเตอร์ครั้งนี้ (${currentValue.toLocaleString("th-TH")}) ต้องไม่มากกว่าเลขมิเตอร์ของรอบถัดไป (${nextMonth}: ${Number(immediateNext.current_value).toLocaleString("th-TH")})`,
       );
     }
   }
 
-  const { error } = await context.supabase.from("meter_readings").upsert({
-    organization_id: context.organizationId,
-    meter_id: meter.id,
-    billing_cycle_id: cycle.id,
-    previous_value: previousValue,
-    current_value: currentValue,
-    read_at: `${recordedAt}T12:00:00+07:00`,
-  }, { onConflict: "meter_id,billing_cycle_id" });
+  const { error } = await context.supabase.from("meter_readings").upsert(
+    {
+      organization_id: context.organizationId,
+      meter_id: meter.id,
+      billing_cycle_id: cycle.id,
+      previous_value: previousValue,
+      current_value: currentValue,
+      read_at: `${recordedAt}T12:00:00+07:00`,
+    },
+    { onConflict: "meter_id,billing_cycle_id" },
+  );
   if (error) {
-    logFailure(requestId, "meter.reading_upsert", error, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.reading_upsert",
+      error,
+      context.organizationId,
+    );
     return { ...fail("บันทึกเลขมิเตอร์ไม่สำเร็จ"), requestId };
   }
 
   if (!subsequentError && subsequentReadings && subsequentReadings.length > 0) {
-    const sortedSubsequent = (subsequentReadings as Array<{ id: string; current_value: number; previous_value: number; billing_cycles: unknown }>).sort((left, right) =>
-      getRelatedPeriodMonth(left.billing_cycles).localeCompare(getRelatedPeriodMonth(right.billing_cycles))
+    const sortedSubsequent = (
+      subsequentReadings as Array<{
+        id: string;
+        current_value: number;
+        previous_value: number;
+        billing_cycles: unknown;
+      }>
+    ).sort((left, right) =>
+      getRelatedPeriodMonth(left.billing_cycles).localeCompare(
+        getRelatedPeriodMonth(right.billing_cycles),
+      ),
     );
     const immediateNext = sortedSubsequent[0];
-    if (immediateNext && Number(immediateNext.previous_value) !== currentValue) {
+    if (
+      immediateNext &&
+      Number(immediateNext.previous_value) !== currentValue
+    ) {
       await context.supabase
         .from("meter_readings")
         .update({ previous_value: currentValue })
@@ -652,7 +1068,9 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
   return success("บันทึกเลขมิเตอร์เรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function deleteMeterReadingAction(formData: FormData): Promise<DashboardActionResult> {
+export async function deleteMeterReadingAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_meters", "delete");
   if (!context.ok) return context.error;
@@ -667,7 +1085,12 @@ export async function deleteMeterReadingAction(formData: FormData): Promise<Dash
     .eq("organization_id", context.organizationId)
     .maybeSingle();
   if (readingError) {
-    logFailure(requestId, "meter.delete.find_reading", readingError, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.delete.find_reading",
+      readingError,
+      context.organizationId,
+    );
     return { ...fail("ตรวจสอบรายการมิเตอร์ไม่สำเร็จ"), requestId };
   }
   if (!reading) return fail("ไม่พบรายการมิเตอร์ หรือคุณไม่มีสิทธิ์ลบรายการนี้");
@@ -679,7 +1102,12 @@ export async function deleteMeterReadingAction(formData: FormData): Promise<Dash
     .eq("organization_id", context.organizationId)
     .maybeSingle();
   if (meterError || !meter) {
-    logFailure(requestId, "meter.delete.find_meter", meterError, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.delete.find_meter",
+      meterError,
+      context.organizationId,
+    );
     return { ...fail("ไม่พบข้อมูลห้องของมิเตอร์นี้"), requestId };
   }
 
@@ -693,10 +1121,18 @@ export async function deleteMeterReadingAction(formData: FormData): Promise<Dash
     .limit(1)
     .maybeSingle();
   if (invoiceError) {
-    logFailure(requestId, "meter.delete.check_invoice", invoiceError, context.organizationId);
+    logFailure(
+      requestId,
+      "meter.delete.check_invoice",
+      invoiceError,
+      context.organizationId,
+    );
     return { ...fail("ตรวจสอบใบแจ้งหนี้ของรอบนี้ไม่สำเร็จ"), requestId };
   }
-  if (invoice) return fail(`ลบรายการมิเตอร์ไม่ได้ เพราะมีใบแจ้งหนี้ ${invoice.invoice_number} กรุณายกเลิกใบแจ้งหนี้ก่อน`);
+  if (invoice)
+    return fail(
+      `ลบรายการมิเตอร์ไม่ได้ เพราะมีใบแจ้งหนี้ ${invoice.invoice_number} กรุณายกเลิกใบแจ้งหนี้ก่อน`,
+    );
 
   const { data: deleted, error } = await context.supabase
     .from("meter_readings")
@@ -723,14 +1159,17 @@ export async function deleteMeterReadingAction(formData: FormData): Promise<Dash
   return success("ลบรายการมิเตอร์เรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function recordPaymentAction(formData: FormData): Promise<DashboardActionResult> {
+export async function recordPaymentAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_payments", "create");
   if (!context.ok) return context.error;
 
   const invoiceId = text(formData, "invoiceId");
   const amount = numberValue(formData, "amount");
-  if (!UUID_PATTERN.test(invoiceId) || !Number.isFinite(amount) || amount <= 0) return fail("กรุณาเลือกใบแจ้งหนี้และกรอกยอดรับชำระ");
+  if (!UUID_PATTERN.test(invoiceId) || !Number.isFinite(amount) || amount <= 0)
+    return fail("กรุณาเลือกใบแจ้งหนี้และกรอกยอดรับชำระ");
 
   const { data: invoice, error: invoiceError } = await context.supabase
     .from("rent_invoices")
@@ -739,9 +1178,12 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
     .eq("organization_id", context.organizationId)
     .single();
   if (invoiceError || !invoice) return fail("ไม่พบใบแจ้งหนี้");
-  if (invoice.status === "void") return fail("ไม่สามารถบันทึกรับชำระสำหรับใบแจ้งหนี้ที่ถูกยกเลิกแล้ว");
-  if (invoice.status === "paid" || Number(invoice.balance_due) <= 0) return fail("ใบแจ้งหนี้นี้ได้รับการชำระเงินเรียบร้อยแล้ว");
-  if (amount > Number(invoice.balance_due)) return fail("ยอดรับชำระมากกว่ายอดคงเหลือ");
+  if (invoice.status === "void")
+    return fail("ไม่สามารถบันทึกรับชำระสำหรับใบแจ้งหนี้ที่ถูกยกเลิกแล้ว");
+  if (invoice.status === "paid" || Number(invoice.balance_due) <= 0)
+    return fail("ใบแจ้งหนี้นี้ได้รับการชำระเงินเรียบร้อยแล้ว");
+  if (amount > Number(invoice.balance_due))
+    return fail("ยอดรับชำระมากกว่ายอดคงเหลือ");
 
   const { data: pendingSubmissions } = await context.supabase
     .from("payment_submissions")
@@ -751,44 +1193,74 @@ export async function recordPaymentAction(formData: FormData): Promise<Dashboard
     .eq("status", "pending")
     .limit(1);
   if (pendingSubmissions && pendingSubmissions.length > 0) {
-    return fail("ใบแจ้งหนี้นี้มีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาไปตรวจสอบสลิปในเมนู 'การชำระเงิน' แทนการบันทึกรับเงินซ้ำ");
+    return fail(
+      "ใบแจ้งหนี้นี้มีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาไปตรวจสอบสลิปในเมนู 'การชำระเงิน' แทนการบันทึกรับเงินซ้ำ",
+    );
   }
 
-  const { data: payment, error } = await context.supabase.from("rent_payments").insert({
-    organization_id: context.organizationId,
-    property_id: invoice.property_id,
-    receipt_number: text(formData, "receiptNumber"),
-    amount,
-    method: text(formData, "method") || "transfer",
-    reference: text(formData, "reference") || null,
-  }).select("id").single();
+  const { data: payment, error } = await context.supabase
+    .from("rent_payments")
+    .insert({
+      organization_id: context.organizationId,
+      property_id: invoice.property_id,
+      receipt_number: text(formData, "receiptNumber"),
+      amount,
+      method: text(formData, "method") || "transfer",
+      reference: text(formData, "reference") || null,
+    })
+    .select("id")
+    .single();
   if (error || !payment) {
     logFailure(requestId, "payment.create", error, context.organizationId);
     return { ...fail("บันทึกรับชำระไม่สำเร็จ เลขที่ใบเสร็จอาจซ้ำ"), requestId };
   }
 
-  const { error: allocationError } = await context.supabase.from("rent_payment_allocations").insert({
-    organization_id: context.organizationId,
-    rent_payment_id: payment.id,
-    rent_invoice_id: invoice.id,
-    amount,
-  });
+  const { error: allocationError } = await context.supabase
+    .from("rent_payment_allocations")
+    .insert({
+      organization_id: context.organizationId,
+      rent_payment_id: payment.id,
+      rent_invoice_id: invoice.id,
+      amount,
+    });
   if (allocationError) {
-    logFailure(requestId, "payment.allocate", allocationError, context.organizationId);
-    await context.supabase.from("rent_payments").delete().eq("id", payment.id).eq("organization_id", context.organizationId);
+    logFailure(
+      requestId,
+      "payment.allocate",
+      allocationError,
+      context.organizationId,
+    );
+    await context.supabase
+      .from("rent_payments")
+      .delete()
+      .eq("id", payment.id)
+      .eq("organization_id", context.organizationId);
     return { ...fail("จัดสรรยอดชำระไม่สำเร็จ"), requestId };
   }
 
   const nextBalance = Number(invoice.balance_due) - amount;
-  await context.supabase.from("rent_invoices").update({
-    balance_due: nextBalance,
-    status: nextBalance === 0 ? "paid" : "partial",
-  }).eq("id", invoice.id).eq("organization_id", context.organizationId);
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "payment.recorded", entity_type: "rent_payment", entity_id: payment.id });
+  await context.supabase
+    .from("rent_invoices")
+    .update({
+      balance_due: nextBalance,
+      status: nextBalance === 0 ? "paid" : "partial",
+    })
+    .eq("id", invoice.id)
+    .eq("organization_id", context.organizationId);
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "payment.recorded",
+      entity_type: "rent_payment",
+      entity_id: payment.id,
+    });
   return success("บันทึกรับชำระเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function updatePropertySettingsAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updatePropertySettingsAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_settings", "update");
   if (!context.ok) return context.error;
@@ -801,9 +1273,20 @@ export async function updatePropertySettingsAction(formData: FormData): Promise<
   const billDay = numberValue(formData, "billDay");
   const dueDay = numberValue(formData, "dueDay");
   const lateFee = numberValue(formData, "lateFee");
-  if ([electricRate, waterRate, lateFee].some((value) => !Number.isFinite(value) || value < 0)) return fail("อัตราค่าบริการไม่ถูกต้อง");
-  if (!["meter", "per_person", "flat_room"].includes(waterBillingMethod)) return fail("วิธีคิดค่าน้ำไม่ถูกต้อง");
-  if (![billDay, dueDay].every((value) => Number.isInteger(value) && value >= 1 && value <= 28)) return fail("วันออกบิลและวันครบกำหนดต้องอยู่ระหว่าง 1–28");
+  if (
+    [electricRate, waterRate, lateFee].some(
+      (value) => !Number.isFinite(value) || value < 0,
+    )
+  )
+    return fail("อัตราค่าบริการไม่ถูกต้อง");
+  if (!["meter", "per_person", "flat_room"].includes(waterBillingMethod))
+    return fail("วิธีคิดค่าน้ำไม่ถูกต้อง");
+  if (
+    ![billDay, dueDay].every(
+      (value) => Number.isInteger(value) && value >= 1 && value <= 28,
+    )
+  )
+    return fail("วันออกบิลและวันครบกำหนดต้องอยู่ระหว่าง 1–28");
 
   const bankName = text(formData, "bankName") || null;
   const bankAccountNo = text(formData, "bankAccountNo") || null;
@@ -855,7 +1338,11 @@ export async function updatePropertySettingsAction(formData: FormData): Promise<
       .eq("property_id", propertyId)
       .eq("organization_id", context.organizationId);
 
-    if (retry.error && (retry.error.code === "42703" || retry.error.message?.includes("bank_name"))) {
+    if (
+      retry.error &&
+      (retry.error.code === "42703" ||
+        retry.error.message?.includes("bank_name"))
+    ) {
       delete payload.bank_name;
       retry = await context.supabase
         .from("property_settings")
@@ -876,45 +1363,105 @@ export async function updatePropertySettingsAction(formData: FormData): Promise<
   return success("บันทึกการตั้งค่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function createTenantPortalAccountAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createTenantPortalAccountAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_tenants", "update");
   if (!context.ok) return context.error;
-  const tenantId = text(formData, "tenantId"), username = normalizeUsername(text(formData, "username")), temporaryPassword = text(formData, "temporaryPassword");
+  const tenantId = text(formData, "tenantId"),
+    username = normalizeUsername(text(formData, "username")),
+    temporaryPassword = text(formData, "temporaryPassword");
   if (!UUID_PATTERN.test(tenantId)) return fail("ไม่พบผู้เช่าที่ต้องการเปิดบัญชี");
-  if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username)) return fail("ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว");
-  if (temporaryPassword.length < 8) return fail("รหัสผ่านชั่วคราวต้องมีอย่างน้อย 8 ตัวอักษร");
-  const { data: tenant } = await context.supabase.from("tenants").select("id, full_name, phone").eq("id", tenantId).eq("organization_id", context.organizationId).maybeSingle();
+  if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username))
+    return fail("ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว");
+  if (temporaryPassword.length < 8)
+    return fail("รหัสผ่านชั่วคราวต้องมีอย่างน้อย 8 ตัวอักษร");
+  const { data: tenant } = await context.supabase
+    .from("tenants")
+    .select("id, full_name, phone")
+    .eq("id", tenantId)
+    .eq("organization_id", context.organizationId)
+    .maybeSingle();
   if (!tenant) return fail("ไม่พบผู้เช่าในกิจการนี้");
   const admin = createAdminClient();
-  const { data: existingAccount } = await admin.from("tenant_accounts").select("auth_user_id").eq("tenant_id", tenantId).maybeSingle();
+  const { data: existingAccount } = await admin
+    .from("tenant_accounts")
+    .select("auth_user_id")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
   if (existingAccount) return fail("ผู้เช่ารายนี้มีบัญชี Tenant Portal แล้ว");
-  const { data: existingAlias } = await admin.from("auth_login_aliases").select("auth_user_id").eq("username", username).maybeSingle();
+  const { data: existingAlias } = await admin
+    .from("auth_login_aliases")
+    .select("auth_user_id")
+    .eq("username", username)
+    .maybeSingle();
   if (existingAlias) return fail("ชื่อผู้ใช้นี้ถูกใช้แล้ว กรุณาเลือกชื่ออื่น");
   const domain = process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase();
   if (!domain) return fail("ระบบบัญชียังตั้งค่าไม่ครบ");
   const internalEmail = `${crypto.randomUUID()}@${domain}`;
-  const { data: created, error: createError } = await admin.auth.admin.createUser({ email: internalEmail, password: temporaryPassword, email_confirm: true, user_metadata: { username, display_name: tenant.full_name, account_type: "tenant" } });
+  const { data: created, error: createError } =
+    await admin.auth.admin.createUser({
+      email: internalEmail,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: {
+        username,
+        display_name: tenant.full_name,
+        account_type: "tenant",
+      },
+    });
   if (createError || !created.user) return fail("สร้างบัญชีผู้เช่าไม่สำเร็จ");
   const authUserId = created.user.id;
   const results = await Promise.all([
-    admin.from("auth_login_aliases").insert({ username, auth_user_id: authUserId, internal_email: internalEmail }),
-    admin.from("profiles").insert({ id: authUserId, username, display_name: tenant.full_name, phone: tenant.phone, must_change_password: true }),
-    admin.from("tenant_accounts").insert({ tenant_id: tenantId, organization_id: context.organizationId, auth_user_id: authUserId, invited_by: context.userId }),
+    admin
+      .from("auth_login_aliases")
+      .insert({
+        username,
+        auth_user_id: authUserId,
+        internal_email: internalEmail,
+      }),
+    admin
+      .from("profiles")
+      .insert({
+        id: authUserId,
+        username,
+        display_name: tenant.full_name,
+        phone: tenant.phone,
+        must_change_password: true,
+      }),
+    admin
+      .from("tenant_accounts")
+      .insert({
+        tenant_id: tenantId,
+        organization_id: context.organizationId,
+        auth_user_id: authUserId,
+        invited_by: context.userId,
+      }),
   ]);
   const setupError = results.find((result) => result.error)?.error;
   if (setupError) {
-    logFailure(requestId, "tenant.portal_account_create", setupError, context.organizationId);
+    logFailure(
+      requestId,
+      "tenant.portal_account_create",
+      setupError,
+      context.organizationId,
+    );
     await admin.auth.admin.deleteUser(authUserId);
     return { ...fail("เปิดบัญชีผู้เช่าไม่สำเร็จ กรุณาลองใหม่"), requestId };
   }
   revalidatePath("/tenants");
   revalidatePath("/guestrooms");
   revalidatePath("/leases");
-  return success("เปิดบัญชี Tenant Portal แล้ว กรุณาส่งชื่อผู้ใช้และรหัสผ่านชั่วคราวให้ผู้เช่า", context.organizationId);
+  return success(
+    "เปิดบัญชี Tenant Portal แล้ว กรุณาส่งชื่อผู้ใช้และรหัสผ่านชั่วคราวให้ผู้เช่า",
+    context.organizationId,
+  );
 }
 
-export async function updateTenantPortalAccountAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateTenantPortalAccountAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_tenants", "update");
   if (!context.ok) return context.error;
@@ -922,8 +1469,10 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
   const username = normalizeUsername(text(formData, "username"));
   const newPassword = text(formData, "temporaryPassword");
   if (!UUID_PATTERN.test(tenantId)) return fail("ไม่พบบัญชีผู้เช่าที่ต้องการแก้ไข");
-  if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username)) return fail("ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว");
-  if (newPassword && newPassword.length < 8) return fail("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร");
+  if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username))
+    return fail("ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว");
+  if (newPassword && newPassword.length < 8)
+    return fail("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร");
 
   const admin = createAdminClient();
   const { data: account, error: accountError } = await admin
@@ -933,7 +1482,8 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
     .eq("organization_id", context.organizationId)
     .eq("status", "active")
     .maybeSingle();
-  if (accountError || !account) return fail("ไม่พบบัญชี Tenant Portal ของผู้เช่ารายนี้");
+  if (accountError || !account)
+    return fail("ไม่พบบัญชี Tenant Portal ของผู้เช่ารายนี้");
 
   const { data: currentAlias, error: aliasError } = await admin
     .from("auth_login_aliases")
@@ -949,12 +1499,21 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
     .neq("auth_user_id", account.auth_user_id)
     .maybeSingle();
   if (duplicateAlias) return fail("ชื่อผู้ใช้นี้ถูกใช้แล้ว กรุณาเลือกชื่ออื่น");
-  if (currentAlias.username === username && !newPassword) return fail("ยังไม่มีข้อมูลที่เปลี่ยนแปลง");
+  if (currentAlias.username === username && !newPassword)
+    return fail("ยังไม่มีข้อมูลที่เปลี่ยนแปลง");
 
   if (newPassword) {
-    const { error: passwordError } = await admin.auth.admin.updateUserById(account.auth_user_id, { password: newPassword });
+    const { error: passwordError } = await admin.auth.admin.updateUserById(
+      account.auth_user_id,
+      { password: newPassword },
+    );
     if (passwordError) {
-      logFailure(requestId, "tenant.portal_account_password_update", passwordError, context.organizationId);
+      logFailure(
+        requestId,
+        "tenant.portal_account_password_update",
+        passwordError,
+        context.organizationId,
+      );
       return { ...fail("ตั้งรหัสผ่านใหม่ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
     }
   }
@@ -964,58 +1523,153 @@ export async function updateTenantPortalAccountAction(formData: FormData): Promi
     .update({ username })
     .eq("auth_user_id", account.auth_user_id);
   if (usernameError) {
-    logFailure(requestId, "tenant.portal_account_username_update", usernameError, context.organizationId);
-    return { ...fail(newPassword ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองแก้ชื่อผู้ใช้อีกครั้ง" : "เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
+    logFailure(
+      requestId,
+      "tenant.portal_account_username_update",
+      usernameError,
+      context.organizationId,
+    );
+    return {
+      ...fail(
+        newPassword
+          ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองแก้ชื่อผู้ใช้อีกครั้ง"
+          : "เปลี่ยนชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง",
+      ),
+      requestId,
+    };
   }
 
-  const profilePatch: { username: string; must_change_password?: boolean } = { username };
+  const profilePatch: { username: string; must_change_password?: boolean } = {
+    username,
+  };
   if (newPassword) profilePatch.must_change_password = true;
-  const { error: profileError } = await admin.from("profiles").update(profilePatch).eq("id", account.auth_user_id);
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update(profilePatch)
+    .eq("id", account.auth_user_id);
   if (profileError) {
-    await admin.from("auth_login_aliases").update({ username: currentAlias.username }).eq("auth_user_id", account.auth_user_id);
-    logFailure(requestId, "tenant.portal_account_profile_update", profileError, context.organizationId);
-    return { ...fail(newPassword ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่บันทึกชื่อผู้ใช้ไม่ครบ กรุณาลองอีกครั้ง" : "บันทึกชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
+    await admin
+      .from("auth_login_aliases")
+      .update({ username: currentAlias.username })
+      .eq("auth_user_id", account.auth_user_id);
+    logFailure(
+      requestId,
+      "tenant.portal_account_profile_update",
+      profileError,
+      context.organizationId,
+    );
+    return {
+      ...fail(
+        newPassword
+          ? "รหัสผ่านถูกเปลี่ยนแล้ว แต่บันทึกชื่อผู้ใช้ไม่ครบ กรุณาลองอีกครั้ง"
+          : "บันทึกชื่อผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง",
+      ),
+      requestId,
+    };
   }
 
   revalidatePath("/tenants");
   revalidatePath("/guestrooms");
   revalidatePath("/leases");
-  return success(newPassword ? "แก้ไขชื่อผู้ใช้และตั้งรหัสผ่านใหม่แล้ว" : "แก้ไขชื่อผู้ใช้แล้ว", context.organizationId);
+  return success(
+    newPassword ? "แก้ไขชื่อผู้ใช้และตั้งรหัสผ่านใหม่แล้ว" : "แก้ไขชื่อผู้ใช้แล้ว",
+    context.organizationId,
+  );
 }
 
-export async function reviewPaymentSubmissionAction(formData: FormData): Promise<DashboardActionResult> {
+export async function reviewPaymentSubmissionAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_payments", "create");
   if (!context.ok) return context.error;
-  const submissionId = text(formData, "submissionId"), decision = text(formData, "decision");
-  if (!UUID_PATTERN.test(submissionId) || !["approve", "reject"].includes(decision)) return fail("ไม่พบรายการหลักฐานที่ต้องการตรวจสอบ");
-  const { data: submission } = await context.supabase.from("payment_submissions").select("id").eq("id", submissionId).eq("organization_id", context.organizationId).eq("status", "pending").maybeSingle();
+  const submissionId = text(formData, "submissionId"),
+    decision = text(formData, "decision");
+  if (
+    !UUID_PATTERN.test(submissionId) ||
+    !["approve", "reject"].includes(decision)
+  )
+    return fail("ไม่พบรายการหลักฐานที่ต้องการตรวจสอบ");
+  const { data: submission } = await context.supabase
+    .from("payment_submissions")
+    .select("id")
+    .eq("id", submissionId)
+    .eq("organization_id", context.organizationId)
+    .eq("status", "pending")
+    .maybeSingle();
   if (!submission) return fail("ไม่พบรายการหลักฐานที่รอตรวจสอบในกิจการนี้");
   if (decision === "approve") {
-    const { error } = await context.supabase.rpc("approve_payment_submission", { target_submission_id: submissionId });
-    if (error) { logFailure(requestId, "payment_submission.approve", error, context.organizationId); return { ...fail("ยืนยันยอดไม่สำเร็จ ยอดคงเหลืออาจมีการเปลี่ยนแปลง"), requestId }; }
+    const { error } = await context.supabase.rpc("approve_payment_submission", {
+      target_submission_id: submissionId,
+    });
+    if (error) {
+      logFailure(
+        requestId,
+        "payment_submission.approve",
+        error,
+        context.organizationId,
+      );
+      return { ...fail("ยืนยันยอดไม่สำเร็จ ยอดคงเหลืออาจมีการเปลี่ยนแปลง"), requestId };
+    }
   } else {
     const reason = text(formData, "rejectionReason");
     if (reason.length < 3) return fail("กรุณาระบุเหตุผลที่ไม่อนุมัติ");
-    const { data, error } = await context.supabase.from("payment_submissions").update({ status: "rejected", rejection_reason: reason, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", submissionId).eq("organization_id", context.organizationId).eq("status", "pending").select("id").maybeSingle();
+    const { data, error } = await context.supabase
+      .from("payment_submissions")
+      .update({
+        status: "rejected",
+        rejection_reason: reason,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", submissionId)
+      .eq("organization_id", context.organizationId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
     if (error || !data) return fail("รายการนี้อาจถูกตรวจสอบไปแล้ว กรุณาโหลดหน้าใหม่");
   }
-  revalidatePath("/payments"); revalidatePath("/tenant"); revalidatePath("/tenant/bills"); revalidatePath("/invoices"); revalidatePath("/receivables");
-  return success(decision === "approve" ? "ยืนยันยอดและตัดใบแจ้งหนี้แล้ว" : "ส่งรายการกลับให้ผู้เช่าแก้ไขแล้ว", context.organizationId);
+  revalidatePath("/payments");
+  revalidatePath("/tenant");
+  revalidatePath("/tenant/bills");
+  revalidatePath("/invoices");
+  revalidatePath("/receivables");
+  return success(
+    decision === "approve"
+      ? "ยืนยันยอดและตัดใบแจ้งหนี้แล้ว"
+      : "ส่งรายการกลับให้ผู้เช่าแก้ไขแล้ว",
+    context.organizationId,
+  );
 }
 
-export async function updatePropertyAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updatePropertyAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData, "customer_properties", "update");
+  const context = await actionContext(
+    formData,
+    "customer_properties",
+    "update",
+  );
   if (!context.ok) return context.error;
-  const propertyId = text(formData, "propertyId"), name = text(formData, "name");
+  const propertyId = text(formData, "propertyId"),
+    name = text(formData, "name");
   const status = text(formData, "status") || "active";
   if (!UUID_PATTERN.test(propertyId)) return fail("ไม่พบหอพักที่ต้องการแก้ไข");
   if (!name || name.length > 160) return fail("กรุณากรอกชื่อหอพักไม่เกิน 160 ตัวอักษร");
   if (!["active", "inactive"].includes(status)) return fail("สถานะหอพักไม่ถูกต้อง");
-  const { data, error } = await context.supabase.from("properties").update({
-    name, address: text(formData, "address"), phone: text(formData, "phone") || null, status,
-  }).eq("id", propertyId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("properties")
+    .update({
+      name,
+      address: text(formData, "address"),
+      phone: text(formData, "phone") || null,
+      status,
+    })
+    .eq("id", propertyId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error || !data) {
     logFailure(requestId, "property.update", error, context.organizationId);
     return { ...fail("แก้ไขหอพักไม่สำเร็จ ชื่อหอพักอาจซ้ำ"), requestId };
@@ -1023,19 +1677,28 @@ export async function updatePropertyAction(formData: FormData): Promise<Dashboar
   return success("แก้ไขข้อมูลหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function updateRoomAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateRoomAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_rooms", "update");
   if (!context.ok) return context.error;
-  const roomId = text(formData, "roomId"), propertyId = text(formData, "propertyId");
-  const roomNumber = text(formData, "roomNumber"), floor = text(formData, "floor");
-  const baseRent = numberValue(formData, "baseRent"), status = text(formData, "status");
-  if (![roomId, propertyId].every((value) => UUID_PATTERN.test(value))) return fail("ไม่พบห้องพักที่ต้องการแก้ไข");
-  if (!roomNumber || roomNumber.length > 40) return fail("กรุณากรอกหมายเลขห้องไม่เกิน 40 ตัวอักษร");
+  const roomId = text(formData, "roomId"),
+    propertyId = text(formData, "propertyId");
+  const roomNumber = text(formData, "roomNumber"),
+    floor = text(formData, "floor");
+  const baseRent = numberValue(formData, "baseRent"),
+    status = text(formData, "status");
+  if (![roomId, propertyId].every((value) => UUID_PATTERN.test(value)))
+    return fail("ไม่พบห้องพักที่ต้องการแก้ไข");
+  if (!roomNumber || roomNumber.length > 40)
+    return fail("กรุณากรอกหมายเลขห้องไม่เกิน 40 ตัวอักษร");
   const floorError = validateFloor(floor);
   if (floorError) return fail(floorError);
-  if (!Number.isFinite(baseRent) || baseRent < 0) return fail("ค่าเช่าต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป");
-  if (!["vacant", "occupied", "maintenance", "inactive"].includes(status)) return fail("สถานะห้องไม่ถูกต้อง");
+  if (!Number.isFinite(baseRent) || baseRent < 0)
+    return fail("ค่าเช่าต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป");
+  if (!["vacant", "occupied", "maintenance", "inactive"].includes(status))
+    return fail("สถานะห้องไม่ถูกต้อง");
   if (status === "vacant") {
     const { data: activeLease } = await context.supabase
       .from("leases")
@@ -1045,12 +1708,24 @@ export async function updateRoomAction(formData: FormData): Promise<DashboardAct
       .eq("status", "active")
       .maybeSingle();
     if (activeLease) {
-      return fail(`ไม่สามารถเปลี่ยนสถานะเป็นห้องว่างได้ เนื่องจากมีสัญญาเช่าที่ยังมีผลอยู่ (${activeLease.lease_number}) กรุณาสิ้นสุดหรือยกเลิกสัญญาเช่าก่อน`);
+      return fail(
+        `ไม่สามารถเปลี่ยนสถานะเป็นห้องว่างได้ เนื่องจากมีสัญญาเช่าที่ยังมีผลอยู่ (${activeLease.lease_number}) กรุณาสิ้นสุดหรือยกเลิกสัญญาเช่าก่อน`,
+      );
     }
   }
-  const { data, error } = await context.supabase.from("rooms").update({
-    property_id: propertyId, room_number: roomNumber, floor: floor || null, base_rent: baseRent, status,
-  }).eq("id", roomId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("rooms")
+    .update({
+      property_id: propertyId,
+      room_number: roomNumber,
+      floor: floor || null,
+      base_rent: baseRent,
+      status,
+    })
+    .eq("id", roomId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error || !data) {
     logFailure(requestId, "room.update", error, context.organizationId);
     return { ...fail("แก้ไขห้องไม่สำเร็จ หมายเลขห้องอาจซ้ำ"), requestId };
@@ -1058,84 +1733,140 @@ export async function updateRoomAction(formData: FormData): Promise<DashboardAct
   return success("แก้ไขข้อมูลห้องพักเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function deletePropertyAction(formData: FormData): Promise<DashboardActionResult> {
+export async function deletePropertyAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
-  const context = await actionContext(formData, "customer_properties", "delete");
+  const context = await actionContext(
+    formData,
+    "customer_properties",
+    "delete",
+  );
   if (!context.ok) return context.error;
   const propertyId = text(formData, "propertyId");
   if (!UUID_PATTERN.test(propertyId)) return fail("ไม่พบหอพักที่ต้องการลบ");
 
-  const { data, error } = await context.supabase.from("properties").delete()
-    .eq("id", propertyId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("properties")
+    .delete()
+    .eq("id", propertyId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error) {
     logFailure(requestId, "property.delete", error, context.organizationId);
-    if (error.code === "23503") return fail("ลบหอพักไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ การรับชำระ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน");
+    if (error.code === "23503")
+      return fail(
+        "ลบหอพักไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ การรับชำระ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน",
+      );
     return { ...fail("ลบหอพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบหอพัก หรือคุณไม่มีสิทธิ์ลบหอพักนี้");
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "property.deleted", entity_type: "property", entity_id: propertyId });
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "property.deleted",
+      entity_type: "property",
+      entity_id: propertyId,
+    });
   return success("ลบหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function deleteRoomAction(formData: FormData): Promise<DashboardActionResult> {
+export async function deleteRoomAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_rooms", "delete");
   if (!context.ok) return context.error;
   const roomId = text(formData, "roomId");
   if (!UUID_PATTERN.test(roomId)) return fail("ไม่พบห้องพักที่ต้องการลบ");
 
-  const { data, error } = await context.supabase.from("rooms").delete()
-    .eq("id", roomId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("rooms")
+    .delete()
+    .eq("id", roomId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error) {
     logFailure(requestId, "room.delete", error, context.organizationId);
-    if (error.code === "23503") return fail("ลบห้องไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน");
+    if (error.code === "23503")
+      return fail(
+        "ลบห้องไม่ได้ เพราะมีสัญญา ใบแจ้งหนี้ หรือประวัติมิเตอร์อยู่ กรุณาเปลี่ยนสถานะเป็นไม่ใช้งานแทน",
+      );
     return { ...fail("ลบห้องพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบห้องพัก หรือคุณไม่มีสิทธิ์ลบห้องนี้");
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "room.deleted", entity_type: "room", entity_id: roomId });
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "room.deleted",
+      entity_type: "room",
+      entity_id: roomId,
+    });
   return success("ลบห้องพักเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function updateTenantAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateTenantAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_tenants", "update");
   if (!context.ok) return context.error;
-  const tenantId = text(formData, "tenantId"), fullName = text(formData, "fullName");
-  const idCardLast4 = text(formData, "idCardLast4"), status = text(formData, "status");
+  const tenantId = text(formData, "tenantId"),
+    fullName = text(formData, "fullName");
+  const idCardLast4 = text(formData, "idCardLast4"),
+    status = text(formData, "status");
   const birthDate = text(formData, "birthDate");
   const emergencyContactName = text(formData, "emergencyContactName");
-  const emergencyContactRelationship = text(formData, "emergencyContactRelationship");
+  const emergencyContactRelationship = text(
+    formData,
+    "emergencyContactRelationship",
+  );
   const emergencyContactPhone = text(formData, "emergencyContactPhone");
   if (!UUID_PATTERN.test(tenantId)) return fail("ไม่พบผู้เช่าที่ต้องการแก้ไข");
-  const validationError = Object.values(validateTenant({
-    fullName,
-    phone: text(formData, "phone"),
-    email: text(formData, "email"),
-    idCardLast4,
-    address: text(formData, "address"),
-    birthDate,
-    emergencyContactName,
-    emergencyContactRelationship,
-    emergencyContactPhone,
-    vehiclePlate: text(formData, "vehiclePlate"),
-    lineId: text(formData, "lineId"),
-    notes: text(formData, "notes"),
-  }))[0];
+  const validationError = Object.values(
+    validateTenant({
+      fullName,
+      phone: text(formData, "phone"),
+      email: text(formData, "email"),
+      idCardLast4,
+      address: text(formData, "address"),
+      birthDate,
+      emergencyContactName,
+      emergencyContactRelationship,
+      emergencyContactPhone,
+      vehiclePlate: text(formData, "vehiclePlate"),
+      lineId: text(formData, "lineId"),
+      notes: text(formData, "notes"),
+    }),
+  )[0];
   if (validationError) return fail(String(validationError));
-  if (!["active", "former", "blocked"].includes(status)) return fail("สถานะผู้เช่าไม่ถูกต้อง");
-  const { data, error } = await context.supabase.from("tenants").update({
-    full_name: fullName, phone: text(formData, "phone") || null, email: text(formData, "email") || null,
-    id_card_last4: idCardLast4 || null,
-    address: text(formData, "address") || null,
-    birth_date: birthDate || null,
-    emergency_contact_name: emergencyContactName || null,
-    emergency_contact_relationship: emergencyContactRelationship || null,
-    emergency_contact_phone: emergencyContactPhone || null,
-    vehicle_plate: text(formData, "vehiclePlate") || null,
-    line_id: text(formData, "lineId") || null,
-    notes: text(formData, "notes") || null,
-    status,
-  }).eq("id", tenantId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  if (!["active", "former", "blocked"].includes(status))
+    return fail("สถานะผู้เช่าไม่ถูกต้อง");
+  const { data, error } = await context.supabase
+    .from("tenants")
+    .update({
+      full_name: fullName,
+      phone: text(formData, "phone") || null,
+      email: text(formData, "email") || null,
+      id_card_last4: idCardLast4 || null,
+      address: text(formData, "address") || null,
+      birth_date: birthDate || null,
+      emergency_contact_name: emergencyContactName || null,
+      emergency_contact_relationship: emergencyContactRelationship || null,
+      emergency_contact_phone: emergencyContactPhone || null,
+      vehicle_plate: text(formData, "vehiclePlate") || null,
+      line_id: text(formData, "lineId") || null,
+      notes: text(formData, "notes") || null,
+      status,
+    })
+    .eq("id", tenantId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error || !data) {
     logFailure(requestId, "tenant.update", error, context.organizationId);
     return { ...fail("แก้ไขข้อมูลผู้เช่าไม่สำเร็จ"), requestId };
@@ -1143,7 +1874,9 @@ export async function updateTenantAction(formData: FormData): Promise<DashboardA
   return success("แก้ไขข้อมูลผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function deleteTenantAction(formData: FormData): Promise<DashboardActionResult> {
+export async function deleteTenantAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_tenants", "delete");
   if (!context.ok) return context.error;
@@ -1153,38 +1886,75 @@ export async function deleteTenantAction(formData: FormData): Promise<DashboardA
   // Check if tenant has tenant_accounts
   const admin = createAdminClient();
   if (admin) {
-    const { data: acc } = await admin.from("tenant_accounts").select("auth_user_id").eq("tenant_id", tenantId).eq("organization_id", context.organizationId).maybeSingle();
+    const { data: acc } = await admin
+      .from("tenant_accounts")
+      .select("auth_user_id")
+      .eq("tenant_id", tenantId)
+      .eq("organization_id", context.organizationId)
+      .maybeSingle();
     if (acc?.auth_user_id) {
       await admin.auth.admin.deleteUser(acc.auth_user_id);
     }
   }
 
-  const { data, error } = await context.supabase.from("tenants").delete()
-    .eq("id", tenantId).eq("organization_id", context.organizationId).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("tenants")
+    .delete()
+    .eq("id", tenantId)
+    .eq("organization_id", context.organizationId)
+    .select("id")
+    .maybeSingle();
   if (error) {
     logFailure(requestId, "tenant.delete", error, context.organizationId);
-    if (error.code === "23503") return fail("ลบผู้เช่าไม่ได้ เนื่องจากมีสัญญาเช่า ใบแจ้งหนี้ หรือประวัติการชำระเงินผูกอยู่ กรุณาเปลี่ยนสถานะเป็น 'ผู้เช่าเดิม' หรือ 'ระงับ' แทน");
+    if (error.code === "23503")
+      return fail(
+        "ลบผู้เช่าไม่ได้ เนื่องจากมีสัญญาเช่า ใบแจ้งหนี้ หรือประวัติการชำระเงินผูกอยู่ กรุณาเปลี่ยนสถานะเป็น 'ผู้เช่าเดิม' หรือ 'ระงับ' แทน",
+      );
     return { ...fail("ลบผู้เช่าไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบผู้เช่า หรือคุณไม่มีสิทธิ์ลบผู้เช่านี้");
-  await context.supabase.from("audit_logs").insert({ organization_id: context.organizationId, action: "tenant.deleted", entity_type: "tenant", entity_id: tenantId });
+  await context.supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: context.organizationId,
+      action: "tenant.deleted",
+      entity_type: "tenant",
+      entity_id: tenantId,
+    });
   return success("ลบข้อมูลผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function updateLeaseAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateLeaseAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_leases", "update");
   if (!context.ok) return context.error;
   const leaseId = text(formData, "leaseId");
-  const startDate = text(formData, "startDate"), endDate = text(formData, "endDate");
-  const rentAmount = numberValue(formData, "rentAmount"), depositAmount = numberValue(formData, "depositAmount");
-  const advanceAmount = numberValue(formData, "advanceAmount"), status = text(formData, "status");
+  const startDate = text(formData, "startDate"),
+    endDate = text(formData, "endDate");
+  const rentAmount = numberValue(formData, "rentAmount"),
+    depositAmount = numberValue(formData, "depositAmount");
+  const advanceAmount = numberValue(formData, "advanceAmount"),
+    status = text(formData, "status");
   const occupantCount = numberValue(formData, "occupantCount");
   if (!UUID_PATTERN.test(leaseId)) return fail("ไม่พบสัญญาที่ต้องการแก้ไข");
-  if (!startDate || (endDate && endDate < startDate)) return fail("กรุณาตรวจสอบช่วงวันที่ของสัญญา");
-  if (![rentAmount, depositAmount, advanceAmount].every((value) => Number.isFinite(value) && value >= 0)) return fail("จำนวนเงินในสัญญาไม่ถูกต้อง");
-  if (!Number.isInteger(occupantCount) || occupantCount < 1 || occupantCount > 50) return fail("จำนวนผู้พักต้องอยู่ระหว่าง 1–50 คน");
-  if (!["draft", "active", "ended", "cancelled"].includes(status)) return fail("สถานะสัญญาไม่ถูกต้อง");
+  if (!startDate || (endDate && endDate < startDate))
+    return fail("กรุณาตรวจสอบช่วงวันที่ของสัญญา");
+  if (
+    ![rentAmount, depositAmount, advanceAmount].every(
+      (value) => Number.isFinite(value) && value >= 0,
+    )
+  )
+    return fail("จำนวนเงินในสัญญาไม่ถูกต้อง");
+  if (
+    !Number.isInteger(occupantCount) ||
+    occupantCount < 1 ||
+    occupantCount > 50
+  )
+    return fail("จำนวนผู้พักต้องอยู่ระหว่าง 1–50 คน");
+  if (!["draft", "active", "ended", "cancelled"].includes(status))
+    return fail("สถานะสัญญาไม่ถูกต้อง");
   if (["ended", "cancelled"].includes(status)) {
     const { data: pendingSubmissions } = await context.supabase
       .from("payment_submissions")
@@ -1194,21 +1964,38 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
       .eq("status", "pending")
       .limit(1);
     if (pendingSubmissions && pendingSubmissions.length > 0) {
-      return fail("ไม่สามารถสิ้นสุดหรือยกเลิกสัญญาได้ เนื่องจากมีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาตรวจสอบสลิปก่อนดำเนินการ");
+      return fail(
+        "ไม่สามารถสิ้นสุดหรือยกเลิกสัญญาได้ เนื่องจากมีสลิปชำระเงินรอการตรวจสอบอยู่ กรุณาตรวจสอบสลิปก่อนดำเนินการ",
+      );
     }
   }
-  const { data, error } = await context.supabase.from("leases").update({
-    start_date: startDate, end_date: endDate || null, rent_amount: rentAmount,
-    deposit_amount: depositAmount, advance_amount: advanceAmount, terms: text(formData, "terms") || null, status,
-    occupant_count: occupantCount,
-  }).eq("id", leaseId).eq("organization_id", context.organizationId).select("id, room_id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("leases")
+    .update({
+      start_date: startDate,
+      end_date: endDate || null,
+      rent_amount: rentAmount,
+      deposit_amount: depositAmount,
+      advance_amount: advanceAmount,
+      terms: text(formData, "terms") || null,
+      status,
+      occupant_count: occupantCount,
+    })
+    .eq("id", leaseId)
+    .eq("organization_id", context.organizationId)
+    .select("id, room_id")
+    .maybeSingle();
   if (error || !data) {
     logFailure(requestId, "lease.update", error, context.organizationId);
     return { ...fail("แก้ไขสัญญาไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (data.room_id) {
     if (status === "active") {
-      await context.supabase.from("rooms").update({ status: "occupied" }).eq("id", data.room_id).eq("organization_id", context.organizationId);
+      await context.supabase
+        .from("rooms")
+        .update({ status: "occupied" })
+        .eq("id", data.room_id)
+        .eq("organization_id", context.organizationId);
     } else if (["ended", "cancelled"].includes(status)) {
       const { data: otherActive } = await context.supabase
         .from("leases")
@@ -1219,31 +2006,53 @@ export async function updateLeaseAction(formData: FormData): Promise<DashboardAc
         .neq("id", leaseId)
         .maybeSingle();
       if (!otherActive) {
-        await context.supabase.from("rooms").update({ status: "vacant" }).eq("id", data.room_id).eq("organization_id", context.organizationId);
+        await context.supabase
+          .from("rooms")
+          .update({ status: "vacant" })
+          .eq("id", data.room_id)
+          .eq("organization_id", context.organizationId);
       }
     }
   }
   return success("แก้ไขสัญญาเช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function updateInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateInvoiceAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_invoices", "update");
   if (!context.ok) return context.error;
-  const invoiceId = text(formData, "invoiceId"), invoiceNumber = text(formData, "invoiceNumber"), dueAt = text(formData, "dueAt");
+  const invoiceId = text(formData, "invoiceId"),
+    invoiceNumber = text(formData, "invoiceNumber"),
+    dueAt = text(formData, "dueAt");
   if (!UUID_PATTERN.test(invoiceId)) return fail("ไม่พบใบแจ้งหนี้ที่ต้องการแก้ไข");
   if (!invoiceNumber || !dueAt) return fail("กรุณากรอกเลขที่เอกสารและวันครบกำหนด");
-  const { data, error } = await context.supabase.from("rent_invoices").update({
-    invoice_number: invoiceNumber, due_at: dueAt, note: text(formData, "note") || null,
-  }).eq("id", invoiceId).eq("organization_id", context.organizationId).in("status", ["draft", "issued", "partial"]).select("id").maybeSingle();
+  const { data, error } = await context.supabase
+    .from("rent_invoices")
+    .update({
+      invoice_number: invoiceNumber,
+      due_at: dueAt,
+      note: text(formData, "note") || null,
+    })
+    .eq("id", invoiceId)
+    .eq("organization_id", context.organizationId)
+    .in("status", ["draft", "issued", "partial"])
+    .select("id")
+    .maybeSingle();
   if (error || !data) {
     logFailure(requestId, "invoice.update", error, context.organizationId);
-    return { ...fail("แก้ไขใบแจ้งหนี้ไม่สำเร็จ เอกสารอาจชำระแล้วหรือเลขที่ซ้ำ"), requestId };
+    return {
+      ...fail("แก้ไขใบแจ้งหนี้ไม่สำเร็จ เอกสารอาจชำระแล้วหรือเลขที่ซ้ำ"),
+      requestId,
+    };
   }
   return success("แก้ไขใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function cancelInvoiceAction(formData: FormData): Promise<DashboardActionResult> {
+export async function cancelInvoiceAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_invoices", "delete");
   if (!context.ok) return context.error;
@@ -1273,7 +2082,9 @@ export async function cancelInvoiceAction(formData: FormData): Promise<Dashboard
   if (submissions && submissions.length > 0) {
     const hasPending = submissions.some((s) => s.status === "pending");
     if (hasPending) {
-      return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีรายการชำระเงินรออนุมัติได้ เนื่องจากมีสลิปรอการตรวจสอบอยู่ กรุณากดไม่อนุมัติสลิปก่อนดำเนินการ");
+      return fail(
+        "ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีรายการชำระเงินรออนุมัติได้ เนื่องจากมีสลิปรอการตรวจสอบอยู่ กรุณากดไม่อนุมัติสลิปก่อนดำเนินการ",
+      );
     }
     return fail("ไม่สามารถยกเลิกใบแจ้งหนี้ที่มีรายการชำระเงินอนุมัติผ่านแล้วได้");
   }
@@ -1302,7 +2113,9 @@ export async function cancelInvoiceAction(formData: FormData): Promise<Dashboard
   return success("ยกเลิกใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function createOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+export async function createOrganizationMemberAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_users", "create");
   if (!context.ok) return context.error;
@@ -1312,25 +2125,31 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
   const password = text(formData, "password");
   const roleCode = text(formData, "roleCode");
 
-  if (fullName.length < 2 || fullName.length > 160) return fail("กรุณากรอกชื่อ-นามสกุล 2-160 ตัวอักษร");
+  if (fullName.length < 2 || fullName.length > 160)
+    return fail("กรุณากรอกชื่อ-นามสกุล 2-160 ตัวอักษร");
   if (!usernameOrEmail) return fail("กรุณากรอกชื่อผู้ใช้หรืออีเมล");
   if (password.length < 8) return fail("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
-  if (!["manager", "accounting", "staff"].includes(roleCode)) return fail("ระดับสิทธิ์ไม่ถูกต้อง");
+  if (!["manager", "accounting", "staff"].includes(roleCode))
+    return fail("ระดับสิทธิ์ไม่ถูกต้อง");
 
-  const plan = getPlanByQuota(context.subscription.max_properties, context.subscription.max_rooms);
+  const plan = getPlanByQuota(
+    context.subscription.max_properties,
+    context.subscription.max_rooms,
+  );
   if (plan.maxUsers > 0) {
-    const { count: currentMemberCount, error: memberCountError } = await context.supabase
-      .from("organization_members")
-      .select("user_id", { count: "exact", head: true })
-      .eq("organization_id", context.organizationId)
-      .eq("status", "active");
+    const { count: currentMemberCount, error: memberCountError } =
+      await context.supabase
+        .from("organization_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("organization_id", context.organizationId)
+        .eq("status", "active");
 
     if (memberCountError || currentMemberCount === null) {
       return fail("ไม่สามารถตรวจสอบโควตาผู้ใช้งานได้ กรุณาลองอีกครั้ง");
     }
     if (currentMemberCount >= plan.maxUsers) {
       return fail(
-        `แพ็กเกจของคุณ (${plan.name}) จำกัดผู้ใช้งานที่ ${plan.maxUsers} คน (ปัจจุบันมีแล้ว ${currentMemberCount} คน) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มผู้ใช้งาน`
+        `แพ็กเกจของคุณ (${plan.name}) จำกัดผู้ใช้งานที่ ${plan.maxUsers} คน (ปัจจุบันมีแล้ว ${currentMemberCount} คน) กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มผู้ใช้งาน`,
       );
     }
   }
@@ -1358,17 +2177,22 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
 
     if (existingMember) return fail("ผู้ใช้งานนี้เป็นสมาชิกในกิจการนี้อยู่แล้ว");
   } else {
-    const domain = process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase() || "longtua.internal";
-    const emailToUse = isEmail ? normalizedUser : `${crypto.randomUUID()}@${domain}`;
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
-      email: emailToUse,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        username: normalizedUser,
-        display_name: fullName,
-      },
-    });
+    const domain =
+      process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase() ||
+      "longtua.internal";
+    const emailToUse = isEmail
+      ? normalizedUser
+      : `${crypto.randomUUID()}@${domain}`;
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
+        email: emailToUse,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          username: normalizedUser,
+          display_name: fullName,
+        },
+      });
 
     if (createError || !created.user) {
       logFailure(requestId, "user.create", createError, context.organizationId);
@@ -1393,15 +2217,22 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
     }
   }
 
-  const { error: memberError } = await admin.from("organization_members").insert({
-    organization_id: context.organizationId,
-    user_id: authUserId,
-    role_code: roleCode,
-    status: "active",
-  });
+  const { error: memberError } = await admin
+    .from("organization_members")
+    .insert({
+      organization_id: context.organizationId,
+      user_id: authUserId,
+      role_code: roleCode,
+      status: "active",
+    });
 
   if (memberError) {
-    logFailure(requestId, "organization_members.insert", memberError, context.organizationId);
+    logFailure(
+      requestId,
+      "organization_members.insert",
+      memberError,
+      context.organizationId,
+    );
     return fail("เพิ่มผู้ใช้เข้าสู่กิจการไม่สำเร็จ");
   }
 
@@ -1409,7 +2240,9 @@ export async function createOrganizationMemberAction(formData: FormData): Promis
   return success(`เพิ่มผู้ใช้งาน "${fullName}" เรียบร้อยแล้ว`, context.organizationId);
 }
 
-export async function updateOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+export async function updateOrganizationMemberAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_users", "update");
   if (!context.ok) return context.error;
@@ -1419,8 +2252,10 @@ export async function updateOrganizationMemberAction(formData: FormData): Promis
   const newPassword = text(formData, "newPassword");
 
   if (!UUID_PATTERN.test(memberId)) return fail("ไม่พบผู้ใช้งานที่ต้องการแก้ไข");
-  if (newPassword && newPassword.length < 8) return fail("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
-  if (!["manager", "accounting", "staff"].includes(roleCode)) return fail("ระดับสิทธิ์ไม่ถูกต้อง");
+  if (newPassword && newPassword.length < 8)
+    return fail("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+  if (!["manager", "accounting", "staff"].includes(roleCode))
+    return fail("ระดับสิทธิ์ไม่ถูกต้อง");
 
   const admin = createAdminClient();
   const { data: member } = await admin
@@ -1431,7 +2266,8 @@ export async function updateOrganizationMemberAction(formData: FormData): Promis
     .maybeSingle();
 
   if (!member) return fail("ไม่พบผู้ใช้งานในกิจการนี้");
-  if (member.role_code === "owner") return fail("ไม่สามารถเปลี่ยนระดับสิทธิ์ของเจ้าของกิจการได้");
+  if (member.role_code === "owner")
+    return fail("ไม่สามารถเปลี่ยนระดับสิทธิ์ของเจ้าของกิจการได้");
 
   const { error: roleError } = await admin
     .from("organization_members")
@@ -1441,15 +2277,21 @@ export async function updateOrganizationMemberAction(formData: FormData): Promis
   if (roleError) return fail("บันทึกระดับสิทธิ์ไม่สำเร็จ กรุณาลองอีกครั้ง");
 
   if (newPassword) {
-    const { error: passwordError } = await admin.auth.admin.updateUserById(member.user_id, { password: newPassword });
-    if (passwordError) return fail("บันทึกระดับสิทธิ์แล้ว แต่ตั้งรหัสผ่านไม่สำเร็จ กรุณาลองอีกครั้ง");
+    const { error: passwordError } = await admin.auth.admin.updateUserById(
+      member.user_id,
+      { password: newPassword },
+    );
+    if (passwordError)
+      return fail("บันทึกระดับสิทธิ์แล้ว แต่ตั้งรหัสผ่านไม่สำเร็จ กรุณาลองอีกครั้ง");
   }
 
   revalidatePath("/users");
   return success("อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว", context.organizationId);
 }
 
-export async function deleteOrganizationMemberAction(formData: FormData): Promise<DashboardActionResult> {
+export async function deleteOrganizationMemberAction(
+  formData: FormData,
+): Promise<DashboardActionResult> {
   const requestId = crypto.randomUUID();
   const context = await actionContext(formData, "customer_users", "delete");
   if (!context.ok) return context.error;
@@ -1475,11 +2317,15 @@ export async function deleteOrganizationMemberAction(formData: FormData): Promis
     .eq("organization_id", context.organizationId);
 
   if (error) {
-    logFailure(requestId, "organization_members.delete", error, context.organizationId);
+    logFailure(
+      requestId,
+      "organization_members.delete",
+      error,
+      context.organizationId,
+    );
     return fail("ลบผู้ใช้งานไม่สำเร็จ");
   }
 
   revalidatePath("/users");
   return success("ลบผู้ใช้งานออกจากกิจการเรียบร้อยแล้ว", context.organizationId);
 }
-

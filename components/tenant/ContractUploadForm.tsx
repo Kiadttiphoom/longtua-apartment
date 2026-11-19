@@ -42,7 +42,9 @@ export function ContractUploadForm({
   const [items, setItems] = useState<PreviewItem[]>([]);
   const [viewingItem, setViewingItem] = useState<PreviewItem | null>(null);
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
 
   const existingCount = uploadCountsByLease[selectedLeaseId] || 0;
   const MAX_IMAGES = 5;
@@ -62,7 +64,7 @@ export function ContractUploadForm({
   // Clean up object URLs on unmount or item removal
   useEffect(() => {
     return () => {
-      items.forEach(item => {
+      items.forEach((item) => {
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
       });
     };
@@ -72,13 +74,27 @@ export function ContractUploadForm({
   useEffect(() => {
     items.forEach(async (item) => {
       if (item.isHeic && !item.previewUrl && !item.preparingPreview) {
-        setItems(prev => prev.map(p => p.id === item.id ? { ...p, preparingPreview: true } : p));
+        setItems((prev) =>
+          prev.map((p) =>
+            p.id === item.id ? { ...p, preparingPreview: true } : p,
+          ),
+        );
         try {
           const prepared = await prepareSlipImage(item.file);
           const url = URL.createObjectURL(prepared);
-          setItems(prev => prev.map(p => p.id === item.id ? { ...p, previewUrl: url, preparingPreview: false } : p));
+          setItems((prev) =>
+            prev.map((p) =>
+              p.id === item.id
+                ? { ...p, previewUrl: url, preparingPreview: false }
+                : p,
+            ),
+          );
         } catch {
-          setItems(prev => prev.map(p => p.id === item.id ? { ...p, preparingPreview: false } : p));
+          setItems((prev) =>
+            prev.map((p) =>
+              p.id === item.id ? { ...p, preparingPreview: false } : p,
+            ),
+          );
         }
       }
     });
@@ -122,7 +138,9 @@ export function ContractUploadForm({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const isHeic = /\.(heic|heif)$/i.test(file.name) || ["image/heic", "image/heif"].includes(file.type);
+      const isHeic =
+        /\.(heic|heif)$/i.test(file.name) ||
+        ["image/heic", "image/heif"].includes(file.type);
       const isImage = isHeic || file.type.startsWith("image/");
 
       if (!isImage) {
@@ -151,7 +169,7 @@ export function ContractUploadForm({
     }
 
     if (validFiles.length > 0) {
-      setItems(prev => [...prev, ...validFiles]);
+      setItems((prev) => [...prev, ...validFiles]);
     }
 
     if (fileInputRef.current) {
@@ -160,17 +178,17 @@ export function ContractUploadForm({
   };
 
   const removeItem = (id: string) => {
-    setViewingItem(curr => curr?.id === id ? null : curr);
-    setItems(prev => {
-      const target = prev.find(p => p.id === id);
+    setViewingItem((curr) => (curr?.id === id ? null : curr));
+    setItems((prev) => {
+      const target = prev.find((p) => p.id === id);
       if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter(p => p.id !== id);
+      return prev.filter((p) => p.id !== id);
     });
   };
 
   const clearAll = () => {
     setViewingItem(null);
-    items.forEach(item => {
+    items.forEach((item) => {
       if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
     });
     setItems([]);
@@ -208,7 +226,9 @@ export function ContractUploadForm({
         try {
           processed = await prepareSlipImage(item.file);
         } catch (err) {
-          throw new Error(`ภาพ "${item.file.name}": ${err instanceof Error ? err.message : "แปลงภาพไม่สำเร็จ"}`);
+          throw new Error(
+            `ภาพ "${item.file.name}": ${err instanceof Error ? err.message : "แปลงภาพไม่สำเร็จ"}`,
+          );
         }
 
         const presigned = await requestContractUploadPresignedUrl({
@@ -232,13 +252,13 @@ export function ContractUploadForm({
           });
         } catch {
           throw new Error(
-            `ไม่สามารถอัปโหลดภาพ "${item.file.name}" ได้ กรุณาลองใหม่อีกครั้ง`
+            `ไม่สามารถอัปโหลดภาพ "${item.file.name}" ได้ กรุณาลองใหม่อีกครั้ง`,
           );
         }
 
         if (!uploadRes.ok) {
           throw new Error(
-            `อัปโหลดภาพ "${item.file.name}" ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง`
+            `อัปโหลดภาพ "${item.file.name}" ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง`,
           );
         }
 
@@ -250,20 +270,29 @@ export function ContractUploadForm({
         });
 
         if (!confirmRes.ok) {
-          throw new Error(`บันทึกข้อมูลภาพ "${item.file.name}": ${confirmRes.message}`);
+          throw new Error(
+            `บันทึกข้อมูลภาพ "${item.file.name}": ${confirmRes.message}`,
+          );
         }
 
         successCount++;
         // Clean up and remove this uploaded item from list
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-        setItems(prev => prev.filter(p => p.id !== item.id));
+        setItems((prev) => prev.filter((p) => p.id !== item.id));
       }
 
-      setMessage({ ok: true, text: `แนบภาพสัญญาสำเร็จเรียบร้อยทั้งหมด ${successCount} ภาพ` });
+      setMessage({
+        ok: true,
+        text: `แนบภาพสัญญาสำเร็จเรียบร้อยทั้งหมด ${successCount} ภาพ`,
+      });
       router.refresh();
-      await alertSuccess("แนบภาพสัญญาสำเร็จ", `แนบภาพสัญญาสำเร็จเรียบร้อยทั้งหมด ${successCount} ภาพ`);
+      await alertSuccess(
+        "แนบภาพสัญญาสำเร็จ",
+        `แนบภาพสัญญาสำเร็จเรียบร้อยทั้งหมด ${successCount} ภาพ`,
+      );
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการอัปโหลด";
+      const errMsg =
+        error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการอัปโหลด";
       setMessage(null);
       await alertError("อัปโหลดไม่สำเร็จ", errMsg);
     } finally {
@@ -272,22 +301,32 @@ export function ContractUploadForm({
   };
 
   return (
-    <form className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5" onSubmit={handleUpload}>
+    <form
+      className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
+      onSubmit={handleUpload}
+    >
       {leases.length > 1 ? (
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">เลือกสัญญา</label>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+            เลือกสัญญา
+          </label>
           <SelectControl
             name="leaseId"
             ariaLabel="เลือกสัญญา"
             defaultValue={selectedLeaseId}
             onValueChange={(val) => setSelectedLeaseId(val)}
-            options={leases.map((l) => ({ value: l.id, label: l.lease_number }))}
+            options={leases.map((l) => ({
+              value: l.id,
+              label: l.lease_number,
+            }))}
             disabled={pending}
           />
         </div>
       ) : (
         <div>
-          <span className="block text-xs font-semibold text-slate-500">สัญญา</span>
+          <span className="block text-xs font-semibold text-slate-500">
+            สัญญา
+          </span>
           <div className="mt-1 flex items-center gap-2">
             <span className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-800">
               เลขที่สัญญา: {leases[0]?.lease_number ?? "-"}
@@ -300,13 +339,18 @@ export function ContractUploadForm({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="block text-xs font-semibold text-slate-700">
-            แนบภาพสัญญา {existingCount > 0 ? `(มีเดิมแล้ว ${existingCount} ภาพ · แนบเพิ่มได้อีก ${remainingQuota} ภาพ)` : "(สูงสุดไม่เกิน 5 ภาพ)"}
+            แนบภาพสัญญา{" "}
+            {existingCount > 0
+              ? `(มีเดิมแล้ว ${existingCount} ภาพ · แนบเพิ่มได้อีก ${remainingQuota} ภาพ)`
+              : "(สูงสุดไม่เกิน 5 ภาพ)"}
           </label>
-          <span className={`text-[11px] font-medium ${items.length >= remainingQuota || existingCount >= MAX_IMAGES ? "text-amber-600 font-bold" : "text-slate-500"}`}>
+          <span
+            className={`text-[11px] font-medium ${items.length >= remainingQuota || existingCount >= MAX_IMAGES ? "text-amber-600 font-bold" : "text-slate-500"}`}
+          >
             {items.length} / {remainingQuota} ภาพ
           </span>
         </div>
-        
+
         {/* Drop / Pick area */}
         <div
           onClick={() => {
@@ -333,25 +377,34 @@ export function ContractUploadForm({
               : "border-blue-300 bg-blue-50/70 hover:bg-blue-50"
           } ${pending ? "pointer-events-none opacity-50" : ""}`}
         >
-          <div className={`flex h-11 w-11 items-center justify-center rounded-full ${existingCount + items.length >= MAX_IMAGES ? "bg-slate-200 text-slate-500" : "bg-blue-100 text-blue-600"}`}>
+          <div
+            className={`flex h-11 w-11 items-center justify-center rounded-full ${existingCount + items.length >= MAX_IMAGES ? "bg-slate-200 text-slate-500" : "bg-blue-100 text-blue-600"}`}
+          >
             <UploadCloud size={24} />
           </div>
           <div className="text-xs text-slate-600">
             {existingCount >= MAX_IMAGES ? (
-              <span className="font-semibold text-amber-700">สัญญานี้มีภาพครบ 5 ภาพแล้ว</span>
+              <span className="font-semibold text-amber-700">
+                สัญญานี้มีภาพครบ 5 ภาพแล้ว
+              </span>
             ) : items.length >= remainingQuota ? (
-              <span className="font-semibold text-slate-700">เลือกภาพใหม่ครบโควตา ({items.length} ภาพ) แล้ว</span>
+              <span className="font-semibold text-slate-700">
+                เลือกภาพใหม่ครบโควตา ({items.length} ภาพ) แล้ว
+              </span>
             ) : (
               <>
-                <span className="font-semibold text-blue-700">คลิกเพื่อเลือกภาพ</span> หรือลากไฟล์มาวางที่นี่
+                <span className="font-semibold text-blue-700">
+                  คลิกเพื่อเลือกภาพ
+                </span>{" "}
+                หรือลากไฟล์มาวางที่นี่
               </>
             )}
             <p className="mt-1 text-[11px] text-slate-400">
               {existingCount >= MAX_IMAGES
                 ? "สัญญานี้มีภาพเดิมครบ 5 ภาพแล้ว หากต้องการเพิ่มภาพใหม่ กรุณากดลบภาพเดิมด้านล่างออกก่อน"
                 : remainingQuota - items.length <= 0
-                ? "เลือกภาพใหม่ครบตามจำนวนที่แนบได้แล้ว"
-                : `สามารถแนบเพิ่มได้อีกไม่เกิน ${remainingQuota - items.length} ภาพ (เฉพาะภาพ JPG, PNG หรือ HEIC จาก iPhone)`}
+                  ? "เลือกภาพใหม่ครบตามจำนวนที่แนบได้แล้ว"
+                  : `สามารถแนบเพิ่มได้อีกไม่เกิน ${remainingQuota - items.length} ภาพ (เฉพาะภาพ JPG, PNG หรือ HEIC จาก iPhone)`}
             </p>
           </div>
           <input
@@ -418,7 +471,10 @@ export function ContractUploadForm({
                     </>
                   ) : item.preparingPreview ? (
                     <div className="flex flex-col items-center gap-1 text-slate-400 p-2 text-center">
-                      <Loader2 className="animate-spin text-blue-500" size={20} />
+                      <Loader2
+                        className="animate-spin text-blue-500"
+                        size={20}
+                      />
                       <span className="text-[10px]">กำลังโหลดรูป...</span>
                     </div>
                   ) : (
@@ -451,7 +507,10 @@ export function ContractUploadForm({
 
                 {/* File info footer */}
                 <div className="p-2 bg-white">
-                  <p className="truncate text-[11px] font-medium text-slate-700" title={item.file.name}>
+                  <p
+                    className="truncate text-[11px] font-medium text-slate-700"
+                    title={item.file.name}
+                  >
                     {item.file.name}
                   </p>
                   <p className="text-[10px] text-slate-400">
@@ -524,11 +583,15 @@ export function ContractUploadForm({
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
               <div className="min-w-0 pr-3">
-                <p className="truncate text-sm font-bold text-slate-800" title={viewingItem.file.name}>
+                <p
+                  className="truncate text-sm font-bold text-slate-800"
+                  title={viewingItem.file.name}
+                >
                   {viewingItem.file.name}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {(viewingItem.file.size / (1024 * 1024)).toFixed(2)} MB · กด ESC เพื่อปิด
+                  {(viewingItem.file.size / (1024 * 1024)).toFixed(2)} MB · กด
+                  ESC เพื่อปิด
                 </p>
               </div>
               <div className="flex items-center gap-2">

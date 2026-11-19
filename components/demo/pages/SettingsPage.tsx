@@ -15,11 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
-import {
-  EmptyState,
-  Modal,
-  PageHeader,
-} from "@/components/portal/PortalUI";
+import { EmptyState, Modal, PageHeader } from "@/components/portal/PortalUI";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money } from "@/lib/format";
 import type { AppSettings, PageContentProps, Property } from "../types";
@@ -37,9 +33,13 @@ export function SettingsPage({
   onSettingsChange,
   properties,
 }: PageContentProps) {
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
+    null,
+  );
   const [localSettings, setLocalSettings] = useState<AppSettings>(appSettings);
-  const [waterMethod, setWaterMethod] = useState<"meter" | "per_person" | "flat_room">("flat_room");
+  const [waterMethod, setWaterMethod] = useState<
+    "meter" | "per_person" | "flat_room"
+  >("flat_room");
   const [query, setQuery] = useState("");
 
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
@@ -50,8 +50,8 @@ export function SettingsPage({
       (item) =>
         !keyword ||
         [item.name, item.address, item.phone].some((value) =>
-          value?.toLowerCase().includes(keyword)
-        )
+          value?.toLowerCase().includes(keyword),
+        ),
     );
   }, [properties, query]);
 
@@ -75,8 +75,8 @@ export function SettingsPage({
     waterMethod === "meter"
       ? "ค่าน้ำ/หน่วย (บาท)"
       : waterMethod === "per_person"
-      ? "ค่าน้ำ/คน (บาท)"
-      : "ค่าน้ำ/ห้อง (บาท)";
+        ? "ค่าน้ำ/คน (บาท)"
+        : "ค่าน้ำ/ห้อง (บาท)";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -86,13 +86,18 @@ export function SettingsPage({
       />
 
       {/* 3 Hero Stat Cards (Matching Portal SettingsPage) */}
-      <section aria-label="ภาพรวมการตั้งค่า" className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs sm:grid-cols-3">
+      <section
+        aria-label="ภาพรวมการตั้งค่า"
+        className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs sm:grid-cols-3"
+      >
         <div className="flex items-center gap-3.5 p-5 sm:border-r sm:border-slate-100">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
             <Building2 aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
-            <span className="block text-xs font-bold text-slate-500">หอพักทั้งหมด</span>
+            <span className="block text-xs font-bold text-slate-500">
+              หอพักทั้งหมด
+            </span>
             <strong className="mt-0.5 block text-2xl font-black tracking-tight text-slate-900 tabular-nums">
               {properties.length.toLocaleString("th-TH")} แห่ง
             </strong>
@@ -104,7 +109,9 @@ export function SettingsPage({
             <Sparkles aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
-            <span className="block text-xs font-bold text-slate-500">ตั้งค่าแล้ว</span>
+            <span className="block text-xs font-bold text-slate-500">
+              ตั้งค่าแล้ว
+            </span>
             <strong className="mt-0.5 block text-2xl font-black tracking-tight text-emerald-800 tabular-nums">
               {properties.length.toLocaleString("th-TH")} แห่ง
             </strong>
@@ -116,9 +123,14 @@ export function SettingsPage({
             <QrCode aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
-            <span className="block text-xs font-bold text-slate-500">ผูก PromptPay</span>
+            <span className="block text-xs font-bold text-slate-500">
+              ผูก PromptPay
+            </span>
             <strong className="mt-0.5 block text-2xl font-black tracking-tight text-blue-900 tabular-nums">
-              {properties.filter((p) => p.settings.promptpay).length.toLocaleString("th-TH")} แห่ง
+              {properties
+                .filter((p) => p.settings.promptpay)
+                .length.toLocaleString("th-TH")}{" "}
+              แห่ง
             </strong>
           </div>
         </div>
@@ -198,7 +210,8 @@ export function SettingsPage({
                       <span>รอบบิล</span>
                     </span>
                     <strong className="text-slate-800 font-bold text-xs">
-                      ออกบิล {property.settings.billDay} · ครบ {property.settings.dueDay}
+                      ออกบิล {property.settings.billDay} · ครบ{" "}
+                      {property.settings.dueDay}
                     </strong>
                   </div>
 
@@ -207,15 +220,22 @@ export function SettingsPage({
                       <QrCode size={13} className="text-purple-500" />
                       <span>บัญชีรับเงิน</span>
                     </span>
-                    <strong className="text-slate-800 font-mono font-bold text-xs truncate" title={property.settings.promptpay}>
+                    <strong
+                      className="text-slate-800 font-mono font-bold text-xs truncate"
+                      title={property.settings.promptpay}
+                    >
                       {property.settings.promptpay || "—"}
                     </strong>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100 text-xs text-slate-500 space-y-1">
-                  <p className="truncate font-medium text-slate-700">ชื่อบัญชี: {property.settings.accountName || "—"}</p>
-                  <p className="truncate text-[11px] text-slate-400">{property.settings.invoiceNote}</p>
+                  <p className="truncate font-medium text-slate-700">
+                    ชื่อบัญชี: {property.settings.accountName || "—"}
+                  </p>
+                  <p className="truncate text-[11px] text-slate-400">
+                    {property.settings.invoiceNote}
+                  </p>
                 </div>
               </div>
 
@@ -234,10 +254,7 @@ export function SettingsPage({
           ))}
         </section>
       ) : (
-        <EmptyState
-          description="ไม่พบหอพักที่ตรงกับคำค้นหา"
-          title="ไม่พบหอพัก"
-        />
+        <EmptyState description="ไม่พบหอพักที่ตรงกับคำค้นหา" title="ไม่พบหอพัก" />
       )}
 
       {/* Edit Property Settings Modal (Matching Portal UI) */}
@@ -255,7 +272,9 @@ export function SettingsPage({
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
               <div className="leading-relaxed">
-                <strong className="font-bold block text-blue-950">ตั้งค่ารอบบิลและสาธารณูปโภค</strong>
+                <strong className="font-bold block text-blue-950">
+                  ตั้งค่ารอบบิลและสาธารณูปโภค
+                </strong>
                 <span className="text-[11px] text-blue-800/80">
                   ค่าเหล่านี้จะถูกใช้เป็นค่าเริ่มต้นในการคำนวณมิเตอร์และใบแจ้งหนี้ประจำเดือน
                 </span>
@@ -264,7 +283,9 @@ export function SettingsPage({
 
             {/* Section 1: Utility Rates */}
             <div className="flex items-center gap-3 pt-1">
-              <strong className="whitespace-nowrap text-xs font-black text-slate-900">อัตราค่าสาธารณูปโภค</strong>
+              <strong className="whitespace-nowrap text-xs font-black text-slate-900">
+                อัตราค่าสาธารณูปโภค
+              </strong>
               <span className="h-px flex-1 bg-slate-200" />
             </div>
 
@@ -273,9 +294,13 @@ export function SettingsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Zap size={14} className="text-amber-500" />
-                    <span>ค่าไฟฟ้า/หน่วย (บาท) <span className="text-rose-500">*</span></span>
+                    <span>
+                      ค่าไฟฟ้า/หน่วย (บาท) <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">THB</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    THB
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -300,7 +325,9 @@ export function SettingsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Droplets size={14} className="text-cyan-500" />
-                    <span>วิธีคิดค่าน้ำประปา <span className="text-rose-500">*</span></span>
+                    <span>
+                      วิธีคิดค่าน้ำประปา <span className="text-rose-500">*</span>
+                    </span>
                   </span>
                 </label>
                 <SelectControl
@@ -323,9 +350,13 @@ export function SettingsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Droplets size={14} className="text-cyan-500" />
-                    <span>{waterRateLabel} <span className="text-rose-500">*</span></span>
+                    <span>
+                      {waterRateLabel} <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">THB</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    THB
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -351,7 +382,9 @@ export function SettingsPage({
                     <Coins size={14} className="text-slate-500" />
                     <span>ค่าปรับล่าช้า/วัน (บาท)</span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">0 หากไม่มีค่าปรับ</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    0 หากไม่มีค่าปรับ
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -375,7 +408,9 @@ export function SettingsPage({
 
             {/* Section 2: Billing Cycle Days */}
             <div className="flex items-center gap-3 pt-1">
-              <strong className="whitespace-nowrap text-xs font-black text-slate-900">รอบวางบิลและกำหนดชำระ</strong>
+              <strong className="whitespace-nowrap text-xs font-black text-slate-900">
+                รอบวางบิลและกำหนดชำระ
+              </strong>
               <span className="h-px flex-1 bg-slate-200" />
             </div>
 
@@ -384,9 +419,13 @@ export function SettingsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays size={14} className="text-slate-500" />
-                    <span>วันตัดรอบบิล (1-28) <span className="text-rose-500">*</span></span>
+                    <span>
+                      วันตัดรอบบิล (1-28) <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">เช่น วันที่ 1 ของเดือน</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    เช่น วันที่ 1 ของเดือน
+                  </span>
                 </label>
                 <input
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
@@ -408,9 +447,14 @@ export function SettingsPage({
                 <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays size={14} className="text-slate-500" />
-                    <span>วันครบกำหนดชำระ (1-28) <span className="text-rose-500">*</span></span>
+                    <span>
+                      วันครบกำหนดชำระ (1-28){" "}
+                      <span className="text-rose-500">*</span>
+                    </span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">เช่น วันที่ 5 ของเดือน</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    เช่น วันที่ 5 ของเดือน
+                  </span>
                 </label>
                 <input
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
@@ -431,7 +475,9 @@ export function SettingsPage({
 
             {/* Section 3: PromptPay Info */}
             <div className="flex items-center gap-3 pt-1">
-              <strong className="whitespace-nowrap text-xs font-black text-slate-900">ข้อมูลรับชำระเงิน</strong>
+              <strong className="whitespace-nowrap text-xs font-black text-slate-900">
+                ข้อมูลรับชำระเงิน
+              </strong>
               <span className="h-px flex-1 bg-slate-200" />
             </div>
 
@@ -442,7 +488,9 @@ export function SettingsPage({
                     <QrCode size={14} className="text-slate-500" />
                     <span>เลขพร้อมเพย์ (PromptPay ID)</span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">เบอร์โทร / เลขนิติบุคคล</span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    เบอร์โทร / เลขนิติบุคคล
+                  </span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -513,7 +561,9 @@ export function SettingsPage({
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span>หมายเหตุท้ายใบแจ้งหนี้</span>
-                <span className="text-[11px] text-slate-400 font-normal">แสดงในบิล</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  แสดงในบิล
+                </span>
               </label>
               <textarea
                 className="w-full p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-medium leading-relaxed transition-all"
@@ -541,7 +591,10 @@ export function SettingsPage({
                 }
                 type="checkbox"
               />
-              <label className="text-xs font-bold text-slate-800 cursor-pointer" htmlFor="attachQR">
+              <label
+                className="text-xs font-bold text-slate-800 cursor-pointer"
+                htmlFor="attachQR"
+              >
                 แนบ QR Code PromptPay อัตโนมัติบนใบแจ้งหนี้
               </label>
             </div>

@@ -90,7 +90,9 @@ test("trialApproval_setsDefaultTrialQuotasToOnePropertyAndTenRooms", () => {
   const actionsCode = read("app/(admin)/admin/actions.ts");
   assert.match(actionsCode, /max_properties: 1, max_rooms: 10/);
 
-  const migrationCode = read("supabase/migrations/20260904160000_subscription_tier_defaults.sql");
+  const migrationCode = read(
+    "supabase/migrations/20260904160000_subscription_tier_defaults.sql",
+  );
   assert.match(migrationCode, /max_properties, max_rooms/);
   assert.match(migrationCode, /1, 10/);
 });

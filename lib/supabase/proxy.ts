@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { verifyToken, signToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import {
+  verifyToken,
+  signToken,
+  SESSION_COOKIE_NAME,
+} from "@/lib/auth/session";
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) return NextResponse.next({ request });

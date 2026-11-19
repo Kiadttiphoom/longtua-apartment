@@ -4,7 +4,10 @@ import { isSystemAdmin } from "@/lib/auth/system-admin";
 import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { readPrivateSlip } from "@/lib/storage/private-r2";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const baseHeaders = {
@@ -42,8 +45,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .eq("status", "active")
     .maybeSingle();
 
-  const managingOrganization = await isSystemAdmin(auth.claims.sub)
-    && (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value === file.organization_id;
+  const managingOrganization =
+    (await isSystemAdmin(auth.claims.sub)) &&
+    (await cookies()).get(IMPERSONATE_ORGANIZATION_COOKIE)?.value ===
+      file.organization_id;
   if (!account && !managingOrganization) {
     return new Response("Not found", {
       status: 404,
@@ -59,8 +64,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       file.content_type === "application/pdf"
         ? "pdf"
         : file.content_type === "image/png"
-        ? "png"
-        : "jpg";
+          ? "png"
+          : "jpg";
 
     const isDownload = new URL(request.url).searchParams.has("download");
 

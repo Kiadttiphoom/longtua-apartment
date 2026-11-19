@@ -10,14 +10,19 @@ export function CompanyPanel({
   onSave: (company: Company) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end"
+      onClick={onClose}
+    >
       <aside
         className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">จัดการลูกค้า</p>
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+              จัดการลูกค้า
+            </p>
             <h2 className="text-lg font-bold text-slate-800">เพิ่มกิจการใหม่</h2>
           </div>
           <button
@@ -42,12 +47,15 @@ export function CompanyPanel({
               properties: 1,
               users: 1,
               status: formData.get("plan") === "Trial" ? "trial" : "active",
-              date: formData.get("plan") === "Trial" ? "อีก 30 วัน" : "รอบถัดไป 30 วัน",
+              date:
+                formData.get("plan") === "Trial" ? "อีก 30 วัน" : "รอบถัดไป 30 วัน",
             });
           }}
         >
           <div className="flex flex-col gap-3.5">
-            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">ข้อมูลกิจการ</h3>
+            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+              ข้อมูลกิจการ
+            </h3>
             <label className="flex flex-col gap-1.5 font-medium text-slate-600">
               <span>ชื่อกิจการ *</span>
               <input
@@ -82,7 +90,9 @@ export function CompanyPanel({
           </div>
 
           <div className="flex flex-col gap-3.5">
-            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">เจ้าของกิจการ</h3>
+            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+              เจ้าของกิจการ
+            </h3>
             <label className="flex flex-col gap-1.5 font-medium text-slate-600">
               <span>ชื่อ-นามสกุล *</span>
               <input
@@ -107,16 +117,26 @@ export function CompanyPanel({
           </div>
 
           <div className="flex flex-col gap-3.5">
-            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">แพ็กเกจ</h3>
+            <h3 className="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+              แพ็กเกจ
+            </h3>
             <div className="flex flex-col gap-1.5 font-medium text-slate-600">
-              <span className="text-xs font-bold text-slate-800">เลือกแพ็กเกจ</span>
+              <span className="text-xs font-bold text-slate-800">
+                เลือกแพ็กเกจ
+              </span>
               <SelectControl
                 ariaLabel="เลือกแพ็กเกจ"
                 defaultValue="Starter"
                 name="plan"
                 options={[
-                  { value: "Starter", label: "Starter (฿790/เดือน - 1 หอพัก 50 ห้อง)" },
-                  { value: "Business", label: "Business (฿1,590/เดือน - 3 หอพัก 200 ห้อง)" },
+                  {
+                    value: "Starter",
+                    label: "Starter (฿790/เดือน - 1 หอพัก 50 ห้อง)",
+                  },
+                  {
+                    value: "Business",
+                    label: "Business (฿1,590/เดือน - 3 หอพัก 200 ห้อง)",
+                  },
                   { value: "Trial", label: "Trial (ทดลองฟรี 30 วัน)" },
                 ]}
                 searchable={false}

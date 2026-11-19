@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 function source(relativePath) {
-  return readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
+  return readFileSync(
+    fileURLToPath(new URL(relativePath, import.meta.url)),
+    "utf8",
+  );
 }
 
 const telegramLib = source("../lib/telegram/notifications.ts");
@@ -24,8 +27,14 @@ test("telegram_module_isServerOnlyAndHasRequiredHandlers", () => {
 });
 
 test("telegram_adminActions_saveAndTestTelegramSettings", () => {
-  assert.match(adminActions, /export async function saveTelegramSettingsAction/);
-  assert.match(adminActions, /export async function testTelegramSettingsAction/);
+  assert.match(
+    adminActions,
+    /export async function saveTelegramSettingsAction/,
+  );
+  assert.match(
+    adminActions,
+    /export async function testTelegramSettingsAction/,
+  );
   assert.match(adminActions, /key: "telegram_settings"/);
   assert.match(adminActions, /testTelegramMessage\(/);
 });

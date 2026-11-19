@@ -2,10 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { money, thaiDate } from "@/lib/format";
-import { formatThaiBillingMonth, getRelatedPeriodMonth } from "@/lib/portal/meter-reading.mjs";
+import {
+  formatThaiBillingMonth,
+  getRelatedPeriodMonth,
+} from "@/lib/portal/meter-reading.mjs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TenantSlipHistoryList } from "@/components/tenant/TenantSlipHistoryList";
-import { DateFilterControl, type DateFilterMode } from "@/components/portal/DateFilterControl";
+import {
+  DateFilterControl,
+  type DateFilterMode,
+} from "@/components/portal/DateFilterControl";
 import { Calendar, ReceiptText, XCircle } from "lucide-react";
 
 export interface TenantBillHistoryData {
@@ -21,7 +27,8 @@ export interface TenantBillHistoryData {
     balance_due: number | string;
     status: string;
     note?: string | null;
-    billing_cycles?: { period_month?: string } | { period_month?: string }[] | null;
+    billing_cycles?:
+      { period_month?: string } | { period_month?: string }[] | null;
   }>;
   allocations: Array<{
     rent_payment_id: string;
@@ -68,9 +75,11 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
   const invoices = useMemo(() => {
     return [...data.invoices].sort(
       (a, b) =>
-        (getRelatedPeriodMonth(b.billing_cycles) || b.issued_at.slice(0, 7)).localeCompare(
-          getRelatedPeriodMonth(a.billing_cycles) || a.issued_at.slice(0, 7)
-        ) || b.issued_at.localeCompare(a.issued_at)
+        (
+          getRelatedPeriodMonth(b.billing_cycles) || b.issued_at.slice(0, 7)
+        ).localeCompare(
+          getRelatedPeriodMonth(a.billing_cycles) || a.issued_at.slice(0, 7),
+        ) || b.issued_at.localeCompare(a.issued_at),
     );
   }, [data.invoices]);
 
@@ -125,7 +134,9 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-bold text-slate-900">ประวัติบิลและการชำระย้อนหลัง</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              ประวัติบิลและการชำระย้อนหลัง
+            </h2>
             {dateFilterValue ? (
               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700">
                 {filteredInvoices.length} รายการ
@@ -159,7 +170,9 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
             <ReceiptText size={24} />
           </div>
           <p className="text-sm font-bold text-slate-700">ยังไม่มีประวัติใบแจ้งหนี้</p>
-          <p className="mt-1 text-xs text-slate-400">เมื่อมีบิลในระบบ ข้อมูลจะปรากฏที่นี่</p>
+          <p className="mt-1 text-xs text-slate-400">
+            เมื่อมีบิลในระบบ ข้อมูลจะปรากฏที่นี่
+          </p>
         </div>
       )}
 
@@ -194,11 +207,16 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
           .filter((a) => a.rent_invoice_id === invoice.id)
           .flatMap((a) => {
             const payment = data.payments.find(
-              (p) => p.id === a.rent_payment_id && p.status === "confirmed"
+              (p) => p.id === a.rent_payment_id && p.status === "confirmed",
             );
-            return payment ? [{ ...payment, allocatedAmount: Number(a.amount) }] : [];
+            return payment
+              ? [{ ...payment, allocatedAmount: Number(a.amount) }]
+              : [];
           });
-        const paid = receipts.reduce((sum, receipt) => sum + receipt.allocatedAmount, 0);
+        const paid = receipts.reduce(
+          (sum, receipt) => sum + receipt.allocatedAmount,
+          0,
+        );
         const slips = data.submissions
           .filter((s) => s.invoice_id === invoice.id)
           .map((s) => ({
@@ -208,7 +226,9 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
             status: s.status,
             rejection_reason: s.rejection_reason,
           }));
-        const lines = data.invoiceItems.filter((i) => i.rent_invoice_id === invoice.id);
+        const lines = data.invoiceItems.filter(
+          (i) => i.rent_invoice_id === invoice.id,
+        );
 
         const isVoid = invoice.status === "void";
         const hasVoidedPrior =
@@ -218,21 +238,26 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
               inv.id !== invoice.id &&
               inv.status === "void" &&
               (getRelatedPeriodMonth(inv.billing_cycles) === period ||
-                (inv.issued_at && invoice.issued_at && inv.issued_at.slice(0, 7) === invoice.issued_at.slice(0, 7)))
+                (inv.issued_at &&
+                  invoice.issued_at &&
+                  inv.issued_at.slice(0, 7) === invoice.issued_at.slice(0, 7))),
           );
 
         return (
           <article
             key={invoice.id}
             className={`space-y-4 rounded-3xl border p-5 sm:p-6 shadow-xs transition-all ${
-              isVoid ? "border-rose-200 bg-slate-50/70 opacity-90" : "border-slate-200/90 bg-white"
+              isVoid
+                ? "border-rose-200 bg-slate-50/70 opacity-90"
+                : "border-slate-200/90 bg-white"
             }`}
           >
             {isVoid && (
               <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-900">
                 <XCircle size={16} className="shrink-0 text-rose-600" />
                 <span>
-                  ใบแจ้งหนี้ฉบับนี้ถูกยกเลิกแล้ว (Void) — หากมีใบแจ้งหนี้ใหม่สำหรับรอบเดือนนี้ กรุณาดูรายการล่าสุด
+                  ใบแจ้งหนี้ฉบับนี้ถูกยกเลิกแล้ว (Void) — หากมีใบแจ้งหนี้ใหม่สำหรับรอบเดือนนี้
+                  กรุณาดูรายการล่าสุด
                 </span>
               </div>
             )}
@@ -240,8 +265,12 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
             <header className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className={`text-base font-bold ${isVoid ? "text-slate-600 line-through" : "text-slate-900"}`}>
-                    {period ? formatThaiBillingMonth(period.slice(0, 7)) : "ไม่ระบุรอบเดือน"}
+                  <h3
+                    className={`text-base font-bold ${isVoid ? "text-slate-600 line-through" : "text-slate-900"}`}
+                  >
+                    {period
+                      ? formatThaiBillingMonth(period.slice(0, 7))
+                      : "ไม่ระบุรอบเดือน"}
                   </h3>
                   {hasVoidedPrior && (
                     <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200 shadow-2xs">
@@ -259,7 +288,9 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
             <dl className="grid grid-cols-3 gap-2 rounded-2xl bg-slate-50/80 p-3.5 text-xs">
               <div>
                 <dt className="font-semibold text-slate-500">ยอดเรียกเก็บ</dt>
-                <dd className={`mt-1 font-bold tabular-nums ${isVoid ? "line-through text-slate-400" : "text-slate-900"}`}>
+                <dd
+                  className={`mt-1 font-bold tabular-nums ${isVoid ? "line-through text-slate-400" : "text-slate-900"}`}
+                >
                   {money(Number(invoice.total))}
                 </dd>
               </div>
@@ -276,13 +307,17 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
                     isVoid
                       ? "text-slate-400 line-through"
                       : Number(invoice.balance_due) > 0
-                      ? "text-rose-600"
-                      : "text-slate-800"
+                        ? "text-rose-600"
+                        : "text-slate-800"
                   }`}
                 >
                   {isVoid ? "฿0.00" : money(Number(invoice.balance_due))}
                 </dd>
-                {isVoid && <span className="text-[10px] font-bold text-rose-600 block mt-0.5">ยกเลิกแล้ว</span>}
+                {isVoid && (
+                  <span className="text-[10px] font-bold text-rose-600 block mt-0.5">
+                    ยกเลิกแล้ว
+                  </span>
+                )}
               </div>
             </dl>
 
@@ -292,14 +327,23 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
               </summary>
               <div className="mt-3 space-y-2 rounded-2xl bg-slate-50/50 p-3.5 text-xs">
                 {lines.map((line) => (
-                  <div key={line.id} className="flex justify-between gap-3 text-slate-700">
+                  <div
+                    key={line.id}
+                    className="flex justify-between gap-3 text-slate-700"
+                  >
                     <span>{line.description}</span>
-                    <strong className="font-bold tabular-nums">{money(Number(line.amount))}</strong>
+                    <strong className="font-bold tabular-nums">
+                      {money(Number(line.amount))}
+                    </strong>
                   </div>
                 ))}
                 {receipts.map((receipt) => (
-                  <p key={receipt.id} className="border-t border-slate-200/60 pt-2 font-medium text-emerald-800">
-                    รับชำระ {thaiDate(receipt.paid_at)} · {money(receipt.allocatedAmount)} · ใบเสร็จ{" "}
+                  <p
+                    key={receipt.id}
+                    className="border-t border-slate-200/60 pt-2 font-medium text-emerald-800"
+                  >
+                    รับชำระ {thaiDate(receipt.paid_at)} ·{" "}
+                    {money(receipt.allocatedAmount)} · ใบเสร็จ{" "}
                     {receipt.receipt_number}
                   </p>
                 ))}
@@ -307,7 +351,9 @@ export function TenantBillHistory({ data }: { data: TenantBillHistoryData }) {
             </details>
 
             <div className="space-y-2 border-t border-slate-100 pt-3">
-              <h4 className="text-xs font-bold text-slate-800">สลิปที่แนบ ({slips.length})</h4>
+              <h4 className="text-xs font-bold text-slate-800">
+                สลิปที่แนบ ({slips.length})
+              </h4>
               <TenantSlipHistoryList slips={slips} />
             </div>
           </article>

@@ -4,21 +4,41 @@ import { useState } from "react";
 import { impersonateOrganizationAction } from "@/app/(admin)/admin/actions";
 import { SelectControl } from "@/components/ui/SelectControl";
 
-export function AdminManageOrganizationButton({ organizationId, section }: { organizationId: string; section: string }) {
+export function AdminManageOrganizationButton({
+  organizationId,
+  section,
+}: {
+  organizationId: string;
+  section: string;
+}) {
   return (
     <form action={impersonateOrganizationAction}>
       <input type="hidden" name="organizationId" value={organizationId} />
       <input type="hidden" name="section" value={section} />
-      <button type="submit" className="whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer">จัดการข้อมูล</button>
+      <button
+        type="submit"
+        className="whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
+      >
+        จัดการข้อมูล
+      </button>
     </form>
   );
 }
 
-export function AdminManageOrganization({ organizations, section }: { organizations: Array<{ id: string; name: string }>; section: string }) {
+export function AdminManageOrganization({
+  organizations,
+  section,
+}: {
+  organizations: Array<{ id: string; name: string }>;
+  section: string;
+}) {
   const [selectedOrgId, setSelectedOrgId] = useState("");
 
   return (
-    <form action={impersonateOrganizationAction} className="flex flex-wrap items-end gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+    <form
+      action={impersonateOrganizationAction}
+      className="flex flex-wrap items-end gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4"
+    >
       <input type="hidden" name="section" value={section} />
       <div className="flex-1 min-w-48 space-y-2 text-xs font-semibold text-slate-700">
         <label className="block">เลือกกิจการที่ต้องการจัดการข้อมูล</label>
@@ -28,7 +48,10 @@ export function AdminManageOrganization({ organizations, section }: { organizati
           ariaLabel="เลือกกิจการที่ต้องการจัดการข้อมูล"
           value={selectedOrgId}
           onValueChange={(val) => setSelectedOrgId(val)}
-          options={organizations.map((organization) => ({ value: organization.id, label: organization.name }))}
+          options={organizations.map((organization) => ({
+            value: organization.id,
+            label: organization.name,
+          }))}
         />
       </div>
       <button
@@ -38,7 +61,9 @@ export function AdminManageOrganization({ organizations, section }: { organizati
       >
         เปิดหน้าจัดการ
       </button>
-      <p className="w-full text-xs text-slate-600">แก้ไขข้อมูลในฐานะ Super Admin โดยระบบจะแสดงชื่อกิจการที่กำลังจัดการ</p>
+      <p className="w-full text-xs text-slate-600">
+        แก้ไขข้อมูลในฐานะ Super Admin โดยระบบจะแสดงชื่อกิจการที่กำลังจัดการ
+      </p>
     </form>
   );
 }

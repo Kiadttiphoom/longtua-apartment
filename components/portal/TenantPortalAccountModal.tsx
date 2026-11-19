@@ -1,7 +1,10 @@
 "use client";
 
 import { KeyRound, Lock, ShieldCheck, Sparkles, UserRound } from "lucide-react";
-import { createTenantPortalAccountAction, updateTenantPortalAccountAction } from "@/app/(portal)/resource-actions";
+import {
+  createTenantPortalAccountAction,
+  updateTenantPortalAccountAction,
+} from "@/app/(portal)/resource-actions";
 import { Modal, PortalForm } from "@/components/portal/PortalUI";
 import type { Tenant } from "@/components/portal/types";
 import type { TenantPortalAccountSummary } from "@/lib/portal/tenant-accounts";
@@ -29,7 +32,11 @@ export function TenantPortalAccountModal({
       title={editing ? "จัดการบัญชี Tenant Portal" : "เปิดบัญชี Tenant Portal"}
     >
       <PortalForm
-        action={editing ? updateTenantPortalAccountAction : createTenantPortalAccountAction}
+        action={
+          editing
+            ? updateTenantPortalAccountAction
+            : createTenantPortalAccountAction
+        }
         onCancel={onClose}
         onSuccess={onClose}
         organizationId={organizationId}
@@ -39,7 +46,8 @@ export function TenantPortalAccountModal({
           const username = String(values.username ?? "").trim();
           const password = String(values.temporaryPassword ?? "").trim();
           if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username)) {
-            errors.username = "ใช้ภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว (ตัวพิมพ์เล็ก)";
+            errors.username =
+              "ใช้ภาษาอังกฤษ ตัวเลข จุด ขีดกลาง หรือขีดล่าง 4–30 ตัว (ตัวพิมพ์เล็ก)";
           }
           if ((!editing || password) && password.length < 8) {
             errors.temporaryPassword = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร";
@@ -50,7 +58,7 @@ export function TenantPortalAccountModal({
         {(errors, clear) => (
           <div className="space-y-4 text-xs">
             <input name="tenantId" type="hidden" value={tenant.id} />
-            
+
             {/* Value Banner */}
             <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-100 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
@@ -74,13 +82,19 @@ export function TenantPortalAccountModal({
                 <UserRound size={15} className="text-slate-400" />
                 <span>ผู้เช่า</span>
               </span>
-              <strong className="text-slate-900 font-bold text-xs">{tenant.full_name}</strong>
+              <strong className="text-slate-900 font-bold text-xs">
+                {tenant.full_name}
+              </strong>
             </div>
 
             {roomNumber ? (
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <span className="text-slate-500 font-medium">ห้องพักตามสัญญาปัจจุบัน</span>
-                <strong className="text-blue-700 font-bold font-mono">ห้อง {roomNumber}</strong>
+                <span className="text-slate-500 font-medium">
+                  ห้องพักตามสัญญาปัจจุบัน
+                </span>
+                <strong className="text-blue-700 font-bold font-mono">
+                  ห้อง {roomNumber}
+                </strong>
               </div>
             ) : null}
 
@@ -89,7 +103,9 @@ export function TenantPortalAccountModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <KeyRound size={14} className="text-slate-500" />
-                  <span>ชื่อผู้ใช้ (Username) <span className="text-rose-500">*</span></span>
+                  <span>
+                    ชื่อผู้ใช้ (Username) <span className="text-rose-500">*</span>
+                  </span>
                 </span>
                 <span className="text-[11px] text-slate-400 font-normal font-mono">
                   {roomNumber ? `เช่น tenant.${roomNumber}` : "เช่น tenant.101"}
@@ -106,11 +122,15 @@ export function TenantPortalAccountModal({
                   defaultValue={account?.username}
                   name="username"
                   onChange={() => clear("username")}
-                  placeholder={roomNumber ? `เช่น tenant.${roomNumber}` : "เช่น somchai.101"}
+                  placeholder={
+                    roomNumber ? `เช่น tenant.${roomNumber}` : "เช่น somchai.101"
+                  }
                 />
               </div>
               {errors.username ? (
-                <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.username}</p>
+                <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                  {errors.username}
+                </p>
               ) : null}
             </div>
 
@@ -119,9 +139,15 @@ export function TenantPortalAccountModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Lock size={14} className="text-slate-500" />
-                  <span>{editing ? "รหัสผ่านใหม่ (หากต้องการเปลี่ยน)" : "รหัสผ่านเริ่มต้น (Temporary Password) *"}</span>
+                  <span>
+                    {editing
+                      ? "รหัสผ่านใหม่ (หากต้องการเปลี่ยน)"
+                      : "รหัสผ่านเริ่มต้น (Temporary Password) *"}
+                  </span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">อย่างน้อย 8 ตัวอักษร</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  อย่างน้อย 8 ตัวอักษร
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -132,12 +158,18 @@ export function TenantPortalAccountModal({
                   className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-500/15 outline-none text-slate-900 text-xs font-bold transition-all placeholder:text-slate-400"
                   name="temporaryPassword"
                   onChange={() => clear("temporaryPassword")}
-                  placeholder={editing ? "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน" : "กำหนดรหัสผ่าน 8 ตัวอักษรขึ้นไป"}
+                  placeholder={
+                    editing
+                      ? "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน"
+                      : "กำหนดรหัสผ่าน 8 ตัวอักษรขึ้นไป"
+                  }
                   type="password"
                 />
               </div>
               {errors.temporaryPassword ? (
-                <p className="mt-1 text-rose-600 text-[11px] font-bold">{errors.temporaryPassword}</p>
+                <p className="mt-1 text-rose-600 text-[11px] font-bold">
+                  {errors.temporaryPassword}
+                </p>
               ) : null}
             </div>
           </div>

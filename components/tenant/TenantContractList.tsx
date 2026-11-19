@@ -12,8 +12,12 @@ export interface TenantContractFile {
 }
 
 export function TenantContractList({ files }: { files: TenantContractFile[] }) {
-  const [viewingFile, setViewingFile] = useState<TenantContractFile | null>(null);
-  const [fileToDelete, setFileToDelete] = useState<TenantContractFile | null>(null);
+  const [viewingFile, setViewingFile] = useState<TenantContractFile | null>(
+    null,
+  );
+  const [fileToDelete, setFileToDelete] = useState<TenantContractFile | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -63,10 +67,15 @@ export function TenantContractList({ files }: { files: TenantContractFile[] }) {
 
             <div className="flex flex-1 flex-col justify-between p-4">
               <div>
-                <strong className="block truncate text-sm font-semibold text-slate-800" title={file.file_name}>
+                <strong
+                  className="block truncate text-sm font-semibold text-slate-800"
+                  title={file.file_name}
+                >
                   {file.file_name}
                 </strong>
-                <p className="mt-1 text-xs text-slate-500">แนบเมื่อ {thaiDate(file.created_at)}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  แนบเมื่อ {thaiDate(file.created_at)}
+                </p>
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold">
@@ -120,7 +129,10 @@ export function TenantContractList({ files }: { files: TenantContractFile[] }) {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
               <div className="min-w-0 pr-3">
-                <p className="truncate text-sm font-bold text-slate-800" title={viewingFile.file_name}>
+                <p
+                  className="truncate text-sm font-bold text-slate-800"
+                  title={viewingFile.file_name}
+                >
                   {viewingFile.file_name}
                 </p>
                 <p className="text-xs text-slate-500">
@@ -189,8 +201,12 @@ export function TenantContractList({ files }: { files: TenantContractFile[] }) {
                 <Trash2 size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 text-base">ยืนยันการลบภาพสัญญา</h3>
-                <p className="text-xs text-slate-500">ไฟล์จะถูกลบออกจากระบบถาวร</p>
+                <h3 className="font-bold text-slate-800 text-base">
+                  ยืนยันการลบภาพสัญญา
+                </h3>
+                <p className="text-xs text-slate-500">
+                  ไฟล์จะถูกลบออกจากระบบถาวร
+                </p>
               </div>
             </div>
 

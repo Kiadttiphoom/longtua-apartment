@@ -33,7 +33,10 @@ export function ContractFormModal({
 }) {
   const [form, setForm] = useState<ContractRecord>({ ...contract });
 
-  function update<K extends keyof ContractRecord>(key: K, value: ContractRecord[K]) {
+  function update<K extends keyof ContractRecord>(
+    key: K,
+    value: ContractRecord[K],
+  ) {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
       if (key === "rent" && typeof value === "number") {
@@ -44,7 +47,10 @@ export function ContractFormModal({
     });
   }
 
-  const isFormValid = form.tenantName.trim() !== "" && form.roomNumber.trim() !== "" && form.rent > 0;
+  const isFormValid =
+    form.tenantName.trim() !== "" &&
+    form.roomNumber.trim() !== "" &&
+    form.rent > 0;
 
   return (
     <div
@@ -70,7 +76,9 @@ export function ContractFormModal({
                 </>
               )}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">ระบุรายละเอียดข้อตกลงและเงื่อนไขการเช่า</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              ระบุรายละเอียดข้อตกลงและเงื่อนไขการเช่า
+            </p>
           </div>
           <button
             aria-label="ปิดหน้าต่าง"
@@ -89,9 +97,12 @@ export function ContractFormModal({
               <Sparkles size={13} strokeWidth={2.2} />
             </span>
             <div className="leading-relaxed">
-              <strong className="font-bold block text-blue-950">ข้อมูลข้อตกลงและสัญญาเช่า</strong>
+              <strong className="font-bold block text-blue-950">
+                ข้อมูลข้อตกลงและสัญญาเช่า
+              </strong>
               <span className="text-[11px] text-blue-800/80">
-                ระบบจะคำนวณเงินประกันและค่าเช่าล่วงหน้าให้อัตโนมัติ พร้อมพิมพ์เป็นเอกสารสัญญาได้ทันที
+                ระบบจะคำนวณเงินประกันและค่าเช่าล่วงหน้าให้อัตโนมัติ
+                พร้อมพิมพ์เป็นเอกสารสัญญาได้ทันที
               </span>
             </div>
           </div>
@@ -101,9 +112,13 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <FileText size={14} className="text-slate-500" />
-                  <span>เลขที่สัญญา <span className="text-rose-500">*</span></span>
+                  <span>
+                    เลขที่สัญญา <span className="text-rose-500">*</span>
+                  </span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">เช่น สญ.-2568-001</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เช่น สญ.-2568-001
+                </span>
               </label>
               <input
                 className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
@@ -117,9 +132,13 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <DoorOpen size={14} className="text-slate-500" />
-                  <span>หมายเลขห้องพัก <span className="text-rose-500">*</span></span>
+                  <span>
+                    หมายเลขห้องพัก <span className="text-rose-500">*</span>
+                  </span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">เช่น 101, 202</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  เช่น 101, 202
+                </span>
               </label>
               <input
                 className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
@@ -135,9 +154,13 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <UserRound size={14} className="text-slate-500" />
-                  <span>ชื่อ-นามสกุล ผู้เช่า <span className="text-rose-500">*</span></span>
+                  <span>
+                    ชื่อ-นามสกุล ผู้เช่า <span className="text-rose-500">*</span>
+                  </span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">คู่สัญญา</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  คู่สัญญา
+                </span>
               </label>
               <input
                 className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-bold transition-all"
@@ -153,7 +176,9 @@ export function ContractFormModal({
                   <CreditCard size={14} className="text-slate-500" />
                   <span>เลขบัตรประชาชน</span>
                 </span>
-                <span className="text-[11px] text-slate-400 font-normal">13 หลัก</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  13 หลัก
+                </span>
               </label>
               <input
                 className="w-full h-11 px-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 outline-none text-slate-900 text-xs font-mono font-bold transition-all"
@@ -189,7 +214,9 @@ export function ContractFormModal({
               </label>
               <SelectControl
                 ariaLabel="สถานะสัญญา"
-                onValueChange={(val) => update("status", val as "active" | "expired" | "draft")}
+                onValueChange={(val) =>
+                  update("status", val as "active" | "expired" | "draft")
+                }
                 options={[
                   { value: "active", label: "มีผลอยู่ (Active)" },
                   { value: "draft", label: "ร่างสัญญา (Draft)" },
@@ -206,7 +233,9 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Calendar size={14} className="text-slate-500" />
-                  <span>วันที่เริ่มสัญญา <span className="text-rose-500">*</span></span>
+                  <span>
+                    วันที่เริ่มสัญญา <span className="text-rose-500">*</span>
+                  </span>
                 </span>
               </label>
               <DateTimeControl
@@ -223,7 +252,9 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <CalendarCheck size={14} className="text-slate-500" />
-                  <span>วันที่สิ้นสุดสัญญา <span className="text-rose-500">*</span></span>
+                  <span>
+                    วันที่สิ้นสุดสัญญา <span className="text-rose-500">*</span>
+                  </span>
                 </span>
               </label>
               <DateTimeControl
@@ -242,7 +273,9 @@ export function ContractFormModal({
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Banknote size={14} className="text-slate-500" />
-                  <span>ค่าเช่า/เดือน (บาท) <span className="text-rose-500">*</span></span>
+                  <span>
+                    ค่าเช่า/เดือน (บาท) <span className="text-rose-500">*</span>
+                  </span>
                 </span>
               </label>
               <input
@@ -251,7 +284,9 @@ export function ContractFormModal({
                 min="0"
                 step="100"
                 value={form.rent || ""}
-                onChange={(e) => update("rent", parseInt(e.target.value, 10) || 0)}
+                onChange={(e) =>
+                  update("rent", parseInt(e.target.value, 10) || 0)
+                }
               />
             </div>
 
@@ -268,7 +303,9 @@ export function ContractFormModal({
                 min="0"
                 step="100"
                 value={form.deposit || ""}
-                onChange={(e) => update("deposit", parseInt(e.target.value, 10) || 0)}
+                onChange={(e) =>
+                  update("deposit", parseInt(e.target.value, 10) || 0)
+                }
               />
             </div>
 
@@ -285,7 +322,9 @@ export function ContractFormModal({
                 min="0"
                 step="100"
                 value={form.advanceRent || ""}
-                onChange={(e) => update("advanceRent", parseInt(e.target.value, 10) || 0)}
+                onChange={(e) =>
+                  update("advanceRent", parseInt(e.target.value, 10) || 0)
+                }
               />
             </div>
           </div>

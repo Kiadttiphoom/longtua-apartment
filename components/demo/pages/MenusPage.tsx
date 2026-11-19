@@ -37,12 +37,33 @@ export function MenusPage({ isLocked, onToast }: PageContentProps) {
         <DataTable
           headers={["ชื่อเมนู", "รหัส", "ลำดับ", "หมวดหมู่", "สถานะ", "การจัดการ"]}
           rows={collection.items.map((row, idx) => [
-            <strong key="name" className="text-slate-800 font-bold text-xs">{row[0]}</strong>,
-            <span key="code" className="text-slate-500 font-mono text-xs">{row[1]}</span>,
-            <span key="order" className="text-slate-700 text-xs">{row[2]}</span>,
-            <span key="cat" className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">{row[3]}</span>,
-            <span key="status" className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">{row[4]}</span>,
-            <DeleteButton key="del" disabled={isLocked} label={row[0]} onClick={() => collection.removeItem(idx)} />,
+            <strong key="name" className="text-slate-800 font-bold text-xs">
+              {row[0]}
+            </strong>,
+            <span key="code" className="text-slate-500 font-mono text-xs">
+              {row[1]}
+            </span>,
+            <span key="order" className="text-slate-700 text-xs">
+              {row[2]}
+            </span>,
+            <span
+              key="cat"
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700"
+            >
+              {row[3]}
+            </span>,
+            <span
+              key="status"
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+            >
+              {row[4]}
+            </span>,
+            <DeleteButton
+              key="del"
+              disabled={isLocked}
+              label={row[0]}
+              onClick={() => collection.removeItem(idx)}
+            />,
           ])}
         />
       </div>

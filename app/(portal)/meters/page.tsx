@@ -5,8 +5,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function Page() {
-  const [context, data] = await Promise.all([requirePortalContext(), loadPortalData()]);
-  const supabase = context.isImpersonating ? createAdminClient() : await createClient();
+  const [context, data] = await Promise.all([
+    requirePortalContext(),
+    loadPortalData(),
+  ]);
+  const supabase = context.isImpersonating
+    ? createAdminClient()
+    : await createClient();
   const { data: submissions } = await supabase
     .from("payment_submissions")
     .select("id, invoice_id, status")

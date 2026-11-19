@@ -1,6 +1,10 @@
 import type { ThaiResidentialLeaseDocumentProps } from "@/components/contracts/ThaiResidentialLeaseDocument";
 export type LeaseClause = { id: string; title: string; body: string };
-export type LeaseContent = { version: 1; title: string; clauses: LeaseClause[] };
+export type LeaseContent = {
+  version: 1;
+  title: string;
+  clauses: LeaseClause[];
+};
 export type LeaseDocumentVersion = {
   id: string;
   created_at: string;

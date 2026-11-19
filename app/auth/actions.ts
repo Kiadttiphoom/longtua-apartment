@@ -38,7 +38,11 @@ function errorState(
   requestId: string,
   code: string,
   message: string,
-  options?: { retryable?: boolean; fields?: FieldErrors; values?: AuthActionState["values"] },
+  options?: {
+    retryable?: boolean;
+    fields?: FieldErrors;
+    values?: AuthActionState["values"];
+  },
 ): AuthActionState {
   return {
     status: "error",
@@ -55,23 +59,37 @@ function errorState(
 
 function logAuthFailure(requestId: string, stage: string, error: unknown) {
   scheduleMonitorEvent(stage, "error", requestId, error);
-  const details = error && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown }
-    : {};
+  const details =
+    error && typeof error === "object"
+      ? (error as { code?: unknown; message?: unknown })
+      : {};
 
-  console.error(`[auth] ${JSON.stringify({
-    requestId,
-    stage,
-    code: typeof details.code === "string" ? details.code : undefined,
-    message: typeof details.message === "string" ? details.message : "Unexpected authentication error",
-  })}`);
+  console.error(
+    `[auth] ${JSON.stringify({
+      requestId,
+      stage,
+      code: typeof details.code === "string" ? details.code : undefined,
+      message:
+        typeof details.message === "string"
+          ? details.message
+          : "Unexpected authentication error",
+    })}`,
+  );
 }
 
 function isInvalidCredentialsError(error: unknown) {
   if (!error || typeof error !== "object") return false;
-  const details = error as { code?: unknown; message?: unknown; status?: unknown };
-  return details.code === "invalid_credentials"
-    || details.status === 400 && typeof details.message === "string" && /invalid login credentials/i.test(details.message);
+  const details = error as {
+    code?: unknown;
+    message?: unknown;
+    status?: unknown;
+  };
+  return (
+    details.code === "invalid_credentials" ||
+    (details.status === 400 &&
+      typeof details.message === "string" &&
+      /invalid login credentials/i.test(details.message))
+  );
 }
 
 export async function loginAction(
@@ -81,7 +99,10 @@ export async function loginAction(
   const requestId = crypto.randomUUID();
   const username = normalizeUsername(textValue(formData, "username"));
   const password = textValue(formData, "password");
-  const fields = validateLoginInput({ username, password }) as unknown as FieldErrors;
+  const fields = validateLoginInput({
+    username,
+    password,
+  }) as unknown as FieldErrors;
 
   if (Object.keys(fields).length > 0) {
     return errorState(requestId, "validation_failed", "กรุณาตรวจสอบข้อมูลที่กรอก", {
@@ -103,10 +124,19 @@ export async function loginAction(
 
     if (aliasError) {
       logAuthFailure(requestId, "login.username_lookup", aliasError);
-      return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
+      return errorState(
+        requestId,
+        "login_failed",
+        "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน",
+        { retryable: true },
+      );
     }
     if (!alias) {
-      return errorState(requestId, "invalid_credentials", "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      return errorState(
+        requestId,
+        "invalid_credentials",
+        "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+      );
     }
     authUserId = alias.auth_user_id;
 
@@ -117,11 +147,20 @@ export async function loginAction(
       .maybeSingle();
     if (profileError) {
       logAuthFailure(requestId, "login.profile_status", profileError);
-      return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
+      return errorState(
+        requestId,
+        "login_failed",
+        "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน",
+        { retryable: true },
+      );
     }
     if (!profile || profile.status !== "active") {
       if (profile?.status !== "pending") {
-        return errorState(requestId, "account_suspended", "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
+        return errorState(
+          requestId,
+          "account_suspended",
+          "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ",
+        );
       }
     }
     profileStatus = profile.status;
@@ -133,18 +172,28 @@ export async function loginAction(
     });
 
     if (error) {
-      if (!isInvalidCredentialsError(error)) logAuthFailure(requestId, "login.password_signin", error);
-      return errorState(requestId, "invalid_credentials", "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      if (!isInvalidCredentialsError(error))
+        logAuthFailure(requestId, "login.password_signin", error);
+      return errorState(
+        requestId,
+        "invalid_credentials",
+        "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+      );
     }
   } catch (error) {
     logAuthFailure(requestId, "login.unexpected", error);
-    return errorState(requestId, "login_failed", "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน", { retryable: true });
+    return errorState(
+      requestId,
+      "login_failed",
+      "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน",
+      { retryable: true },
+    );
   }
 
   scheduleMonitorEvent("auth.login", "success", requestId);
   if (profileStatus === "pending") redirect("/registration/pending");
-  if (authUserId && await isSystemAdmin(authUserId)) redirect("/admin");
-  if (authUserId && await isTenantUser(authUserId)) redirect("/tenant");
+  if (authUserId && (await isSystemAdmin(authUserId))) redirect("/admin");
+  if (authUserId && (await isTenantUser(authUserId))) redirect("/tenant");
   redirect("/dashboard");
 }
 
