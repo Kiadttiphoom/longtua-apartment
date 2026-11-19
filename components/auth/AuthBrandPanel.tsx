@@ -3,7 +3,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export function AuthBrandPanel() {
   return (
-    <section className="hidden md:flex flex-col justify-between p-8 lg:p-12 bg-gradient-to-br from-[#0a1b38] via-[#091830] to-[#040e1f] text-white">
+    <section className="hidden md:flex flex-col justify-between p-8 lg:p-12 bg-[#091830] text-white">
       <div>
         <BrandLogo className="max-h-12 w-auto object-contain" variant="inverse" />
       </div>

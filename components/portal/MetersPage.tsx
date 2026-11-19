@@ -382,17 +382,16 @@ export function MetersPage({
       <section aria-label="ภาพรวมมิเตอร์" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Readings */}
         <button
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer ${
             typeFilter === "all"
               ? "bg-white border-blue-500 shadow-md ring-2 ring-blue-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setTypeFilter("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Gauge size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -406,17 +405,16 @@ export function MetersPage({
 
         {/* Card 2: Electric Meters */}
         <button
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer ${
             typeFilter === "electric"
               ? "bg-white border-amber-500 shadow-md ring-2 ring-amber-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setTypeFilter("electric")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <Zap size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -430,17 +428,16 @@ export function MetersPage({
 
         {/* Card 3: Water Meters */}
         <button
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer ${
             typeFilter === "water"
               ? "bg-white border-cyan-500 shadow-md ring-2 ring-cyan-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setTypeFilter("water")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-cyan-600 text-white flex items-center justify-center shrink-0">
               <Droplets size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -454,14 +451,13 @@ export function MetersPage({
 
         {/* Card 4: Total Units Used */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <TrendingUp size={20} strokeWidth={2.2} />
             </span>
             <div>
               <span className="text-xs font-bold text-slate-500 block">หน่วยรวมที่บันทึก</span>
-              <strong className="text-2xl font-black text-emerald-800 tracking-tight tabular-nums mt-0.5 block">
+              <strong className="text-2xl font-black text-slate-900 tracking-tight tabular-nums mt-0.5 block">
                 {Math.round(totalUnits).toLocaleString("th-TH")} หน่วย
               </strong>
             </div>
@@ -502,7 +498,7 @@ export function MetersPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -719,25 +715,16 @@ export function MetersPage({
 
                     return (
                       <article
-                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-colors duration-150 flex flex-col justify-between"
                         key={item.id}
                       >
-                        {/* Ambient Glow */}
-                        <div
-                          className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500 ${
-                            isElectric ? "bg-gradient-to-bl from-amber-500/10 to-transparent" : "bg-gradient-to-bl from-cyan-500/10 to-transparent"
-                          }`}
-                        />
-
                         <div>
                           {/* Header: Room & Meter Type */}
                           <header className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3 min-w-0">
                               <span
-                                className={`w-12 h-12 rounded-xl text-white font-black text-sm shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                                  isElectric
-                                    ? "bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/25"
-                                    : "bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-cyan-500/25"
+                                className={`w-12 h-12 rounded-xl text-white font-bold text-sm flex items-center justify-center shrink-0 ${
+                                  isElectric ? "bg-amber-600" : "bg-cyan-600"
                                 }`}
                               >
                                 {room?.room_number ?? "—"}
@@ -775,19 +762,19 @@ export function MetersPage({
                           {/* 3-Column Reading Stats Container */}
                           <div className="grid grid-cols-3 gap-2 text-center p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs mb-4">
                             <div>
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ก่อนหน้า</span>
+                              <span className="text-[11px] font-medium text-slate-500 block">ก่อนหน้า</span>
                               <strong className="text-xs font-mono font-bold text-slate-600 block mt-1">
                                 {Number(item.previous_value).toLocaleString("th-TH")}
                               </strong>
                             </div>
                             <div>
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">ปัจจุบัน</span>
+                              <span className="text-[11px] font-medium text-slate-500 block">ปัจจุบัน</span>
                               <strong className="text-xs font-mono font-bold text-slate-900 block mt-1">
                                 {Number(item.current_value).toLocaleString("th-TH")}
                               </strong>
                             </div>
                             <div className="bg-emerald-50/90 rounded-xl py-1 border border-emerald-200/60 shadow-2xs">
-                              <span className="text-[10px] font-bold text-emerald-700 block uppercase tracking-wider">ใช้ไป</span>
+                              <span className="text-[11px] font-medium text-emerald-800 block">ใช้ไป</span>
                               <strong className="text-xs font-mono font-black text-emerald-800 block mt-0.5">
                                 {usage.toLocaleString("th-TH")}
                               </strong>

@@ -594,7 +594,7 @@ export async function saveMeterReadingAction(formData: FormData): Promise<Dashbo
       logFailure(requestId, "meter.previous_reading", priorError, context.organizationId);
       return { ...fail("ค้นหาเลขมิเตอร์รอบก่อนไม่สำเร็จ"), requestId };
     }
-    const latestReading = (priorReadings ?? []).sort((left, right) =>
+    const latestReading = (priorReadings ?? []).sort((left: { billing_cycles?: unknown; current_value?: unknown }, right: { billing_cycles?: unknown; current_value?: unknown }) =>
       getRelatedPeriodMonth(right.billing_cycles).localeCompare(getRelatedPeriodMonth(left.billing_cycles))
     )[0];
     previousValue = Number(latestReading?.current_value ?? 0);

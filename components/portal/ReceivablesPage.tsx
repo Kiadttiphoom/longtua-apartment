@@ -164,14 +164,13 @@ export function ReceivablesPage({
           className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-500/20 ${
             urgency === "all"
               ? "bg-white border-rose-500 shadow-md ring-2 ring-rose-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setUrgency("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
               <ReceiptText size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -185,9 +184,8 @@ export function ReceivablesPage({
 
         {/* Card 2: Total Outstanding Balance */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <CalendarClock size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -202,17 +200,16 @@ export function ReceivablesPage({
         {/* Card 3: Overdue Count & Balance */}
         <button
           aria-pressed={urgency === "overdue"}
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/20 ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/20 ${
             urgency === "overdue"
               ? "bg-white border-red-500 shadow-md ring-2 ring-red-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setUrgency("overdue")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-red-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-red-700 to-rose-800 text-white shadow-md shadow-red-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
               <ShieldAlert size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -227,17 +224,16 @@ export function ReceivablesPage({
         {/* Card 4: Upcoming within due date */}
         <button
           aria-pressed={urgency === "upcoming"}
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-500/20 ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-500/20 ${
             urgency === "upcoming"
               ? "bg-white border-amber-500 shadow-md ring-2 ring-amber-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setUrgency("upcoming")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <Clock3 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -283,7 +279,7 @@ export function ReceivablesPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -493,35 +489,24 @@ export function ReceivablesPage({
                     const fl = getInvoiceFloor(item);
                     return (
                       <article
-                        className={`relative overflow-hidden p-6 rounded-2xl bg-white border shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 ${
-                          overdue ? "border-rose-200 hover:border-rose-300" : "border-slate-200/90 hover:border-blue-300"
+                        className={`relative overflow-hidden p-6 rounded-2xl bg-white border shadow-xs transition-colors duration-150 flex flex-col justify-between ${
+                          overdue ? "border-rose-200 hover:border-rose-300" : "border-slate-200/90 hover:border-slate-300"
                         }`}
                         key={item.id}
                       >
-                        {/* Ambient Glow */}
-                        <div
-                          className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500 ${
-                            overdue
-                              ? "bg-gradient-to-bl from-rose-500/15 via-red-500/5 to-transparent"
-                              : "bg-gradient-to-bl from-amber-500/10 via-orange-500/5 to-transparent"
-                          }`}
-                        />
-
                         <div>
                           {/* Header */}
                           <header className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3 min-w-0">
                               <span
-                                className={`w-12 h-12 rounded-xl text-white font-black text-sm shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                                  overdue
-                                    ? "bg-gradient-to-tr from-rose-600 to-red-600 shadow-rose-500/25"
-                                    : "bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/25"
+                                className={`w-12 h-12 rounded-xl text-white font-bold text-sm flex items-center justify-center shrink-0 ${
+                                  overdue ? "bg-rose-600" : "bg-slate-700"
                                 }`}
                               >
                                 {room?.room_number ?? "—"}
                               </span>
                               <div className="min-w-0">
-                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-rose-600 transition-colors">
+                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate">
                                   {item.invoice_number}
                                 </h2>
                                 <span className="text-xs text-slate-400 block truncate mt-0.5">
@@ -535,11 +520,11 @@ export function ReceivablesPage({
                           {/* Numbers Grid */}
                           <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดเรียกเก็บ</dt>
+                              <dt className="text-[11px] font-medium text-slate-500">ยอดเรียกเก็บ</dt>
                               <dd className="text-base font-mono font-bold text-slate-800 mt-1">{money(Number(item.total))}</dd>
                             </div>
                             <div className="p-3 rounded-xl bg-rose-50/60 border border-rose-100">
-                              <dt className="text-[10px] font-bold text-rose-500 uppercase tracking-wide">ยอดค้างชำระ</dt>
+                              <dt className="text-[11px] font-medium text-rose-600">ยอดค้างชำระ</dt>
                               <dd className="text-base font-mono font-black text-rose-600 mt-1">{money(Number(item.balance_due))}</dd>
                             </div>
                           </dl>

@@ -88,7 +88,7 @@ export function SettingsPage({
 
       <section aria-label="ภาพรวมการตั้งค่า" className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs sm:grid-cols-3">
         <div className="flex items-center gap-3.5 p-5 sm:border-r sm:border-slate-100">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
             <Building2 aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -97,7 +97,7 @@ export function SettingsPage({
           </div>
         </div>
         <div className="flex items-center gap-3.5 border-t border-slate-100 p-5 sm:border-r sm:border-t-0">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-white">
             <Sparkles aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -106,7 +106,7 @@ export function SettingsPage({
           </div>
         </div>
         <div className="flex items-center gap-3.5 border-t border-slate-100 p-5 sm:border-t-0">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-600 to-blue-700 text-white shadow-md shadow-blue-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
             <QrCode aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -134,9 +134,8 @@ export function SettingsPage({
             const item = settingsMap.get(property.id);
             const paymentInfo = parsePaymentSettings(item);
             return (
-              <article className="group relative overflow-hidden p-6 flex flex-col gap-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1" key={property.id}>
-                <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent blur-xl transition-transform duration-500 group-hover:scale-125" />
-                <header className="flex items-center justify-between gap-3">
+              <article className="group relative overflow-hidden p-6 flex flex-col gap-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300" key={property.id}>
+                                <header className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                       <Building2 aria-hidden="true" size={20} />

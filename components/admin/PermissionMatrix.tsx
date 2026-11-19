@@ -113,9 +113,9 @@ export function RolePermissionMatrix({ menus, actions, roles, selectedRoleId }: 
           <table className="w-full text-left text-[13px] border-collapse whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">เมนู</th>
+                <th className="px-4 py-3 text-xs font-medium text-slate-500">เมนู</th>
                 {actions.map((action) => (
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center" key={action.code}>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 text-center" key={action.code}>
                     <button
                       className="hover:text-blue-600 cursor-pointer disabled:cursor-default"
                       disabled={locked}
@@ -297,9 +297,9 @@ export function UserPermissionMatrix({ menus, actions, organizations, organizati
             <table className="w-full text-left text-[13px] border-collapse whitespace-nowrap">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">เมนู</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500">เมนู</th>
                   {actions.map((action) => (
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center" key={action.code}>
+                    <th className="px-4 py-3 text-xs font-medium text-slate-500 text-center" key={action.code}>
                       {action.name}
                     </th>
                   ))}

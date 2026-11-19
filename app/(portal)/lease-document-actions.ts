@@ -18,7 +18,7 @@ export async function loadLeaseDocumentAction(leaseId: string): Promise<{ ok: tr
   ]);
   const errors = [versions.error, template.error, initialTemplate.error].filter(Boolean);
   if (errors.length) {
-    if (errors.every(error => ["PGRST205", "42P01"].includes(error!.code))) return { ok: true, state: {
+    if (errors.every(error => Boolean(error?.code && ["PGRST205", "42P01"].includes(error.code)))) return { ok: true, state: {
       storageReady: false, versions: [], template: null, templateId: null, initialTemplate: null, canSaveTemplate: false,
     } };
     return { ok: false, message: "โหลดข้อความที่บันทึกไม่สำเร็จ กรุณาตรวจการเชื่อมต่อและสิทธิ์เข้าถึง" };

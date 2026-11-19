@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { query } from "@/lib/db/pool";
 
 const noStoreHeaders = {
   "Cache-Control": "no-store, max-age=0",
@@ -7,12 +7,11 @@ const noStoreHeaders = {
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const databaseUrl = process.env.DATABASE_URL;
 
   if (!cronSecret) {
     return NextResponse.json(
-      { ok: false, error: "Health check is not configured." },
+      { ok: false, error: "Health check is not configured (missing CRON_SECRET)." },
       { status: 503, headers: noStoreHeaders },
     );
   }
@@ -24,34 +23,26 @@ export async function GET(request: Request) {
     });
   }
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!databaseUrl) {
     return NextResponse.json(
-      { ok: false, error: "Health check is not configured." },
+      { ok: false, error: "Health check is not configured (missing DATABASE_URL)." },
       { status: 503, headers: noStoreHeaders },
     );
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  try {
+    // Verify database connectivity
+    await query("SELECT 1 FROM health_checks LIMIT 1");
 
-  const { error } = await supabase
-    .from("health_checks")
-    .select("id")
-    .limit(1);
-
-  if (error) {
     return NextResponse.json(
-      { ok: false },
+      { ok: true, timestamp: new Date().toISOString() },
+      { status: 200, headers: noStoreHeaders },
+    );
+  } catch (err: unknown) {
+    console.error("[health] Database health check failed:", err);
+    return NextResponse.json(
+      { ok: false, error: "Database connectivity check failed" },
       { status: 500, headers: noStoreHeaders },
     );
   }
-
-  return NextResponse.json(
-    { ok: true },
-    { status: 200, headers: noStoreHeaders },
-  );
 }

@@ -16,7 +16,7 @@ export function DataTable({ headers, rows, emptyTitle = "ยังไม่ม�
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             {headers.map((header) => (
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500" key={header}>
+              <th className="px-4 py-3 text-xs font-medium text-slate-500" key={header}>
                 {header}
               </th>
             ))}

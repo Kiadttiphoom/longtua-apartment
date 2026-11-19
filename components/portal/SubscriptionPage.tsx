@@ -115,9 +115,9 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
 
       {/* Hero: Current Plan & Quota Usage Overview */}
       <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-6 lg:p-8 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="p-6 lg:p-8 bg-[#091830] text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30">
+            <span className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-sm">
               <Crown size={28} />
             </span>
             <div className="space-y-1.5">

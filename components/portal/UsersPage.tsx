@@ -113,10 +113,10 @@ export function UsersPage({
   }, [members, query, roleFilter]);
 
   const roleColors: Record<string, { bg: string; text: string; border: string; badgeBg: string }> = {
-    owner: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", badgeBg: "bg-purple-600 text-white shadow-purple-500/25" },
-    manager: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", badgeBg: "bg-blue-600 text-white shadow-blue-500/25" },
-    accounting: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badgeBg: "bg-emerald-600 text-white shadow-emerald-500/25" },
-    staff: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", badgeBg: "bg-amber-600 text-white shadow-amber-500/25" },
+    owner: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", badgeBg: "bg-purple-600 text-white shadow-sm" },
+    manager: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", badgeBg: "bg-blue-600 text-white shadow-sm" },
+    accounting: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", badgeBg: "bg-emerald-600 text-white shadow-sm" },
+    staff: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", badgeBg: "bg-amber-600 text-white shadow-sm" },
   };
 
   const inviteRoleOptions = useMemo(() => [
@@ -233,9 +233,8 @@ export function UsersPage({
       {/* 4-Metric Hero Stat Cards */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -248,9 +247,8 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -263,9 +261,8 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -278,9 +275,8 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -399,11 +395,10 @@ export function UsersPage({
               const color = roleColors[m.roleCode] ?? { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200", badgeBg: "bg-slate-600 text-white" };
               return (
                 <article
-                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                  className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
                   key={m.id}
                 >
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
+                  
                   <div>
                     {/* Header */}
                     <header className="flex items-start justify-between gap-3 mb-4">
@@ -618,7 +613,7 @@ export function UsersPage({
                 ยกเลิก
               </button>
               <button
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 disabled={isPending || !inviteName.trim() || !inviteEmail.trim() || invitePassword.length < 8}
                 onClick={handleSendInvite}
                 type="button"
@@ -730,7 +725,7 @@ export function UsersPage({
                 ยกเลิก
               </button>
               <button
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
                 disabled={isPending}
                 onClick={handleSaveEdit}
                 type="button"

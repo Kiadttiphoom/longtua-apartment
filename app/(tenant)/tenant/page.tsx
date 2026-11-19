@@ -28,7 +28,7 @@ export default async function TenantHomePage() {
   const outstanding = data.invoices.filter((i) => i.status !== "void" && Number(i.balance_due) > 0);
   const totalBalance = outstanding.reduce((sum, i) => sum + Number(i.balance_due), 0);
   const pendingSubmissions = data.submissions.filter((i) => i.status === "pending");
-  const nextInvoice = outstanding.slice().sort((a, b) => a.due_at.localeCompare(b.due_at))[0];
+  const nextInvoice = outstanding.toSorted((a, b) => a.due_at.localeCompare(b.due_at))[0];
   const latestNonVoidInvoice = data.invoices.find((i) => i.status !== "void");
 
   // Fetch active repair requests

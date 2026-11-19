@@ -76,20 +76,32 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         },
       });
     }
-    const { data: legacy } = await supabase.storage.from("payment-slips").download(submission.slip_path);
-    if (!legacy) return denied();
-    const ext = legacy.type === "image/png" ? ".png" : ".jpg";
-    const disposition = isDownload
-      ? `attachment; filename="payment-slip-${id.slice(0, 8)}${ext}"`
-      : 'inline; filename="payment-slip"';
-    return new Response(legacy, {
-      headers: {
-        ...baseHeaders,
-        "Cache-Control": "private, max-age=604800, immutable",
-        "Content-Type": legacy.type || "application/octet-stream",
-        "Content-Disposition": disposition,
-      },
-    });
+
+    // Legacy Supabase Storage fallback (only if credentials exist during migration period)
+    const legacyUrl = process.env.SUPABASE_MIGRATION_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const legacyKey = process.env.SUPABASE_MIGRATION_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (legacyUrl && legacyKey) {
+      const { createClient: createLegacyClient } = await import("@supabase/supabase-js");
+      const legacySupabase = createLegacyClient(legacyUrl, legacyKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: legacy } = await legacySupabase.storage.from("payment-slips").download(submission.slip_path);
+      if (!legacy) return denied();
+      const ext = legacy.type === "image/png" ? ".png" : ".jpg";
+      const disposition = isDownload
+        ? `attachment; filename="payment-slip-${id.slice(0, 8)}${ext}"`
+        : 'inline; filename="payment-slip"';
+      return new Response(legacy, {
+        headers: {
+          ...baseHeaders,
+          "Cache-Control": "private, max-age=604800, immutable",
+          "Content-Type": legacy.type || "application/octet-stream",
+          "Content-Disposition": disposition,
+        },
+      });
+    }
+
+    return denied();
   } catch {
     return denied();
   }

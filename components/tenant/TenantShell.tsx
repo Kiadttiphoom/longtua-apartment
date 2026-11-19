@@ -27,7 +27,7 @@ export function TenantShell({
   return (
     <div className="min-h-dvh bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white">
       {/* Top App Bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/20 bg-gradient-to-r from-[#0b1d39] via-[#0d2243] to-[#091830] text-white shadow-sm backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-slate-800/20 bg-[#091830] text-white shadow-sm backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <BrandLogo
@@ -45,9 +45,9 @@ export function TenantShell({
                 {organizationName}
               </span>
             </div>
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 font-bold text-xs text-white shadow-sm ring-2 ring-white/10">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 font-bold text-xs text-white shadow-sm ring-2 ring-white/10">
               {tenantName.trim().slice(0, 1)}
-              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0b1d39]" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#091830]" />
             </div>
           </div>
         </div>

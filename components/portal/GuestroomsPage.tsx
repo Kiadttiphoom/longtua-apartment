@@ -230,9 +230,8 @@ export function GuestroomsPage({
               onClick={() => setStatus("all")}
               type="button"
             >
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-3.5">
-                <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-3.5">
+                <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
                   <Building2 size={20} strokeWidth={2.2} />
                 </span>
                 <div>
@@ -254,9 +253,8 @@ export function GuestroomsPage({
               onClick={() => setStatus("vacant")}
               type="button"
             >
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-3.5">
-                <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-3.5">
+                <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
                   <DoorOpen size={20} strokeWidth={2.2} />
                 </span>
                 <div>
@@ -278,9 +276,8 @@ export function GuestroomsPage({
               onClick={() => setStatus("occupied")}
               type="button"
             >
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-3.5">
-                <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-3.5">
+                <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
                   <UserRound size={20} strokeWidth={2.2} />
                 </span>
                 <div>
@@ -294,9 +291,8 @@ export function GuestroomsPage({
 
             {/* Card 4: Occupancy Rate */}
             <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-3.5">
-                <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-3.5">
+                <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
                   <Percent size={20} strokeWidth={2.2} />
                 </span>
                 <div>
@@ -347,7 +343,7 @@ export function GuestroomsPage({
                     role="tab"
                     type="button"
                   >
-                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
                       <Building2 size={19} strokeWidth={2.2} />
                     </span>
                     <div className="flex flex-col min-w-0 flex-1">
@@ -610,7 +606,7 @@ export function GuestroomsPage({
 
                           return (
                             <article
-                              className="p-5 flex flex-col gap-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 transition-all duration-300 group"
+                              className="p-5 flex flex-col gap-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-lg hover:border-slate-300 transition-all duration-300 group"
                               data-status={item.status}
                               key={item.id}
                             >
@@ -626,11 +622,11 @@ export function GuestroomsPage({
 
                               <dl className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-center">
                                 <div>
-                                  <dt className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ชั้น</dt>
+                                  <dt className="text-[10px] text-slate-400 font-bold font-medium">ชั้น</dt>
                                   <dd className="text-xs font-bold text-slate-800 mt-0.5">{item.floor || "ไม่ระบุ"}</dd>
                                 </div>
                                 <div>
-                                  <dt className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ค่าเช่า / เดือน</dt>
+                                  <dt className="text-[10px] text-slate-400 font-bold font-medium">ค่าเช่า / เดือน</dt>
                                   <dd className="text-xs font-black text-blue-600 mt-0.5 tabular-nums">{money(Number(item.base_rent))}</dd>
                                 </div>
                               </dl>

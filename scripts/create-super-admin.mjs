@@ -1,4 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { Pool } from "pg";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const [usernameInput, password, displayNameInput] = process.argv.slice(2);
 const username = String(usernameInput ?? "").trim().toLowerCase();
@@ -13,64 +15,90 @@ if (String(password ?? "").length < 12 || !/[a-zA-Z]/.test(password) || !/\d/.te
   process.exit(1);
 }
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const domain = process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase();
-if (!url || !serviceRoleKey || !domain) {
-  console.error(".env.local ขาด NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY หรือ AUTH_INTERNAL_EMAIL_DOMAIN");
+const databaseUrl = process.env.DATABASE_URL;
+const domain = process.env.AUTH_INTERNAL_EMAIL_DOMAIN?.trim().toLowerCase() || "auth.longtua.com";
+
+if (!databaseUrl) {
+  console.error(".env.local ขาด DATABASE_URL");
   process.exit(1);
 }
 
-const admin = createClient(url, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
-const { data: existingAlias, error: lookupError } = await admin
-  .from("auth_login_aliases")
-  .select("auth_user_id")
-  .eq("username", username)
-  .maybeSingle();
-if (lookupError) throw lookupError;
+const isLocalhost = databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+const pool = new Pool({
+  connectionString: databaseUrl,
+  ssl: isLocalhost ? false : { rejectUnauthorized: false },
+});
 
-let userId = existingAlias?.auth_user_id;
-let createdUser = false;
+const client = await pool.connect();
 
 try {
+  await client.query("BEGIN");
+
+  // Check existing alias
+  const aliasRes = await client.query(
+    "SELECT auth_user_id FROM public.auth_login_aliases WHERE username = $1 LIMIT 1",
+    [username],
+  );
+
+  let userId = aliasRes.rows[0]?.auth_user_id;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   if (userId) {
-    const { error } = await admin.auth.admin.updateUserById(userId, {
-      password,
-    });
-    if (error) throw error;
+    // Update existing user password
+    await client.query(
+      "UPDATE auth.users SET encrypted_password = $1, updated_at = now() WHERE id = $2",
+      [hashedPassword, userId],
+    );
+    console.log(`อัปเดตรหัสผ่านสำหรับ super admin '${username}' เรียบร้อยแล้ว`);
   } else {
+    // Create new user
+    userId = crypto.randomUUID();
     const internalEmail = `${crypto.randomUUID()}@${domain}`;
-    const { data, error } = await admin.auth.admin.createUser({
-      email: internalEmail,
-      password,
-      email_confirm: true,
-      user_metadata: { username, display_name: displayName },
-    });
-    if (error || !data.user) throw error ?? new Error("Supabase did not return the created user");
-    userId = data.user.id;
-    createdUser = true;
+    const userMetadata = { username, display_name: displayName };
 
-    const { error: aliasError } = await admin.from("auth_login_aliases").insert({
-      username,
-      auth_user_id: userId,
-      internal_email: internalEmail,
-    });
-    if (aliasError) throw aliasError;
+    await client.query(
+      `INSERT INTO auth.users (id, email, encrypted_password, raw_user_meta_data, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, now(), now())`,
+      [userId, internalEmail, hashedPassword, JSON.stringify(userMetadata)],
+    );
 
-    const { error: profileError } = await admin.from("profiles").insert({
-      id: userId,
-      username,
-      display_name: displayName,
-      status: "active",
-    });
-    if (profileError) throw profileError;
+    await client.query(
+      `INSERT INTO public.auth_login_aliases (username, auth_user_id, internal_email)
+       VALUES ($1, $2, $3)`,
+      [username, userId, internalEmail],
+    );
+    console.log(`สร้างบัญชี super admin '${username}' (${userId}) เรียบร้อยแล้ว`);
   }
 
-  const { error: adminError } = await admin.from("system_admins").upsert({ user_id: userId, status: "active" });
-  if (adminError) throw adminError;
-  console.log(`สร้าง Super Admin สำเร็จ: ${username}`);
-} catch (error) {
-  if (createdUser && userId) await admin.auth.admin.deleteUser(userId);
-  console.error(error instanceof Error ? error.message : error);
+  // Upsert profile
+  await client.query(
+    `INSERT INTO public.profiles (id, username, display_name, status, updated_at)
+     VALUES ($1, $2, $3, 'active', now())
+     ON CONFLICT (id) DO UPDATE
+     SET username = EXCLUDED.username,
+         display_name = EXCLUDED.display_name,
+         status = 'active',
+         updated_at = now()`,
+    [userId, username, displayName],
+  );
+
+  // Upsert system_admins
+  await client.query(
+    `INSERT INTO public.system_admins (user_id, status, notes, updated_at)
+     VALUES ($1, 'active', 'Created by local administrative CLI tool', now())
+     ON CONFLICT (user_id) DO UPDATE
+     SET status = 'active',
+         updated_at = now()`,
+    [userId],
+  );
+
+  await client.query("COMMIT");
+  console.log(`กำหนดสิทธิ์ super admin ให้ '${username}' เรียบร้อยแล้ว`);
+} catch (err) {
+  await client.query("ROLLBACK");
+  console.error("เกิดข้อผิดพลาดในการสร้าง super admin:", err);
   process.exit(1);
+} finally {
+  client.release();
+  await pool.end();
 }

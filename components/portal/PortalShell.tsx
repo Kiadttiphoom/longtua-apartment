@@ -65,7 +65,7 @@ export function PortalShell({ children, context }: ShellProps) {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)] bg-[#f5f7fb] text-[#15233b]">
-      <aside className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-gradient-to-b from-[#0b1d39] via-[#091830] to-[#071428] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-[#091830] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="h-[96px] min-h-[96px] p-4 flex items-center justify-center border-b border-white/10 bg-[#06152d]">
           <BrandLogo className="w-full max-h-[70px] object-contain" variant="inverse" />
         </div>
@@ -80,7 +80,7 @@ export function PortalShell({ children, context }: ShellProps) {
         <nav aria-label="เมนูหลัก" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4">
           {groupedMenus.map((group) => (
             <section className="space-y-1" key={group.label}>
-              <p className="px-3 py-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase">
+              <p className="px-3 py-1 text-[11px] font-medium text-slate-400">
                 {group.label}
               </p>
               {group.items.map((item) => {
@@ -92,7 +92,7 @@ export function PortalShell({ children, context }: ShellProps) {
                     active={active}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all ${
                       active
-                        ? "bg-[#2457e6] text-white shadow-md shadow-blue-700/40 font-semibold"
+                        ? "bg-[#2457e6] text-white shadow-sm font-semibold"
                         : "text-slate-300 hover:text-white hover:bg-white/10"
                     }`}
                     href={item.href}

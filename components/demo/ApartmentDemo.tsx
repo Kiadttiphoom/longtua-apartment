@@ -285,7 +285,7 @@ export function ApartmentDemo({
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)] bg-[#f5f7fb] text-[#15233b]">
       <aside
-        className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-gradient-to-b from-[#0b1d39] via-[#091830] to-[#071428] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-[#091830] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -319,7 +319,7 @@ export function ApartmentDemo({
                   <button
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all cursor-pointer ${
                       active
-                        ? "bg-[#2457e6] text-white shadow-md shadow-blue-700/40 font-semibold"
+                        ? "bg-[#2457e6] text-white shadow-sm font-semibold"
                         : "text-slate-300 hover:text-white hover:bg-white/10"
                     }`}
                     key={item.code}

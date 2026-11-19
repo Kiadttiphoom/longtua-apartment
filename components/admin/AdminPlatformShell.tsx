@@ -67,7 +67,7 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
             if (items.length === 0) return null;
             return (
               <section className="space-y-1" key={group.label}>
-                <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="px-3 py-1 text-[11px] font-medium text-slate-400">
                   {group.label}
                 </p>
                 {items.map(([key, label, Icon]) => {

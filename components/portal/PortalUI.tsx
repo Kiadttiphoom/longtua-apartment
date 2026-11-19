@@ -23,7 +23,7 @@ export function PageHeader({ title, description, actionLabel, onAction }: { titl
       </div>
       {actionLabel && onAction ? (
         <button
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-semibold text-sm shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-semibold text-sm shadow-sm transition-all cursor-pointer"
           onClick={onAction}
           type="button"
         >
@@ -226,7 +226,7 @@ export function PortalForm({ action, organizationId, validate, onSuccess, onCanc
             </button>
           ) : null}
           <button
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
             disabled={pending || submitDisabled}
             title={submitDisabled ? submitDisabledReason : undefined}
             type="submit"

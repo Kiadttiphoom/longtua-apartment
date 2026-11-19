@@ -230,9 +230,8 @@ export function PaymentsPage({
 
       <section aria-label="ภาพรวมการรับชำระ" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -246,17 +245,16 @@ export function PaymentsPage({
 
         <button
           aria-pressed={method === "all"}
-          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
+          className={`relative overflow-hidden p-5 rounded-2xl border text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
             method === "all"
               ? "bg-white border-blue-500 shadow-md ring-2 ring-blue-500/20"
-              : "bg-white border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+              : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
           }`}
           onClick={() => setMethod("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <Receipt size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -269,9 +267,8 @@ export function PaymentsPage({
         </button>
 
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
               <Clock3 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -284,9 +281,8 @@ export function PaymentsPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
               <CreditCard size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -332,7 +328,7 @@ export function PaymentsPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -637,18 +633,17 @@ export function PaymentsPage({
                     const fl = getPaymentFloor(item);
                     return (
                       <article
-                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-colors duration-150 flex flex-col justify-between"
                         key={item.id}
                       >
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
                         <div>
                           <header className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3 min-w-0">
-                              <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white font-black text-sm shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                              <span className="w-12 h-12 rounded-xl bg-slate-700 text-white font-bold text-sm flex items-center justify-center shrink-0">
                                 <Receipt size={20} strokeWidth={2.2} />
                               </span>
                               <div className="min-w-0">
-                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate group-hover:text-emerald-600 transition-colors">
+                                <h2 className="text-sm font-bold text-slate-900 font-mono truncate">
                                   {item.receipt_number}
                                 </h2>
                                 <span className="text-xs text-slate-400 block truncate mt-0.5">
@@ -660,12 +655,12 @@ export function PaymentsPage({
                           </header>
                           <dl className="grid grid-cols-2 gap-2.5 mb-4 text-xs">
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ยอดชำระจริง</dt>
+                              <dt className="text-[11px] font-medium text-slate-500">ยอดชำระจริง</dt>
                               <dd className="text-base font-mono font-black text-emerald-600 mt-1">{money(Number(item.amount))}</dd>
                               <span className="text-[10px] text-slate-400 block mt-0.5">ช่องทาง: {methodLabel(item.method)}</span>
                             </div>
                             <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100">
-                              <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">เลขอ้างอิง</dt>
+                              <dt className="text-[11px] font-medium text-slate-500">เลขอ้างอิง</dt>
                               <dd className="text-xs font-mono font-bold text-slate-800 mt-1 truncate">{item.reference || "—"}</dd>
                               <span className="text-[10px] text-slate-400 block mt-0.5">ยืนยันแล้ว</span>
                             </div>

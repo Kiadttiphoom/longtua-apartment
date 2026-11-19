@@ -45,7 +45,7 @@ export function TenantPaymentAccountCard({
   }
 
   return (
-    <div className="mb-6 overflow-hidden rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/90 via-blue-50/50 to-indigo-50/40 p-4 shadow-xs sm:p-5">
+    <div className="mb-6 overflow-hidden rounded-2xl border border-blue-200/90 bg-blue-50/70 p-4 shadow-xs sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-blue-100 pb-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">

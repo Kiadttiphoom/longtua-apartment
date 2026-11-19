@@ -23,7 +23,6 @@ import {
   LineChart,
   PieChart,
   ReceiptText,
-  Sparkles,
   Star,
   TrendingUp,
   WalletCards,
@@ -91,9 +90,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: "อาคารที่เปิดใช้งาน",
       icon: Building2,
       href: "/dormitories",
-      gradient: "from-blue-500/10 via-indigo-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25",
-      borderHover: "hover:border-blue-400 hover:shadow-blue-500/10",
+      iconBg: "bg-blue-600 text-white",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: `${data.properties.length} หอ`,
       pillColor: "bg-blue-50 text-blue-700 border-blue-200/70",
     },
@@ -103,9 +101,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: `มีผู้พัก ${occupiedRooms} ห้อง • ว่าง ${vacantRooms} ห้อง`,
       icon: KeyRound,
       href: "/guestrooms",
-      gradient: "from-purple-500/10 via-violet-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25",
-      borderHover: "hover:border-purple-400 hover:shadow-purple-500/10",
+      iconBg: "bg-slate-700 text-white",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: `${occupancy}% เข้าพัก`,
       pillColor: "bg-purple-50 text-purple-700 border-purple-200/70",
     },
@@ -115,9 +112,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: "สัญญาที่มีผลบังคับใช้จริง",
       icon: CalendarRange,
       href: "/leases",
-      gradient: "from-sky-500/10 via-cyan-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25",
-      borderHover: "hover:border-sky-400 hover:shadow-sky-500/10",
+      iconBg: "bg-slate-700 text-white",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: "Active",
       pillColor: "bg-sky-50 text-sky-700 border-sky-200/70",
     },
@@ -127,9 +123,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: `${occupiedRooms} จาก ${data.rooms.length} ห้องพัก`,
       icon: Activity,
       href: "/guestrooms",
-      gradient: "from-emerald-500/10 via-teal-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25",
-      borderHover: "hover:border-emerald-400 hover:shadow-emerald-500/10",
+      iconBg: "bg-slate-700 text-white",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: occupancy >= 80 ? "ยอดเยี่ยม" : "ปกติ",
       pillColor: "bg-emerald-50 text-emerald-700 border-emerald-200/70",
     },
@@ -139,9 +134,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: "ยอดเงินเข้าบัญชีกิจการแล้ว",
       icon: WalletCards,
       href: "/payments",
-      gradient: "from-teal-500/10 via-emerald-500/5 to-transparent",
-      iconBg: "bg-gradient-to-tr from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25",
-      borderHover: "hover:border-teal-400 hover:shadow-teal-500/10",
+      iconBg: "bg-blue-600 text-white",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: "รับชำระแล้ว",
       pillColor: "bg-teal-50 text-teal-700 border-teal-200/70",
     },
@@ -151,9 +145,8 @@ export function DashboardOverview({ data }: { data: PortalData }) {
       sub: outstanding > 0 ? "มียอดค้างชำระรอติดตาม" : "ไม่มีบิลค้างชำระ",
       icon: ReceiptText,
       href: "/receivables",
-      gradient: outstanding > 0 ? "from-rose-500/10 via-pink-500/5 to-transparent" : "from-slate-500/10 via-slate-500/5 to-transparent",
-      iconBg: outstanding > 0 ? "bg-gradient-to-tr from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25" : "bg-gradient-to-tr from-slate-600 to-slate-700 text-white shadow-md shadow-slate-500/25",
-      borderHover: outstanding > 0 ? "hover:border-rose-400 hover:shadow-rose-500/10" : "hover:border-slate-400 hover:shadow-slate-500/10",
+      iconBg: outstanding > 0 ? "bg-rose-600 text-white" : "bg-slate-200 text-slate-700",
+      borderHover: "hover:border-slate-300 hover:shadow-sm",
       pill: outstanding > 0 ? "ค้างชำระ" : "เรียบร้อย",
       pillColor: outstanding > 0 ? "bg-rose-50 text-rose-700 border-rose-200/70" : "bg-slate-50 text-slate-700 border-slate-200/70",
     },
@@ -326,28 +319,28 @@ export function DashboardOverview({ data }: { data: PortalData }) {
         {/* Action Hub */}
         <div className="flex items-center gap-2.5 flex-wrap">
           <Link
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-bold transition-colors cursor-pointer"
             href="/invoices"
           >
             <FilePlus size={15} strokeWidth={2.2} />
             <span>ออกบิลใหม่</span>
           </Link>
           <Link
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] text-slate-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
             href="/meters"
           >
             <Gauge size={15} strokeWidth={2.2} className="text-amber-500" />
             <span>จดมิเตอร์</span>
           </Link>
           <Link
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] text-slate-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
             href="/leases"
           >
             <CalendarCheck size={15} strokeWidth={2.2} className="text-emerald-500" />
             <span>ทำสัญญา</span>
           </Link>
           <Link
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] text-slate-700 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
             href="/reports"
           >
             <LineChart size={15} strokeWidth={2.2} className="text-purple-500" />
@@ -369,13 +362,10 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           const Icon = c.icon;
           return (
             <Link
-              className={`relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 ${c.borderHover}`}
+              className={`relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm transition-colors duration-150 group ${c.borderHover}`}
               href={c.href}
               key={c.label}
             >
-              {/* Subtle ambient gradient mesh */}
-              <div className={`absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-bl ${c.gradient} rounded-full blur-2xl pointer-events-none opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500`} />
-
               <div className="relative flex flex-col justify-between h-full gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5">
@@ -417,15 +407,14 @@ export function DashboardOverview({ data }: { data: PortalData }) {
               <p className="text-xs text-slate-500">วิเคราะห์ห้องที่ใช้พลังงานสูงสุด และห้องที่มีประวัติการชำระเงินโดดเด่น</p>
             </div>
           </div>
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
-            <Sparkles size={13} className="text-amber-500" />
+          <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
             วิเคราะห์อัตโนมัติ
           </span>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 1. Electricity Top Consumer */}
-          <article className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-amber-500/8 via-white to-amber-50/40 border border-amber-200/80 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between group">
+          <article className="relative overflow-hidden p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80 shadow-xs hover:border-amber-300 transition-colors duration-150 flex flex-col justify-between">
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center">
@@ -456,7 +445,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           </article>
 
           {/* 2. Water Top Consumer */}
-          <article className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-sky-500/8 via-white to-sky-50/40 border border-sky-200/80 shadow-xs hover:shadow-md hover:border-sky-300 transition-all duration-200 flex flex-col justify-between group">
+          <article className="relative overflow-hidden p-5 rounded-2xl bg-sky-50/50 border border-sky-200/80 shadow-xs hover:border-sky-300 transition-colors duration-150 flex flex-col justify-between">
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-sky-500/15 text-sky-600 flex items-center justify-center">
@@ -487,7 +476,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           </article>
 
           {/* 3. Slowest Payer / Overdue */}
-          <article className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-rose-500/8 via-white to-rose-50/40 border border-rose-200/80 shadow-xs hover:shadow-md hover:border-rose-300 transition-all duration-200 flex flex-col justify-between group">
+          <article className="relative overflow-hidden p-5 rounded-2xl bg-rose-50/50 border border-rose-200/80 shadow-xs hover:border-rose-300 transition-colors duration-150 flex flex-col justify-between">
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-rose-500/15 text-rose-600 flex items-center justify-center">
@@ -520,7 +509,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           </article>
 
           {/* 4. Best / On-time Payer */}
-          <article className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-emerald-500/8 via-white to-emerald-50/40 border border-emerald-200/80 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all duration-200 flex flex-col justify-between group">
+          <article className="relative overflow-hidden p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 shadow-xs hover:border-emerald-300 transition-colors duration-150 flex flex-col justify-between">
             <header className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
@@ -554,7 +543,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
 
       {/* Urgent Action Items / Alerts Banner */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50/90 via-white to-white border border-rose-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5">
+        <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80 shadow-2xs transition-colors flex items-center gap-3.5">
           <span className="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
             <AlertCircle size={22} strokeWidth={2.2} />
           </span>
@@ -566,7 +555,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50/90 via-white to-white border border-amber-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5">
+        <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 shadow-2xs transition-colors flex items-center gap-3.5">
           <span className="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
             <Clock size={22} strokeWidth={2.2} />
           </span>
@@ -576,7 +565,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-white to-white border border-blue-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5">
+        <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 shadow-2xs transition-colors flex items-center gap-3.5">
           <span className="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
             <Gauge size={22} strokeWidth={2.2} />
           </span>
@@ -629,11 +618,11 @@ export function DashboardOverview({ data }: { data: PortalData }) {
 
                       <div className="w-full max-w-[48px] flex items-end justify-center gap-1.5 h-full">
                         <div
-                          className="w-1/2 rounded-t-lg bg-blue-100 group-hover:bg-blue-200 transition-all duration-300"
+                          className="w-1/2 rounded-t-lg bg-blue-100 group-hover:bg-blue-200 transition-colors"
                           style={{ height: `${billedHeight}%` }}
                         />
                         <div
-                          className="w-1/2 rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-500 group-hover:from-emerald-500 group-hover:to-teal-400 transition-all duration-300 shadow-xs"
+                          className="w-1/2 rounded-t-lg bg-blue-600 group-hover:bg-blue-700 transition-colors shadow-xs"
                           style={{ height: `${collectedHeight}%` }}
                         />
                       </div>
@@ -675,12 +664,12 @@ export function DashboardOverview({ data }: { data: PortalData }) {
           <div className="space-y-3 my-2">
             <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden p-0.5 gap-0.5 ring-1 ring-slate-200/60">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
+                className="h-full rounded-full bg-blue-600 transition-[width] duration-500"
                 style={{ width: `${occupancy}%` }}
                 title={`มีผู้พัก ${occupiedRooms} ห้อง (${occupancy}%)`}
               />
               <div
-                className="h-full rounded-full bg-slate-300 transition-all duration-700"
+                className="h-full rounded-full bg-slate-300 transition-[width] duration-500"
                 style={{ width: `${100 - occupancy}%` }}
                 title={`ห้องว่าง ${vacantRooms} ห้อง (${100 - occupancy}%)`}
               />
@@ -759,10 +748,10 @@ export function DashboardOverview({ data }: { data: PortalData }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {propertyStats.map((prop) => (
-              <article className="p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50/80 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col justify-between group" key={prop.id}>
+              <article className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors duration-150 flex flex-col justify-between" key={prop.id}>
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{prop.name}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 truncate">{prop.name}</h3>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200/80 shrink-0">
                       {prop.occupancy}%
                     </span>
@@ -775,7 +764,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                       <strong className="text-slate-800">{prop.occupiedCount} / {prop.roomsCount} ห้อง</strong>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
-                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style={{ width: `${prop.occupancy}%` }} />
+                      <div className="h-full rounded-full bg-blue-600 transition-[width] duration-500" style={{ width: `${prop.occupancy}%` }} />
                     </div>
                     <div className="flex justify-between pt-1">
                       <span className="text-slate-500">ยอดค้างชำระ:</span>
@@ -890,7 +879,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                         {item.elecUnits} หน่วย
                       </div>
                       <div
-                        className="w-full max-w-[32px] rounded-t-lg bg-gradient-to-t from-amber-500 to-amber-400 group-hover:from-amber-600 group-hover:to-amber-500 transition-all duration-300 shadow-2xs"
+                        className="w-full max-w-[32px] rounded-t-lg bg-amber-500 group-hover:bg-amber-600 transition-colors shadow-2xs"
                         style={{ height: `${height}%` }}
                       />
                       <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>
@@ -945,7 +934,7 @@ export function DashboardOverview({ data }: { data: PortalData }) {
                         {item.waterUnits} m³
                       </div>
                       <div
-                        className="w-full max-w-[32px] rounded-t-lg bg-gradient-to-t from-sky-500 to-sky-400 group-hover:from-sky-600 group-hover:to-sky-500 transition-all duration-300 shadow-2xs"
+                        className="w-full max-w-[32px] rounded-t-lg bg-sky-500 group-hover:bg-sky-600 transition-colors shadow-2xs"
                         style={{ height: `${height}%` }}
                       />
                       <span className="text-[11px] font-bold text-slate-500 mt-1">{item.month}</span>

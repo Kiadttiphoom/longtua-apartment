@@ -34,22 +34,26 @@ npm run build
 
 Super Admin มีโค้ดรองรับภายใน แต่ตั้งใจไม่แสดงเป็นตัวเลือกในเดโมสาธารณะ
 
-## Auth และทดลองใช้ฟรีจริง
+## สถาปัตยกรรม Database และ Authentication (Decoupled PostgreSQL)
 
-หน้า `/login`, `/register` และหน้าพอร์ทัล เช่น `/dashboard`, `/dormitories`, `/guestrooms` ใช้ Supabase Auth แบบ cookie session โดยผู้ใช้กรอกเฉพาะ `username + password` ระบบ map username ไป synthetic email ฝั่ง server จึงไม่เปิดเผย service role key หรืออีเมลภายในให้ browser
+ระบบเชื่อมต่อฐานข้อมูลตรงผ่าน **PostgreSQL (`DATABASE_URL`) ฝั่งเซิร์ฟเวอร์** โดยถอดการพึ่งพา Supabase SDK, Auth API และ Storage ออกจากตัวแอปพลิเคชันอย่างสมบูรณ์:
+- **Database Connection:** ใช้ `pg.Pool` ทำ parameterized queries 100% ปลอดภัยจาก SQL Injection รองรับทั้ง Direct Connection (พอร์ต 5432) และ Supabase Transaction Pooler / PgBouncer (พอร์ต 6543) ด้วยโหมด unnamed prepared statements
+- **Authentication:** รองรับการล็อกอินด้วย `username + password` ผ่าน HTTP-Only Cookie Session ที่เข้ารหัสลายเซ็นแบบ HMAC-SHA256 รหัสผ่านถูกเข้ารหัสด้วย bcrypt ซึ่งเข้ากันได้ 100% กับ hash เดิมของ Supabase GoTrue ทำให้ผู้ใช้เดิมเข้าสู่ระบบได้ทันทีโดยไม่ต้องรีเซ็ตรหัสผ่าน
+- **File Storage:** ใช้ **Cloudflare R2** (S3 Protocol) เก็บสลิปโอนเงิน สัญญาเช่า และเอกสารทั้งหมด ปลอดภัยด้วย Signed URLs และ Private API Routes
+- **Multi-Tenant Isolation:** แยกสิทธิ์ข้อมูลระดับองค์กร (`organization_id`) ทั้งในระดับ Application Logic (Server Action Context) และ Database Functions/RLS
 
-1. คัดลอกค่าจาก `.env.example` ไป `.env.local` และตั้ง `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` กับ `AUTH_INTERNAL_EMAIL_DOMAIN`
-2. Apply migration ตามลำดับไปยัง Supabase project:
+1. คัดลอกค่าจาก `.env.example` ไป `.env.local` และตั้งค่า:
+   - `DATABASE_URL=postgresql://user:password@host:6543/postgres?sslmode=require`
+   - `AUTH_SESSION_SECRET=รหัสสุ่มยาว32ตัวขึ้นไป`
+   - `AUTH_INTERNAL_EMAIL_DOMAIN=auth.longtua.com`
+   - ค่า Cloudflare R2 สำหรับจัดเก็บไฟล์เอกสาร
+2. Apply migration ไปยังฐานข้อมูล PostgreSQL (รองรับทั้ง Supabase Cloud และ Standalone PostgreSQL บน VPS):
    - `supabase/migrations/20260828070647_auth_foundation.sql`
-   - `supabase/migrations/20260828083714_apartment_core.sql`
-   - `supabase/migrations/20260828090230_super_admin_and_registration_control.sql`
-   - `supabase/migrations/20260828091931_admin_management_catalog.sql`
-   - `supabase/migrations/20260828100500_expand_super_admin_operations.sql`
-   - `supabase/migrations/20260828101032_granular_menu_permissions.sql`
-   - `supabase/migrations/20260829023526_create_rooms_with_meters.sql`
-3. สมัครที่ `/register`; ระบบจะสร้าง profile, organization, owner membership และ trial 30 วันใน transaction เดียว
+   - ...
+   - `supabase/migrations/20261119000000_decouple_supabase_auth.sql`
+3. สมัครทดลองใช้ที่หน้าลงทะเบียน; ระบบจะสร้าง profile, organization, owner membership และ trial ใน transaction เดียว
 
-หน้าระบบจริงอยู่ใน route group `app/(portal)` และแยก route ตาม feature โดยไม่ใช้ข้อมูลตัวอย่างหรือ `localStorage` ข้อมูลทั้งหมดอ่าน/เขียน Supabase โดยมี RLS จำกัดตาม `organization_id`
+หน้าระบบจริงอยู่ใน route group `app/(portal)` และแยก route ตาม feature โดยไม่ใช้ข้อมูลตัวอย่างหรือ `localStorage` ข้อมูลทั้งหมดอ่าน/เขียนผ่าน PostgreSQL แบบมี Transaction คุ้มครองความสมบูรณ์ของข้อมูล
 
 ## สร้าง Super Admin คนแรก
 
@@ -57,6 +61,20 @@ Super Admin มีโค้ดรองรับภายใน แต่ตั�
 
 ```bash
 npm run admin:create -- superadmin "รหัสผ่านที่ยาวและเดายาก" "Longtua Super Admin"
+```
+
+สคริปต์จะเชื่อมต่อผ่าน `DATABASE_URL`, แฮชรหัสผ่านด้วย bcrypt และบันทึกลงฐานข้อมูลใน atomic transaction เดียวกันทันที
+
+## ย้ายสลิปเก่าจาก Supabase Storage ไป Cloudflare R2
+
+หากมีสลิปเก่าในระบบที่ยังไม่ได้ย้ายไป Cloudflare R2 สามารถใช้สคริปต์ย้ายข้อมูลที่ทำงานแบบ idempotent:
+
+```bash
+# ตรวจสอบรายการสลิปที่ต้องย้ายโดยไม่เปลี่ยนแปลงข้อมูล (Dry run)
+node scripts/migrate-slips-to-r2.mjs --dry-run
+
+# ดำเนินการย้ายจริงและอัปเดตพาธในฐานข้อมูล
+node scripts/migrate-slips-to-r2.mjs --apply
 ```
 
 Super Admin เข้าสู่ระบบผ่าน `/login` เหมือนผู้ใช้ทั่วไป แต่จะถูกส่งไป `/admin` อัตโนมัติ หน้านี้จัดการกิจการ ผู้ใช้ Subscription, Role, Permission, เมนู, Audit Log และการเปิด/ปิดลงทะเบียนได้จริง การแก้ Role/Permission/เมนูมีผลกับเมนูและ Server Action ของระบบลูกค้า ส่วน `/demo/*` จะไม่แสดง Super Admin หรือการตั้งค่านี้

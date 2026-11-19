@@ -152,7 +152,7 @@ export function RepairForm({ leases }: { leases: Array<{ id: string; label: stri
 
       <button
         type="submit"
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-600/20 hover:from-blue-700 hover:to-indigo-700 active:scale-98 transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 active:scale-[0.99] transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
         disabled={pending || !leases.length}
       >
         {pending ? (

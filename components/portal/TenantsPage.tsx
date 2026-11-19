@@ -187,9 +187,8 @@ export function TenantsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -211,9 +210,8 @@ export function TenantsPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -235,9 +233,8 @@ export function TenantsPage({
           onClick={() => setStatus("former")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-slate-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-slate-600 to-slate-700 text-white shadow-md shadow-slate-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <UserMinus size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -251,9 +248,8 @@ export function TenantsPage({
 
         {/* Card 4: Tenant Portal Accounts */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3.5">
+            <span className="w-11 h-11 rounded-xl bg-slate-700 text-white flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -302,7 +298,7 @@ export function TenantsPage({
                 role="tab"
                 type="button"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}>
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -515,16 +511,15 @@ export function TenantsPage({
                     const leaseInfo = tenantLeaseMap.get(item.id);
                     return (
                       <article
-                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                        className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
                         key={item.id}
                       >
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-
+                        
                         <div>
                           {/* Header */}
                           <header className="flex items-start justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3.5 min-w-0">
-                              <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                              <span className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0">
                                 {item.full_name.slice(0, 1)}
                               </span>
                               <div className="min-w-0">
