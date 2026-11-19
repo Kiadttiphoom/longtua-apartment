@@ -93,8 +93,8 @@ try {
 
   // Upsert system_admins
   await client.query(
-    `INSERT INTO public.system_admins (user_id, status, notes, updated_at)
-     VALUES ($1, 'active', 'Created by local administrative CLI tool', now())
+    `INSERT INTO public.system_admins (user_id, status, updated_at)
+     VALUES ($1, 'active', now())
      ON CONFLICT (user_id) DO UPDATE
      SET status = 'active',
          updated_at = now()`,
