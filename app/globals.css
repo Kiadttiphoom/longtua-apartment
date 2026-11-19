@@ -56,6 +56,69 @@
 @layer base {
   * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.6);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Dark themed sidebar & containers */
+  aside,
+  aside *,
+  .dark-scrollbar,
+  .dark-scrollbar * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  aside::-webkit-scrollbar,
+  aside *::-webkit-scrollbar,
+  .dark-scrollbar::-webkit-scrollbar,
+  .dark-scrollbar *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  aside::-webkit-scrollbar-track,
+  aside *::-webkit-scrollbar-track,
+  .dark-scrollbar::-webkit-scrollbar-track,
+  .dark-scrollbar *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  aside::-webkit-scrollbar-thumb,
+  aside *::-webkit-scrollbar-thumb,
+  .dark-scrollbar::-webkit-scrollbar-thumb,
+  .dark-scrollbar *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+  }
+
+  aside::-webkit-scrollbar-thumb:hover,
+  aside *::-webkit-scrollbar-thumb:hover,
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark-scrollbar *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
   }
 
   html,
