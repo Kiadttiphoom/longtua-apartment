@@ -144,7 +144,7 @@ export function AdminPlatformShell({ profileName, children }: { profileName: str
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full flex-1">{children}</main>
+        <main className="w-full p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
       </div>
     </div>
   );

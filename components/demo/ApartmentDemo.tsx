@@ -483,7 +483,7 @@ export function ApartmentDemo({
           </div>
         </header>
 
-        <main className="w-full max-w-[1460px] mx-auto p-6 lg:p-8 flex-1">
+        <main className="w-full p-4 sm:p-6 lg:p-8 flex-1">
           {subscription === "trialing" ? (
             <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">

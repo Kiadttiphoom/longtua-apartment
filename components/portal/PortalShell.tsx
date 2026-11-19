@@ -186,7 +186,7 @@ export function PortalShell({ children, context }: ShellProps) {
             </div>
           </div>
         </header>
-        <main className="w-full max-w-[1460px] mx-auto p-6 lg:p-8 flex-1">{children}</main>
+        <main className="w-full p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
       </div>
     </div>
   );
