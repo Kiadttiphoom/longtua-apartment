@@ -9,7 +9,7 @@ import { AdminTenantViews, AdminLeasesView } from "@/components/admin/views/Admi
 import { AdminMetersView, AdminInvoicesView, AdminPaymentsView, AdminReceivablesView, AdminReportsView } from "@/components/admin/views/AdminBillingViews";
 import { AdminLineView, AdminSubscriptionsView, AdminRolesView, AdminPermissionsView, AdminMenusView, AdminAuditView, AdminSettingsView, AdminTrialRequestsView } from "@/components/admin/views/AdminManagementViews";
 
-export function AdminViewContent({ view, title, description, params, catalogReady, granularPermissionsReady, organizationCount, profileCount, organizations, profiles, memberships, subscriptions, subscriptionPlans, properties, rooms, tenants, leases, meters, invoices, payments, roles, permissions, menus, audits, trialRequests, propertiesReady, roomsReady, tenantsReady, leasesReady, metersReady, invoicesReady, paymentsReady, registration, systemAdminIds, organizationMap, profileMap, propertyMap, roomMap, tenantMap, latestReadingByMeter, memberCountByOrganization, organizationCountByUser, matrixActions, matrixMenus, matrixRoles, selectedRoleId, selectedOrganizationId, selectedOrganizationUsers, selectedUserId, totalBilled, totalOutstanding, totalCollected, occupiedRooms }: AdminViewContentProps) {
+export function AdminViewContent({ view, title, description, params, catalogReady, granularPermissionsReady, organizationCount, profileCount, organizations, profiles, memberships, subscriptions, subscriptionPlans, properties, rooms, tenants, leases, meters, invoices, payments, roles, permissions, menus, audits, trialRequests, propertiesReady, roomsReady, tenantsReady, leasesReady, metersReady, invoicesReady, paymentsReady, registration, telegramSettings, systemAdminIds, organizationMap, profileMap, propertyMap, roomMap, tenantMap, latestReadingByMeter, memberCountByOrganization, organizationCountByUser, matrixActions, matrixMenus, matrixRoles, selectedRoleId, selectedOrganizationId, selectedOrganizationUsers, selectedUserId, totalBilled, totalOutstanding, totalCollected, occupiedRooms }: AdminViewContentProps) {
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
@@ -68,7 +68,7 @@ export function AdminViewContent({ view, title, description, params, catalogRead
       {view === "permissions" ? <AdminPermissionsView granularPermissionsReady={granularPermissionsReady} params={params} organizations={organizations} roles={roles} matrixActions={matrixActions} matrixMenus={matrixMenus} matrixRoles={matrixRoles} selectedRoleId={selectedRoleId} selectedOrganizationId={selectedOrganizationId} selectedOrganizationUsers={selectedOrganizationUsers} selectedUserId={selectedUserId} /> : null}
       {view === "menus" ? <AdminMenusView menus={menus} permissions={permissions} /> : null}
       {view === "audit" ? <AdminAuditView audits={audits} profileMap={profileMap} /> : null}
-      {view === "settings" ? <AdminSettingsView registration={registration} /> : null}
+      {view === "settings" ? <AdminSettingsView registration={registration} telegramSettings={telegramSettings} /> : null}
     </div>
   );
 }

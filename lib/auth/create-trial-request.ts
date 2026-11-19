@@ -6,6 +6,7 @@ import { isRegistrationEnabled } from "@/lib/auth/system-admin";
 import { normalizePhone, normalizeUsername, validateTrialRequestInput } from "@/lib/auth/validation.mjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { notifyNewTrialRequest } from "@/lib/telegram/notifications";
 
 export type TrialRequestBody = {
   username?: unknown;
@@ -121,6 +122,17 @@ export async function createTrialRequest(body: TrialRequestBody, origin = "") {
     }
 
     const appUrl = process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") || origin;
+
+    // Send Telegram notification asynchronously without blocking response
+    notifyNewTrialRequest({
+      operatorName,
+      propertyName,
+      contactEmail,
+      phone: normalizedPhone,
+      username,
+      requestedRoomCount,
+    }).catch((err) => console.error("[telegram] trial notification error:", err));
+
     return json({
       requestId: trialRequestId,
       status: "pending",

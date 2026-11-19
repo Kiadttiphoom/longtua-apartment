@@ -1,6 +1,7 @@
 "use server";
 import { requireTenantContext } from "@/lib/auth/tenant-access";
 import { revalidatePath } from "next/cache";
+import { notifyNewRepairRequest } from "@/lib/telegram/notifications";
 
 export async function submitRepair(data: FormData) {
   const context = await requireTenantContext();
@@ -13,5 +14,10 @@ export async function submitRepair(data: FormData) {
   const { error } = await context.supabase.from("repair_requests").insert({ organization_id: context.organizationId, tenant_id: context.tenantId, room_id: lease.room_id, property_id: lease.property_id, title, detail });
   if (error) return { ok: false, message: "ส่งคำขอไม่สำเร็จ กรุณาติดต่อหอพักหรือลองอีกครั้ง" };
   revalidatePath("/tenant/repairs");
+
+  notifyNewRepairRequest({
+    title,
+  }).catch((err) => console.error("[telegram] repair notification error:", err));
+
   return { ok: true, message: "ส่งคำขอแจ้งซ่อมแล้ว" };
 }

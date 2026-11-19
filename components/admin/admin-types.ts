@@ -45,6 +45,15 @@ export type MatrixMenu = { id: string; code: string; label: string; actionCodes:
 export type MatrixRole = { id: string; code: string; name: string; values: Record<string, boolean> };
 export type SelectedUser = { id: string; username: string; name: string; roleCode: string; roleName: string; values: Record<string, "inherit" | "allow" | "deny"> };
 
+export type TelegramSettings = {
+  enabled: boolean;
+  botToken: string;
+  chatId: string;
+  notifyTrialRequests: boolean;
+  notifyPaymentSubmissions: boolean;
+  notifyRepairRequests: boolean;
+};
+
 export type AdminViewContentProps = {
   view: string;
   title: string;
@@ -79,6 +88,7 @@ export type AdminViewContentProps = {
   invoicesReady: boolean;
   paymentsReady: boolean;
   registration: { enabled: boolean };
+  telegramSettings?: TelegramSettings;
   systemAdminIds: Set<string>;
   organizationMap: Map<string, string>;
   profileMap: Map<string, string>;

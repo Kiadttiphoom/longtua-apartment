@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, MessageCircle, Package, Pencil, Save, Trash2, XCircle } from "lucide-react";
-import { approveTrialRequestAction, deleteRoleAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, setRegistrationEnabledAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
+import { AlertTriangle, Bot, CheckCircle2, Info, MessageCircle, Package, Pencil, Save, Send, Trash2, XCircle } from "lucide-react";
+import { approveTrialRequestAction, deleteRoleAction, rejectTrialRequestAction, saveMenuAction, saveRoleAction, saveSubscriptionPlanAction, saveTelegramSettingsAction, setRegistrationEnabledAction, testTelegramSettingsAction, updateSubscriptionAction } from "@/app/(admin)/admin/actions";
 import { AdminTable, dateInput, statusLabel, thaiDate } from "@/components/admin/AdminPrimitives";
 import { RolePermissionMatrix, UserPermissionMatrix } from "@/components/admin/PermissionMatrix";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -842,40 +842,214 @@ export function AdminAuditView({ audits, profileMap }: Pick<AdminViewContentProp
   );
 }
 
-export function AdminSettingsView({ registration }: Pick<AdminViewContentProps, "registration">) {
+export function AdminSettingsView({ registration, telegramSettings }: Pick<AdminViewContentProps, "registration" | "telegramSettings">) {
+  const telegram = telegramSettings ?? {
+    enabled: false,
+    botToken: "",
+    chatId: "",
+    notifyTrialRequests: true,
+    notifyPaymentSubmissions: true,
+    notifyRepairRequests: true,
+  };
+
   return (
-    <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="space-y-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การตั้งค่าระบบ</span>
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">เปิด/ปิดคำขอทดลองใช้</h2>
-        <p className="text-xs text-slate-500 max-w-xl">
-          ควบคุมการรับคำขอจากหน้าสมัครสมาชิกในแอปและเว็บไซต์หลัก เมื่อครบ 20 กิจการจะไม่รับสมัครหรืออนุมัติเพิ่ม แม้เปิดสวิตช์ไว้ ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ และคำขอที่ส่งแล้วไม่ถูกลบ
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-bold ${
-            registration.enabled
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-rose-50 text-rose-700 border border-rose-200"
-          }`}
-        >
-          {registration.enabled ? "เปิดรับคำขอ" : "ปิดรับคำขอ"}
-        </span>
-        <form action={setRegistrationEnabledAction}>
-          <input name="enabled" type="hidden" value={registration.enabled ? "false" : "true"} />
-          <button
-            className={`h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-xs ${
+    <div className="space-y-6">
+      {/* 1. เปิด/ปิดคำขอทดลองใช้ */}
+      <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">การตั้งค่าระบบ</span>
+          <h2 className="text-lg font-bold text-slate-800 tracking-tight">เปิด/ปิดคำขอทดลองใช้</h2>
+          <p className="text-xs text-slate-500 max-w-xl">
+            ควบคุมการรับคำขอจากหน้าสมัครสมาชิกในแอปและเว็บไซต์หลัก เมื่อครบ 20 กิจการจะไม่รับสมัครหรืออนุมัติเพิ่ม แม้เปิดสวิตช์ไว้ ผู้ใช้เดิมยังเข้าสู่ระบบได้ตามปกติ และคำขอที่ส่งแล้วไม่ถูกลบ
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold ${
               registration.enabled
-                ? "bg-rose-600 hover:bg-rose-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-rose-50 text-rose-700 border border-rose-200"
             }`}
-            type="submit"
           >
-            {registration.enabled ? "ปิดรับคำขอ" : "เปิดรับคำขอ"}
-          </button>
+            {registration.enabled ? "เปิดรับคำขอ" : "ปิดรับคำขอ"}
+          </span>
+          <form action={setRegistrationEnabledAction}>
+            <input name="enabled" type="hidden" value={registration.enabled ? "false" : "true"} />
+            <button
+              className={`h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-xs ${
+                registration.enabled
+                  ? "bg-rose-600 hover:bg-rose-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+              type="submit"
+            >
+              {registration.enabled ? "ปิดรับคำขอ" : "เปิดรับคำขอ"}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* 2. ตั้งค่า Telegram แจ้งเตือน */}
+      <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5">
+                <Bot size={14} /> การแจ้งเตือน · TELEGRAM BOT
+              </span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">ตั้งค่าการแจ้งเตือน Telegram</h2>
+            <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+              เชื่อมต่อ Telegram Bot เพื่อรับแจ้งเตือนแบบเรียลไทม์เข้าบัญชีส่วนตัวหรือกลุ่มของคุณทันที เมื่อมีผู้ส่งคำขอทดลองใช้ใหม่ ผู้เช่าส่งสลิปชำระเงิน หรือมีรายการแจ้งซ่อมห้องพัก
+            </p>
+          </div>
+          <span
+            className={`self-start sm:self-auto px-3 py-1 rounded-full text-xs font-bold ${
+              telegram.enabled && telegram.botToken && telegram.chatId
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-slate-100 text-slate-600 border border-slate-200"
+            }`}
+          >
+            {telegram.enabled && telegram.botToken && telegram.chatId ? "เปิดใช้งานอยู่" : "ยังไม่เปิดใช้งาน"}
+          </span>
+        </div>
+
+        <form action={saveTelegramSettingsAction} className="space-y-6">
+          {/* Active Switch */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <label htmlFor="telegram-enabled" className="text-sm font-semibold text-slate-800 cursor-pointer">
+                เปิดระบบแจ้งเตือนผ่าน Telegram
+              </label>
+              <p className="text-xs text-slate-500">
+                เมื่อเปิดใช้งาน ข้อความแจ้งเตือนจะถูกส่งไปยัง Chat ID ที่ระบุด้านล่างทันที
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                id="telegram-enabled"
+                name="enabled"
+                type="checkbox"
+                value="true"
+                defaultChecked={telegram.enabled}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+            </label>
+          </div>
+
+          {/* Bot Token & Chat ID inputs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                Telegram Bot Token <span className="text-rose-500">*</span>
+              </label>
+              <input
+                name="botToken"
+                type="text"
+                defaultValue={telegram.botToken}
+                placeholder="เช่น 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+              />
+              <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
+                <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
+                <span>
+                  สร้างบอทผ่าน <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-sky-600 underline font-medium hover:text-sky-700">@BotFather</a> ใน Telegram แล้วคัดลอก HTTP API Token มาใส่
+                </span>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                Telegram Chat ID <span className="text-rose-500">*</span>
+              </label>
+              <input
+                name="chatId"
+                type="text"
+                defaultValue={telegram.chatId}
+                placeholder="เช่น 987654321 หรือ -100123456789"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+              />
+              <p className="text-[11px] text-slate-500 leading-normal flex items-start gap-1">
+                <Info size={13} className="shrink-0 mt-0.5 text-slate-400" />
+                <span>
+                  ตรวจสอบ Chat ID ของคุณได้จาก <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-sky-600 underline font-medium hover:text-sky-700">@userinfobot</a> (หากใช้กลุ่ม ให้นำ Bot เข้ากลุ่มแล้วใช้ ID ที่ขึ้นต้นด้วย <code>-100...</code>)
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Notification Triggers / Events */}
+          <div className="space-y-3 pt-2">
+            <span className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+              เหตุการณ์ที่ต้องการให้แจ้งเตือน
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors">
+                <input
+                  name="notifyTrialRequests"
+                  type="checkbox"
+                  value="true"
+                  defaultChecked={telegram.notifyTrialRequests}
+                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <div className="space-y-0.5 text-xs">
+                  <span className="font-semibold text-slate-800 block">คำขอทดลองใช้ใหม่</span>
+                  <span className="text-slate-500 text-[11px] block">เมื่อมีผู้สมัคร Trial จากหน้าเว็บหรือฟอร์ม</span>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors">
+                <input
+                  name="notifyPaymentSubmissions"
+                  type="checkbox"
+                  value="true"
+                  defaultChecked={telegram.notifyPaymentSubmissions}
+                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <div className="space-y-0.5 text-xs">
+                  <span className="font-semibold text-slate-800 block">แจ้งชำระเงิน / ส่งสลิป</span>
+                  <span className="text-slate-500 text-[11px] block">เมื่อผู้เช่าอัปโหลดสลิปชำระเงิน</span>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors">
+                <input
+                  name="notifyRepairRequests"
+                  type="checkbox"
+                  value="true"
+                  defaultChecked={telegram.notifyRepairRequests}
+                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <div className="space-y-0.5 text-xs">
+                  <span className="font-semibold text-slate-800 block">แจ้งซ่อมห้องพัก</span>
+                  <span className="text-slate-500 text-[11px] block">เมื่อมีผู้เช่าส่งคำขอแจ้งซ่อม</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="submit"
+              formAction={testTelegramSettingsAction}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 cursor-pointer shadow-xs transition-colors"
+            >
+              <Send size={14} className="text-sky-600" />
+              ทดสอบส่งข้อความไปยัง Telegram
+            </button>
+
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 h-9 px-5 rounded-xl text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 cursor-pointer shadow-xs transition-colors"
+            >
+              <Save size={14} />
+              บันทึกการตั้งค่า Telegram
+            </button>
+          </div>
         </form>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { IMPERSONATE_ORGANIZATION_COOKIE } from "@/lib/portal/context";
 import { adminManagementPaths } from "@/lib/portal/admin-management-paths";
+import { testTelegramMessage } from "@/lib/telegram/notifications";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CODE_PATTERN = /^[a-z][a-z0-9_]{2,49}$/;
@@ -64,6 +65,67 @@ export async function setRegistrationEnabledAction(formData: FormData) {
   await audit(context, "system.registration.updated", "system_setting", "registration_enabled", before, { value: enabled });
   revalidatePath("/register");
   done("settings", enabled ? "เปิดรับคำขอทดลองใช้แล้ว" : "ปิดรับคำขอทดลองใช้แล้ว");
+}
+
+export async function saveTelegramSettingsAction(formData: FormData) {
+  const context = await adminContext();
+  const enabled = text(formData, "enabled") === "true";
+  const botToken = text(formData, "botToken");
+  const chatId = text(formData, "chatId");
+  const notifyTrialRequests = text(formData, "notifyTrialRequests") === "true";
+  const notifyPaymentSubmissions = text(formData, "notifyPaymentSubmissions") === "true";
+  const notifyRepairRequests = text(formData, "notifyRepairRequests") === "true";
+
+  const { data: before } = await context.admin
+    .from("system_settings")
+    .select("value")
+    .eq("key", "telegram_settings")
+    .maybeSingle();
+
+  const telegramSettings = {
+    enabled,
+    botToken: botToken.trim(),
+    chatId: chatId.trim(),
+    notifyTrialRequests,
+    notifyPaymentSubmissions,
+    notifyRepairRequests,
+  };
+
+  const { error } = await context.admin.from("system_settings").upsert({
+    key: "telegram_settings",
+    value: telegramSettings,
+    description: "Telegram notification configuration for platform alerts",
+    updated_by: context.userId,
+  });
+
+  if (error) failed("settings", context.requestId, "telegram_setting.update", error);
+  await audit(context, "system.telegram.updated", "system_setting", "telegram_settings", before, telegramSettings);
+  done("settings", "บันทึกการตั้งค่า Telegram เรียบร้อยแล้ว");
+}
+
+export async function testTelegramSettingsAction(formData: FormData) {
+  const context = await adminContext();
+  const botToken = text(formData, "botToken").trim();
+  const chatId = text(formData, "chatId").trim();
+
+  if (!botToken || !chatId) {
+    redirect(`${adminPath("settings")}?notice=${encodeURIComponent("กรุณาระบุ Telegram Bot Token และ Chat ID ก่อนทดสอบส่งข้อความ")}`);
+  }
+
+  const result = await testTelegramMessage({
+    enabled: true,
+    botToken,
+    chatId,
+    notifyTrialRequests: true,
+    notifyPaymentSubmissions: true,
+    notifyRepairRequests: true,
+  });
+
+  if (!result.success) {
+    redirect(`${adminPath("settings")}?notice=${encodeURIComponent(`ส่งข้อความไม่สำเร็จ: ${result.error || "ตรวจสอบ Bot Token และ Chat ID ให้ถูกต้อง"}`)}`);
+  }
+
+  done("settings", "ส่งข้อความทดสอบไปยัง Telegram สำเร็จแล้ว ตรวจสอบในแชตได้เลยครับ");
 }
 
 export async function approveTrialRequestAction(formData: FormData) {

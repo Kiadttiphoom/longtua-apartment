@@ -10,6 +10,7 @@ import {
 } from "@/lib/storage/private-r2";
 import { detectSlipType, MAX_SLIP_BYTES } from "@/lib/tenant/slip-validation.mjs";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyNewPaymentSubmission } from "@/lib/telegram/notifications";
 
 export async function requestPaymentSlipUploadPresignedUrl({
   invoiceId,
@@ -203,6 +204,13 @@ export async function confirmPaymentSubmissionWithR2({
   revalidatePath("/tenant");
   revalidatePath("/tenant/bills");
   revalidatePath("/payments");
+
+  notifyNewPaymentSubmission({
+    amount,
+    invoiceNumber: invoice.invoice_number,
+    paidAt: parsedDate.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }),
+  }).catch((err) => console.error("[telegram] payment submission notification error:", err));
+
   return { ok: true, message: "ส่งหลักฐานแล้ว รอเจ้าหน้าที่ตรวจสอบก่อนยืนยันยอดชำระ" };
 }
 
