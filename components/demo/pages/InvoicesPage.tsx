@@ -417,7 +417,6 @@ export function InvoicesPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ReceiptText size={20} strokeWidth={2.2} />
@@ -435,7 +434,6 @@ export function InvoicesPage({
 
         {/* Card 2: Total Billed Amount */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <FileText size={20} strokeWidth={2.2} />
@@ -461,7 +459,6 @@ export function InvoicesPage({
           onClick={() => setStatus("paid")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
@@ -487,7 +484,6 @@ export function InvoicesPage({
           onClick={() => setStatus(status === "issued" ? "all" : "issued")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CalendarClock size={20} strokeWidth={2.2} />
@@ -796,8 +792,6 @@ export function InvoicesPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-
-
                       <div>
                         {/* Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">

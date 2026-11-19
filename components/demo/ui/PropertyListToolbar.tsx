@@ -1,5 +1,8 @@
 import { Building2, LayoutGrid, ListFilter, Search } from "lucide-react";
-import { SelectControl, type SelectOption } from "@/components/ui/SelectControl";
+import {
+  SelectControl,
+  type SelectOption,
+} from "@/components/ui/SelectControl";
 
 type ViewMode = "grid" | "table";
 

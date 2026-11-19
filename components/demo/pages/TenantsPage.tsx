@@ -19,10 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { PropertyListToolbar } from "../ui/PropertyListToolbar";
-import {
-  DataTable,
-  StatusBadge,
-} from "@/components/portal/PortalUI";
+import { DataTable, StatusBadge } from "@/components/portal/PortalUI";
 import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 
@@ -227,7 +224,6 @@ export function TenantsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
@@ -253,7 +249,6 @@ export function TenantsPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
@@ -279,7 +274,6 @@ export function TenantsPage({
           onClick={() => setStatus("former")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserMinus size={20} strokeWidth={2.2} />
@@ -297,7 +291,6 @@ export function TenantsPage({
 
         {/* Card 4: Tenant Portal Accounts */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
@@ -451,11 +444,15 @@ export function TenantsPage({
             { value: "blocked", label: "ระงับการใช้งาน" },
           ]}
           onStatusChange={setStatus}
-          onClear={query || status !== "all" || floor !== "all" ? () => {
-            setQuery("");
-            setStatus("all");
-            setFloor("all");
-          } : undefined}
+          onClear={
+            query || status !== "all" || floor !== "all"
+              ? () => {
+                  setQuery("");
+                  setStatus("all");
+                  setFloor("all");
+                }
+              : undefined
+          }
           viewMode={viewMode}
           onViewChange={setViewMode}
         />
@@ -587,8 +584,6 @@ export function TenantsPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-
-
                       <div>
                         {/* Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">

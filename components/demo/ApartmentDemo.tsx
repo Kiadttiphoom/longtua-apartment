@@ -2,7 +2,17 @@
 import { Swal } from "@/lib/sweetalert";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, ChevronRight, LockKeyhole, LogOut, Menu, RotateCcw, Search, X, Zap } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronRight,
+  LockKeyhole,
+  LogOut,
+  Menu,
+  RotateCcw,
+  Search,
+  X,
+  Zap,
+} from "lucide-react";
 import { AddPropertyWizard } from "./modals/AddPropertyWizard";
 import { CompanyPanel } from "./modals/CompanyPanel";
 import { ContractFormModal } from "./modals/ContractFormModal";
@@ -317,77 +327,162 @@ export function ApartmentDemo({
   const currentItem = navigationItems.find((item) => item.code === activePage);
   const searchTerm = menuQuery.trim().toLowerCase();
   const matchingItems = searchTerm
-    ? navigationItems.filter((item) => item.label.toLowerCase().includes(searchTerm))
+    ? navigationItems.filter((item) =>
+        item.label.toLowerCase().includes(searchTerm),
+      )
     : [];
 
   return (
     <div className="demo-workspace">
       <aside className="demo-sidebar" data-open={isMobileOpen}>
         <div className="demo-sidebar-brand">
-          <button type="button" onClick={() => navigate("dashboard")} className="demo-wordmark">
+          <button
+            type="button"
+            onClick={() => navigate("dashboard")}
+            className="demo-wordmark"
+          >
             <span aria-hidden="true">L</span> Longtua
           </button>
-          <button type="button" className="demo-control demo-dismiss" onClick={() => setIsMobileOpen(false)} aria-label="ปิดเมนู"><X size={18} /></button>
+          <button
+            type="button"
+            className="demo-control demo-dismiss"
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="ปิดเมนู"
+          >
+            <X size={18} />
+          </button>
         </div>
         <nav className="demo-navigation" aria-label="เมนูหลัก">
           {visibleGroups.map((group) => (
             <section key={group.label}>
               <h2>{group.label}</h2>
               {group.items.map(({ code, icon: Icon, label, addon }) => (
-                <button type="button" aria-current={activePage === code ? "page" : undefined} key={code} onClick={() => navigate(code)}>
-                  <Icon size={17} aria-hidden="true" /><span>{label}</span>
-                  {addon && !lineEnabled ? <LockKeyhole size={13} aria-label="ยังไม่เปิดใช้งาน" /> : null}
+                <button
+                  type="button"
+                  aria-current={activePage === code ? "page" : undefined}
+                  key={code}
+                  onClick={() => navigate(code)}
+                >
+                  <Icon size={17} aria-hidden="true" />
+                  <span>{label}</span>
+                  {addon && !lineEnabled ? (
+                    <LockKeyhole size={13} aria-label="ยังไม่เปิดใช้งาน" />
+                  ) : null}
                 </button>
               ))}
             </section>
           ))}
         </nav>
         <div className="demo-account">
-          <span className="demo-avatar" aria-hidden="true">{displayInitials}</span>
-          <div><strong>{displayUserName}</strong><small>{displayUserRole}</small></div>
-          <button type="button" className="demo-control" aria-label="ออกจากระบบ" title="ออกจากระบบ" onClick={() => logoutAction ? void logoutAction() : resetDemo()}>
+          <span className="demo-avatar" aria-hidden="true">
+            {displayInitials}
+          </span>
+          <div>
+            <strong>{displayUserName}</strong>
+            <small>{displayUserRole}</small>
+          </div>
+          <button
+            type="button"
+            className="demo-control"
+            aria-label="ออกจากระบบ"
+            title="ออกจากระบบ"
+            onClick={() => (logoutAction ? void logoutAction() : resetDemo())}
+          >
             <LogOut size={16} />
           </button>
         </div>
       </aside>
 
-      {isMobileOpen ? <button type="button" className="demo-overlay" aria-label="ปิดเมนู" onClick={() => setIsMobileOpen(false)} /> : null}
+      {isMobileOpen ? (
+        <button
+          type="button"
+          className="demo-overlay"
+          aria-label="ปิดเมนู"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      ) : null}
 
       <div className="demo-frame">
         <header className="demo-topbar">
-          <button type="button" className="demo-control demo-menu-trigger" aria-label="เปิดเมนู" aria-expanded={isMobileOpen} onClick={() => setIsMobileOpen(true)}><Menu size={18} /></button>
+          <button
+            type="button"
+            className="demo-control demo-menu-trigger"
+            aria-label="เปิดเมนู"
+            aria-expanded={isMobileOpen}
+            onClick={() => setIsMobileOpen(true)}
+          >
+            <Menu size={18} />
+          </button>
           <div className="demo-location">
-            <span>{currentOrganizationName ?? "Demo"}</span><ChevronRight size={13} aria-hidden="true" /><strong>{currentItem?.label}</strong>
+            <span>{currentOrganizationName ?? "Demo"}</span>
+            <ChevronRight size={13} aria-hidden="true" />
+            <strong>{currentItem?.label}</strong>
           </div>
-          <form className="demo-menu-search" role="search" onSubmit={(event) => {
-            event.preventDefault();
-            if (matchingItems[0]) navigate(matchingItems[0].code);
-          }}>
+          <form
+            className="demo-menu-search"
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (matchingItems[0]) navigate(matchingItems[0].code);
+            }}
+          >
             <Search size={16} aria-hidden="true" />
-            <input type="search" aria-label="ค้นหาเมนู" placeholder="ค้นหาเมนู" value={menuQuery} onChange={(event) => setMenuQuery(event.target.value)} onKeyDown={(event) => {
-              if (event.key === "Escape") setMenuQuery("");
-            }} />
+            <input
+              type="search"
+              aria-label="ค้นหาเมนู"
+              placeholder="ค้นหาเมนู"
+              value={menuQuery}
+              onChange={(event) => setMenuQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setMenuQuery("");
+              }}
+            />
             {searchTerm ? (
               <div className="demo-search-results">
-                {matchingItems.length ? matchingItems.map(({ code, label }) => (
-                  <button type="button" onClick={() => navigate(code)} key={code}>{label}<ArrowUpRight size={14} /></button>
-                )) : <p role="status">ไม่พบเมนู</p>}
+                {matchingItems.length ? (
+                  matchingItems.map(({ code, label }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate(code)}
+                      key={code}
+                    >
+                      {label}
+                      <ArrowUpRight size={14} />
+                    </button>
+                  ))
+                ) : (
+                  <p role="status">ไม่พบเมนู</p>
+                )}
               </div>
             ) : null}
           </form>
           {showDemoControls ? (
             <div className="demo-topbar-actions">
-              <select className="demo-control" aria-label="จำลองบทบาท" value={role} onChange={(event) => {
-                const nextRole = event.target.value as RoleKey;
-                setRole(nextRole);
-                if (!roleInfo[nextRole].allowed.includes(activePage)) navigate("dashboard");
-              }}>
+              <select
+                className="demo-control"
+                aria-label="จำลองบทบาท"
+                value={role}
+                onChange={(event) => {
+                  const nextRole = event.target.value as RoleKey;
+                  setRole(nextRole);
+                  if (!roleInfo[nextRole].allowed.includes(activePage))
+                    navigate("dashboard");
+                }}
+              >
                 <option value="owner">เจ้าของ</option>
                 <option value="manager">ผู้จัดการ</option>
                 <option value="accounting">การเงิน</option>
                 <option value="staff">เจ้าหน้าที่</option>
               </select>
-              <button type="button" className="demo-control" aria-label="รีเซ็ต Demo" title="รีเซ็ต Demo" onClick={resetDemo}><RotateCcw size={16} /></button>
+              <button
+                type="button"
+                className="demo-control"
+                aria-label="รีเซ็ต Demo"
+                title="รีเซ็ต Demo"
+                onClick={resetDemo}
+              >
+                <RotateCcw size={16} />
+              </button>
             </div>
           ) : null}
         </header>

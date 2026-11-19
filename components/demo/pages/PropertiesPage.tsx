@@ -67,7 +67,6 @@ export function PropertiesPage({
       {/* Hero Stat Matrix */}
       <section className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Building2 size={20} strokeWidth={2.2} />
@@ -84,7 +83,6 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CheckCircle2 size={20} strokeWidth={2.2} />
@@ -101,7 +99,6 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
@@ -118,7 +115,6 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Activity size={20} strokeWidth={2.2} />
@@ -312,8 +308,6 @@ export function PropertiesPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-
-
                       <div>
                         <header className="flex items-start justify-between gap-3 mb-4">
                           <div className="flex items-center gap-3.5 min-w-0">

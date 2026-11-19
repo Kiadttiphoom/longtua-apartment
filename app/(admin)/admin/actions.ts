@@ -102,18 +102,16 @@ export async function setRegistrationEnabledAction(formData: FormData) {
     .select("value")
     .eq("key", "registration_enabled")
     .maybeSingle();
-  const { error } = await context.admin
-    .from("system_settings")
-    .upsert(
-      {
-        key: "registration_enabled",
-        value: enabled,
-        description:
-          "Controls trial requests submitted by the public marketing website",
-        updated_by: context.userId,
-      },
-      { onConflict: "key" },
-    );
+  const { error } = await context.admin.from("system_settings").upsert(
+    {
+      key: "registration_enabled",
+      value: enabled,
+      description:
+        "Controls trial requests submitted by the public marketing website",
+      updated_by: context.userId,
+    },
+    { onConflict: "key" },
+  );
   if (error)
     failed("settings", context.requestId, "registration_setting.update", error);
   await audit(

@@ -154,8 +154,6 @@ export function SettingsPage({
               className="group relative overflow-hidden p-6 flex flex-col justify-between gap-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
               key={property.id}
             >
-
-
               <div>
                 {/* Header */}
                 <header className="flex items-start justify-between gap-3 mb-4">

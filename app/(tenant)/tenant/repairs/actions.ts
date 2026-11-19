@@ -27,16 +27,14 @@ export async function submitRepair(data: FormData) {
     .eq("status", "active")
     .maybeSingle();
   if (!lease) return { ok: false, message: "ไม่พบสัญญาห้องพักที่ใช้งานอยู่" };
-  const { error } = await context.supabase
-    .from("repair_requests")
-    .insert({
-      organization_id: context.organizationId,
-      tenant_id: context.tenantId,
-      room_id: lease.room_id,
-      property_id: lease.property_id,
-      title,
-      detail,
-    });
+  const { error } = await context.supabase.from("repair_requests").insert({
+    organization_id: context.organizationId,
+    tenant_id: context.tenantId,
+    room_id: lease.room_id,
+    property_id: lease.property_id,
+    title,
+    detail,
+  });
   if (error)
     return { ok: false, message: "ส่งคำขอไม่สำเร็จ กรุณาติดต่อหอพักหรือลองอีกครั้ง" };
   revalidatePath("/tenant/repairs");

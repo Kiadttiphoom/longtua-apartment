@@ -34,9 +34,7 @@ export type DashboardActionResult = {
   requestId?: string;
 };
 
-export async function saveLeaseDocumentAction(
-  formData: FormData,
-): Promise<
+export async function saveLeaseDocumentAction(formData: FormData): Promise<
   DashboardActionResult & {
     version?: LeaseDocumentVersion;
     templateId?: string;
@@ -548,14 +546,12 @@ export async function createTenantAction(
     logFailure(requestId, "tenant.create", error, context.organizationId);
     return { ...fail("เพิ่มผู้เช่าไม่สำเร็จ"), requestId };
   }
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "tenant.created",
-      entity_type: "tenant",
-      entity_id: data.id,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "tenant.created",
+    entity_type: "tenant",
+    entity_id: data.id,
+  });
   return success("เพิ่มผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -615,14 +611,12 @@ export async function createLeaseAction(
     .update({ status: "occupied" })
     .eq("id", roomId)
     .eq("organization_id", context.organizationId);
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "lease.created",
-      entity_type: "lease",
-      entity_id: data.id,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "lease.created",
+    entity_type: "lease",
+    entity_id: data.id,
+  });
   return success("สร้างสัญญาเช่าเรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -818,14 +812,12 @@ export async function createInvoiceAction(
       .eq("organization_id", context.organizationId);
     return { ...fail("สร้างรายการในใบแจ้งหนี้ไม่สำเร็จ"), requestId };
   }
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "invoice.created",
-      entity_type: "rent_invoice",
-      entity_id: invoice.id,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "invoice.created",
+    entity_type: "rent_invoice",
+    entity_id: invoice.id,
+  });
   return success("ออกใบแจ้งหนี้เรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -1247,14 +1239,12 @@ export async function recordPaymentAction(
     })
     .eq("id", invoice.id)
     .eq("organization_id", context.organizationId);
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "payment.recorded",
-      entity_type: "rent_payment",
-      entity_id: payment.id,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "payment.recorded",
+    entity_type: "rent_payment",
+    entity_id: payment.id,
+  });
   return success("บันทึกรับชำระเรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -1414,30 +1404,24 @@ export async function createTenantPortalAccountAction(
   if (createError || !created.user) return fail("สร้างบัญชีผู้เช่าไม่สำเร็จ");
   const authUserId = created.user.id;
   const results = await Promise.all([
-    admin
-      .from("auth_login_aliases")
-      .insert({
-        username,
-        auth_user_id: authUserId,
-        internal_email: internalEmail,
-      }),
-    admin
-      .from("profiles")
-      .insert({
-        id: authUserId,
-        username,
-        display_name: tenant.full_name,
-        phone: tenant.phone,
-        must_change_password: true,
-      }),
-    admin
-      .from("tenant_accounts")
-      .insert({
-        tenant_id: tenantId,
-        organization_id: context.organizationId,
-        auth_user_id: authUserId,
-        invited_by: context.userId,
-      }),
+    admin.from("auth_login_aliases").insert({
+      username,
+      auth_user_id: authUserId,
+      internal_email: internalEmail,
+    }),
+    admin.from("profiles").insert({
+      id: authUserId,
+      username,
+      display_name: tenant.full_name,
+      phone: tenant.phone,
+      must_change_password: true,
+    }),
+    admin.from("tenant_accounts").insert({
+      tenant_id: tenantId,
+      organization_id: context.organizationId,
+      auth_user_id: authUserId,
+      invited_by: context.userId,
+    }),
   ]);
   const setupError = results.find((result) => result.error)?.error;
   if (setupError) {
@@ -1762,14 +1746,12 @@ export async function deletePropertyAction(
     return { ...fail("ลบหอพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบหอพัก หรือคุณไม่มีสิทธิ์ลบหอพักนี้");
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "property.deleted",
-      entity_type: "property",
-      entity_id: propertyId,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "property.deleted",
+    entity_type: "property",
+    entity_id: propertyId,
+  });
   return success("ลบหอพักเรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -1798,14 +1780,12 @@ export async function deleteRoomAction(
     return { ...fail("ลบห้องพักไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบห้องพัก หรือคุณไม่มีสิทธิ์ลบห้องนี้");
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "room.deleted",
-      entity_type: "room",
-      entity_id: roomId,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "room.deleted",
+    entity_type: "room",
+    entity_id: roomId,
+  });
   return success("ลบห้องพักเรียบร้อยแล้ว", context.organizationId);
 }
 
@@ -1913,14 +1893,12 @@ export async function deleteTenantAction(
     return { ...fail("ลบผู้เช่าไม่สำเร็จ กรุณาลองอีกครั้ง"), requestId };
   }
   if (!data) return fail("ไม่พบผู้เช่า หรือคุณไม่มีสิทธิ์ลบผู้เช่านี้");
-  await context.supabase
-    .from("audit_logs")
-    .insert({
-      organization_id: context.organizationId,
-      action: "tenant.deleted",
-      entity_type: "tenant",
-      entity_id: tenantId,
-    });
+  await context.supabase.from("audit_logs").insert({
+    organization_id: context.organizationId,
+    action: "tenant.deleted",
+    entity_type: "tenant",
+    entity_id: tenantId,
+  });
   return success("ลบข้อมูลผู้เช่าเรียบร้อยแล้ว", context.organizationId);
 }
 

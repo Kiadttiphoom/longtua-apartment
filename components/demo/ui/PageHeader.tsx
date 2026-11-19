@@ -24,9 +24,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1>
-          {title}
-        </h1>
+        <h1>{title}</h1>
         <p className="demo-page-description">{description}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

@@ -3,10 +3,7 @@
 import { ShieldCheck } from "lucide-react";
 import { roles } from "../mock-data";
 import type { PageContentProps } from "../types";
-import {
-  DataTable,
-  EditButton,
-} from "@/components/portal/PortalUI";
+import { DataTable, EditButton } from "@/components/portal/PortalUI";
 import { PageHeader } from "../ui/PageHeader";
 import { useDemoCollection } from "../utils";
 

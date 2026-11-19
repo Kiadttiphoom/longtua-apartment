@@ -26,7 +26,9 @@ export function Metric({
   return (
     <article className="demo-panel min-w-0">
       <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5">
-        <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${toneClasses}`}>
+        <span
+          className={`grid size-8 shrink-0 place-items-center rounded-lg ${toneClasses}`}
+        >
           <Icon size={16} aria-hidden="true" />
         </span>
         <p className="text-sm font-semibold text-slate-700">{label}</p>

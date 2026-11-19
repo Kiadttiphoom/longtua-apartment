@@ -206,7 +206,6 @@ export function UsersPage({
       {/* 4-Metric Hero Stat Cards */}
       <section className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
@@ -223,7 +222,6 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
@@ -240,7 +238,6 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
@@ -257,7 +254,6 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
@@ -338,7 +334,6 @@ export function UsersPage({
                 "การจัดการ",
               ]}
               rows={visibleRows.map((row, index) => {
-
                 return [
                   <div className="flex items-center gap-3.5" key="user">
                     <span
@@ -408,14 +403,11 @@ export function UsersPage({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleRows.map((m, index) => {
-
               return (
                 <article
                   className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                   key={index}
                 >
-
-
                   <div>
                     <header className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3.5 min-w-0">

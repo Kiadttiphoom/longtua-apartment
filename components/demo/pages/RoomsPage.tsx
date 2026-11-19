@@ -153,7 +153,6 @@ export function RoomsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Building2 size={20} strokeWidth={2.2} />
@@ -179,7 +178,6 @@ export function RoomsPage({
           onClick={() => setStatus("vacant")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <DoorOpen size={20} strokeWidth={2.2} />
@@ -205,7 +203,6 @@ export function RoomsPage({
           onClick={() => setStatus("occupied")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserRound size={20} strokeWidth={2.2} />
@@ -223,7 +220,6 @@ export function RoomsPage({
 
         {/* Card 4: Occupancy Rate */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Percent size={20} strokeWidth={2.2} />
@@ -394,11 +390,15 @@ export function RoomsPage({
             { value: "occupied", label: "มีผู้เช่า (Occupied)" },
           ]}
           onStatusChange={setStatus}
-          onClear={query || status !== "all" || floor !== "all" ? () => {
-            setQuery("");
-            setStatus("all");
-            setFloor("all");
-          } : undefined}
+          onClear={
+            query || status !== "all" || floor !== "all"
+              ? () => {
+                  setQuery("");
+                  setStatus("all");
+                  setFloor("all");
+                }
+              : undefined
+          }
           viewMode={viewMode}
           onViewChange={setViewMode}
         />

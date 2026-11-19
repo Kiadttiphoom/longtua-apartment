@@ -10,10 +10,7 @@ import {
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
-import {
-  DataTable,
-  EmptyState,
-} from "@/components/portal/PortalUI";
+import { DataTable, EmptyState } from "@/components/portal/PortalUI";
 import { PageHeader } from "../ui/PageHeader";
 import { money } from "@/lib/format";
 import type { PageContentProps } from "../types";
@@ -99,7 +96,6 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
       >
         {/* Card 1: Total Confirmed Revenue */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-emerald-200 hover:shadow-md">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <TrendingUp size={20} strokeWidth={2.2} />
@@ -117,7 +113,6 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
         {/* Card 2: Current Outstanding Balance */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-rose-200 hover:shadow-md">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CalendarClock size={20} strokeWidth={2.2} />
@@ -135,7 +130,6 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
         {/* Card 3: Average Occupancy Rate */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-blue-200 hover:shadow-md">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <DoorOpen size={20} strokeWidth={2.2} />
@@ -153,7 +147,6 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
         {/* Card 4: Active Leases Count */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-slate-200 hover:shadow-md">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
@@ -197,7 +190,6 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
                 key={property.id}
               >
                 {/* Ambient Glow */}
-
 
                 <div>
                   {/* Header */}

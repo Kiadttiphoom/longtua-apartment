@@ -20,11 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
-import {
-  DataTable,
-  EmptyState,
-  Modal,
-} from "@/components/portal/PortalUI";
+import { DataTable, EmptyState, Modal } from "@/components/portal/PortalUI";
 import { PageHeader } from "../ui/PageHeader";
 import { thaiDate } from "@/lib/format";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
@@ -377,7 +373,6 @@ export function MetersPage({
           onClick={() => setTypeFilter("all")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Gauge size={20} strokeWidth={2.2} />
@@ -403,7 +398,6 @@ export function MetersPage({
           onClick={() => setTypeFilter("electric")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Zap size={20} strokeWidth={2.2} />
@@ -429,7 +423,6 @@ export function MetersPage({
           onClick={() => setTypeFilter("water")}
           type="button"
         >
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Droplets size={20} strokeWidth={2.2} />
@@ -447,7 +440,6 @@ export function MetersPage({
 
         {/* Card 4: Total Units Used */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-
           <div className="flex items-center gap-3.5">
             <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <TrendingUp size={20} strokeWidth={2.2} />
@@ -753,8 +745,6 @@ export function MetersPage({
                         className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                         key={item.id}
                       >
-
-
                         <div>
                           {/* Card Header */}
                           <header className="flex items-start justify-between gap-3 mb-4">
