@@ -15,23 +15,23 @@ test("subscriptionPlans_matrixMatchesAgreedThailandPricingTiers", () => {
   assert.equal(SUBSCRIPTION_PLANS.trial.maxRooms, 10);
   assert.equal(SUBSCRIPTION_PLANS.trial.maxUsers, 1);
 
-  // Starter: 1 property, 30 rooms, 2 users, 199 THB
-  assert.equal(SUBSCRIPTION_PLANS.starter.priceMonthly, 199);
+  // Starter: 1 property, 20 rooms, 2 users, 99 THB
+  assert.equal(SUBSCRIPTION_PLANS.starter.priceMonthly, 99);
   assert.equal(SUBSCRIPTION_PLANS.starter.maxProperties, 1);
-  assert.equal(SUBSCRIPTION_PLANS.starter.maxRooms, 30);
+  assert.equal(SUBSCRIPTION_PLANS.starter.maxRooms, 20);
   assert.equal(SUBSCRIPTION_PLANS.starter.maxUsers, 2);
 
-  // Growth: 3 properties, 100 rooms, 5 users, 399 THB
-  assert.equal(SUBSCRIPTION_PLANS.growth.priceMonthly, 399);
+  // Growth: 3 properties, 50 rooms, 5 users, 199 THB
+  assert.equal(SUBSCRIPTION_PLANS.growth.priceMonthly, 199);
   assert.equal(SUBSCRIPTION_PLANS.growth.maxProperties, 3);
-  assert.equal(SUBSCRIPTION_PLANS.growth.maxRooms, 100);
+  assert.equal(SUBSCRIPTION_PLANS.growth.maxRooms, 50);
   assert.equal(SUBSCRIPTION_PLANS.growth.maxUsers, 5);
   assert.equal(SUBSCRIPTION_PLANS.growth.popular, true);
 
-  // Pro: 10 properties, 300 rooms, unlimited users (-1), 699 THB
-  assert.equal(SUBSCRIPTION_PLANS.pro.priceMonthly, 699);
+  // Pro: 10 properties, 100 rooms, unlimited users (-1), 399 THB
+  assert.equal(SUBSCRIPTION_PLANS.pro.priceMonthly, 399);
   assert.equal(SUBSCRIPTION_PLANS.pro.maxProperties, 10);
-  assert.equal(SUBSCRIPTION_PLANS.pro.maxRooms, 300);
+  assert.equal(SUBSCRIPTION_PLANS.pro.maxRooms, 100);
   assert.equal(SUBSCRIPTION_PLANS.pro.maxUsers, -1);
 
   // Business: 999 properties, 500 rooms, unlimited users (-1), 1299 THB
@@ -43,12 +43,12 @@ test("subscriptionPlans_matrixMatchesAgreedThailandPricingTiers", () => {
 
 test("getPlanByQuota_correctlyMapsRoomCountsToTiers", () => {
   assert.equal(getPlanByQuota(1, 10).code, "trial");
-  assert.equal(getPlanByQuota(1, 30).code, "starter");
-  assert.equal(getPlanByQuota(3, 100).code, "growth");
-  assert.equal(getPlanByQuota(10, 300).code, "pro");
+  assert.equal(getPlanByQuota(1, 20).code, "starter");
+  assert.equal(getPlanByQuota(3, 50).code, "growth");
+  assert.equal(getPlanByQuota(10, 100).code, "pro");
   assert.equal(getPlanByQuota(999, 500).code, "business");
   assert.equal(getPlanByQuota(1, 5).code, "trial");
-  assert.equal(getPlanByQuota(1, 25).code, "starter");
+  assert.equal(getPlanByQuota(1, 15).code, "starter");
 });
 
 test("resourceActions_enforcesPropertyRoomAndUserQuotas", () => {

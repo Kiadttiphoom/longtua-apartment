@@ -28,9 +28,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
   starter: {
     code: "starter",
     name: "Starter",
-    priceMonthly: 199,
+    priceMonthly: 99,
     maxProperties: 1,
-    maxRooms: 30,
+    maxRooms: 20,
     maxUsers: 2,
     maxSlipVerifications: 45,
     description: "แพ็กเกจเริ่มต้นราคาประหยัด",
@@ -39,9 +39,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
   growth: {
     code: "growth",
     name: "Growth",
-    priceMonthly: 399,
+    priceMonthly: 199,
     maxProperties: 3,
-    maxRooms: 100,
+    maxRooms: 50,
     maxUsers: 5,
     maxSlipVerifications: 150,
     description: "แพ็กเกจยอดนิยม คุ้มค่าที่สุด",
@@ -51,9 +51,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
   pro: {
     code: "pro",
     name: "Pro",
-    priceMonthly: 699,
+    priceMonthly: 399,
     maxProperties: 10,
-    maxRooms: 300,
+    maxRooms: 100,
     maxUsers: -1, // Unlimited
     maxSlipVerifications: 450,
     description: "สำหรับธุรกิจหอพักมืออาชีพ",
@@ -75,9 +75,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
 export function getPlanByQuota(maxProperties: number | null | undefined, maxRooms: number | null | undefined): SubscriptionPlan {
   const rooms = maxRooms ?? 10;
   if (rooms <= 10) return SUBSCRIPTION_PLANS.trial;
-  if (rooms <= 30) return SUBSCRIPTION_PLANS.starter;
-  if (rooms <= 100) return SUBSCRIPTION_PLANS.growth;
-  if (rooms <= 300) return SUBSCRIPTION_PLANS.pro;
+  if (rooms <= 20) return SUBSCRIPTION_PLANS.starter;
+  if (rooms <= 50) return SUBSCRIPTION_PLANS.growth;
+  if (rooms <= 100) return SUBSCRIPTION_PLANS.pro;
   return SUBSCRIPTION_PLANS.business;
 }
 
@@ -142,13 +142,13 @@ export const FALLBACK_PUBLIC_PLANS: PublicPlanItem[] = [
     name: "Starter",
     badge: null,
     popular: false,
-    priceMonthly: 199,
+    priceMonthly: 99,
     period: "เดือน",
     targetAudience: "เจ้าของหอเดี่ยวขนาดเล็ก เริ่มต้นระบบดิจิทัล",
     maxProperties: 1,
     maxPropertiesLabel: "1 หอพัก",
-    maxRooms: 30,
-    maxRoomsLabel: "สูงสุด 30 ห้อง",
+    maxRooms: 20,
+    maxRoomsLabel: "สูงสุด 20 ห้อง",
     maxUsers: 2,
     maxUsersLabel: "ผู้ใช้งาน 2 คน",
     maxSlipVerifications: 45,
@@ -172,13 +172,13 @@ export const FALLBACK_PUBLIC_PLANS: PublicPlanItem[] = [
     name: "Growth",
     badge: "⭐ ยอดนิยม คุ้มค่าที่สุด",
     popular: true,
-    priceMonthly: 399,
+    priceMonthly: 199,
     period: "เดือน",
     targetAudience: "เจ้าของหลายอาคาร หรือหอพักขนาดกลาง",
     maxProperties: 3,
     maxPropertiesLabel: "สูงสุด 3 หอพัก",
-    maxRooms: 100,
-    maxRoomsLabel: "รวมสูงสุด 100 ห้อง",
+    maxRooms: 50,
+    maxRoomsLabel: "รวมสูงสุด 50 ห้อง",
     maxUsers: 5,
     maxUsersLabel: "ผู้ใช้งาน 5 คน",
     maxSlipVerifications: 150,
@@ -201,13 +201,13 @@ export const FALLBACK_PUBLIC_PLANS: PublicPlanItem[] = [
     name: "Pro",
     badge: null,
     popular: false,
-    priceMonthly: 699,
+    priceMonthly: 399,
     period: "เดือน",
     targetAudience: "ธุรกิจหอพักมืออาชีพ และทีมบริหารจัดการ",
     maxProperties: 10,
     maxPropertiesLabel: "สูงสุด 10 หอพัก",
-    maxRooms: 300,
-    maxRoomsLabel: "รวมสูงสุด 300 ห้อง",
+    maxRooms: 100,
+    maxRoomsLabel: "รวมสูงสุด 100 ห้อง",
     maxUsers: -1,
     maxUsersLabel: "ผู้ใช้งานไม่จำกัด",
     maxSlipVerifications: 450,
