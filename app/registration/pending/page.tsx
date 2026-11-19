@@ -29,8 +29,8 @@ export default async function RegistrationPendingPage() {
       </div>
       <h1 className="text-2xl font-bold leading-snug sm:text-3xl">{rejected ? "คำขอยังไม่ได้รับการอนุมัติ" : "กำลังรอผู้ดูแลตรวจสอบ"}</h1>
       <p className="mt-3 text-sm leading-7 text-slate-600">{rejected
-        ? "ระบบยังไม่ได้สร้างกิจการหรือเริ่มนับช่วงทดลองใช้ฟรี หากข้อมูลไม่ถูกต้องสามารถติดต่อผู้ดูแลเพื่อขอตรวจสอบอีกครั้ง"
-        : "เราได้รับข้อมูลแล้ว ระบบจะเริ่มทดลองใช้ฟรี 30 วันหลังจากคำขอได้รับการอนุมัติเท่านั้น"}</p>
+        ? "ระบบยังไม่ได้สร้างกิจการหรือเริ่มเปิดใช้งาน หากข้อมูลไม่ถูกต้องสามารถติดต่อผู้ดูแลเพื่อขอตรวจสอบอีกครั้ง"
+        : "เราได้รับข้อมูลแล้ว ระบบจะเปิดใช้งานแพลนฟรี 10 ห้อง (0 บาท) ให้ทันทีหลังจากคำขอได้รับการอนุมัติ"}</p>
 
       {request ? <dl className="my-7 divide-y divide-slate-200 rounded-xl bg-slate-50 px-4 [&>div]:grid [&>div]:gap-1 [&>div]:py-4 sm:[&>div]:grid-cols-[160px_1fr] [&_dt]:text-sm [&_dt]:text-slate-600 [&_dd]:flex [&_dd]:min-w-0 [&_dd]:items-start [&_dd]:gap-2 [&_dd]:text-sm [&_dd]:font-medium [&_dd]:break-words [&_svg]:shrink-0">
         <div><dt>ผู้ประกอบการ</dt><dd>{request.operator_name}</dd></div>
@@ -44,7 +44,7 @@ export default async function RegistrationPendingPage() {
       <div className="space-y-3 text-sm leading-relaxed text-slate-700 [&>strong]:block [&>span]:flex [&>span]:items-start [&>span]:gap-2 [&_svg]:mt-0.5 [&_svg]:shrink-0 [&_svg]:text-blue-700">
         <strong>{rejected ? "ขั้นตอนถัดไป" : "เมื่ออนุมัติแล้ว"}</strong>
         <span><CheckCircle2 size={16} />{rejected ? "ติดต่อผู้ดูแลพร้อมแจ้งชื่อผู้ใช้ของคุณ" : "ระบบจะสร้างกิจการและหอพัก 1 แห่งให้โดยอัตโนมัติ"}</span>
-        {!rejected ? <span><CheckCircle2 size={16} />รองรับสูงสุด 10 ห้อง และเริ่มทดลองใช้ฟรี 30 วันในวันอนุมัติ</span> : null}
+        {!rejected ? <span><CheckCircle2 size={16} />รองรับสูงสุด 10 ห้อง (0 บาท) พร้อมเริ่มใช้งานได้ทันทีในวันอนุมัติ</span> : null}
       </div>
 
       {/* LINE QR Code Card */}
