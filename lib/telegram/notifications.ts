@@ -97,6 +97,36 @@ export async function sendTelegramMessage(
   }
 }
 
+// Deduplication cache: keeps track of notified event keys to prevent sending duplicate Telegram messages
+const notifiedKeys = new Map<string, number>();
+const DEDUP_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export function isDuplicateNotification(keys: string[]): boolean {
+  const now = Date.now();
+  // Evict expired entries
+  for (const [k, time] of notifiedKeys.entries()) {
+    if (now - time > DEDUP_EXPIRY_MS) {
+      notifiedKeys.delete(k);
+    }
+  }
+
+  for (const key of keys) {
+    if (key && notifiedKeys.has(key)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function markNotified(keys: string[]) {
+  const now = Date.now();
+  for (const key of keys) {
+    if (key) {
+      notifiedKeys.set(key, now);
+    }
+  }
+}
+
 export async function testTelegramMessage(
   customSettings?: TelegramSettings,
 ): Promise<{ success: boolean; error?: string }> {
@@ -119,6 +149,7 @@ export async function testTelegramMessage(
 }
 
 export async function notifyNewTrialRequest(data: {
+  requestId?: string;
   operatorName: string;
   propertyName: string;
   contactEmail: string;
@@ -129,6 +160,23 @@ export async function notifyNewTrialRequest(data: {
   try {
     const settings = await getTelegramSettings();
     if (!settings.enabled || !settings.notifyTrialRequests) return;
+    if (!settings.botToken || !settings.chatId) return;
+
+    // Deduplication check: prevent sending duplicate notifications for the same trial request
+    const dedupKeys = [
+      data.requestId ? `trial_id:${data.requestId}` : "",
+      data.username ? `trial_user:${data.username.toLowerCase().trim()}` : "",
+      data.contactEmail ? `trial_email:${data.contactEmail.toLowerCase().trim()}` : "",
+      data.phone ? `trial_phone:${data.phone.replace(/\D/g, "")}` : "",
+    ].filter(Boolean);
+
+    if (isDuplicateNotification(dedupKeys)) {
+      console.log(`[telegram] Duplicate trial notification skipped for: ${dedupKeys.join(", ")}`);
+      return;
+    }
+
+    // Mark as notified before sending to prevent race conditions from concurrent calls
+    markNotified(dedupKeys);
 
     const appUrl = process.env.APARTMENT_APP_URL?.trim().replace(/\/$/, "") || "http://localhost:3000";
     const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
@@ -140,13 +188,16 @@ export async function notifyNewTrialRequest(data: {
       `👤 <b>ผู้ติดต่อ:</b> ${escapeHtml(data.operatorName)} (@${escapeHtml(data.username)})`,
       `📞 <b>เบอร์โทร:</b> <code>${escapeHtml(data.phone)}</code>`,
       `✉️ <b>อีเมล:</b> ${escapeHtml(data.contactEmail)}`,
-      `🚪 <b>จำนวนห้องที่ขอ:</b> ${escapeHtml(data.requestedRoomCount)} ห้อง`,
+      `🚪 <b>แพ็กเกจเริ่มต้น:</b> ทดลองใช้ฟรี (${escapeHtml(data.requestedRoomCount)} ห้อง)`,
       `⏰ <b>เวลาส่งคำขอ:</b> ${escapeHtml(now)}`,
       `━━━━━━━━━━━━━━━━━━`,
       `👉 <a href="${appUrl}/admin/trial-requests">เปิดตรวจสอบและอนุมัติใน Admin</a>`,
     ].join("\n");
 
-    await sendTelegramMessage(message, settings);
+    const result = await sendTelegramMessage(message, settings);
+    if (!result.success) {
+      console.error("[telegram] Failed to send trial notification:", result.error);
+    }
   } catch (err) {
     console.error("[telegram] notifyNewTrialRequest error:", err);
   }

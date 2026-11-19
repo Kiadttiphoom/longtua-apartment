@@ -48,3 +48,11 @@ test("telegram_adminSectionPage_loadsTelegramSettings", () => {
   assert.match(adminSectionPage, /getTelegramSettings\(\)/);
   assert.match(adminSectionPage, /telegramSettings={telegramSettings}/);
 });
+
+test("telegram_trialRequest_deduplicatesAndPreventsRepeatedNotifications", () => {
+  assert.match(telegramLib, /export function isDuplicateNotification/);
+  assert.match(telegramLib, /export function markNotified/);
+  assert.match(telegramLib, /isDuplicateNotification\(dedupKeys\)/);
+  assert.match(telegramLib, /Duplicate trial notification skipped/);
+  assert.match(createTrialRequest, /requestId: trialRequestId/);
+});

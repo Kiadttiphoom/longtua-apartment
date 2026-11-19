@@ -125,6 +125,7 @@ export async function createTrialRequest(body: TrialRequestBody, origin = "") {
 
     // Send Telegram notification asynchronously without blocking response
     notifyNewTrialRequest({
+      requestId: trialRequestId,
       operatorName,
       propertyName,
       contactEmail,
