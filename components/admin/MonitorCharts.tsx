@@ -23,7 +23,16 @@ export function MonitorCharts({ series, actions }: { series: Point[]; actions: A
             <polyline points={line("success")} fill="none" stroke="#2563eb" strokeWidth="2.5" />
             <polyline points={line("errors")} fill="none" stroke="#e11d48" strokeWidth="2.5" />
             {series.map((p, i) => <g key={p.time} onMouseEnter={() => setSelected(i)} onClick={() => setSelected(i)}>
-              <rect x={x(i) - Math.max(3, 310 / series.length)} y="20" width={Math.max(6, 620 / series.length)} height="178" fill="transparent"><title>{p.time} เวลาไทย: สำเร็จ {p.success}, Error {p.errors}</title></rect>
+              <rect
+                x={x(i) - Math.max(3, 310 / series.length)}
+                y="20"
+                width={Math.max(6, 620 / series.length)}
+                height="178"
+                fill="transparent"
+                role="button"
+                tabIndex={-1}
+                aria-label={`${p.time} เวลาไทย: สำเร็จ ${p.success}, Error ${p.errors}`}
+              />
             </g>)}
             {point && <g><line x1={x(selected)} x2={x(selected)} y1="24" y2="195" stroke="#94a3b8" strokeDasharray="4 4" /><circle cx={x(selected)} cy={y(point.success)} r="4" fill="#2563eb" /><circle cx={x(selected)} cy={y(point.errors)} r="4" fill="#e11d48" /></g>}
             <text x="42" y="218" fontSize="10" fill="#64748b">{series[0]?.time}</text>
