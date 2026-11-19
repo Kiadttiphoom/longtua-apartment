@@ -1,6 +1,7 @@
 "use client";
 
-import { DataTable, PageHeader } from "@/components/portal/PortalUI";
+import { DataTable } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 
 export function AuditPage() {
   const rows = [

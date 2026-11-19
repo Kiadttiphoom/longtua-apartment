@@ -13,8 +13,8 @@ import {
 import {
   DataTable,
   EmptyState,
-  PageHeader,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import { money } from "@/lib/format";
 import type { PageContentProps } from "../types";
 
@@ -86,7 +86,7 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="demo-menu-page">
       <PageHeader
         description="ผลการดำเนินงาน อัตราการเข้าพัก และรายรับจากข้อมูลจริงของทุกหอพัก"
         title="รายงานและสถิติภาพรวม"
@@ -95,13 +95,13 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
       {/* 4 Hero Stat Cards (Matching Portal ReportsPage) */}
       <section
         aria-label="ภาพรวมสถิติ"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
         {/* Card 1: Total Confirmed Revenue */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-emerald-200 hover:shadow-md">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <TrendingUp size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -117,9 +117,9 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
         {/* Card 2: Current Outstanding Balance */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-rose-200 hover:shadow-md">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CalendarClock size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -135,9 +135,9 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
         {/* Card 3: Average Occupancy Rate */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-blue-200 hover:shadow-md">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <DoorOpen size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -152,10 +152,10 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
         </div>
 
         {/* Card 4: Active Leases Count */}
-        <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-indigo-200 hover:shadow-md">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+        <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all hover:border-slate-200 hover:shadow-md">
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-slate-700 to-blue-800 text-white shadow-md shadow-slate-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -197,13 +197,13 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
                 key={property.id}
               >
                 {/* Ambient Glow */}
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                 <div>
                   {/* Header */}
                   <header className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <span className="w-12 h-12 rounded-xl demo-icon font-black text-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <Building2 size={20} strokeWidth={2.2} />
                       </span>
                       <div className="min-w-0">
@@ -227,7 +227,7 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
                     </div>
                     <div className="w-full h-2.5 rounded-full bg-slate-200/80 overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min(100, Math.max(0, propOcc))}%`,
                         }}
@@ -241,7 +241,7 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
 
                   {/* Financial Metrics */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/80 flex flex-col">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col">
                       <span className="text-emerald-800 text-[11px] font-medium">
                         รายรับสะสม
                       </span>
@@ -249,7 +249,7 @@ export function ReportsPage({ properties, activeProperty }: PageContentProps) {
                         {money(propRev)}
                       </strong>
                     </div>
-                    <div className="p-3 rounded-xl bg-rose-50/50 border border-rose-100/80 flex flex-col">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col">
                       <span className="text-rose-800 text-[11px] font-medium">
                         ยอดคงค้าง
                       </span>

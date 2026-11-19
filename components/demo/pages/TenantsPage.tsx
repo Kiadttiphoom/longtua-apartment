@@ -6,8 +6,6 @@ import {
   CreditCard,
   Hash,
   Layers,
-  LayoutGrid,
-  ListFilter,
   Mail,
   MapPin,
   Pencil,
@@ -20,12 +18,12 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
-import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
+import { PropertyListToolbar } from "../ui/PropertyListToolbar";
 import {
   DataTable,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 
 export function TenantsPage({
@@ -206,7 +204,7 @@ export function TenantsPage({
   );
 
   return (
-    <>
+    <div className="demo-menu-page">
       <PageHeader
         actionLabel={!isLocked ? "เพิ่มผู้เช่า" : undefined}
         description="ทะเบียนผู้เช่า ข้อมูลติดต่อ และสถานะผู้พักอาศัยของทุกอาคาร"
@@ -217,7 +215,7 @@ export function TenantsPage({
       {/* 4-Metric Hero Stat Cards (Identical style to /users and /guestrooms) */}
       <section
         aria-label="ภาพรวมผู้เช่า"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
         {/* Card 1: Total Tenants */}
         <button
@@ -229,9 +227,9 @@ export function TenantsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -255,9 +253,9 @@ export function TenantsPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -281,9 +279,9 @@ export function TenantsPage({
           onClick={() => setStatus("former")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-slate-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-slate-600 to-slate-700 text-white shadow-md shadow-slate-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserMinus size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -299,9 +297,9 @@ export function TenantsPage({
 
         {/* Card 4: Tenant Portal Accounts */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -319,7 +317,7 @@ export function TenantsPage({
       {/* Property Switcher Bar (แยกหอ แบบ /guestrooms) */}
       <section
         aria-label="เลือกหอพัก"
-        className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
+        className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden"
       >
         <header className="px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2">
@@ -347,7 +345,7 @@ export function TenantsPage({
                 aria-selected={active}
                 className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
                   active
-                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    ? "border-blue-500 bg-white"
                     : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
                 key={property.id}
@@ -360,7 +358,7 @@ export function TenantsPage({
                 type="button"
               >
                 <span
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "demo-icon shadow-sm" : "bg-slate-100 text-slate-600"}`}
                 >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
@@ -385,7 +383,7 @@ export function TenantsPage({
       {/* Floor Filter Tabs (แยกชั้น แบบ /guestrooms) */}
       <nav
         aria-label="เลือกชั้น"
-        className="mb-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
+        className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 overflow-x-auto"
       >
         <div className="flex items-center gap-1.5 pl-2 text-xs font-bold text-slate-600 shrink-0">
           <Layers size={14} className="text-slate-400" strokeWidth={2.2} />
@@ -437,55 +435,31 @@ export function TenantsPage({
         </div>
       </nav>
 
-      {/* Collection Toolbar */}
-      <CollectionToolbar
-        actions={
-          <div className="inline-flex items-center p-1 rounded-xl bg-slate-100/80 border border-slate-200 gap-1">
-            <button
-              aria-label="มุมมองตาราง"
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "table"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-              onClick={() => setViewMode("table")}
-              type="button"
-            >
-              <ListFilter size={15} strokeWidth={2.2} />
-              <span>ตาราง</span>
-            </button>
-            <button
-              aria-label="มุมมองการ์ด"
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === "grid"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-              onClick={() => setViewMode("grid")}
-              type="button"
-            >
-              <LayoutGrid size={15} strokeWidth={2.2} />
-              <span>การ์ด</span>
-            </button>
-          </div>
-        }
-        description={`พบ ${filtered.length.toLocaleString("th-TH")} จาก ${propertyTenants.length.toLocaleString("th-TH")} คน (${currentProperty.name})`}
-        filter={{
-          label: "กรองสถานะผู้เช่า",
-          value: status,
-          onChange: setStatus,
-          options: [
+      <div>
+        <PropertyListToolbar
+          propertyName={currentProperty.name}
+          description={`แสดง ${filtered.length.toLocaleString("th-TH")} จาก ${propertyTenants.length.toLocaleString("th-TH")} คน`}
+          placeholder="ค้นหาชื่อ เบอร์โทร หรือห้องพัก"
+          query={query}
+          onQueryChange={setQuery}
+          filterLabel="กรองสถานะผู้เช่า"
+          status={status}
+          options={[
             { value: "all", label: "ทุกสถานะ" },
             { value: "active", label: "กำลังใช้งาน" },
             { value: "former", label: "ผู้เช่าเดิม" },
             { value: "blocked", label: "ระงับการใช้งาน" },
-          ],
-        }}
-        onQueryChange={setQuery}
-        placeholder="ค้นหาชื่อ เบอร์โทร หรือห้องพัก"
-        query={query}
-        title="รายชื่อผู้เช่า"
-      />
+          ]}
+          onStatusChange={setStatus}
+          onClear={query || status !== "all" || floor !== "all" ? () => {
+            setQuery("");
+            setStatus("all");
+            setFloor("all");
+          } : undefined}
+          viewMode={viewMode}
+          onViewChange={setViewMode}
+        />
+      </div>
 
       {filtered.length ? (
         viewMode === "table" ? (
@@ -502,7 +476,7 @@ export function TenantsPage({
               ]}
               rows={filtered.map((item) => [
                 <div className="flex items-center gap-3.5" key="name">
-                  <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 font-bold text-sm shadow-2xs">
+                  <span className="w-10 h-10 rounded-xl bg-slate-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 font-bold text-sm shadow-2xs">
                     {item.full_name.slice(0, 1)}
                   </span>
                   <div className="flex flex-col text-xs min-w-0">
@@ -540,7 +514,7 @@ export function TenantsPage({
                 </span>,
                 <div key="account">
                   {item.username ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/80 shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 text-purple-700 border border-slate-200 shadow-2xs">
                       <UserRoundCheck size={13} strokeWidth={2.2} />
                       <span>{item.username}</span>
                     </span>
@@ -556,7 +530,7 @@ export function TenantsPage({
                   key="actions"
                 >
                   <button
-                    className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-purple-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                     onClick={() => onToast(`จัดการบัญชีผู้เช่า ${item.full_name}`)}
                     title="จัดการบัญชีผู้เช่า"
                     type="button"
@@ -566,7 +540,7 @@ export function TenantsPage({
                   </button>
                   <button
                     aria-label={`แก้ไขข้อมูล ${item.full_name}`}
-                    className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+                    className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
                     onClick={() =>
                       onToast(`เปิดแบบฟอร์มแก้ไขข้อมูล ${item.full_name}`)
                     }
@@ -613,13 +587,13 @@ export function TenantsPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                       <div>
                         {/* Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">
                           <div className="flex items-center gap-3.5 min-w-0">
-                            <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                            <span className="w-12 h-12 rounded-xl demo-icon flex items-center justify-center font-black text-lg shadow-md shrink-0 group-hover:scale-105 transition-transform">
                               {item.full_name.slice(0, 1)}
                             </span>
                             <div className="min-w-0">
@@ -679,7 +653,7 @@ export function TenantsPage({
                             สถานะบัญชี
                           </span>
                           {item.username ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-50 text-purple-700 border border-slate-200">
                               <UserRoundCheck size={13} strokeWidth={2.2} />
                               <span>{item.username}</span>
                             </span>
@@ -692,7 +666,7 @@ export function TenantsPage({
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             aria-label={`จัดการบัญชีให้ ${item.full_name}`}
-                            className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-purple-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() =>
                               onToast(`จัดการบัญชีผู้เช่า ${item.full_name}`)
                             }
@@ -704,7 +678,7 @@ export function TenantsPage({
                           </button>
                           <button
                             aria-label={`แก้ไขข้อมูล ${item.full_name}`}
-                            className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() =>
                               onToast(`เปิดแก้ไขข้อมูล ${item.full_name}`)
                             }
@@ -736,6 +710,6 @@ export function TenantsPage({
           </div>
         )
       ) : null}
-    </>
+    </div>
   );
 }

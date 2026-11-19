@@ -17,23 +17,23 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <header className="demo-page-heading">
       <div>
         {eyebrow ? (
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="text-xl lg:text-2xl font-bold text-slate-800 tracking-tight">
+        <h1>
           {title}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">{description}</p>
+        <p className="demo-page-description">{description}</p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         {children}
         {actionLabel ? (
           <button
-            className="h-10 px-4 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            className="demo-control cursor-pointer"
             onClick={onAction}
             type="button"
           >

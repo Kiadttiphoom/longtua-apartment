@@ -17,8 +17,8 @@ export function FilterBar({
   const searchTerm = value !== undefined ? value : internalValue;
 
   return (
-    <div className="mb-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-      <label className="flex items-center gap-2.5 px-3.5 h-10 rounded-xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-blue-500 text-xs transition-all flex-1">
+    <div className="demo-panel mb-4 flex flex-col items-stretch justify-between gap-3 p-3 md:flex-row md:items-center">
+      <label className="flex min-h-9 flex-1 items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus-within:border-blue-500 focus-within:bg-white">
         <Search size={16} className="text-slate-400 shrink-0" />
         <input
           className="bg-transparent border-0 outline-none text-slate-800 w-full placeholder:text-slate-400 font-medium"

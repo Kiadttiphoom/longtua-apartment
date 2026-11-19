@@ -3,9 +3,9 @@
 import {
   DataTable,
   DeleteButton,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 import { useDemoCollection } from "../utils";
 

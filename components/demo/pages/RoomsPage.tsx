@@ -8,19 +8,16 @@ import {
   FileText,
   Hash,
   Layers,
-  LayoutGrid,
-  ListFilter,
   Pencil,
   Percent,
   Plus,
-  Search,
   Sparkles,
   Trash2,
   UserRound,
   UserRoundCheck,
   Zap,
 } from "lucide-react";
-import { SelectControl } from "@/components/ui/SelectControl";
+import { PropertyListToolbar } from "../ui/PropertyListToolbar";
 import {
   DataTable,
   DeleteButton,
@@ -28,9 +25,9 @@ import {
   EmptyState,
   Field,
   Modal,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps, RoomRecord } from "../types";
 
 export function RoomsPage({
@@ -144,7 +141,7 @@ export function RoomsPage({
       {/* 4-Metric Hero Stat Cards (Identical style to /users) */}
       <section
         aria-label="ภาพรวมห้องพัก"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6"
       >
         {/* Card 1: Total Rooms */}
         <button
@@ -156,9 +153,9 @@ export function RoomsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Building2 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -182,9 +179,9 @@ export function RoomsPage({
           onClick={() => setStatus("vacant")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <DoorOpen size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -208,9 +205,9 @@ export function RoomsPage({
           onClick={() => setStatus("occupied")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserRound size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -226,9 +223,9 @@ export function RoomsPage({
 
         {/* Card 4: Occupancy Rate */}
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Percent size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -279,7 +276,7 @@ export function RoomsPage({
                 aria-selected={active}
                 className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
                   active
-                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    ? "border-blue-500 bg-white"
                     : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
                 key={property.id}
@@ -295,7 +292,7 @@ export function RoomsPage({
                 <span
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${
                     active
-                      ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm"
+                      ? "demo-icon shadow-sm"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
@@ -382,81 +379,29 @@ export function RoomsPage({
         </div>
       </nav>
 
-      {/* Search Bar with Dorm Name & Controls */}
-      <div className="mb-5 p-4 lg:p-4.5 flex flex-wrap lg:flex-nowrap items-center gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-        <div className="flex flex-col min-w-[180px] mr-auto">
-          <strong className="text-slate-900 text-sm font-bold flex items-center gap-2">
-            <Building2 size={15} className="text-blue-600" />
-            <span>{activeProperty?.name}</span>
-          </strong>
-          <span className="text-slate-500 text-xs mt-0.5 font-medium">
-            แสดง {visibleRooms.length} จาก {selectedFloorTotal} ห้อง
-          </span>
-        </div>
-        <label className="flex items-center gap-2.5 px-3.5 h-10 min-w-[200px] max-w-sm flex-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 focus-within:border-blue-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
-          <Search aria-hidden="true" size={16} strokeWidth={2.2} />
-          <input
-            aria-label="ค้นหาหมายเลขห้องหรือชั้น"
-            className="w-full bg-transparent border-0 outline-none text-slate-900 text-xs font-medium placeholder:text-slate-400"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="ค้นหาหมายเลขห้องหรือผู้เช่า..."
-            type="search"
-            value={query}
-          />
-        </label>
-        <div className="min-w-[160px]">
-          <SelectControl
-            ariaLabel="กรองสถานะห้อง"
-            onValueChange={setStatus}
-            options={[
-              { value: "all", label: "ทุกสถานะ" },
-              { value: "vacant", label: "ห้องว่าง (Vacant)" },
-              { value: "occupied", label: "มีผู้เช่า (Occupied)" },
-            ]}
-            value={status}
-          />
-        </div>
-        {query || status !== "all" || floor !== "all" ? (
-          <button
-            className="px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all cursor-pointer"
-            onClick={() => {
-              setQuery("");
-              setStatus("all");
-              setFloor("all");
-            }}
-            type="button"
-          >
-            ล้างตัวกรอง
-          </button>
-        ) : null}
-        <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
-          <button
-            aria-label="มุมมองตาราง"
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-              viewMode === "table"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setViewMode("table")}
-            type="button"
-          >
-            <ListFilter size={15} strokeWidth={2.2} />
-            <span>ตาราง</span>
-          </button>
-          <button
-            aria-label="มุมมองการ์ด"
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-              viewMode === "grid"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setViewMode("grid")}
-            type="button"
-          >
-            <LayoutGrid size={15} strokeWidth={2.2} />
-            <span>การ์ด</span>
-          </button>
-        </div>
+      <div className="mb-5">
+        <PropertyListToolbar
+          propertyName={activeProperty?.name}
+          description={`แสดง ${visibleRooms.length} จาก ${selectedFloorTotal} ห้อง`}
+          placeholder="ค้นหาหมายเลขห้องหรือผู้เช่า..."
+          query={query}
+          onQueryChange={setQuery}
+          filterLabel="กรองสถานะห้อง"
+          status={status}
+          options={[
+            { value: "all", label: "ทุกสถานะ" },
+            { value: "vacant", label: "ห้องว่าง (Vacant)" },
+            { value: "occupied", label: "มีผู้เช่า (Occupied)" },
+          ]}
+          onStatusChange={setStatus}
+          onClear={query || status !== "all" || floor !== "all" ? () => {
+            setQuery("");
+            setStatus("all");
+            setFloor("all");
+          } : undefined}
+          viewMode={viewMode}
+          onViewChange={setViewMode}
+        />
       </div>
 
       {visibleRooms.length ? (
@@ -476,7 +421,7 @@ export function RoomsPage({
                 const fl = item.number.length >= 3 ? item.number[0] : "1";
                 return [
                   <div
-                    className="inline-flex items-center justify-center min-w-12 h-8 px-2.5 rounded-xl bg-blue-50/80 border border-blue-100 text-blue-950 text-xs font-black tabular-nums shadow-2xs"
+                    className="inline-flex items-center justify-center min-w-12 h-8 px-2.5 rounded-xl bg-slate-50 border border-slate-200 text-blue-950 text-xs font-black tabular-nums shadow-2xs"
                     key="room"
                   >
                     <span>{item.number}</span>
@@ -519,7 +464,7 @@ export function RoomsPage({
                   >
                     {isVacant ? (
                       <button
-                        className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                        className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                         onClick={() => onNavigate("contracts")}
                         title="ทำสัญญาเช่าใหม่"
                         type="button"
@@ -529,7 +474,7 @@ export function RoomsPage({
                       </button>
                     ) : (
                       <button
-                        className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                        className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-sky-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                         onClick={() => onNavigate("contracts")}
                         title="ดูสัญญาเช่า"
                         type="button"
@@ -539,7 +484,7 @@ export function RoomsPage({
                       </button>
                     )}
                     <button
-                      className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                      className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-indigo-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                       onClick={() => onNavigate("meters")}
                       title="บันทึกมิเตอร์"
                       type="button"
@@ -549,7 +494,7 @@ export function RoomsPage({
                     </button>
                     <button
                       aria-label={`แก้ไขห้อง ${item.number}`}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
                       onClick={() => onToast("เปิดแก้ไขข้อมูลห้องพัก")}
                       title="แก้ไขข้อมูลห้อง"
                       type="button"
@@ -635,7 +580,7 @@ export function RoomsPage({
                       <div className="h-12 px-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs flex items-center">
                         {!isVacant ? (
                           <div className="flex items-center gap-2 text-slate-700 w-full min-w-0">
-                            <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <span className="w-6 h-6 rounded-lg demo-icon flex items-center justify-center shrink-0">
                               <UserRound size={13} strokeWidth={2.2} />
                             </span>
                             <div className="flex flex-col min-w-0 truncate">
@@ -660,7 +605,7 @@ export function RoomsPage({
                         <div className="grid grid-cols-2 gap-2">
                           {isVacant ? (
                             <button
-                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                               onClick={() => onNavigate("contracts")}
                               title="ทำสัญญาเช่า"
                               type="button"
@@ -670,7 +615,7 @@ export function RoomsPage({
                             </button>
                           ) : (
                             <button
-                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-sky-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                               onClick={() => onNavigate("contracts")}
                               title="ดูสัญญาเช่า"
                               type="button"
@@ -680,7 +625,7 @@ export function RoomsPage({
                             </button>
                           )}
                           <button
-                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-indigo-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() => onNavigate("meters")}
                             title="บันทึกมิเตอร์"
                             type="button"
@@ -694,7 +639,7 @@ export function RoomsPage({
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             aria-label={`แก้ไขห้อง ${item.number}`}
-                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() => onToast("เปิดแก้ไขห้องพัก")}
                             title="แก้ไขห้องพัก"
                             type="button"
@@ -705,7 +650,7 @@ export function RoomsPage({
                           {!isVacant ? (
                             <button
                               aria-label={`จัดการบัญชีผู้เช่า ${item.tenant}`}
-                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                              className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-purple-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                               onClick={() =>
                                 onToast(`จัดการบัญชีผู้เช่าห้อง ${item.number}`)
                               }
@@ -756,7 +701,7 @@ export function RoomsPage({
         >
           <div className="p-6 space-y-4 text-xs">
             {/* Helper Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
@@ -826,7 +771,7 @@ export function RoomsPage({
                 ยกเลิก
               </button>
               <button
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
+                className="px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
                 disabled={!newRoomNumber.trim()}
                 onClick={handleCreateRoom}
                 type="button"

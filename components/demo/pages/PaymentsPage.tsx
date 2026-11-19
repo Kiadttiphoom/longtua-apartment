@@ -30,9 +30,9 @@ import {
   DataTable,
   EmptyState,
   Modal,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money, thaiBahtText, thaiDate } from "@/lib/format";
@@ -357,7 +357,7 @@ export function PaymentsPage({
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="demo-menu-page">
       <PageHeader
         actionLabel={!isLocked ? "บันทึกรับชำระ" : undefined}
         description="บันทึกยอดรับเงินจริงและตัดยอดคงเหลือของใบแจ้งหนี้อัตโนมัติ"
@@ -368,13 +368,13 @@ export function PaymentsPage({
       {/* 4 Hero Stat Cards (Matching Portal PaymentsPage) */}
       <section
         aria-label="ภาพรวมการรับชำระ"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
         {/* Card 1: Verified Paid Amount */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -398,9 +398,9 @@ export function PaymentsPage({
           onClick={() => setMethod("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Receipt size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -416,9 +416,9 @@ export function PaymentsPage({
 
         {/* Card 3: Pending Slip Submissions */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Clock3 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -434,9 +434,9 @@ export function PaymentsPage({
 
         {/* Card 4: Open Invoices Waiting for Payment */}
         <div className="relative overflow-hidden p-5 rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-rose-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CreditCard size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -453,9 +453,9 @@ export function PaymentsPage({
 
       {/* Pending Slip Verification Banner (Matching Portal Feature) */}
       {submissions.length > 0 ? (
-        <section className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 shadow-xs space-y-3">
+        <section className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
               <Clock3 size={18} className="text-amber-600" />
               <span>มีสลิปโอนเงินรอยืนยันจากผู้เช่า ({submissions.length} รายการ)</span>
             </div>
@@ -464,12 +464,12 @@ export function PaymentsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {submissions.map((sub) => (
               <div
-                className="p-4 rounded-xl bg-white border border-amber-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                 key={sub.id}
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-mono font-bold">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-50 text-blue-700 text-xs font-mono font-bold">
                       ห้อง {sub.roomNumber}
                     </span>
                     <strong className="text-xs font-bold text-slate-800">
@@ -498,7 +498,7 @@ export function PaymentsPage({
                     <span>ตรวจสลิป</span>
                   </button>
                   <button
-                    className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                    className="h-8 px-3 rounded-lg border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 border text-xs font-bold flex items-center gap-1 cursor-pointer transition-all shadow-xs"
                     onClick={() => handleApproveSlip(sub)}
                     type="button"
                   >
@@ -543,7 +543,7 @@ export function PaymentsPage({
                 aria-selected={active}
                 className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
                   active
-                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    ? "border-blue-500 bg-white"
                     : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
                 key={property.id}
@@ -556,7 +556,7 @@ export function PaymentsPage({
                 type="button"
               >
                 <span
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "demo-icon shadow-sm" : "bg-slate-100 text-slate-600"}`}
                 >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
@@ -708,7 +708,7 @@ export function PaymentsPage({
                   {item.receiptNumber}
                 </strong>,
                 <div className="flex items-center gap-2" key="inv">
-                  <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-mono font-bold border border-blue-200">
+                  <span className="px-2 py-0.5 rounded bg-slate-50 text-blue-700 text-xs font-mono font-bold border border-blue-200">
                     ห้อง {item.roomNumber}
                   </span>
                   <span className="text-xs text-slate-500 font-mono">
@@ -746,7 +746,7 @@ export function PaymentsPage({
                   key="actions"
                 >
                   <button
-                    className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-slate-200 bg-slate-50 text-blue-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                     onClick={() => setViewingReceipt(item)}
                     title="ดูใบเสร็จรับเงิน"
                     type="button"
@@ -781,13 +781,13 @@ export function PaymentsPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                       <div>
                         {/* Card Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-mono font-black text-sm border border-blue-200 shadow-2xs shrink-0">
+                            <span className="px-3 py-1.5 rounded-xl bg-slate-50 text-blue-700 font-mono font-black text-sm border border-blue-200 shadow-2xs shrink-0">
                               ห้อง {item.roomNumber}
                             </span>
                             <div className="min-w-0">
@@ -817,7 +817,7 @@ export function PaymentsPage({
                         </div>
 
                         {/* Amount Paid Callout */}
-                        <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between mb-3">
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between mb-3">
                           <div>
                             <span className="text-[11px] font-bold text-emerald-800 block">
                               ยอดรับชำระเงิน
@@ -852,7 +852,7 @@ export function PaymentsPage({
                       {/* Card Footer Actions */}
                       <footer className="mt-4 pt-3.5 border-t border-slate-100 flex items-center gap-2">
                         <button
-                          className="w-full h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                          className="w-full h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-blue-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                           onClick={() => setViewingReceipt(item)}
                           type="button"
                         >
@@ -1083,7 +1083,7 @@ export function PaymentsPage({
         >
           <div className="p-6 flex flex-col gap-4 text-left text-xs">
             {/* Feature Intro Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>

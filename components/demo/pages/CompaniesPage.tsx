@@ -7,9 +7,9 @@ import {
   DataTable,
   DeleteButton,
   EditButton,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 
 export function CompaniesPage({
@@ -102,7 +102,7 @@ export function CompaniesPage({
           ]}
           rows={filtered.map((item, idx) => [
             <div className="flex items-center gap-3" key="comp">
-              <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+              <span className="w-9 h-9 rounded-xl bg-slate-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                 <Building2 size={18} />
               </span>
               <div className="flex flex-col text-xs min-w-0">

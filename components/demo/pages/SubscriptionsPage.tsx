@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Crown, ShieldCheck, Sparkles, Zap } from "lucide-react";
-import { PageHeader } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 
 export function SubscriptionsPage({ onToast }: PageContentProps) {
@@ -14,7 +14,7 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
     },
     trialing: {
       label: "ช่วงทดลองใช้ฟรี (Trial)",
-      badgeBg: "bg-blue-50 border-blue-200",
+      badgeBg: "bg-slate-50 border-blue-200",
       badgeText: "text-blue-700",
       desc: "ท่านกำลังใช้งานระบบในช่วงทดลองใช้งาน 30 วัน พร้อมฟังก์ชันเต็มรูปแบบ",
     },
@@ -33,7 +33,7 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="demo-menu-page">
       <PageHeader
         description="ตรวจสอบสถานะบริการ สิทธิ์การใช้งาน และแพ็กเกจของกิจการ"
         title="แพ็กเกจและบริการ"
@@ -43,7 +43,7 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
         {/* Main Status Hero Card (Matching Portal SubscriptionPage) */}
         <section className="p-6 lg:p-8 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+            <span className="w-14 h-14 rounded-2xl demo-icon flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
               <Crown size={28} />
             </span>
             <div className="space-y-1">
@@ -95,24 +95,24 @@ export function SubscriptionsPage({ onToast }: PageContentProps) {
             </ul>
           </div>
 
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-[#0c1a30] text-white shadow-md flex flex-col justify-between space-y-6">
+          <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-950 flex flex-col justify-between space-y-6">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs font-semibold text-blue-300">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 text-xs font-semibold text-blue-800">
                 <Zap size={14} />
                 <span>ติดต่อทีมงาน</span>
               </div>
               <h3 className="text-lg font-bold">
                 ต้องการเพิ่มจำนวนห้อง หรือปรับแต่งระบบ?
               </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 หากท่านต้องการปลดล็อกโควตาห้องพักมากกว่า 100 ห้อง หรือต้องการติดตั้ง LINE
                 Notify แจ้งเตือนยอดชำระแบบอัตโนมัติ ติดต่อฝ่ายบริการลูกค้าได้ตลอด 24 ชั่วโมง
               </p>
             </div>
 
-            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+            <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
               <span>โทร: 063-090-7500 · LINE: p.pond29</span>
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-slate-900">
                 official.longtua@gmail.com
               </span>
             </div>

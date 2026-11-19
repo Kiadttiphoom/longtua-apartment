@@ -24,17 +24,19 @@ export function Metric({
           : "bg-blue-50 text-blue-600 border border-blue-100";
 
   return (
-    <article className="p-5 flex flex-col rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all">
-      <span
-        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${toneClasses}`}
-      >
-        <Icon size={20} />
-      </span>
-      <p className="text-xs font-semibold text-slate-400 mb-1">{label}</p>
-      <strong className="text-2xl font-bold text-slate-800 tracking-tight">
-        {value}
-      </strong>
-      <small className="text-[11px] text-slate-400 mt-1">{delta}</small>
+    <article className="demo-panel min-w-0">
+      <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5">
+        <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${toneClasses}`}>
+          <Icon size={16} aria-hidden="true" />
+        </span>
+        <p className="text-sm font-semibold text-slate-700">{label}</p>
+      </div>
+      <div className="px-4 py-3">
+        <strong className="block text-2xl font-bold tracking-tight text-slate-950 tabular-nums">
+          {value}
+        </strong>
+        <small className="mt-1 block text-xs text-slate-600">{delta}</small>
+      </div>
     </article>
   );
 }

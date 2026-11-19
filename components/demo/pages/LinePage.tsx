@@ -1,7 +1,8 @@
 "use client";
 
 import { MessageCircle, Send } from "lucide-react";
-import { DataTable, PageHeader } from "@/components/portal/PortalUI";
+import { DataTable } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 import { useDemoCollection } from "../utils";
 
@@ -32,7 +33,7 @@ export function LinePage({
   if (!lineEnabled && role !== "super_admin") {
     return (
       <div className="flex flex-col items-center justify-center p-12 rounded-3xl bg-white border border-slate-200 shadow-xs text-center max-w-xl mx-auto my-12">
-        <span className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 border border-purple-100">
+        <span className="w-16 h-16 rounded-2xl demo-icon flex items-center justify-center mb-4 border border-slate-200">
           <MessageCircle size={32} />
         </span>
         <h2 className="text-xl font-bold text-slate-800">
@@ -47,7 +48,7 @@ export function LinePage({
           <span className="text-xs text-slate-400">/ เดือน</span>
         </div>
         <button
-          className="h-11 px-8 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all cursor-pointer shadow-md shadow-blue-500/10"
+          className="demo-control h-10 px-5 cursor-pointer"
           onClick={() => {
             onLineChange(true);
             onToast("เปิดใช้งาน LINE แจ้งเตือนเรียบร้อยแล้ว");

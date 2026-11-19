@@ -33,7 +33,7 @@ export function CollectionToolbar({
   actions,
 }: CollectionToolbarProps) {
   return (
-    <section className="mb-6 p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+    <section className="collection-toolbar mb-6 p-4 lg:p-5 flex flex-wrap lg:flex-nowrap items-center gap-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
       <div className="flex flex-col min-w-[180px] mr-auto">
         <strong className="text-slate-800 text-[15px] font-bold">
           {title}

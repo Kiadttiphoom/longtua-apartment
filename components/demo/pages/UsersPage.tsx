@@ -28,10 +28,10 @@ import {
   EditButton,
   Field,
   Modal,
-  PageHeader,
   SelectField,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 import { useDemoCollection } from "../utils";
 
@@ -186,36 +186,6 @@ export function UsersPage({
     onToast(`อัปเดตข้อมูลผู้ใช้งาน "${editingRow.data[0]}" เรียบร้อยแล้ว`);
   }
 
-  const roleColors: Record<
-    string,
-    { bg: string; text: string; border: string; badgeBg: string }
-  > = {
-    เจ้าของกิจการ: {
-      bg: "bg-purple-50",
-      text: "text-purple-700",
-      border: "border-purple-200",
-      badgeBg: "bg-purple-600 text-white shadow-purple-500/25",
-    },
-    ผู้จัดการ: {
-      bg: "bg-blue-50",
-      text: "text-blue-700",
-      border: "border-blue-200",
-      badgeBg: "bg-blue-600 text-white shadow-blue-500/25",
-    },
-    ฝ่ายการเงิน: {
-      bg: "bg-emerald-50",
-      text: "text-emerald-700",
-      border: "border-emerald-200",
-      badgeBg: "bg-emerald-600 text-white shadow-emerald-500/25",
-    },
-    เจ้าหน้าที่: {
-      bg: "bg-amber-50",
-      text: "text-amber-700",
-      border: "border-amber-200",
-      badgeBg: "bg-amber-600 text-white shadow-amber-500/25",
-    },
-  };
-
   const activeCount = collection.items.filter(
     (item) => item[4] === "active",
   ).length;
@@ -225,7 +195,7 @@ export function UsersPage({
   const staffCount = collection.items.length - ownerCount;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="demo-menu-page">
       <PageHeader
         actionLabel={!isLocked ? "เพิ่มผู้ใช้ใหม่" : undefined}
         description="กำหนดระดับสิทธิ์ รหัสผ่านเข้าใช้งาน ขอบเขตสาขา/หอพัก และสถานะ"
@@ -234,11 +204,11 @@ export function UsersPage({
       />
 
       {/* 4-Metric Hero Stat Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Users size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -253,9 +223,9 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <UserCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -270,9 +240,9 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -287,9 +257,9 @@ export function UsersPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -368,15 +338,11 @@ export function UsersPage({
                 "การจัดการ",
               ]}
               rows={visibleRows.map((row, index) => {
-                const color = roleColors[row[2]] ?? {
-                  bg: "bg-slate-50",
-                  text: "text-slate-700",
-                  border: "border-slate-200",
-                };
+
                 return [
                   <div className="flex items-center gap-3.5" key="user">
                     <span
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${color.bg} ${color.text} ${color.border} shadow-2xs`}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs`}
                     >
                       {row[0].slice(0, 1)}
                     </span>
@@ -394,7 +360,7 @@ export function UsersPage({
                   </span>,
                   <span
                     key="role"
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${color.bg} ${color.text} ${color.border}`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border bg-slate-50 text-slate-700 border-slate-200`}
                   >
                     {row[2]}
                   </span>,
@@ -411,7 +377,7 @@ export function UsersPage({
                     key="actions"
                   >
                     <button
-                      className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs"
+                      className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
                       onClick={() => setEditingRow({ index, data: [...row] })}
                       title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
                       type="button"
@@ -442,24 +408,19 @@ export function UsersPage({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleRows.map((m, index) => {
-              const color = roleColors[m[2]] ?? {
-                bg: "bg-slate-50",
-                text: "text-slate-700",
-                border: "border-slate-200",
-                badgeBg: "bg-slate-600 text-white",
-              };
+
               return (
                 <article
                   className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                   key={index}
                 >
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                   <div>
                     <header className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3.5 min-w-0">
                         <span
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0 ${color.badgeBg} group-hover:scale-105 transition-transform`}
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0 demo-icon group-hover:scale-105 transition-transform`}
                         >
                           {m[0].slice(0, 1)}
                         </span>
@@ -481,7 +442,7 @@ export function UsersPage({
                           ระดับสิทธิ์
                         </span>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border ${color.bg} ${color.text} ${color.border}`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold border bg-slate-50 text-slate-700 border-slate-200`}
                         >
                           {m[2]}
                         </span>
@@ -501,7 +462,7 @@ export function UsersPage({
 
                   <footer className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
                     <button
-                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-2xs cursor-pointer"
+                      className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all shadow-2xs cursor-pointer"
                       onClick={() => setEditingRow({ index, data: [...m] })}
                       title="แก้ไข / เปลี่ยนรหัสผ่าน"
                       type="button"
@@ -512,7 +473,7 @@ export function UsersPage({
                     {m[2] !== "เจ้าของกิจการ" ? (
                       <button
                         aria-label={`ลบผู้ใช้ ${m[0]}`}
-                        className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs"
+                        className="h-9.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer shadow-2xs"
                         onClick={() =>
                           collection.removeItem(
                             index,
@@ -548,7 +509,7 @@ export function UsersPage({
         >
           <div className="p-6 space-y-4 text-xs">
             {/* Value / Security Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>
@@ -698,7 +659,7 @@ export function UsersPage({
                 ยกเลิก
               </button>
               <button
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
+                className="px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-98"
                 disabled={
                   !inviteName.trim() ||
                   !inviteEmail.trim() ||
@@ -818,7 +779,7 @@ export function UsersPage({
                 ยกเลิก
               </button>
               <button
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
                 onClick={handleSaveEdit}
                 type="button"
               >

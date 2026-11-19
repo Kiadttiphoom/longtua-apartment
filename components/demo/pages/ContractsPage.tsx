@@ -27,9 +27,9 @@ import {
   DataTable,
   EmptyState,
   Modal,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import { DateTimeControl } from "@/components/ui/DateTimeControl";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { ThaiResidentialLeaseDocument } from "@/components/contracts/ThaiResidentialLeaseDocument";
@@ -310,7 +310,7 @@ export function ContractsPage({
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="demo-menu-page">
       <PageHeader
         actionLabel={!isLocked ? "สร้างสัญญาเช่า" : undefined}
         description="จัดการข้อมูลสัญญาเช่า ห้องพัก ผู้เช่า เงินประกัน และข้อตกลงการอยู่อาศัย"
@@ -321,7 +321,7 @@ export function ContractsPage({
       {/* 4 Hero Stat Cards (Matching Portal LeasesPage) */}
       <section
         aria-label="ภาพรวมสัญญาเช่า"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
         {/* Card 1: Total Contracts */}
         <button
@@ -333,9 +333,9 @@ export function ContractsPage({
           onClick={() => setStatus("all")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <FileText size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -359,9 +359,9 @@ export function ContractsPage({
           onClick={() => setStatus("active")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <ShieldCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -385,9 +385,9 @@ export function ContractsPage({
           onClick={() => setStatus("draft")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Pencil size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -411,9 +411,9 @@ export function ContractsPage({
           onClick={() => setStatus("ended")}
           type="button"
         >
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-slate-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-slate-600 to-slate-800 text-white shadow-md shadow-slate-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CalendarCheck size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -459,7 +459,7 @@ export function ContractsPage({
                 aria-selected={active}
                 className={`min-w-[220px] p-3.5 flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
                   active
-                    ? "border-blue-500 bg-blue-50/70 shadow-xs ring-2 ring-blue-500/15"
+                    ? "border-blue-500 bg-white"
                     : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"
                 }`}
                 key={property.id}
@@ -472,7 +472,7 @@ export function ContractsPage({
                 type="button"
               >
                 <span
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${active ? "demo-icon shadow-sm" : "bg-slate-100 text-slate-600"}`}
                 >
                   <Building2 size={18} strokeWidth={2.2} />
                 </span>
@@ -624,7 +624,7 @@ export function ContractsPage({
                   {item.id}
                 </strong>,
                 <div className="flex items-center gap-2.5" key="room">
-                  <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200">
+                  <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-slate-50 text-blue-700 text-xs font-bold border border-blue-200">
                     {item.roomNumber || "—"}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
@@ -666,7 +666,7 @@ export function ContractsPage({
                   </small>
                 </div>,
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200"
                   key="portal"
                 >
                   <UserRoundCheck size={12} />
@@ -681,7 +681,7 @@ export function ContractsPage({
                   key="actions"
                 >
                   <button
-                    className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="h-8 px-2.5 rounded-xl flex items-center gap-1 text-xs font-bold border border-slate-200 bg-slate-50 text-blue-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                     onClick={() => setViewingContract(item)}
                     title="ดูตัวอย่างสัญญา"
                     type="button"
@@ -691,7 +691,7 @@ export function ContractsPage({
                   </button>
                   <button
                     aria-label={`แก้ไขสัญญา ${item.id}`}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
                     onClick={() => openEditModal(item)}
                     title="แก้ไขสัญญา"
                     type="button"
@@ -737,13 +737,13 @@ export function ContractsPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                       <div>
                         {/* Header */}
                         <header className="flex items-start justify-between gap-3 mb-4">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-mono font-black text-sm border border-blue-200 shadow-2xs shrink-0">
+                            <span className="px-3 py-1.5 rounded-xl bg-slate-50 text-blue-700 font-mono font-black text-sm border border-blue-200 shadow-2xs shrink-0">
                               {item.roomNumber
                                 ? `ห้อง ${item.roomNumber}`
                                 : "ไม่ระบุห้อง"}
@@ -764,7 +764,7 @@ export function ContractsPage({
 
                         {/* Tenant info */}
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100 mb-3">
-                          <span className="w-10 h-10 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 shadow-xs text-sm">
+                          <span className="w-10 h-10 rounded-lg demo-icon font-bold flex items-center justify-center shrink-0 shadow-xs text-sm">
                             {item.tenantName
                               ? item.tenantName.slice(0, 1)
                               : "ผ"}
@@ -811,7 +811,7 @@ export function ContractsPage({
                               />
                               <span>ระยะเวลาสัญญา</span>
                             </span>
-                            <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px]">
+                            <span className="font-bold text-blue-700 bg-slate-50 px-2 py-0.5 rounded text-[11px]">
                               สัญญามาตรฐาน
                             </span>
                           </div>
@@ -837,7 +837,7 @@ export function ContractsPage({
                         {/* Row 1: ดูสัญญา / พิมพ์ */}
                         <div className="grid grid-cols-2 gap-2">
                           <button
-                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-sky-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() => setViewingContract(item)}
                             title="ดูตัวอย่างสัญญา"
                             type="button"
@@ -863,7 +863,7 @@ export function ContractsPage({
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             aria-label={`แก้ไขสัญญา ${item.id}`}
-                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                             onClick={() => openEditModal(item)}
                             title="แก้ไขสัญญา"
                             type="button"
@@ -980,7 +980,7 @@ export function ContractsPage({
         >
           <div className="p-6 flex flex-col gap-4 text-left text-xs">
             {/* Feature Intro Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>

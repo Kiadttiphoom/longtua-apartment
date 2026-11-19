@@ -19,9 +19,9 @@ import {
   DeleteButton,
   EditButton,
   EmptyState,
-  PageHeader,
   StatusBadge,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import type { PageContentProps } from "../types";
 
 export function PropertiesPage({
@@ -56,7 +56,7 @@ export function PropertiesPage({
     : 0;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="demo-menu-page">
       <PageHeader
         actionLabel={!isLocked ? "เพิ่มหอพัก" : undefined}
         description="จัดการข้อมูลอาคาร ที่อยู่ ช่องทางติดต่อ และสถานะการใช้งาน"
@@ -65,11 +65,11 @@ export function PropertiesPage({
       />
 
       {/* Hero Stat Matrix */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Building2 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -84,9 +84,9 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <CheckCircle2 size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -101,9 +101,9 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <KeyRound size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -118,9 +118,9 @@ export function PropertiesPage({
         </div>
 
         <div className="relative overflow-hidden p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-bl from-teal-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+
           <div className="flex items-center gap-3.5">
-            <span className="w-11 h-11 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/25 flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 rounded-xl demo-icon flex items-center justify-center shrink-0">
               <Activity size={20} strokeWidth={2.2} />
             </span>
             <div>
@@ -210,7 +210,7 @@ export function PropertiesPage({
 
                     return [
                       <div className="flex items-center gap-3.5" key="prop">
-                        <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 shadow-2xs">
+                        <span className="w-10 h-10 rounded-xl bg-slate-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 shadow-2xs">
                           <Building2 size={19} strokeWidth={2.2} />
                         </span>
                         <div>
@@ -255,7 +255,7 @@ export function PropertiesPage({
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/50">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+                            className="h-full rounded-full bg-blue-600"
                             style={{ width: `${propOccupancy}%` }}
                           />
                         </div>
@@ -266,7 +266,7 @@ export function PropertiesPage({
                         key="actions"
                       >
                         <button
-                          className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all cursor-pointer shadow-2xs"
+                          className="h-8.5 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-sky-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
                           onClick={() => {
                             onSwitchProperty(item.id);
                             onNavigate("rooms");
@@ -312,12 +312,12 @@ export function PropertiesPage({
                       className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
                       key={item.id}
                     >
-                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+
 
                       <div>
                         <header className="flex items-start justify-between gap-3 mb-4">
                           <div className="flex items-center gap-3.5 min-w-0">
-                            <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <span className="w-12 h-12 rounded-xl demo-icon flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                               <Building2 size={22} strokeWidth={2.2} />
                             </span>
                             <div className="min-w-0">
@@ -355,7 +355,7 @@ export function PropertiesPage({
                           </div>
                           <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-200/60">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700"
+                              className="h-full rounded-full bg-blue-600 transition-all duration-700"
                               style={{ width: `${propOccupancy}%` }}
                             />
                           </div>
@@ -391,7 +391,7 @@ export function PropertiesPage({
 
                       <footer className="pt-4 border-t border-slate-100 flex items-center gap-2">
                         <button
-                          className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all shadow-2xs cursor-pointer"
+                          className="flex-1 h-9.5 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-sky-700 hover:bg-slate-100 hover:border-slate-300 transition-all shadow-2xs cursor-pointer"
                           onClick={() => {
                             onSwitchProperty(item.id);
                             onNavigate("rooms");

@@ -15,7 +15,8 @@ import {
   Zap,
 } from "lucide-react";
 import { CollectionToolbar } from "@/components/portal/CollectionToolbar";
-import { EmptyState, Modal, PageHeader } from "@/components/portal/PortalUI";
+import { EmptyState, Modal } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import { SelectControl } from "@/components/ui/SelectControl";
 import { money } from "@/lib/format";
 import type { AppSettings, PageContentProps, Property } from "../types";
@@ -79,7 +80,7 @@ export function SettingsPage({
         : "ค่าน้ำ/ห้อง (บาท)";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="demo-menu-page">
       <PageHeader
         description="กำหนดสูตรค่าน้ำ ค่าไฟ รอบบิล ค่าปรับ และข้อมูลรับเงินแยกตามหอ"
         title="ตั้งค่าหอพัก"
@@ -91,7 +92,7 @@ export function SettingsPage({
         className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs sm:grid-cols-3"
       >
         <div className="flex items-center gap-3.5 p-5 sm:border-r sm:border-slate-100">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl demo-icon">
             <Building2 aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -105,7 +106,7 @@ export function SettingsPage({
         </div>
 
         <div className="flex items-center gap-3.5 border-t border-slate-100 p-5 sm:border-r sm:border-t-0">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl demo-icon">
             <Sparkles aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -119,7 +120,7 @@ export function SettingsPage({
         </div>
 
         <div className="flex items-center gap-3.5 border-t border-slate-100 p-5 sm:border-t-0">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-600 to-blue-700 text-white shadow-md shadow-blue-500/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl demo-icon">
             <QrCode aria-hidden="true" size={20} strokeWidth={2.2} />
           </span>
           <div>
@@ -153,13 +154,13 @@ export function SettingsPage({
               className="group relative overflow-hidden p-6 flex flex-col justify-between gap-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
               key={property.id}
             >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-bl from-blue-500/10 via-indigo-500/5 to-transparent blur-xl transition-transform duration-500 group-hover:scale-125" />
+
 
               <div>
                 {/* Header */}
                 <header className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <span className="w-12 h-12 rounded-xl demo-icon font-black text-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <Building2 aria-hidden="true" size={20} />
                     </span>
                     <div className="min-w-0">
@@ -173,7 +174,7 @@ export function SettingsPage({
                   </div>
                   <button
                     aria-label={`แก้ไขการตั้งค่า ${property.name}`}
-                    className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+                    className="w-8.5 h-8.5 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
                     onClick={() => openSettings(property.id)}
                     title="แก้ไขการตั้งค่า"
                     type="button"
@@ -242,7 +243,7 @@ export function SettingsPage({
               {/* Card Footer Button */}
               <footer className="mt-2 pt-3 border-t border-slate-100">
                 <button
-                  className="w-full h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                  className="w-full h-9 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border border-slate-200 bg-slate-50 text-blue-700 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer shadow-2xs active:scale-95"
                   onClick={() => openSettings(property.id)}
                   type="button"
                 >
@@ -267,7 +268,7 @@ export function SettingsPage({
         >
           <div className="p-6 flex flex-col gap-4 text-left text-xs">
             {/* Feature Intro Banner */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                 <Sparkles size={13} strokeWidth={2.2} />
               </span>

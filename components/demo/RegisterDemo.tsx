@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 import { validateRegistration } from "@/components/demo/demo-domain.mjs";
 
 const initialForm = {
@@ -41,12 +40,10 @@ export function RegisterDemo() {
   }
 
   return (
-    <main className="min-h-screen grid grid-cols-1 md:grid-cols-[1fr_520px] lg:grid-cols-[1fr_560px] bg-[#f8fafc]">
-      <AuthBrandPanel />
-
-      <section className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-14 bg-white overflow-y-auto">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="md:hidden flex justify-center pb-2">
+    <main className="demo-auth">
+      <section className="demo-auth-card">
+        <div className="space-y-5">
+          <div className="flex justify-center border-b border-slate-100 pb-4">
             <BrandLogo className="max-h-11 w-auto object-contain" />
           </div>
 

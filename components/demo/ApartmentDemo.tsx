@@ -2,22 +2,7 @@
 import { Swal } from "@/lib/sweetalert";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  LockKeyhole,
-  LogOut,
-  Menu,
-  Plus,
-  RotateCcw,
-  ShieldCheck,
-  UserCheck,
-  UserCog,
-  Users,
-  X,
-  Zap,
-} from "lucide-react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ArrowUpRight, ChevronRight, LockKeyhole, LogOut, Menu, RotateCcw, Search, X, Zap } from "lucide-react";
 import { AddPropertyWizard } from "./modals/AddPropertyWizard";
 import { CompanyPanel } from "./modals/CompanyPanel";
 import { ContractFormModal } from "./modals/ContractFormModal";
@@ -60,7 +45,7 @@ import type {
   RoomRecord,
   SubscriptionState,
 } from "./types";
-import { PageHeader } from "@/components/portal/PortalUI";
+import { PageHeader } from "./ui/PageHeader";
 import { useDemoCollection } from "./utils";
 
 function PageContent(props: PageContentProps) {
@@ -80,11 +65,8 @@ function PageContent(props: PageContentProps) {
     }
     return (
       <CustomerDashboard
-        isLocked={props.isLocked}
         onNavigate={props.onNavigate}
-        activeProperty={props.activeProperty}
         properties={props.properties}
-        meterRooms={props.meterRooms}
         contracts={props.contracts}
       />
     );
@@ -137,7 +119,7 @@ export function ApartmentDemo({
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [menuQuery, setMenuQuery] = useState("");
   const [hasRestoredDemo, setHasRestoredDemo] = useState(!showDemoControls);
 
   function showNotice(message: string) {
@@ -250,7 +232,7 @@ export function ApartmentDemo({
   function navigate(page: PageKey) {
     setActivePage(page);
     setIsMobileOpen(false);
-    setShowUserMenu(false);
+    setMenuQuery("");
   }
 
   function updateActiveProperty(updater: (p: Property) => Property) {
@@ -331,243 +313,86 @@ export function ApartmentDemo({
     showNotice("รีเซ็ตข้อมูล Demo กลับค่าเริ่มต้นแล้ว");
   }
 
-  return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)] bg-[#f5f7fb] text-[#15233b]">
-      <aside
-        className={`fixed top-0 left-0 z-50 w-[272px] h-dvh flex flex-col bg-[#091830] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="h-[96px] min-h-[96px] p-4 flex items-center justify-center border-b border-white/10 bg-[#06152d]">
-          <button
-            className="flex items-center gap-2.5 bg-transparent border-0 p-0 text-white cursor-pointer w-full"
-            type="button"
-            onClick={() => navigate("dashboard")}
-          >
-            <BrandLogo
-              className="w-full max-h-[70px] object-contain"
-              variant="inverse"
-            />
-          </button>
-        </div>
-        <button
-          className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg bg-white/5"
-          onClick={() => setIsMobileOpen(false)}
-          aria-label="ปิดเมนู"
-          type="button"
-        >
-          <X size={20} />
-        </button>
+  const navigationItems = visibleGroups.flatMap((group) => group.items);
+  const currentItem = navigationItems.find((item) => item.code === activePage);
+  const searchTerm = menuQuery.trim().toLowerCase();
+  const matchingItems = searchTerm
+    ? navigationItems.filter((item) => item.label.toLowerCase().includes(searchTerm))
+    : [];
 
-        <nav
-          aria-label="เมนูหลัก"
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-4"
-        >
+  return (
+    <div className="demo-workspace">
+      <aside className="demo-sidebar" data-open={isMobileOpen}>
+        <div className="demo-sidebar-brand">
+          <button type="button" onClick={() => navigate("dashboard")} className="demo-wordmark">
+            <span aria-hidden="true">L</span> Longtua
+          </button>
+          <button type="button" className="demo-control demo-dismiss" onClick={() => setIsMobileOpen(false)} aria-label="ปิดเมนู"><X size={18} /></button>
+        </div>
+        <nav className="demo-navigation" aria-label="เมนูหลัก">
           {visibleGroups.map((group) => (
-            <section className="space-y-1" key={group.label}>
-              <p className="px-3 py-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase">
-                {group.label}
-              </p>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const addonLocked = item.addon && !lineEnabled;
-                const active = activePage === item.code;
-                return (
-                  <button
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all cursor-pointer ${
-                      active
-                        ? "bg-[#2457e6] text-white shadow-sm font-semibold"
-                        : "text-slate-300 hover:text-white hover:bg-white/10"
-                    }`}
-                    key={item.code}
-                    onClick={() => navigate(item.code)}
-                    type="button"
-                  >
-                    <Icon size={18} />
-                    <span className="flex-1 text-left truncate">
-                      {item.label}
-                    </span>
-                    {addonLocked ? (
-                      <LockKeyhole className="text-slate-400" size={14} />
-                    ) : null}
-                  </button>
-                );
-              })}
+            <section key={group.label}>
+              <h2>{group.label}</h2>
+              {group.items.map(({ code, icon: Icon, label, addon }) => (
+                <button type="button" aria-current={activePage === code ? "page" : undefined} key={code} onClick={() => navigate(code)}>
+                  <Icon size={17} aria-hidden="true" /><span>{label}</span>
+                  {addon && !lineEnabled ? <LockKeyhole size={13} aria-label="ยังไม่เปิดใช้งาน" /> : null}
+                </button>
+              ))}
             </section>
           ))}
         </nav>
-
-        <div className="mt-auto shrink-0 p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] lg:pb-3 border-t border-white/10">
-          <button
-            className="w-full min-h-11 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-slate-300 text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
-            onClick={() => {
-              if (logoutAction) {
-                logoutAction();
-              } else {
-                resetDemo();
-              }
-            }}
-            type="button"
-          >
-            <LogOut size={18} />
-            <span>ออกจากระบบ</span>
+        <div className="demo-account">
+          <span className="demo-avatar" aria-hidden="true">{displayInitials}</span>
+          <div><strong>{displayUserName}</strong><small>{displayUserRole}</small></div>
+          <button type="button" className="demo-control" aria-label="ออกจากระบบ" title="ออกจากระบบ" onClick={() => logoutAction ? void logoutAction() : resetDemo()}>
+            <LogOut size={16} />
           </button>
         </div>
       </aside>
 
-      {isMobileOpen ? (
-        <button
-          aria-label="ปิดเมนู"
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-          type="button"
-        />
-      ) : null}
+      {isMobileOpen ? <button type="button" className="demo-overlay" aria-label="ปิดเมนู" onClick={() => setIsMobileOpen(false)} /> : null}
 
-      <div className="min-w-0 flex flex-col">
-        <header className="sticky top-0 z-30 min-h-[70px] px-6 lg:px-8 flex items-center gap-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-          <button
-            className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
-            onClick={() => setIsMobileOpen(true)}
-            aria-label="เปิดเมนู"
-            type="button"
-          >
-            <Menu size={20} />
-          </button>
-
-          {showDemoControls ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                type="button"
-                title="รีเซ็ตข้อมูล Demo"
-                onClick={resetDemo}
-              >
-                <RotateCcw size={13} />
-                <span>รีเซ็ต Demo</span>
-              </button>
-
-              <div className="hidden sm:flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium">
-                <span className="px-2 py-0.5 text-[11px] text-slate-400 font-semibold">
-                  จำลองระดับ:
-                </span>
-                {(["owner", "manager", "accounting", "staff"] as RoleKey[]).map(
-                  (r) => (
-                    <button
-                      key={r}
-                      onClick={() => {
-                        setRole(r);
-                        showNotice(`สลับเป็นระดับ ${roleInfo[r].label}`);
-                      }}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                        role === r
-                          ? "bg-white text-blue-700 shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                      type="button"
-                    >
-                      {r === "owner"
-                        ? "เจ้าของ"
-                        : r === "manager"
-                          ? "ผู้จัดการ"
-                          : r === "accounting"
-                            ? "การเงิน"
-                            : "เจ้าหน้าที่"}
-                    </button>
-                  ),
-                )}
+      <div className="demo-frame">
+        <header className="demo-topbar">
+          <button type="button" className="demo-control demo-menu-trigger" aria-label="เปิดเมนู" aria-expanded={isMobileOpen} onClick={() => setIsMobileOpen(true)}><Menu size={18} /></button>
+          <div className="demo-location">
+            <span>{currentOrganizationName ?? "Demo"}</span><ChevronRight size={13} aria-hidden="true" /><strong>{currentItem?.label}</strong>
+          </div>
+          <form className="demo-menu-search" role="search" onSubmit={(event) => {
+            event.preventDefault();
+            if (matchingItems[0]) navigate(matchingItems[0].code);
+          }}>
+            <Search size={16} aria-hidden="true" />
+            <input type="search" aria-label="ค้นหาเมนู" placeholder="ค้นหาเมนู" value={menuQuery} onChange={(event) => setMenuQuery(event.target.value)} onKeyDown={(event) => {
+              if (event.key === "Escape") setMenuQuery("");
+            }} />
+            {searchTerm ? (
+              <div className="demo-search-results">
+                {matchingItems.length ? matchingItems.map(({ code, label }) => (
+                  <button type="button" onClick={() => navigate(code)} key={code}>{label}<ArrowUpRight size={14} /></button>
+                )) : <p role="status">ไม่พบเมนู</p>}
               </div>
+            ) : null}
+          </form>
+          {showDemoControls ? (
+            <div className="demo-topbar-actions">
+              <select className="demo-control" aria-label="จำลองบทบาท" value={role} onChange={(event) => {
+                const nextRole = event.target.value as RoleKey;
+                setRole(nextRole);
+                if (!roleInfo[nextRole].allowed.includes(activePage)) navigate("dashboard");
+              }}>
+                <option value="owner">เจ้าของ</option>
+                <option value="manager">ผู้จัดการ</option>
+                <option value="accounting">การเงิน</option>
+                <option value="staff">เจ้าหน้าที่</option>
+              </select>
+              <button type="button" className="demo-control" aria-label="รีเซ็ต Demo" title="รีเซ็ต Demo" onClick={resetDemo}><RotateCcw size={16} /></button>
             </div>
           ) : null}
-
-          {/* User Profile on Right */}
-          <div className="relative ml-auto">
-            <button
-              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-slate-50 transition-all cursor-pointer border-0 bg-transparent text-left"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              type="button"
-            >
-              <span className="relative w-10 h-10 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm">
-                {displayInitials}
-                <i
-                  aria-hidden="true"
-                  className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                />
-              </span>
-              <div className="hidden sm:flex flex-col">
-                <strong className="text-sm font-semibold text-slate-800 leading-tight">
-                  {displayUserName}
-                </strong>
-                <small className="text-xs text-slate-500">
-                  {displayUserRole}
-                </small>
-              </div>
-              <ChevronDown
-                size={14}
-                className="text-slate-400 hidden sm:block"
-              />
-            </button>
-
-            {/* Dropdown User Menu */}
-            {showUserMenu ? (
-              <>
-                <button
-                  aria-label="ปิดเมนูผู้ใช้"
-                  className="fixed inset-0 z-30 cursor-default bg-transparent border-0"
-                  onClick={() => setShowUserMenu(false)}
-                  type="button"
-                />
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-xl z-40 p-2 text-xs space-y-1 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-3 border-b border-slate-100">
-                    <strong className="text-slate-800 font-bold block text-sm">
-                      {displayUserName}
-                    </strong>
-                    <span className="text-slate-400 text-xs block mt-0.5">
-                      {displayUserRole}
-                    </span>
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-100">
-                      ลงตัว เรสซิเดน 2
-                    </span>
-                  </div>
-
-                  <button
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
-                    onClick={() => navigate("users")}
-                    type="button"
-                  >
-                    <Users size={16} className="text-slate-400" />
-                    <span>จัดการผู้ใช้งานในระบบ</span>
-                  </button>
-
-                  <button
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
-                    onClick={() => navigate("settings")}
-                    type="button"
-                  >
-                    <UserCog size={16} className="text-slate-400" />
-                    <span>ตั้งค่าหอพักและบัญชี</span>
-                  </button>
-
-                  <div className="pt-1 border-t border-slate-100">
-                    <button
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all cursor-pointer font-medium"
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        resetDemo();
-                      }}
-                      type="button"
-                    >
-                      <LogOut size={16} />
-                      <span>ออกจากระบบ / รีเซ็ต Demo</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </div>
         </header>
 
-        <main className="w-full p-4 sm:p-6 lg:p-8 flex-1">
+        <main className="demo-content min-w-0 flex-1 p-4 sm:p-6">
           {subscription === "trialing" ? (
             <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">

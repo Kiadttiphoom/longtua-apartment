@@ -6,8 +6,8 @@ import type { PageContentProps } from "../types";
 import {
   DataTable,
   EditButton,
-  PageHeader,
 } from "@/components/portal/PortalUI";
+import { PageHeader } from "../ui/PageHeader";
 import { useDemoCollection } from "../utils";
 
 export function RolesPage({ isLocked, onToast }: PageContentProps) {
@@ -57,7 +57,7 @@ export function RolesPage({ isLocked, onToast }: PageContentProps) {
               key="system"
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                 role.system
-                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                  ? "bg-slate-50 text-purple-700 border-slate-200"
                   : "bg-slate-50 text-slate-600 border-slate-200"
               }`}
             >

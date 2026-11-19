@@ -20,7 +20,7 @@ export function AdminDashboard({
 }) {
   return (
     <>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section className="demo-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <Metric
           label="กิจการทั้งหมด"
           value="28"
@@ -128,7 +128,7 @@ export function AdminDashboard({
               type="button"
             >
               <div className="flex items-center gap-3">
-                <span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                <span className="w-9 h-9 rounded-lg bg-slate-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                   <Users size={18} />
                 </span>
                 <div>
@@ -171,7 +171,7 @@ export function AdminDashboard({
           ]}
           rows={companies.slice(0, 4).map((c) => [
             <div className="flex items-center gap-3" key="c">
-              <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+              <span className="w-9 h-9 rounded-xl bg-slate-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                 <Building2 size={18} />
               </span>
               <div className="flex flex-col text-xs min-w-0">
