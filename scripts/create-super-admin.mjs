@@ -24,8 +24,13 @@ if (!databaseUrl) {
 }
 
 const isLocalhost = databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+let cleanDbUrl = databaseUrl;
+if (!isLocalhost && cleanDbUrl.includes("sslmode=")) {
+  cleanDbUrl = cleanDbUrl.replace(/[\?&]sslmode=[^&]+/g, "");
+  if (cleanDbUrl.endsWith("?")) cleanDbUrl = cleanDbUrl.slice(0, -1);
+}
 const pool = new Pool({
-  connectionString: databaseUrl,
+  connectionString: cleanDbUrl,
   ssl: isLocalhost ? false : { rejectUnauthorized: false },
 });
 

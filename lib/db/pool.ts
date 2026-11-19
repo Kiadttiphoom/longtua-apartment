@@ -16,7 +16,7 @@ export function getDatabaseUrl(): string {
 }
 
 export function createPool(connectionString?: string): Pool {
-  const url = connectionString || getDatabaseUrl();
+  let url = connectionString || getDatabaseUrl();
   const isLocalhost = url.includes("localhost") || url.includes("127.0.0.1");
 
   // Determine SSL configuration
@@ -26,6 +26,14 @@ export function createPool(connectionString?: string): Pool {
     : {
         rejectUnauthorized: false,
       };
+
+  // Strip sslmode parameter so pg driver respects rejectUnauthorized: false
+  if (!isLocalhost && url.includes("sslmode=")) {
+    url = url.replace(/[\?&]sslmode=[^&]+/g, "");
+    if (url.endsWith("?")) {
+      url = url.slice(0, -1);
+    }
+  }
 
   const pool = new Pool({
     connectionString: url,
