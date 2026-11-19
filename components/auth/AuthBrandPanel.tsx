@@ -10,10 +10,10 @@ export function AuthBrandPanel() {
       <div className="space-y-6 max-w-md my-auto py-10">
         <div className="space-y-3">
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tight leading-tight">
-            บริหารทุกหอพัก<br />จากที่เดียวอย่างเป็นระบบ
+            บริหารทุกหอพัก<br />ครบจบในที่เดียวอย่างเป็นระบบ
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            ดูสถานะห้อง จัดการผู้เช่า ออกบิลค่าเช่า ค่าน้ำ ค่าไฟ และติดตามกระแสเงินสดในแพลตฟอร์มเดียว
+            เช็กสถานะห้อง บันทึกมิเตอร์ ออกบิลค่าเช่า ค่าน้ำ ค่าไฟ และตรวจยอดชำระเงินได้สะดวกรวดเร็ว
           </p>
         </div>
         <ul className="space-y-3 text-xs sm:text-sm text-slate-200">
@@ -21,19 +21,19 @@ export function AuthBrandPanel() {
             <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
               <Check size={13} />
             </span>
-            <span>รวมหลายหอพักไว้ในบัญชีกิจการเดียว</span>
+            <span>จัดการได้หลายตึก หลายหอพัก ในบัญชีเดียว</span>
           </li>
           <li className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
               <Check size={13} />
             </span>
-            <span>กำหนด Role และสิทธิ์ทีมงานได้ละเอียด</span>
+            <span>แบ่งหน้าที่และกำหนดสิทธิ์ทีมงานได้ชัดเจน</span>
           </li>
           <li className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
               <Check size={13} />
             </span>
-            <span>รองรับพอร์ทัลผู้เช่า ดูบิลและแนบสลิปโอนเงิน</span>
+            <span>ผู้เช่าเช็กบิลและส่งสลิปโอนเงินผ่านมือถือได้ทันที</span>
           </li>
         </ul>
       </div>

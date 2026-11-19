@@ -93,7 +93,7 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
     "สัญญาเช่า & ประวัติผู้เช่าไม่จำกัด",
     "จดมิเตอร์น้ำ-ไฟ คำนวณหน่วยอัตโนมัติ",
     "ออกใบแจ้งหนี้พร้อม QR PromptPay รับเงิน",
-    "พอร์ทัลผู้เช่า (Tenant Portal) ดูบิล & แจ้งชำระ",
+    "หน้าสำหรับผู้เช่า ดูบิล & แนบสลิปชำระเงิน",
     "ระบบตรวจสอบสลิปโอนเงิน",
     "รายงานสถิติรายรับและอัตราการเข้าพัก",
   ];
@@ -332,7 +332,7 @@ export function SubscriptionPage({ subscription, usage }: SubscriptionPageProps)
                     </div>
                     <div className="flex items-start gap-2">
                       <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <span>พอร์ทัลผู้เช่า ดูบิลและแจ้งโอน</span>
+                      <span>หน้าผู้เช่า ดูบิลและแจ้งโอน</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
