@@ -524,25 +524,46 @@ export async function executeRpc(
     const fn = sanitizeIdentifier(functionName);
     const keys = Object.keys(params);
 
+    let res: any;
     if (keys.length === 0) {
-      const res = await executor.query(`SELECT * FROM ${fn}()`);
-      return { data: res.rows, error: null, count: res.rows.length };
+      res = await executor.query(`SELECT * FROM ${fn}()`);
+    } else {
+      const namedArgs: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+
+      for (const key of keys) {
+        namedArgs.push(`${sanitizeIdentifier(key)} := $${idx++}`);
+        values.push(params[key]);
+      }
+
+      res = await executor.query(
+        `SELECT * FROM ${fn}(${namedArgs.join(", ")})`,
+        values,
+      );
     }
 
-    const namedArgs: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
+    // In PostgreSQL, scalar or JSON/JSONB functions return 1 row with 1 column named after the function.
+    // Supabase RPC unboxes this single return value so data is the object/value itself.
+    const fnLower = functionName.toLowerCase();
+    const isSingleColumnFunc =
+      res.fields &&
+      res.fields.length === 1 &&
+      res.fields[0].name.toLowerCase() === fnLower;
 
-    for (const key of keys) {
-      namedArgs.push(`${sanitizeIdentifier(key)} := $${idx++}`);
-      values.push(params[key]);
+    let data: any = res.rows;
+    if (isSingleColumnFunc) {
+      const colName = res.fields[0].name;
+      if (res.rows.length === 0) {
+        data = null;
+      } else if (res.rows.length === 1) {
+        data = res.rows[0][colName];
+      } else {
+        data = res.rows.map((r: any) => r[colName]);
+      }
     }
 
-    const res = await executor.query(
-      `SELECT * FROM ${fn}(${namedArgs.join(", ")})`,
-      values,
-    );
-    return { data: res.rows, error: null, count: res.rows.length };
+    return { data, error: null, count: res.rows.length };
   } catch (err: any) {
     return {
       data: null,

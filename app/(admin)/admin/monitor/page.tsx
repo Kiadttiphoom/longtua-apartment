@@ -27,10 +27,30 @@ export default async function AdminMonitorPage({ searchParams }: { searchParams:
   let data: MonitorData | null = null;
   if (!issue) {
     const result = await createAdminClient().rpc("query_admin_monitor", query);
-    if (result.error) issue = ["PGRST202", "42P01", "42883"].includes(result.error.code)
-      ? "Monitor ยังไม่พร้อม กรุณารัน migration admin_monitor ในฐานข้อมูลก่อน"
-      : "โหลดข้อมูล Monitor ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
-    else data = result.data as MonitorData;
+    if (result.error) {
+      issue = ["PGRST202", "42P01", "42883"].includes(result.error.code)
+        ? "Monitor ยังไม่พร้อม กรุณารัน migration admin_monitor ในฐานข้อมูลก่อน"
+        : "โหลดข้อมูล Monitor ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+    } else {
+      let rawData = result.data;
+      if (Array.isArray(rawData) && rawData.length === 1 && rawData[0]?.query_admin_monitor) {
+        rawData = rawData[0].query_admin_monitor;
+      }
+      if (typeof rawData === "string") {
+        try { rawData = JSON.parse(rawData); } catch {}
+      }
+      if (rawData && typeof rawData === "object" && !Array.isArray(rawData)) {
+        data = {
+          total: Number(rawData.total ?? 0),
+          errors: Number(rawData.errors ?? 0),
+          users: Number(rawData.users ?? 0),
+          organizations: Number(rawData.organizations ?? 0),
+          series: Array.isArray(rawData.series) ? rawData.series : [],
+          actions: Array.isArray(rawData.actions) ? rawData.actions : [],
+          rows: Array.isArray(rawData.rows) ? rawData.rows : [],
+        };
+      }
+    }
   }
   const pageLink = (page: number) => `/admin/monitor?${new URLSearchParams({ ...strings, page: String(page) })}`;
   const pageCount = Math.max(1, Math.ceil((data?.total ?? 0) / 50));
@@ -45,22 +65,22 @@ export default async function AdminMonitorPage({ searchParams }: { searchParams:
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[["เหตุการณ์ทั้งหมด", data.total, Activity, "text-blue-600"], ["ข้อผิดพลาด", data.errors, AlertTriangle, "text-rose-600"], ["ผู้ใช้งานที่ระบุตัวตนได้", data.users, Users, "text-violet-600"], ["กิจการที่มีกิจกรรม", data.organizations, Building2, "text-emerald-600"]].map(([label, count, Icon, color]) => {
             const CardIcon = Icon as typeof Activity;
-            return <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs"><CardIcon size={20} className={String(color)} /><p className="mt-3 text-xs text-slate-500">{String(label)}</p><p className="mt-1 text-3xl font-bold tracking-tight text-slate-800">{Number(count).toLocaleString("th-TH")}</p></div>;
+            return <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs"><CardIcon size={20} className={String(color)} /><p className="mt-3 text-xs text-slate-500">{String(label)}</p><p className="mt-1 text-3xl font-bold tracking-tight text-slate-800">{Number(count ?? 0).toLocaleString("th-TH")}</p></div>;
           })}
         </div>
-        <MonitorCharts key={JSON.stringify(query)} series={data.series} actions={data.actions} />
+        <MonitorCharts key={JSON.stringify(query)} series={data.series ?? []} actions={data.actions ?? []} />
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <div className="border-b border-slate-100 p-5"><h2 className="font-bold text-slate-800">รายการเหตุการณ์</h2><p className="mt-1 text-xs text-slate-500">{data.total.toLocaleString("th-TH")} รายการ · หน้า {filters.page_number} / {pageCount} · วันเวลาไทย (ค.ศ.)</p></div>
+          <div className="border-b border-slate-100 p-5"><h2 className="font-bold text-slate-800">รายการเหตุการณ์</h2><p className="mt-1 text-xs text-slate-500">{(data.total ?? 0).toLocaleString("th-TH")} รายการ · หน้า {filters.page_number} / {pageCount} · วันเวลาไทย (ค.ศ.)</p></div>
           <div className="overflow-x-auto"><table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500"><tr>{["วันที่ / เวลา", "ผู้ทำรายการ", "กิจการ", "กิจกรรม", "ผลลัพธ์", "รายละเอียด / รหัสอ้างอิง"].map((label) => <th key={label} className="whitespace-nowrap px-4 py-3 font-semibold">{label}</th>)}</tr></thead>
-            <tbody className="divide-y divide-slate-100">{data.rows.map((event) => <tr key={event.id} className="align-top hover:bg-slate-50/70">
+            <tbody className="divide-y divide-slate-100">{(data.rows ?? []).map((event) => <tr key={event.id} className="align-top hover:bg-slate-50/70">
               <td className="whitespace-nowrap px-4 py-4"><time dateTime={event.occurred_at}>{timestamp(event.occurred_at)}</time></td>
               <td className="min-w-36 px-4 py-4 font-semibold text-slate-700">{event.actor_name || "ระบบ / ไม่ระบุผู้ใช้"}</td>
               <td className="min-w-36 px-4 py-4">{event.organization_name || "ระบบ / ไม่ระบุกิจการ"}</td>
               <td className="px-4 py-4"><span className="font-medium text-slate-700">{event.action}</span><span className="mt-1 block text-[10px] text-slate-400">{event.source}</span></td>
               <td className="px-4 py-4"><span className={`inline-block whitespace-nowrap rounded-full px-2 py-1 font-semibold ${event.outcome === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{event.outcome === "error" ? "Error" : "สำเร็จ"}</span></td>
               <td className="min-w-64 px-4 py-4 text-slate-600">{event.message || event.entity_type || "—"}{(event.request_id || event.entity_id || event.error_code) && <details className="mt-2"><summary className="cursor-pointer text-blue-600">ดูรหัสอ้างอิง</summary><div className="mt-2 space-y-1 break-all font-mono text-[11px]">{event.error_code && <p>Error: {event.error_code}</p>}{event.request_id && <p>Request: {event.request_id}</p>}{event.entity_id && <p>Record: {event.entity_id}</p>}</div></details>}</td>
-            </tr>)}{!data.rows.length && <tr><td colSpan={6} className="p-12 text-center text-slate-500">ไม่พบเหตุการณ์ตามตัวกรองที่เลือก</td></tr>}</tbody>
+            </tr>)}{!(data.rows?.length) && <tr><td colSpan={6} className="p-12 text-center text-slate-500">ไม่พบเหตุการณ์ตามตัวกรองที่เลือก</td></tr>}</tbody>
           </table></div>
           <div className="flex items-center justify-between border-t border-slate-100 p-4 text-sm">
             {filters.page_number > 1 ? <Link className="text-blue-600" href={pageLink(filters.page_number - 1)}>← ก่อนหน้า</Link> : <span className="text-slate-300">← ก่อนหน้า</span>}
