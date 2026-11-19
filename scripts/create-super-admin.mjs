@@ -10,8 +10,8 @@ if (!/^[a-z0-9][a-z0-9._-]{2,28}[a-z0-9]$/.test(username)) {
   console.error("Username ต้องเป็น a-z, 0-9, จุด, _ หรือ - จำนวน 4–30 ตัว");
   process.exit(1);
 }
-if (String(password ?? "").length < 12 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-  console.error("Password ต้องยาวอย่างน้อย 12 ตัว และมีทั้งตัวอักษรกับตัวเลข");
+if (String(password ?? "").length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+  console.error("Password ต้องยาวอย่างน้อย 8 ตัว และมีทั้งตัวอักษรกับตัวเลข");
   process.exit(1);
 }
 
